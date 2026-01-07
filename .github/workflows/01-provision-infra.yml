@@ -215,9 +215,12 @@ jobs:
         export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
         export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
 
-        # Run Importer
-        echo "🚀 Triggering Resource Importer Action..."
-        bash "$GITHUB_WORKSPACE/.github/actions/resource-importer/import.sh"
+        # Run Importer (Fetch from blaze-actions)
+        echo "🚀 Fetching Resource Importer Logic..."
+        gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh \
+          -H "Accept: application/vnd.github.v3.raw" > import.sh
+        chmod +x import.sh
+        bash import.sh
 
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
