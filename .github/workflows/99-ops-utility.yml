@@ -295,7 +295,6 @@ jobs:
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources'
-    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     secrets: inherit
     with:
@@ -308,7 +307,6 @@ jobs:
     name: Destroy
     needs: [configuration, pre-cleanup]
     if: inputs.action == 'destroy-resources'
-    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-terraform.yml
     secrets: inherit
     with:
