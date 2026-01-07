@@ -76,7 +76,7 @@ jobs:
       outputs: ${{ steps.result.outputs.outputs }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Blaze
         uses: ./.github/actions/setup-blaze
@@ -133,6 +133,12 @@ jobs:
           else
              echo "ℹ️ TF_VARS_JSON input is empty - using only direct env: variables (this is OK)"
           fi
+
+      - name: Configure Git for Private Modules
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global url."https://oauth2:${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Terraform Init
         working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
