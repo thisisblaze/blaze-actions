@@ -117,6 +117,14 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
+      - name: Debug Secret Presence
+        run: |
+          if [ -n "${{ secrets.GH_PAT }}" ]; then
+            echo "✅ GH_PAT is DETECTED."
+          else
+            echo "⚠️ GH_PAT is NOT DETECTED. Falling back to GITHUB_TOKEN."
+          fi
+
       - name: Configure Git for Private Modules
         env:
           TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
