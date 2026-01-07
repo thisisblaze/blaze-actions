@@ -144,6 +144,7 @@ jobs:
     # Explicitly run only for actions that need Terraform/ECR config
     if: contains(fromJSON('["manage-environment", "destroy-resources", "unlock-state", "wipe-state", "nuke-environment"]'), inputs.action)
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
