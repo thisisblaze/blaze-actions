@@ -196,7 +196,7 @@ runs:
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
         if [[ "$CLUSTER_TIER" == "auto" ]]; then
            if [[ "$STAGE_KEY" == "dev" ]]; then
-              CLUSTER_TIER="M2"
+              CLUSTER_TIER="M10"  # M2 is EOL (Jan 2026), minimum is now M10
            else
               CLUSTER_TIER="M10"
            fi
