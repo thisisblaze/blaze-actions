@@ -1,0 +1,191 @@
+name: "Smart Infrastructure Dashboard"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**.tf"
+      - "**.hcl"
+      - ".github/workflows/smart-dashboard.yml"
+
+permissions:
+  id-token: write # Required for AWS OIDC
+  contents: read # Required for checkout
+  pull-requests: write # Required for commenting
+  checks: write # Required for test reporting
+
+jobs:
+  dashboard:
+    name: "Plan, Audit & Dashboard"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-config
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "AWS_REGION=$AWS_REGION" >> "$GITHUB_ENV"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      # --- 1. SECURITY SCAN (Trivy) ---
+      # Scans config before Terraform runs to fail fast on risks (but outputting to file for dashboard)
+      - name: Security Scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true # Don't block build, let dashboard show issues
+        with:
+          scan-type: "config"
+          hide-progress: true
+          format: "table"
+          output: "trivy-results.txt"
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+      # --- 2. COST ESTIMATION (Infracost) ---
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Cost Baseline
+        continue-on-error: true # Don't fail if Infracost errors (e.g. key missing in dev)
+        run: |
+          infracost breakdown --path . --format json --out-file infracost.json
+          # Convert to markdown snippet for dashboard
+          infracost output --path infracost.json --format github-comment > cost-summary.md
+
+      # --- 3. TERRAFORM & VISUALIZATION ---
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: "1.5.0" # Match project version if known, or latest 1.x
+
+      - name: Terraform Init & Plan
+        id: plan
+        # Note: This runs a generic plan on root folder. Adjust '--path' if needed.
+        # Assuming we want to scan the WHOLE repo or specific live dirs?
+        # For this dashboard blueprint, we'll scan the root (or modules) or rely on path filters to trigger.
+        # Given this is a blueprint, we run on root '.' for demonstration unless specified.
+        # However, typically you plan specific 'live' directories.
+        # For safety/speed in this template, we'll try to find the first 'live' or 'main.tf' dir.
+        # But to be "Smart", let's assume we run where the change IS.
+        # For now, we'll use a safer dummy plan or just init valid directories.
+        # Actually, let's keep it simple: run on current dir if it has TF files, else skip.
+        run: |
+          if [ -f "main.tf" ] || [ -f "versions.tf" ]; then
+            terraform init
+            terraform plan -out=tfplan.binary -no-color
+            terraform show -json tfplan.binary > plan.json
+          else
+            echo "Skipping root plan (no main.tf in root)."
+            echo "{}" > plan.json
+          fi
+        env:
+          # Fake inputs for modules if needed, or rely on .tfvars
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+
+      # Generate Infrastructure Diagram (Mermaid.js)
+      # Using RoseSecurity/Terramaid (Community Action)
+      # Generate Infrastructure Diagram (Mermaid.js)
+      # Replaces 'uses: RoseSecurity/Terramaid@v1' which is not a valid Action
+      - name: Generate Diagram
+        continue-on-error: true
+        run: |
+          go install github.com/RoseSecurity/Terramaid@latest
+          # Add GOPATH/bin to PATH for this step
+          export PATH=$PATH:$(go env GOPATH)/bin
+
+          # Run Terramaid
+          # Assumes 'terraform' is in PATH from previous setup-terraform step
+          terramaid run \
+            --working-dir . \
+            --output Terramaid.md \
+            --chart-type flowchart \
+            --direction TD
+
+      # --- 4. COMPILE THE SMART DASHBOARD ---
+      - name: 📊 Publish Smart Dashboard
+        if: always()
+        run: |
+          {
+            echo "# 🚀 Smart Infrastructure Dashboard"
+            echo "### 📅 Build: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+            # --- Section 1: Terraform Change Summary ---
+            if [ -f plan.json ] && [ -s plan.json ] && grep -q "resource_changes" plan.json; then
+              echo "### 🏗️ Change Summary"
+              
+              # Calculate counts
+              ADD=$(jq '[.resource_changes[] | select(.change.actions[] | contains("create"))] | length' plan.json)
+              CHANGE=$(jq '[.resource_changes[] | select(.change.actions[] | contains("update"))] | length' plan.json)
+              DESTROY=$(jq '[.resource_changes[] | select(.change.actions[] | contains("delete"))] | length' plan.json)
+
+              echo "| 🟢 Added | 🟡 Modified | 🔴 Destroyed |"
+              echo "| :---: | :---: | :---: |"
+              echo "| **$ADD** | **$CHANGE** | **$DESTROY** |"
+              
+              # 🚨 CRITICAL DESTRUCTION CHECK
+              # Lists specific resources being destroyed if they look important (db, s3, iam, vpc, etc.)
+              CRITICAL_DESTROYS=$(jq -r '.resource_changes[] | select(.change.actions[] | contains("delete")) | .address' plan.json | grep -E "rds|s3|iam|vpc|db" || true)
+              
+              if [ ! -z "$CRITICAL_DESTROYS" ]; then
+                echo " "
+                echo "> [!CAUTION]"
+                echo "> **CRITICAL DESTRUCTIONS DETECTED**"
+                echo "> The following sensitive resources are being destroyed:"
+                echo "> \`\`\`"
+                echo "$CRITICAL_DESTROYS"
+                echo "> \`\`\`"
+              fi
+            else
+               echo "> ℹ️ **No Plan Generated** or Root directory has no Terraform configuration."
+            fi
+
+            # --- Section 2: FinOps (Infracost) ---
+            if [ -f cost-summary.md ] && [ -s cost-summary.md ]; then
+              echo "### 💰 FinOps Impact"
+              cat cost-summary.md
+            fi
+
+            # --- Section 3: Topology (Collapsible) ---
+            if [ -f Terramaid.md ]; then
+              echo "### 🗺️ Visual Topology"
+              echo "<details><summary>Click to view Infrastructure Graph</summary>"
+              echo " "
+              echo "\`\`\`mermaid"
+              cat Terramaid.md
+              echo "\`\`\`"
+              echo " "
+              echo "</details>"
+            fi
+
+            # --- Section 4: Security (Collapsible) ---
+            if [ -f trivy-results.txt ] && [ -s trivy-results.txt ]; then
+              echo "### 🛡️ Security Scan"
+              echo "<details><summary>Click to view Top Security Issues</summary>"
+              echo " "
+              echo "\`\`\`"
+              # Show first 30 lines to ensure we capture headers + top failures
+              head -n 30 trivy-results.txt
+              echo "\`\`\`"
+              echo " "
+              echo "</details>"
+            fi
+
+            # --- Section 5: Quick Links ---
+            echo "### 🔗 Reference"
+            echo "- [AWS Console](https://console.aws.amazon.com/console/home?region=$AWS_REGION)"
+            echo "- [Job Logs]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+
+          } >> $GITHUB_STEP_SUMMARY

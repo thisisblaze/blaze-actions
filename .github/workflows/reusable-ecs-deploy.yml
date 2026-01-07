@@ -1,0 +1,166 @@
+name: "Reusable ECS Deploy"
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      stage_key:
+        required: true
+        type: string
+      config_environment:
+        required: false
+        type: string
+        description: "Environment config key (e.g. DEV, STAGE, PROD)"
+      branch_name:
+        required: false
+        type: string
+      image_tag:
+        required: true
+        type: string
+      project_key:
+        required: true
+        type: string
+      client_key:
+        required: true
+        type: string
+      cloud_platform:
+        required: true
+        type: string
+      domain_root:
+        required: true
+        type: string
+      # Infra specifics
+      efs_id:
+        required: false
+        type: string
+      api_ap_id:
+        required: false
+        type: string
+      mongo_ap_id:
+        required: false
+        type: string
+      es_ap_id:
+        required: false
+        type: string
+      ns_id:
+        required: false
+        type: string
+      registry:
+        required: true
+        type: string
+      # Configs
+      dfp_network_id:
+        required: false
+        type: string
+      gtm_id:
+        required: false
+        type: string
+      s3_bucket:
+        required: false
+        type: string
+      s3_public_url:
+        required: false
+        type: string
+      aws_region:
+        required: true
+        type: string
+      elasticsearch_endpoint:
+        required: false
+        type: string
+
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      # Standard Secrets
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.service_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Use config_environment if provided (uppercase), otherwise fallback.
+    # We force uppercase via shell logic usually, but here we bind to the GitHub Environment.
+    # GitHub Environments ARE case-sensitive. 'STAGE' != 'stage'.
+    # We should default to the uppercase convention if input is mixed.
+    environment: ${{ inputs.config_environment || inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Blaze (Credentials)
+        uses: ./.github/actions/setup-blaze
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+          ecr: "true"
+          terraform: "false"
+
+      - name: Deploy Service
+        uses: ./.github/actions/deploy-ecs-service
+        with:
+          service_name: ${{ inputs.service_name }}
+          environment: ${{ inputs.environment }}
+          stage_key: ${{ inputs.stage_key }}
+          branch_name: ${{ inputs.branch_name }}
+          image_tag: ${{ inputs.image_tag }}
+          project_key: ${{ inputs.project_key }}
+          client_key: ${{ inputs.client_key }}
+          cloud_platform: ${{ inputs.cloud_platform }}
+          domain_root: ${{ inputs.domain_root }}
+
+          # Infra
+          efs_id: ${{ inputs.efs_id }}
+          api_ap_id: ${{ inputs.api_ap_id }}
+          mongo_ap_id: ${{ inputs.mongo_ap_id }}
+          es_ap_id: ${{ inputs.es_ap_id }}
+          ns_id: ${{ inputs.ns_id }}
+          registry: ${{ inputs.registry }}
+
+          # Secrets
+          mongo_password: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          jwt_private_key: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+          s3_bucket: ${{ inputs.s3_bucket }}
+          admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+          mongodb_uri: ${{ secrets.BLAZE_CONNECTION_STRING }}
+          elasticsearch_endpoint: ${{ inputs.elasticsearch_endpoint }}
+
+          elasticsearch_username: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+          elasticsearch_password: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+
+          s3_access_key: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+          s3_secret_key: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+          s3_public_url: ${{ inputs.s3_public_url }}
+
+          graphql_cache_settings: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+          blaze_client_header: ${{ secrets.BLAZE_CLIENT_HEADER }}
+          dfp_network_id: ${{ inputs.dfp_network_id }}
+          gtm_id: ${{ inputs.gtm_id }}
+          aws_region: ${{ inputs.aws_region }}

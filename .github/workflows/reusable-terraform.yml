@@ -1,0 +1,321 @@
+name: "Reusable Terraform"
+
+on:
+  workflow_call:
+    inputs:
+      tf_dir:
+        description: "Directory containing Terraform configuration"
+        required: true
+        type: string
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
+      environment:
+        description: "GitHub Environment (for secrets)"
+        required: false
+        type: string
+      bucket:
+        description: "S3 Bucket for State"
+        required: true
+        type: string
+      state_key:
+        description: "S3 Key for State"
+        required: true
+        type: string
+      lock_table:
+        description: "DynamoDB Table for Locking"
+        required: false
+        type: string
+      terraform_version:
+        description: "Terraform Version"
+        required: false
+        type: string
+        default: "1.9.0"
+      apply:
+        description: "Whether to run terraform apply"
+        required: false
+        type: boolean
+        default: false
+      tf_vars:
+        description: "Map of Terraform variables (passed as environment variables)"
+        required: false
+        type: string
+      pre_apply_script:
+        description: "Bash script to run after Init but before Plan/Apply (e.g. imports)"
+        required: false
+        type: string
+      destroy:
+        description: "Whether to generate a destroy plan"
+        required: false
+        type: boolean
+        default: false
+      detect_drift:
+        description: "Fail if changes are detected (detailed-exitcode)"
+        required: false
+        type: boolean
+        default: false
+
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+
+    outputs:
+      mongodb_uri:
+        description: "MongoDB Connection String"
+        value: ${{ jobs.terraform.outputs.mongodb_uri }}
+      cluster_name:
+        description: "MongoDB Cluster Name"
+        value: ${{ jobs.terraform.outputs.cluster_name }}
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      mongodb_uri: ${{ steps.tf_outputs.outputs.mongodb_uri }}
+      cluster_name: ${{ steps.tf_outputs.outputs.cluster_name }}
+      plan_summary: ${{ steps.plan.outputs.summary }}
+    environment: ${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.tf_dir }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@3bfe16ac5e1853c3abbfb53f3de4c424657a0e5b # v2.0.3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+          terraform_wrapper: false
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Terraform Init
+        id: init
+        run: |
+          set +e
+          BUCKET="${{ inputs.bucket }}"
+          STATE_KEY="${{ inputs.state_key }}"
+          LOCK_TABLE="${{ inputs.lock_table }}"
+          TABLE_NAME="${LOCK_TABLE:-${BUCKET}}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🌐 Initializing Terraform Backend..."
+          echo "   Bucket: $BUCKET"
+          echo "   Key:    $STATE_KEY"
+          echo "   Table:  $TABLE_NAME"
+
+          terraform init \
+            -backend-config="bucket=${BUCKET}" \
+            -backend-config="key=${STATE_KEY}" \
+            -backend-config="dynamodb_table=${TABLE_NAME}" \
+            -backend-config="region=${REGION}" 2>&1 | tee /tmp/init_output.log
+            
+          INIT_EXIT_CODE=${PIPESTATUS[0]}
+
+          if [[ $INIT_EXIT_CODE -ne 0 ]]; then
+            if grep -qi "checksum" /tmp/init_output.log || grep -qi "does not have the expected content" /tmp/init_output.log; then
+               echo "⚠️ Checksum mismatch / Stale Lock detected. Attempting recovery..."
+               LOCK_ID="${BUCKET}/${STATE_KEY}"
+               
+               # Delete Lock from DynamoDB
+               aws dynamodb delete-item \
+                 --table-name "${TABLE_NAME}" \
+                 --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" \
+                 --region "${REGION}"
+                 
+               # Delete .tflock from S3
+               aws s3 rm "s3://${BUCKET}/${STATE_KEY}.tflock" --region "${REGION}" || true
+               
+               echo "🔄 Retrying Init..."
+               terraform init \
+                -backend-config="bucket=${BUCKET}" \
+                -backend-config="key=${STATE_KEY}" \
+                -backend-config="dynamodb_table=${TABLE_NAME}" \
+                -backend-config="region=${REGION}" \
+
+               
+               exit "$?"
+            else
+               echo "❌ Terraform Init Failed"
+               exit "$INIT_EXIT_CODE"
+            fi
+          fi
+
+      - name: Check & Release Stale Locks
+        run: |
+          # Simplified lock check logic
+          BUCKET="${{ inputs.bucket }}"
+          STATE_KEY="${{ inputs.state_key }}"
+          TABLE_NAME="${{ inputs.lock_table }}"
+          TABLE_NAME="${TABLE_NAME:-$BUCKET}"
+          LOCK_ID="${BUCKET}/${STATE_KEY}"
+
+          LOCK_DATA=$(aws dynamodb get-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "${{ inputs.aws_region }}" 2>/dev/null)
+
+          if echo "$LOCK_DATA" | grep -q "Item"; then
+             CREATED=$(echo "$LOCK_DATA" | jq -r '.Item.Created.S // empty')
+             if [[ -n "$CREATED" ]]; then
+                LOCK_EPOCH=$(date -d "$CREATED" +%s)
+                NOW_EPOCH=$(date +%s)
+                AGE_MIN=$(( (NOW_EPOCH - LOCK_EPOCH) / 60 ))
+                if [[ $AGE_MIN -gt 15 ]]; then
+                   echo "🔓 Releasing stale lock (Age: ${AGE_MIN}m)..."
+                   aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "${{ inputs.aws_region }}"
+                fi
+             fi
+          fi
+
+      - name: Load TF Vars
+        if: ${{ inputs.tf_vars != '' }}
+        run: |
+          # Write input vars to a .auto.tfvars file or export to ENV
+          # Exporting to ENV is safest for dynamic keys
+          echo "${{ inputs.tf_vars }}" > _github_vars.env
+          while read -r line; do
+            if [[ -n "$line" && ! "$line" =~ ^# ]]; then
+               # Check if line contains =
+               if [[ "$line" == *"="* ]]; then
+                 KEY=$(echo "$line" | cut -d'=' -f1 | tr -d ' ')
+                 VAL=$(echo "$line" | cut -d'=' -f2-)
+                 echo "TF_VAR_${KEY}=${VAL}" >> "$GITHUB_ENV"
+               fi
+            fi
+          done < _github_vars.env
+
+      - name: Run Pre-Apply Script
+        if: ${{ inputs.pre_apply_script != '' }}
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          EC_API_KEY: ${{ secrets.EC_API_KEY }}
+        run: |
+          echo "📜 Running Pre-Apply Script..."
+          ${{ inputs.pre_apply_script }}
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+        run: |
+          DESTROY_FLAG=""
+          if [[ "${{ inputs.destroy }}" == "true" ]]; then
+            DESTROY_FLAG="-destroy"
+          fi
+
+          DETAILED_EXITCODE=""
+          if [[ "${{ inputs.detect_drift }}" == "true" ]]; then
+             DETAILED_EXITCODE="-detailed-exitcode"
+          fi
+
+          set +e
+          terraform plan $DESTROY_FLAG $DETAILED_EXITCODE -out=tfplan -input=false | tee plan.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+
+          # Extract Plan Summary
+          PLAN_SUMMARY="No changes"
+          if grep -q "Plan:" plan.log; then
+             PLAN_SUMMARY=$(grep "Plan:" plan.log | tail -n 1)
+          elif grep -q "No changes" plan.log; then
+             PLAN_SUMMARY="No changes"
+          fi
+          echo "summary=$PLAN_SUMMARY" >> $GITHUB_OUTPUT
+
+          # Handle Drift Detection
+          if [[ "${{ inputs.detect_drift }}" == "true" ]]; then
+             if [[ $EXIT_CODE -eq 2 ]]; then
+                echo "::error::⚠️ Drift Detected! Infrastructure differs from Code."
+                exit 1
+             elif [[ $EXIT_CODE -eq 0 ]]; then
+                echo "✅ No Drift Detected."
+             else
+                echo "❌ Terraform Plan Failed (Exit Code: $EXIT_CODE)"
+                exit $EXIT_CODE
+             fi
+          else
+             # Standard Behavior: Exit code 0 (no changes) or 2 (changes) are both success
+             if [[ $EXIT_CODE -eq 0 || $EXIT_CODE -eq 2 ]]; then
+                if [[ $EXIT_CODE -eq 2 ]]; then
+                   echo "✅ Terraform Plan Successful - Changes Detected"
+                else
+                   echo "✅ Terraform Plan Successful - No Changes"
+                fi
+             else
+                echo "❌ Terraform Plan Failed (Exit Code: $EXIT_CODE)"
+                exit $EXIT_CODE
+             fi
+          fi
+
+      - name: Terraform Apply
+        if: ${{ inputs.apply == true }}
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+        run: |
+          terraform apply -auto-approve -input=false tfplan
+
+      - name: Export Terraform Outputs
+        id: tf_outputs
+        if: ${{ inputs.apply == true }}
+        run: |
+          echo "📤 Exporting Terraform Outputs..."
+          terraform output -json > tf_outputs.json
+
+          # MongoDB URI
+          MONGO_URI=$(jq -r '.mongodb_uri.value // empty' tf_outputs.json)
+          if [[ -n "$MONGO_URI" ]]; then
+             echo "::add-mask::$MONGO_URI"
+             echo "mongodb_uri=$MONGO_URI" >> $GITHUB_OUTPUT
+          fi
+
+          # Cluster Name
+          CLUSTER_NAME=$(jq -r '.cluster_name.value // empty' tf_outputs.json)
+          if [[ -n "$CLUSTER_NAME" ]]; then
+             echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          fi

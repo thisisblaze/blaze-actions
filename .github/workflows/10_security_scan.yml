@@ -1,0 +1,336 @@
+name: 🔒 Security Scan
+
+# Note: To enable SARIF uploads to GitHub Security tab, enable "Code Security" in:
+# Repository Settings → Code security and analysis → Code scanning → Set up
+# For now, SARIF uploads are non-blocking (continue-on-error: true)
+
+on:
+  pull_request:
+    branches: [main, master, dev]
+  push:
+    branches: [main, master, dev]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly deep scan on Sunday
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write # For SARIF uploads
+  actions: read # Required for CodeQL Action v4
+  id-token: write # Required for OSSF Scorecard signing
+  issues: read # Required for OSSF Scorecard checks
+  checks: read # Required for OSSF Scorecard checks
+
+jobs:
+  # ------------------------------------------------------------------
+  # JOB 1: SECRET SCANNING (Fail Fast)
+  # ------------------------------------------------------------------
+  secrets:
+    name: 🔐 Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          fetch-depth: 1 # Scan current state only (faster)
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_CONFIG: .github/security/.gitleaks.toml
+          GITLEAKS_ENABLE_SUMMARY: true
+          GITLEAKS_EXIT_CODE: 1 # Fail on secrets found
+
+      - name: Upload Gitleaks Results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: gitleaks-results
+          path: |
+            gitleaks-report.json
+            gitleaks-report.sarif
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # JOB 2: SAST (Semgrep) - Diff Aware
+  # ------------------------------------------------------------------
+  sast:
+    name: 🔍 SAST (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: secrets
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          fetch-depth: 0 # Needed for diff calculation
+
+      - name: Get Changed Files
+        id: changed-files
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" | \
+            grep -E '\.(js|ts|jsx|tsx)$' > changed_files.txt || true
+          
+          if [ -s changed_files.txt ]; then
+            echo "files=$(cat changed_files.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+          
+          echo "Changed files:"
+          cat changed_files.txt || echo "No changed files"
+
+      - name: Install Semgrep
+        run: |
+          python3 -m pip install --upgrade semgrep
+
+      - name: Run Semgrep Scan
+        id: semgrep-scan
+        continue-on-error: true # Don't fail workflow on findings, we'll handle it in reporting
+        run: |
+          # Build config list
+          CONFIGS="p/default p/react p/security-audit p/typescript"
+          
+          # Build paths - scan changed files in PRs, full scan otherwise
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ steps.changed-files.outputs.has_changes }}" == "true" ]]; then
+            PATHS="${{ steps.changed-files.outputs.files }}"
+          else
+            PATHS="."
+          fi
+          
+          # Run Semgrep scan with SARIF output
+          semgrep scan \
+            --config "$CONFIGS" \
+            --sarif --output=semgrep.sarif \
+            --exclude="**/node_modules" \
+            --exclude="**/dist" \
+            --exclude="**/build" \
+            --exclude="**/__tests__" \
+            --exclude="**/*.test.js" \
+            --exclude="**/*.test.ts" \
+            --exclude="**/*.spec.js" \
+            --exclude="**/*.spec.ts" \
+            "$PATHS" || true
+          
+          # Count findings
+          if [ -f "semgrep.sarif" ]; then
+            FINDINGS=$(jq -r '.runs[0].results | length // 0' semgrep.sarif 2>/dev/null || echo "0")
+            echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
+            echo "has_findings=$([ "$FINDINGS" -gt 0 ] && echo "true" || echo "false")" >> "$GITHUB_OUTPUT"
+          else
+            echo "findings=0" >> "$GITHUB_OUTPUT"
+            echo "has_findings=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Semgrep CI (for PR comments)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          # Run semgrep ci for PR comments (separate from scan)
+          semgrep ci \
+            --config "p/default p/react p/security-audit p/typescript" \
+            --exclude="**/node_modules" \
+            --exclude="**/dist" \
+            --exclude="**/build" \
+            --exclude="**/__tests__" \
+            --exclude="**/*.test.js" \
+            --exclude="**/*.test.ts" \
+            --exclude="**/*.spec.js" \
+            --exclude="**/*.spec.ts" || true
+
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: semgrep-results
+          path: semgrep.sarif
+          if-no-files-found: ignore
+          retention-days: 7
+
+
+  # ------------------------------------------------------------------
+  # JOB 3: SCA (Trivy) & Lockfile Validation
+  # ------------------------------------------------------------------
+  dependencies:
+    name: 📦 Dependency Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: secrets
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: .trivy
+          key: ${{ runner.os }}-trivy-db-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
+      - name: Run Trivy (Console Log)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'packages/'
+          ignore-unfixed: false
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0' # Don't fail yet, just show logs
+          cache-dir: '.trivy'
+          hide-progress: true
+
+      - name: Run Trivy (Filesystem)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'packages/'
+          ignore-unfixed: false
+          format: 'sarif'
+          output: 'trivy.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          cache-dir: '.trivy'
+          exit-code: '0' # Don't fail on app vulnerabilities (User Request: Focus on Infra/CI only)
+
+      - name: Validate Lockfile Integrity
+        run: |
+          echo "🔍 Validating lockfile integrity..."
+          
+          # Check for lockfiles
+          if [ -f "package-lock.json" ]; then
+            echo "Found package-lock.json"
+            npx --yes lockfile-lint --path package-lock.json --type npm \
+              --validate-https \
+              --allowed-hosts npm yarn || echo "⚠️ Lockfile validation failed"
+          elif [ -f "yarn.lock" ]; then
+            echo "Found yarn.lock"
+            npx --yes lockfile-lint --path yarn.lock --type yarn \
+              --validate-https \
+              --allowed-hosts npm yarn || echo "⚠️ Lockfile validation failed"
+          elif [ -f "pnpm-lock.yaml" ]; then
+            echo "Found pnpm-lock.yaml"
+            echo "⚠️ pnpm lockfile validation not yet supported by lockfile-lint"
+          else
+            echo "⚠️ No lockfile found. Consider adding one for security."
+          fi
+
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: trivy-results
+          path: trivy.sarif
+          if-no-files-found: ignore
+          retention-days: 7
+
+
+  # ------------------------------------------------------------------
+  # JOB 4: REPOSITORY INTEGRITY (OSSF Scorecard)
+  # ------------------------------------------------------------------
+  integrity:
+    name: 🛡️ Repository Integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: secrets
+    # Only run on default branch - Scorecard only supports default branch
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Run OSSF Scorecard
+        uses: ossf/scorecard-action@v2.4.3
+        continue-on-error: true # Prevent failure on private repos where some checks are restricted
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          publish_results: false # Keep results local for private repos
+
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: scorecard-results
+          path: scorecard-results.sarif
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # JOB 5: UNIFIED REPORTING
+  # ------------------------------------------------------------------
+  reporting:
+    name: 📊 Security Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always() && github.event_name == 'pull_request'
+    needs: [sast, dependencies, integrity]
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          pattern: '*-results'
+          merge-multiple: false
+
+      - name: Generate Job Summary
+        run: |
+          {
+            echo "## 🔒 Security Scan Summary"
+            echo ""
+            
+            # Semgrep Results
+            if [ -f "semgrep-results/semgrep.sarif" ]; then
+              echo "### 🔍 SAST (Semgrep)"
+              echo "✅ Scan completed. Check PR comments for details."
+              echo ""
+            fi
+            
+            # Trivy Results
+            if [ -f "trivy-results/trivy.sarif" ]; then
+              echo "### 📦 Dependency Scan (Trivy)"
+              echo "✅ Scan completed. Check PR comments for details."
+              echo ""
+            fi
+            
+            # Scorecard Results
+            if [ -f "scorecard-results/scorecard-results.sarif" ]; then
+              echo "### 🛡️ Repository Integrity (OSSF Scorecard)"
+              echo "✅ Scan completed. Check artifacts for full report."
+              echo ""
+            fi
+            
+            echo "---"
+            echo "**Note**: Full SARIF reports are available as workflow artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment Semgrep Findings
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Generate Markdown from SARIF
+          python3 scripts/sarif_to_markdown.py semgrep-results/semgrep.sarif "🔍 SAST Findings (Semgrep)" > semgrep-comment.md
+          
+          # Post comment if content exists (and not empty)
+          if [ -s semgrep-comment.md ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body-file semgrep-comment.md
+          fi
+
+      - name: Comment Trivy Findings
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Generate Markdown from SARIF
+          python3 scripts/sarif_to_markdown.py trivy-results/trivy.sarif "📦 Dependency Vulnerabilities (Trivy)" > trivy-comment.md
+          
+          # Post comment if content exists (and not empty)
+          if [ -s trivy-comment.md ]; then
+             gh pr comment ${{ github.event.pull_request.number }} --body-file trivy-comment.md
+          fi

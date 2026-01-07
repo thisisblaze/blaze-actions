@@ -1,0 +1,344 @@
+name: "Calculate Configuration"
+description: "Determines Terraform stack, directory, and state key based on inputs"
+inputs:
+  environment:
+    description: "Target environment (DEV, STAGE, PROD)"
+    required: true
+  terraform_stack:
+    description: "Selected Terraform Stack"
+    required: true
+  branch_name:
+    description: "Feature Branch Name"
+    required: false
+  deploy_infra:
+    description: "Deploy Infra Flag"
+    required: true
+  build_images:
+    description: "Build Images Flag"
+    required: true
+  deploy_services:
+    description: "Deploy Services Flag"
+    required: true
+  event_name:
+    description: "GitHub Event Name"
+    required: true
+  cluster_tier:
+    description: "MongoDB Cluster Tier"
+    required: false
+    default: "auto"
+  project:
+    description: "Target Project (e.g. thisisblaze)"
+    required: false
+    default: "thisisblaze" # Default to existing for migration
+
+outputs:
+  env_val:
+    description: "Environment Value"
+    value: ${{ steps.config.outputs.env_val }}
+  tf_dir:
+    description: "Terraform Directory"
+    value: ${{ steps.config.outputs.tf_dir }}
+  bucket:
+    description: "S3 Bucket Name"
+    value: ${{ steps.config.outputs.bucket }}
+  lock_table:
+    description: "DynamoDB Lock Table"
+    value: ${{ steps.config.outputs.lock_table }}
+  state_key:
+    description: "Terraform State Key"
+    value: ${{ steps.config.outputs.state_key }}
+  stage_key:
+    description: "Stage Key (dev/stage/prod)"
+    value: ${{ steps.config.outputs.stage_key }}
+  should_build:
+    description: "Should Build Images?"
+    value: ${{ steps.config.outputs.should_build }}
+  should_deploy_app:
+    description: "Should Deploy App?"
+    value: ${{ steps.config.outputs.should_deploy_app }}
+  client_key:
+    description: "Client Key"
+    value: ${{ steps.config.outputs.client_key }}
+  project_key:
+    description: "Project Key"
+    value: ${{ steps.config.outputs.project_key }}
+  namespace:
+    description: "Namespace"
+    value: ${{ steps.config.outputs.namespace }}
+  platform:
+    description: "Cloud Platform"
+    value: ${{ steps.config.outputs.platform }}
+  aws_region:
+    description: "AWS Region"
+    value: ${{ steps.config.outputs.aws_region }}
+  domain_root:
+    description: "Domain Root"
+    value: ${{ steps.config.outputs.domain_root }}
+  beta:
+    description: "Beta Flag"
+    value: ${{ steps.config.outputs.beta }}
+  gtm_id:
+    description: "GTM ID"
+    value: ${{ steps.config.outputs.gtm_id }}
+  aws_account_id:
+    description: "AWS Account ID"
+    value: ${{ steps.config.outputs.aws_account_id }}
+  dfp_network_id:
+    description: "DFP Network ID"
+    value: ${{ steps.config.outputs.dfp_network_id }}
+  cluster_name:
+    description: "ECS Cluster Name"
+    value: ${{ steps.config.outputs.cluster_name }}
+  cluster_tier:
+    description: "Resolved MongoDB Cluster Tier"
+    value: ${{ steps.config.outputs.cluster_tier }}
+  config_env:
+    description: "Uppercase Environment Name (e.g. STAGE)"
+    value: ${{ steps.config.outputs.config_env }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Calculate Configuration
+      id: config
+      shell: bash
+      run: |
+        # 0. Load Config from Files
+        GLOBAL_CONFIG="vars/blaze-env.json"
+        
+        # Determine Project
+        INPUT_PROJECT="${{ inputs.project }}"
+        if [[ -z "$INPUT_PROJECT" ]]; then
+           INPUT_PROJECT="thisisblaze" # Fallback
+        fi
+        
+        PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
+
+        if ! test -f "$GLOBAL_CONFIG"; then
+          echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"
+          exit 1
+        fi
+        
+        # Smart Validation: Check vars/ AND projects/
+        VARS_EXISTS=false
+        PROJECTS_EXISTS=false
+        
+        if test -f "$PROJECT_CONFIG"; then VARS_EXISTS=true; fi
+        if test -d "projects/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi
+        
+        if [[ "$VARS_EXISTS" == "false" || "$PROJECTS_EXISTS" == "false" ]]; then
+           echo "❌ ERROR: Project '$INPUT_PROJECT' is invalid or incomplete."
+           
+           if [[ "$VARS_EXISTS" == "false" ]]; then
+             echo "   - Missing Config: $PROJECT_CONFIG"
+           fi
+           if [[ "$PROJECTS_EXISTS" == "false" ]]; then
+             echo "   - Missing Directory: projects/$INPUT_PROJECT (Required for Infrastructure Overrides)"
+           fi
+           
+           echo ""
+           echo "🌟 Available Projects (detected in vars/):"
+           # List subdirectories in vars/ that contain blaze-env.json
+           for d in vars/*/; do
+             if [[ -f "${d}blaze-env.json" ]]; then
+                echo "   - $(basename "$d")"
+             fi
+           done
+           exit 1
+        fi
+        
+        # Merge Configs: Project (Args 2) overrides Global (Arg 1)
+        # We output to a temporary JSON for querying
+        MERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")
+
+        # Determine Env first to get stage-specific overrides
+        if [[ "${{ inputs.event_name }}" == "repository_dispatch" ]]; then
+          ENV_VAL="${{ inputs.environment }}"
+          IS_DISPATCH="true"
+        else
+          ENV_VAL="${{ inputs.environment }}"
+          IS_DISPATCH="false"
+        fi
+        STAGE_KEY=$(echo "$ENV_VAL" | tr '[:upper:]' '[:lower:]')
+        CONFIG_ENV=$(echo "$ENV_VAL" | tr '[:lower:]' '[:upper:]')
+
+        # Read keys from MERGED config
+        CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY')
+        PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY')
+        NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE')
+        PLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')
+        AWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')
+        DOMAIN_ROOT=$(echo "$MERGED_CONFIG" | jq -r '.common.DOMAIN_ROOT')
+        GTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')
+        DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
+
+        # Read Beta Flag (Env specific)
+        IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments.${STAGE_KEY}.BETA // \"false\"")
+
+        # Verify
+        if [[ "$CLIENT_KEY" == "null" || -z "$CLIENT_KEY" ]]; then
+           echo "❌ ERROR: CLIENT_KEY not found in Merged Config (Global: $GLOBAL_CONFIG, Project: $PROJECT_CONFIG)"
+           exit 1
+        fi
+
+        # Export to Outputs
+        echo "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT
+        echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
+        echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
+        echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
+        echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+        echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
+        echo "beta=$IS_BETA" >> $GITHUB_OUTPUT
+        echo "gtm_id=$GTM_ID" >> $GITHUB_OUTPUT
+        echo "dfp_network_id=$DFP_NETWORK_ID" >> $GITHUB_OUTPUT
+
+        # Resolve MongoDB Tier
+        CLUSTER_TIER="${{ inputs.cluster_tier }}"
+        if [[ "$CLUSTER_TIER" == "auto" ]]; then
+           if [[ "$STAGE_KEY" == "dev" ]]; then
+              CLUSTER_TIER="M2"
+           else
+              CLUSTER_TIER="M10"
+           fi
+        fi
+        echo "cluster_tier=$CLUSTER_TIER" >> $GITHUB_OUTPUT
+
+        # Calculate Bucket & Lock using loaded vars
+        # New naming: {client}-{stage}-blaze-tfstate
+        BUCKET="${CLIENT_KEY}-${STAGE_KEY}-blaze-tfstate"
+        LOCK_TABLE="${BUCKET}-lock"
+
+        # 2. Dynamic Directory & State Key Selection
+        INPUT_STACK="${{ inputs.terraform_stack }}"
+
+        # Map Descriptive Dropdown -> Internal Logic Code
+        case "$INPUT_STACK" in
+          "3. Network Infrastructure (All Environments: VPC, Subnets, NAT Gateway, ECS Cluster, ALB/EFS/DNS)"|"network")
+            STACK="network"
+            ;;
+          "2. Third Party (DEV ONLY: Cloudflare Tunnel)"|"tunnel")
+            STACK="third-party-cloudflare"
+            ;;
+          "1. Third Party (STAGE/PROD: ACM SSL Certificates)"|"acm")
+            STACK="third-party-acm"
+            ;;
+          "third-party-mongodb"|"mongodb")
+            STACK="third-party-mongodb"
+            ;;
+          "third-party-elastic"|"elastic")
+            STACK="third-party-elastic"
+            ;;
+          "4. Application (API/Frontend) - All Environments"|"app")
+            STACK="app"
+            ;;
+          *)
+            # Default or direct "app" match
+            if [[ -z "$INPUT_STACK" ]]; then 
+               STACK="app"
+            else
+               STACK="app"
+            fi
+            ;;
+        esac
+
+        echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
+
+        # 3. SAFETY CHECK: Prevent No-Op Runs
+        if [[ "$STACK" == "network" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" ]]; then
+           if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
+              echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
+              echo "   This would result in a no-op (doing nothing)."
+              echo "   Please re-run and check 'Run Terraform' (deploy_infra) to apply changes."
+              exit 1
+           fi
+        fi
+
+        # --- BUILD & DEPLOY LOGIC ---
+        SHOULD_BUILD="false"
+        SHOULD_DEPLOY_APP="false"
+
+        if [[ "$STACK" == "app" ]]; then
+           BUILD_INPUT=$(echo "${{ inputs.build_images }}" | tr '[:upper:]' '[:lower:]')
+           
+           if [[ "$BUILD_INPUT" == "true" || "$IS_DISPATCH" == "true" ]]; then
+              SHOULD_BUILD="true"
+              echo "   ✅ SHOULD_BUILD set to true (build_images=$BUILD_INPUT or dispatch)"
+           else
+              echo "   ⚠️  SHOULD_BUILD remains false (build_images=$BUILD_INPUT, not dispatch)"
+           fi
+        fi
+
+        # Unified Deploy Logic for App and Tunnel
+        if [[ "$STACK" == "app" || "$STACK" == "third-party-cloudflare" ]]; then
+            if [[ "${{ inputs.deploy_services }}" == "true" || "$IS_DISPATCH" == "true" ]]; then
+               SHOULD_DEPLOY_APP="true"
+            fi
+        fi
+
+        if [[ "$STACK" == "third-party-cloudflare" ]]; then
+            TF_DIR=".github/aws/infra/live/third-party/cloudflare"
+            STATE_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
+            
+        elif [[ "$STACK" == "third-party-acm" ]]; then
+            TF_DIR=".github/aws/infra/live/third-party/acm"
+            STATE_KEY="infra/${PROJECT_KEY}/third-party/acm.tfstate"
+
+        elif [[ "$STACK" == "third-party-mongodb" ]]; then
+            TF_DIR=".github/aws/infra/live/third-party/mongodb"
+            STATE_KEY="infra/${PROJECT_KEY}/third-party/mongodb.tfstate"
+
+        elif [[ "$STACK" == "third-party-elastic" ]]; then
+            TF_DIR=".github/aws/infra/live/third-party/elastic"
+            STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
+            
+        elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
+            if [[ "$STACK" == "network" ]]; then
+               TF_DIR=".github/aws/infra/live/${STAGE_KEY}-network"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
+            else
+               TF_DIR=".github/aws/infra/live/${STAGE_KEY}-app"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
+            fi
+            
+        else
+            # DEV (V2 Architecture)
+            if [[ "$STACK" == "network" ]]; then
+               TF_DIR=".github/aws/infra/live/dev-network"
+               STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+            else
+               # App stack
+               TF_DIR=".github/aws/infra/live/dev-app"
+               if [[ -n "${{ inputs.branch_name }}" ]]; then
+                  STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
+               else
+                  # Host app state
+                  STATE_KEY="infra/${PROJECT_KEY}/dev/app.tfstate"
+               fi
+            fi
+        fi
+
+        # Sanitize STATE_KEY to remove double slashes (e.g. if project_key is empty)
+        STATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')
+
+        # Calculate Cluster Name
+        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+        echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+
+        echo "env_val=$ENV_VAL" >> $GITHUB_OUTPUT
+        echo "tf_dir=$TF_DIR" >> $GITHUB_OUTPUT
+        echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
+        echo "lock_table=$LOCK_TABLE" >> $GITHUB_OUTPUT
+
+        # Get Account ID (Optional)
+        if command -v aws >/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
+           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        else
+           ACCOUNT_ID=""
+        fi
+        echo "aws_account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+        echo "state_key=$STATE_KEY" >> $GITHUB_OUTPUT
+        echo "stage_key=$STAGE_KEY" >> $GITHUB_OUTPUT
+        echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+        echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+        echo "should_deploy_app=$SHOULD_DEPLOY_APP" >> $GITHUB_OUTPUT
+        echo "config_env=$CONFIG_ENV" >> $GITHUB_OUTPUT

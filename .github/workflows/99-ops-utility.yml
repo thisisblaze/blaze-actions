@@ -1,0 +1,591 @@
+name: "99 - Ops Utility"
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "🛠️ Select Category & Action"
+        type: choice
+        options:
+          - "---------------------------------------"
+          - "--- 🌍 ENVIRONMENT LIFECYCLE ---"
+          - "manage-environment"
+          - "destroy-resources"
+          - "nuke-environment"
+          - "--- 🔐 SECRETS & CONFIG ---"
+          - "sync-cloudflare-config"
+          - "--- 🔐 TERRAFORM STATE RECOVERY ---"
+          - "unlock-state"
+          - "wipe-state"
+          - "--- 🧟 GITHUB WORKFLOW OPS ---"
+          - "kill-workflows"
+          - "---------------------------------------"
+        required: true
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "STAGE", "PROD"]
+        required: false
+      stack:
+        description: "Terraform Stack (for state/destroy)"
+        type: choice
+        options:
+          [
+            "network",
+            "acm",
+            "tunnel",
+            "app",
+            "third-party-mongodb",
+            "third-party-elastic",
+          ]
+        default: "app"
+        required: false
+      branch_tag:
+        description: "Feature Tag (if applicable)"
+        required: false
+        type: string
+      confirmation:
+        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+        required: false
+        type: string
+
+      # Action-specific inputs
+      run_id:
+        description: "GitHub Run ID (for kill-workflows)"
+        required: false
+        type: string
+      manage_action:
+        description: "Service Action (for manage-environment)"
+        type: choice
+        options: ["start", "stop", "restart", "scale"]
+        default: "stop"
+      desired_count:
+        description: "Desired Instance Count (for scale)"
+        type: string
+        default: "0"
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  validate:
+    name: Validate Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate Input
+        run: |
+          ACTION="${{ inputs.action }}"
+          CONF="${{ inputs.confirmation }}"
+
+          echo "🔍 Selected Action: $ACTION"
+
+          # Block separators and headers
+          if [[ "$ACTION" == "-"* ]]; then
+            echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
+            echo "   Please select a real action (e.g., 'manage-environment')."
+            exit 1
+          fi
+
+          # Validation for destructive actions
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" ]]; then
+            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
+              exit 1
+            fi
+          fi
+
+  configuration:
+    name: Configuration
+    needs: [validate]
+    # Explicitly run only for actions that need Terraform/ECR config
+    if: contains(fromJSON('["manage-environment", "destroy-resources", "unlock-state", "wipe-state", "nuke-environment"]'), inputs.action)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      cluster_name: ${{ steps.config.outputs.cluster_name }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Calculate Configuration
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          terraform_stack: ${{ inputs.stack || 'app' }}
+          branch_name: ${{ inputs.branch_tag }}
+          # Ops Utility implies infra operations, so we must pass true to bypass safety check
+          deploy_infra: true
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+  kill-workflows:
+    name: 🧟‍♂️ Kill Workflows
+    needs: [validate]
+    if: inputs.action == 'kill-workflows'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Kill Zombies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_FILTER="${{ inputs.branch_tag }}"
+          if [[ -n "$BRANCH_FILTER" ]]; then
+            echo "🎯 Filtering by branch: $BRANCH_FILTER"
+            RUNS=$(gh run list --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
+          else
+            RUNS=$(gh run list --status in_progress --json databaseId,name --limit 50)
+          fi
+          CURRENT_ID="${{ github.run_id }}"
+          TARGET_ID="${{ inputs.run_id }}"
+
+          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
+            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
+            id=$(_jq '.databaseId')
+            name=$(_jq '.name')
+            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
+            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
+            echo "🔪 Killing Run $id ($name)..."
+            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
+          done
+
+  state-operations:
+    name: State Ops
+    needs: [configuration]
+    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Execute Ops
+        run: |
+          ACTION="${{ inputs.action }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+          KEY="${{ needs.configuration.outputs.state_key }}"
+          TABLE="${{ needs.configuration.outputs.lock_table }}"
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+
+          # Fallback for table if not specified
+          if [[ -z "$TABLE" ]]; then
+            TABLE="$BUCKET"
+          fi
+
+          LOCK_ID="${BUCKET}/${KEY}"
+
+          if [[ "$ACTION" == "unlock-state" ]]; then
+            echo "🔓 Unlocking State: $LOCK_ID"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+            
+            # Optional: Remove .tflock file if it exists in S3 (legacy/emergency check)
+            aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+            
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING STATE: $LOCK_ID"
+            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+          fi
+
+  manage-environment:
+    name: Manage Env
+    needs: [configuration]
+    if: inputs.action == 'manage-environment'
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: ${{ inputs.manage_action }}
+      service_name: "all"
+      desired_count: ${{ inputs.desired_count }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+    secrets: inherit
+
+  pre-cleanup:
+    name: Pre-Cleanup
+    needs: [configuration]
+    if: inputs.action == 'destroy-resources'
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      stage_filter: ${{ inputs.branch_tag }}
+      environment: ${{ inputs.environment || 'DEV' }}
+    secrets: inherit
+
+  destroy-resources:
+    name: Destroy
+    needs: [configuration, pre-cleanup]
+    if: inputs.action == 'destroy-resources'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }}
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+    secrets: inherit
+
+  sync-cloudflare-config:
+    name: Sync Cloudflare Config
+    needs: [configuration]
+    if: inputs.action == 'sync-cloudflare-config'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Parse blaze-env.json
+        id: parse
+        run: |
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Read and parse JSON
+          COMMON=$(jq -r '.common' vars/blaze-env.json)
+          STAGE_OVERRIDES=$(jq -r ".${STAGE} // {}" vars/blaze-env.json)
+
+          # Extract key values (PROJECT IDENTITY)
+          CLIENT_KEY=$(echo "$COMMON" | jq -r '.CLIENT_KEY')
+          PROJECT_KEY=$(echo "$COMMON" | jq -r '.PROJECT_KEY')
+          NAMESPACE=$(echo "$COMMON" | jq -r '.NAMESPACE')
+          SITE_NAME=$(echo "$COMMON" | jq -r '.BLAZE_FRONTEND_SITE_NAME')
+
+          # Extract infrastructure values
+          AWS_REGION=$(echo "$COMMON" | jq -r '.AWS_REGION')
+          CLOUD_PLATFORM=$(echo "$COMMON" | jq -r '.CLOUD_PLATFORM')
+          DOMAIN_ROOT=$(echo "$COMMON" | jq -r '.DOMAIN_ROOT')
+
+          # Extract app config
+          NODE_ENV=$(echo "$COMMON" | jq -r '.NODE_ENV')
+          DEBUG=$(echo "$COMMON" | jq -r '.DEBUG')
+
+          # Extract stage-specific overrides
+          S3_BUCKET=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_BUCKET // empty')
+          S3_PUBLIC_URL=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_PUBLIC_URL // empty')
+          GRAPHQL_PLAYGROUND=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_GRAPHQL_PLAYGROUND_ENABLED // empty')
+
+          # Export to outputs
+          echo "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT
+          echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
+          echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
+          echo "site_name=$SITE_NAME" >> $GITHUB_OUTPUT
+          echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+          echo "cloud_platform=$CLOUD_PLATFORM" >> $GITHUB_OUTPUT
+          echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
+          echo "node_env=$NODE_ENV" >> $GITHUB_OUTPUT
+          echo "debug=$DEBUG" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
+          echo "s3_public_url=$S3_PUBLIC_URL" >> $GITHUB_OUTPUT
+          echo "graphql_playground=$GRAPHQL_PLAYGROUND" >> $GITHUB_OUTPUT
+
+          echo "✅ Parsed blaze-env.json for $STAGE environment"
+
+      - name: Sync to Cloudflare Pages (Admin)
+        if: ${{ needs.configuration.outputs.stage_key != 'dev' }}
+        run: |
+          # Install Wrangler
+          npm install -g wrangler
+
+          # Project name
+          PROJECT_NAME="blaze-${{ steps.parse.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+
+          echo "🔄 Syncing config to Cloudflare Pages project: $PROJECT_NAME"
+
+          # Sync PROJECT IDENTITY
+          echo "${{ steps.parse.outputs.client_key }}" | wrangler pages secret put CLIENT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.project_key }}" | wrangler pages secret put PROJECT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.namespace }}" | wrangler pages secret put NAMESPACE --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.site_name }}" | wrangler pages secret put BLAZE_FRONTEND_SITE_NAME --project-name="$PROJECT_NAME"
+
+          # Sync Infrastructure
+          echo "${{ steps.parse.outputs.aws_region }}" | wrangler pages secret put AWS_REGION --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.cloud_platform }}" | wrangler pages secret put CLOUD_PLATFORM --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.domain_root }}" | wrangler pages secret put DOMAIN_ROOT --project-name="$PROJECT_NAME"
+
+          # Sync App Config
+          echo "${{ steps.parse.outputs.node_env }}" | wrangler pages secret put NODE_ENV --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.debug }}" | wrangler pages secret put DEBUG --project-name="$PROJECT_NAME"
+
+          # Sync Stage-specific overrides (if they exist)
+          if [ -n "${{ steps.parse.outputs.s3_bucket }}" ]; then
+            echo "${{ steps.parse.outputs.s3_bucket }}" | wrangler pages secret put BLAZE_FILES_S3_BUCKET --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.s3_public_url }}" ]; then
+            echo "${{ steps.parse.outputs.s3_public_url }}" | wrangler pages secret put BLAZE_FILES_S3_PUBLIC_URL --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.graphql_playground }}" ]; then
+            echo "${{ steps.parse.outputs.graphql_playground }}" | wrangler pages secret put BLAZE_GRAPHQL_PLAYGROUND_ENABLED --project-name="$PROJECT_NAME"
+          fi
+
+          echo "✅ Successfully synced application config to Cloudflare Pages"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Skip DEV
+        if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
+        run: |
+          echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
+
+  # ------------------------------------------------------------------
+  # ☢️ NUKE SEQUENCE (Chained Destruction)
+  # ------------------------------------------------------------------
+
+  nuke-stop-services:
+    name: 🛑 Nuke 1/5 - Stop Services
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: "stop"
+      service_name: "all"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+    secrets: inherit
+
+  nuke-destroy-app:
+    name: 🗑️ Nuke 2/5 - App Stack
+    needs: [configuration, nuke-stop-services]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      # Force explicit path for App stack instead of using config output (which relies on input.stack)
+      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-app"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      # Backend Config (Must match calculate-config logic)
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      # Key format: infra/{project}/{stage}/{stack}.tfstate
+      # We must reconstruct the key for each stack.
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/app.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+    secrets: inherit
+
+  nuke-destroy-tunnel:
+    name: 🚇 Nuke 3/5 - Tunnel
+    needs: [configuration, nuke-destroy-app]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ".github/aws/infra/live/third-party/cloudflare"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/cloudflare.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      # Tunnel stack needs specific vars?
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+    secrets: inherit
+
+  #  nuke-destroy-data-mongo:
+  #    name: 💾 Nuke 4a/5 - Mongo
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/mongodb.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+  #
+  #  nuke-destroy-data-elastic:
+  #    name: 💾 Nuke 4b/5 - Elastic
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/elastic"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/elastic.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+
+  nuke-destroy-network:
+    name: 💥 Nuke 5/5 - Network (Host)
+    # Wait for Tunnel (and implicit App) instead of Data
+    needs: [configuration, nuke-destroy-tunnel]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+    secrets: inherit
+
+  summary:
+    name: 📝 Ops Summary
+    needs:
+      [
+        configuration,
+        kill-workflows,
+        state-operations,
+        manage-environment,
+        destroy-resources,
+        sync-cloudflare-config,
+        nuke-destroy-network,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
+
+          echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          # If configuration ran successfully, we have more info
+          if [[ "${{ needs.configuration.result }}" == "success" ]]; then
+            echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
+             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "unlock-state" || "${{ inputs.action }}" == "wipe-state" ]]; then
+             echo "| **State Ops** | $(get_icon ${{ needs.state-operations.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "manage-environment" ]]; then
+             echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
+             echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
+             echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
+             echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Mongo** | $(get_icon ${{ needs.nuke-destroy-data-mongo.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Elastic** | $(get_icon ${{ needs.nuke-destroy-data-elastic.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi

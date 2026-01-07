@@ -1,0 +1,347 @@
+name: Terraform Operations
+
+on:
+  workflow_call:
+    inputs:
+      tf_dir:
+        required: true
+        type: string
+      bucket:
+        required: true
+        type: string
+      state_key:
+        required: true
+        type: string
+      lock_table:
+        required: false
+        type: string
+        description: "DynamoDB Lock Table name. If omitted, defaults to bucket name (legacy behavior)."
+      action:
+        required: true
+        type: string
+        description: "Terraform action: init, plan, apply, destroy"
+      aws_region:
+        required: true
+        type: string
+      terraform_vars:
+        required: false
+        type: string
+        description: "JSON string of TF_VAR_* environment variables"
+      working_directory:
+        required: false
+        type: string
+        description: "Working directory override (defaults to tf_dir)"
+      stage_key:
+        required: false
+        type: string
+        description: "Stage key (dev, stage, prod) - calculated from environment"
+      branch_name:
+        required: false
+        type: string
+        description: "Feature branch name (optional; for feature stacks)"
+      environment:
+        required: false
+        type: string
+        description: "GitHub Environment to run in"
+      client_key:
+        required: true
+        type: string
+      project_key:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      cloud_platform:
+        required: true
+        type: string
+      domain_root:
+        required: true
+        type: string
+    outputs:
+      apply_status:
+        value: ${{ jobs.terraform.outputs.status }}
+      terraform_outputs:
+        value: ${{ jobs.terraform.outputs.outputs }}
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # Prevent runaway billing (terraform can hang on API timeouts, state locks)
+    environment: ${{ inputs.environment }}
+
+    outputs:
+      status: ${{ steps.result.outputs.status }}
+      outputs: ${{ steps.result.outputs.outputs }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Blaze
+        uses: ./.github/actions/setup-blaze
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+          terraform: "true"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Parse Terraform Variables
+        id: parse_vars
+        env:
+          TF_VARS_JSON: ${{ inputs.terraform_vars }}
+        run: |
+          set -e
+          set -o pipefail
+
+          # 🎯 NOTE: Common variables (client_key, project_key, etc.) are passed directly in the
+          # Terraform step's env: block below. This JSON parsing is for ADDITIONAL variables only
+          # (like Cloudflare tokens, MongoDB keys, etc.). This dual approach ensures essential
+          # variables are always available even if JSON parsing fails.
+
+          if [[ -n "$TF_VARS_JSON" ]]; then
+            # Validate JSON first
+            if ! echo "$TF_VARS_JSON" | jq . > /dev/null 2>&1; then
+              echo "❌ ERROR: Invalid JSON received in terraform_vars!"
+              echo "Received (first 200 chars): $(echo "$TF_VARS_JSON" | head -c 200)"
+              exit 1
+            fi
+            
+            # DEBUG: Print received JSON
+            echo "✅ Received valid JSON. Parsing additional Terraform variables..."
+            echo "$TF_VARS_JSON" | jq .
+            
+            # Parse JSON and export as environment variables
+            echo "$TF_VARS_JSON" | jq -r 'to_entries[] | "export \(.key)=\"\(.value)\""' > /tmp/tf_vars.sh
+            
+            # DEBUG: Show generated script
+            echo "✅ Generated environment script:"
+            cat /tmp/tf_vars.sh
+            
+            chmod +x /tmp/tf_vars.sh
+            source /tmp/tf_vars.sh
+            
+            # Export variables to GITHUB_ENV robustly
+            # Convert 'export KEY="VAL"' -> 'KEY="VAL"' and append to GITHUB_ENV
+            sed 's/^export //g' /tmp/tf_vars.sh >> "$GITHUB_ENV"
+            
+            echo "✅ Additional variables from JSON have been exported to GITHUB_ENV"
+          else
+             echo "ℹ️ TF_VARS_JSON input is empty - using only direct env: variables (this is OK)"
+          fi
+
+      - name: Terraform Init
+        working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
+        run: |
+          set +e  # Don't exit on error, we'll handle it
+
+          BUCKET="${{ inputs.bucket }}"
+          STATE_KEY="${{ inputs.state_key }}"
+          LOCK_ID="${BUCKET}/${STATE_KEY}"
+
+          # Determine Lock Table Name
+          INPUT_TABLE="${{ inputs.lock_table }}"
+          if [[ -n "$INPUT_TABLE" ]]; then
+            TABLE_NAME="$INPUT_TABLE"
+          else
+            TABLE_NAME="${BUCKET}"
+          fi
+
+          REGION="${{ inputs.aws_region }}"
+
+          # Construct Backend Config args
+          # Skip DynamoDB locking if action is 'destroy' to bypass corrupt checksums/locks
+          BACKEND_ARGS="-backend-config=\"bucket=${BUCKET}\" -backend-config=\"key=${STATE_KEY}\" -backend-config=\"region=${REGION}\" -backend-config=\"use_lockfile=false\""
+
+          if [[ "${{ inputs.action }}" != "destroy" ]]; then
+             BACKEND_ARGS="$BACKEND_ARGS -backend-config=\"dynamodb_table=${TABLE_NAME}\""
+          else
+             echo "⚠️ Action is 'destroy' - Skipping DynamoDB State Locking to bypass potential checksum errors."
+          fi
+
+          # Function to attempt repair
+          repair_checksum_lock() {
+              echo "⚠️ Potential state inconsistency detected. Attempting to clear stale locks and digests..."
+              echo "   LockID (Normal): ${LOCK_ID}"
+              echo "   LockID (Digest): ${LOCK_ID}-md5"
+              
+              # 1. Remove standard lock entry
+              aws dynamodb delete-item \
+                --table-name "${TABLE_NAME}" \
+                --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" \
+                --region "${REGION}" 2>/dev/null || true
+              
+              # 2. Remove MD5 digest entry (this is usually the culprit for checksum mismatches)
+              aws dynamodb delete-item \
+                --table-name "${TABLE_NAME}" \
+                --key "{\"LockID\": {\"S\": \"${LOCK_ID}-md5\"}}" \
+                --region "${REGION}" 2>/dev/null || true
+              
+              # 3. Remove S3 side tflock
+              aws s3 rm "s3://${BUCKET}/${STATE_KEY}.tflock" --region "${REGION}" 2>/dev/null || true
+              
+              echo "✅ Purge complete. Ready for retry."
+          }
+
+          # Try terraform init
+          echo "Runnning terraform init with args: $BACKEND_ARGS"
+          INIT_LOG="/tmp/init_output.log"
+          eval "terraform init $BACKEND_ARGS" 2>&1 | tee "$INIT_LOG"
+          INIT_EXIT_CODE=${PIPESTATUS[0]}
+
+          if [[ $INIT_EXIT_CODE -ne 0 ]]; then
+            if grep -qiE "checksum|digest|expected content" "$INIT_LOG"; then
+              repair_checksum_lock
+              echo "🔄 Retrying terraform init..."
+              eval "terraform init $BACKEND_ARGS"
+              if [ $? -ne 0 ]; then
+                echo "❌ Terraform init still failing after repair"
+                exit 1
+              fi
+            else
+              echo "❌ Terraform init failed with non-checksum error:"
+              cat "$INIT_LOG"
+              exit "$INIT_EXIT_CODE"
+            fi
+          fi
+          echo "✅ Terraform initialized successfully"
+
+      - name: Generate Terraform Imports (Log Groups)
+        if: ${{ inputs.action == 'plan' || inputs.action == 'apply' }}
+        working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
+        env:
+          PROJECT_KEY: ${{ inputs.project_key }}
+          CLIENT_KEY: ${{ inputs.client_key }}
+          STAGE_KEY: ${{ inputs.stage_key }}
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          echo "🔍 Generating Terraform import blocks..."
+
+          # The script is in the root of the repo, but we might be in a subdir
+          # We need to find the script path relative to the checkout
+          SCRIPT_PATH="${GITHUB_WORKSPACE}/scripts/generate_imports.py"
+
+          RESOURCE_ADDRESS="module.environment_network.module.cluster.aws_cloudwatch_log_group.main"
+          if [[ -n "$BRANCH_NAME" ]]; then
+            RESOURCE_ADDRESS="module.feature_cluster[0].aws_cloudwatch_log_group.main"
+          fi
+
+          if [[ -f "$SCRIPT_PATH" ]]; then
+            python3 "$SCRIPT_PATH" \
+              --region "${{ inputs.aws_region }}" \
+              --project-key "${PROJECT_KEY}" \
+              --client-key "${CLIENT_KEY}" \
+              --stage-key "${STAGE_KEY}" \
+              --branch-name "${BRANCH_NAME}" \
+              --resource-address "$RESOURCE_ADDRESS" \
+              --allow-missing \
+              --require-config
+          else
+             echo "⚠️ Script $SCRIPT_PATH not found. Skipping imports."
+          fi
+
+      - name: Terraform ${{ inputs.action }}
+        id: result
+        working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
+        env:
+          # 🎯 CRITICAL PATTERN (see .cursorrules): Common Terraform variables MUST be passed directly in env:
+          # This ensures essential variables are ALWAYS available, even if JSON parsing fails.
+          # Pattern matches commit 7d7507c and 50_deploy_blaze_app.yml infrastructure step.
+          # DO NOT remove these - they are required for ALL Terraform operations.
+          TF_VAR_project_key: ${{ inputs.project_key }}
+          TF_VAR_client_key: ${{ inputs.client_key }}
+          TF_VAR_namespace: ${{ inputs.namespace }}
+          TF_VAR_platform: ${{ inputs.cloud_platform }}
+          TF_VAR_aws_region: ${{ inputs.aws_region }}
+          TF_VAR_stage: ${{ inputs.stage_key || '' }}
+          # Cloudflare variables (required for Cloudflare resource operations)
+          # These are passed directly to ensure they're available even if JSON parsing fails
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_domain_root: ${{ inputs.domain_root }}
+          AWS_REGION: ${{ inputs.aws_region }}
+          # MongoDB / Elastic Secrets (Direct Mapping for reliability)
+          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+        run: |
+          set +e
+
+          EXEC_LOG="/tmp/tf_exec.log"
+
+          # Use same variables as init step for consistency
+          BUCKET="${{ inputs.bucket }}"
+          STATE_KEY="${{ inputs.state_key }}"
+          LOCK_ID="${BUCKET}/${STATE_KEY}"
+          REGION="${{ inputs.aws_region }}"
+          INPUT_TABLE="${{ inputs.lock_table }}"
+          TABLE_NAME="${INPUT_TABLE:-$BUCKET}"
+
+          # Same repair function as init (duplicated because steps are independent shells)
+          repair_checksum_lock() {
+              echo "⚠️ state inconsistency detected during execution. Attempting repair..."
+              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" --region "$REGION" 2>/dev/null || true
+              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID-md5\"}}" --region "$REGION" 2>/dev/null || true
+              aws s3 rm "s3://$BUCKET/$STATE_KEY.tflock" --region "$REGION" 2>/dev/null || true
+          }
+
+          run_terraform() {
+            local action=$1
+            case "$action" in
+              "init")
+                echo "status=success" >> "$GITHUB_OUTPUT"
+                ;;
+              "plan")
+                terraform plan -out=tfplan 2>&1 | tee "$EXEC_LOG"
+                return ${PIPESTATUS[0]}
+                ;;
+              "apply")
+                terraform apply -auto-approve 2>&1 | tee "$EXEC_LOG"
+                return ${PIPESTATUS[0]}
+                ;;
+              "destroy")
+                terraform destroy -auto-approve 2>&1 | tee "$EXEC_LOG"
+                return ${PIPESTATUS[0]}
+                ;;
+            esac
+          }
+
+          # Primary execution attempt
+          run_terraform "${{ inputs.action }}"
+          EXIT_CODE=$?
+
+          # Check for checksum error and retry if needed
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            if grep -qiE "checksum|digest|expected content" "$EXEC_LOG"; then
+              repair_checksum_lock
+              echo "🔄 Retrying ${{ inputs.action }} after repair..."
+              run_terraform "${{ inputs.action }}"
+              EXIT_CODE=$?
+            fi
+          fi
+
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            echo "❌ Terraform ${{ inputs.action }} failed (exit code $EXIT_CODE)"
+            exit $EXIT_CODE
+          fi
+
+          # Handle outputs for success case
+          echo "status=success" >> "$GITHUB_OUTPUT"
+          if [[ "${{ inputs.action }}" == "apply" ]]; then
+            echo "🔍 Capturing Terraform outputs..."
+            echo "{}" > /tmp/outputs.json
+            RAW_OUTPUT=$(terraform output -json 2>&1) || true
+            if [[ "$RAW_OUTPUT" == \{* ]]; then
+               echo "$RAW_OUTPUT" > /tmp/outputs.json
+            fi
+            echo "outputs<<EOF" >> "$GITHUB_OUTPUT"
+            cat /tmp/outputs.json >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
