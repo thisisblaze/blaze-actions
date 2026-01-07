@@ -96,7 +96,7 @@ on:
         default: false
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
         description: "AWS OIDC Role ARN"
       GH_PAT:
         required: false
