@@ -194,7 +194,8 @@ jobs:
         echo "🚀 Triggering Resource Importer Action..."
         bash "$GITHUB_WORKSPACE/.github/actions/resource-importer/import.sh"
 
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
