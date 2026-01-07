@@ -122,6 +122,12 @@ on:
       MONGODB_ATLAS_ORG_ID:
         required: false
         description: "MongoDB Atlas Organization ID"
+      EC_API_KEY:
+        required: false
+        description: "Elastic Cloud API Key"
+      ACM_CERTIFICATE_ARN:
+        required: false
+        description: "ACM Certificate ARN (for CloudFront/ALB)"
 
 permissions:
   id-token: write
@@ -232,6 +238,8 @@ jobs:
       MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
       MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
