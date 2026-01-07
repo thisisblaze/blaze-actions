@@ -48,7 +48,6 @@ on:
         description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
         required: false
         type: string
-
       # Action-specific inputs
       run_id:
         description: "GitHub Run ID (for kill-workflows)"
@@ -63,6 +62,48 @@ on:
         description: "Desired Instance Count (for scale)"
         type: string
         default: "0"
+
+  workflow_call:
+    inputs:
+      action:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: false
+      stack:
+        type: string
+        required: false
+      branch_tag:
+        type: string
+        required: false
+      confirmation:
+        type: string
+        required: false
+      run_id:
+        type: string
+        required: false
+      manage_action:
+        type: string
+        default: "stop"
+        required: false
+      desired_count:
+        type: string
+        default: "0"
+        required: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      GH_PAT:
+        required: false
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
 
 permissions:
   id-token: write
