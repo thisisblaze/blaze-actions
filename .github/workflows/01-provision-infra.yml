@@ -182,6 +182,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration]
     uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -227,7 +228,6 @@ jobs:
         bash import.sh
 
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
