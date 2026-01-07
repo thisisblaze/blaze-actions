@@ -109,6 +109,18 @@ on:
       CLOUDFLARE_ACCOUNT_ID:
         required: false
         description: "Cloudflare Account ID"
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+        description: "MongoDB Atlas Public Key"
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+        description: "MongoDB Atlas Private Key"
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+        description: "MongoDB Atlas Project ID"
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+        description: "MongoDB Atlas Organization ID"
 
 permissions:
   id-token: write
@@ -212,6 +224,10 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
