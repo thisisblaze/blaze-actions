@@ -37,6 +37,10 @@ on:
       tasks_deleted:
         value: ${{ jobs.cleanup.outputs.tasks_deleted }}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   cleanup:
     name: Pre-Destroy Cleanup
