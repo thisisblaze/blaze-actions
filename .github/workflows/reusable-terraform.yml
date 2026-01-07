@@ -57,8 +57,6 @@ on:
         default: false
 
     secrets:
-      AWS_ROLE_ARN:
-        required: true
       GH_PAT:
         required: false
       CLOUDFLARE_API_TOKEN:
