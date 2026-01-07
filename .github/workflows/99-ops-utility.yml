@@ -1,67 +1,67 @@
 name: "99 - Ops Utility"
 
 on:
-  workflow_dispatch:
-    inputs:
-      action:
-        description: "🛠️ Select Category & Action"
-        type: choice
-        options:
-          - "---------------------------------------"
-          - "--- 🌍 ENVIRONMENT LIFECYCLE ---"
-          - "manage-environment"
-          - "destroy-resources"
-          - "nuke-environment"
-          - "--- 🔐 SECRETS & CONFIG ---"
-          - "sync-cloudflare-config"
-          - "--- 🔐 TERRAFORM STATE RECOVERY ---"
-          - "unlock-state"
-          - "wipe-state"
-          - "--- 🧟 GITHUB WORKFLOW OPS ---"
-          - "kill-workflows"
-          - "---------------------------------------"
-        required: true
-      environment:
-        description: "Target Environment"
-        type: choice
-        options: ["DEV", "STAGE", "PROD"]
-        required: false
-      stack:
-        description: "Terraform Stack (for state/destroy)"
-        type: choice
-        options:
-          [
-            "network",
-            "acm",
-            "tunnel",
-            "app",
-            "third-party-mongodb",
-            "third-party-elastic",
-          ]
-        default: "app"
-        required: false
-      branch_tag:
-        description: "Feature Tag (if applicable)"
-        required: false
-        type: string
-      confirmation:
-        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
-        required: false
-        type: string
-      # Action-specific inputs
-      run_id:
-        description: "GitHub Run ID (for kill-workflows)"
-        required: false
-        type: string
-      manage_action:
-        description: "Service Action (for manage-environment)"
-        type: choice
-        options: ["start", "stop", "restart", "scale"]
-        default: "stop"
-      desired_count:
-        description: "Desired Instance Count (for scale)"
-        type: string
-        default: "0"
+  #  workflow_dispatch:
+  #    inputs:
+  #      action:
+  #        description: "🛠️ Select Category & Action"
+  #        type: choice
+  #        options:
+  #          - "---------------------------------------"
+  #          - "--- 🌍 ENVIRONMENT LIFECYCLE ---"
+  #          - "manage-environment"
+  #          - "destroy-resources"
+  #          - "nuke-environment"
+  #          - "--- 🔐 SECRETS & CONFIG ---"
+  #          - "sync-cloudflare-config"
+  #          - "--- 🔐 TERRAFORM STATE RECOVERY ---"
+  #          - "unlock-state"
+  #          - "wipe-state"
+  #          - "--- 🧟 GITHUB WORKFLOW OPS ---"
+  #          - "kill-workflows"
+  #          - "---------------------------------------"
+  #        required: true
+  #      environment:
+  #        description: "Target Environment"
+  #        type: choice
+  #        options: ["DEV", "STAGE", "PROD"]
+  #        required: false
+  #      stack:
+  #        description: "Terraform Stack (for state/destroy)"
+  #        type: choice
+  #        options:
+  #          [
+  #            "network",
+  #            "acm",
+  #            "tunnel",
+  #            "app",
+  #            "third-party-mongodb",
+  #            "third-party-elastic",
+  #          ]
+  #        default: "app"
+  #        required: false
+  #      branch_tag:
+  #        description: "Feature Tag (if applicable)"
+  #        required: false
+  #        type: string
+  #      confirmation:
+  #        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+  #        required: false
+  #        type: string
+  #      # Action-specific inputs
+  #      run_id:
+  #        description: "GitHub Run ID (for kill-workflows)"
+  #        required: false
+  #        type: string
+  #      manage_action:
+  #        description: "Service Action (for manage-environment)"
+  #        type: choice
+  #        options: ["start", "stop", "restart", "scale"]
+  #        default: "stop"
+  #      desired_count:
+  #        description: "Desired Instance Count (for scale)"
+  #        type: string
+  #        default: "0"
 
   workflow_call:
     inputs:
