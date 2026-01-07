@@ -1,0 +1,93 @@
+name: 'Setup Blaze Environment'
+description: 'Handles Checkout, AWS Login, and optional Tool Setup'
+
+inputs:
+  aws-role-arn:
+    description: 'AWS Role to Assume (can also be set via env.AWS_ROLE_ARN)'
+    required: false
+  aws-region:
+    description: 'AWS Region (can also be set via env.AWS_REGION)'
+    required: false
+  terraform:
+    description: 'Set to true to install Terraform'
+    required: false
+    default: 'false'
+  ecr:
+    description: 'Set to true to login to ECR'
+    required: false
+    default: 'false'
+  aws-access-key-id:
+    description: 'AWS Access Key ID'
+    required: false
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key'
+    required: false
+  skip-aws-setup:
+    description: 'Set to true to skip AWS credential configuration'
+    required: false
+    default: 'false'
+
+outputs:
+  registry:
+    description: "ECR Registry URI (if logged in)"
+    value: ${{ steps.login-ecr.outputs.registry }}
+
+runs:
+  using: "composite"
+  steps:
+    # 🎯 OPTIMIZED: Removed redundant 'Checkout Code' step. 
+    # The calling workflow must perform checkout before calling this local action.
+
+    - name: Configure AWS Credentials
+      if: inputs.skip-aws-setup != 'true'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        # Flexible Authentication:
+        # 1. OIDC (GitHub): Provide only aws-role-arn (requires id-token: write permission)
+        # 2. IAM User: Provide aws-access-key-id + aws-secret-access-key
+        # 3. IAM User + Role Assumption: Provide all three
+        # 4. act (local): Always uses direct credentials from .secrets
+        role-to-assume: ${{ inputs.aws-role-arn || env.AWS_ROLE_ARN }}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region || env.AWS_REGION || 'eu-west-1' }}
+        role-session-name: ${{ github.run_id && format('GitHubActions-{0}', github.run_id) || 'LocalActSession' }}
+
+    - name: Ensure AWS CLI is installed
+      shell: bash
+      if: inputs.skip-aws-setup != 'true'
+      run: |
+        if ! command -v aws &> /dev/null; then
+          echo "Installing AWS CLI..."
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          # Install to /usr/local/bin if possible, else local dir
+          if command -v sudo &> /dev/null; then
+            sudo ./aws/install --update
+          else
+             ./aws/install --update --install-dir /usr/local/aws-cli --bin-dir /usr/local/bin || echo "Could not install AWS CLI with standard paths, proceeding anyway..."
+          fi
+          rm -rf aws awscliv2.zip
+        fi
+
+    # --- Optional: Terraform Setup ---
+    - name: Cache Terraform Providers
+      if: inputs.terraform == 'true'
+      uses: actions/cache@v3
+      with:
+        path: |
+          .terraform
+          ~/.terraform.d/plugin-cache
+        key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+        restore-keys: |
+          terraform-${{ runner.os }}-
+
+    - name: Setup Terraform
+      if: inputs.terraform == 'true'
+      uses: hashicorp/setup-terraform@v3
+
+    # --- Optional: ECR Login ---
+    - name: Login to Amazon ECR
+      if: inputs.ecr == 'true' && inputs.skip-aws-setup != 'true'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2

@@ -1,0 +1,566 @@
+name: 'Deploy ECS Service'
+description: 'Deploys a single service to ECS Fargate'
+inputs:
+  service_name:
+    description: 'Name of the service (api, frontend, etc)'
+    required: true
+  environment:
+    description: 'Target Environment (DEV, STAGE, PROD)'
+    required: true
+  stage_key:
+    description: 'Stage Key (dev, stage, prod)'
+    required: true
+  branch_name:
+    description: 'Feature Branch Tag'
+    required: false
+  image_tag:
+    description: 'Docker Image Tag (usually commit sha)'
+    required: true
+  project_key:
+    description: 'Project Key'
+    required: true
+  client_key:
+    description: 'Client Key'
+    required: true
+  cloud_platform:
+    description: 'Cloud Platform'
+    required: true
+  domain_root:
+    description: 'Domain Root'
+    required: true
+  namespace:
+    description: 'Framework namespace (e.g. blaze). Passed through to task defs as ${NAMESPACE}.'
+    required: false
+    default: 'blaze'
+  efs_id:
+    description: 'EFS ID (optional)'
+    required: false
+  mongo_ap_id:
+    description: 'Mongo Access Point (optional)'
+    required: false
+  es_ap_id:
+    description: 'Elastic Access Point (optional)'
+    required: false
+  api_ap_id:
+    description: 'API Access Point (optional)'
+    required: false
+  ns_id:
+    description: 'Service Discovery Namespace ID (optional)'
+    required: false
+  registry:
+    description: 'ECR Registry URL'
+    required: true
+  mongo_password:
+    description: 'Mongo Password'
+    required: false
+  mongodb_uri:
+    description: 'MongoDB URI (e.g. Atlas mongodb+srv://...). If set, this is used for API instead of internal mongo.'
+    required: false
+  jwt_private_key:
+    description: 'JWT Private Key for API Authentication'
+    required: false
+  s3_bucket:
+    description: 'S3 Bucket Name'
+    required: false
+  admin_email:
+    description: 'Admin Email for Seeding'
+    required: false
+  admin_password:
+    description: 'Admin Password for Seeding'
+    required: false
+  deployment_timeout_minutes:
+    description: 'Maximum time to wait for deployment to complete (minutes).'
+    required: false
+    default: '15'
+  # --- NEW INPUTS (DEC 2025) ---
+  blaze_client_header:
+    description: 'Blaze Client Header'
+    required: false
+  dfp_network_id:
+    description: 'DFP Network ID'
+    required: false
+  gtm_id:
+    description: 'GTM ID'
+    required: false
+  graphql_cache_settings:
+    description: 'GraphQL Cache Settings'
+    required: false
+  elasticsearch_endpoint:
+    description: 'Elasticsearch Endpoint'
+    required: false
+  elasticsearch_username:
+    description: 'Elasticsearch Username'
+    required: false
+  elasticsearch_password:
+    description: 'Elasticsearch Password'
+    required: false
+  s3_access_key:
+    description: 'S3 Access Key'
+    required: false
+  s3_secret_key:
+    description: 'S3 Secret Key'
+    required: false
+  s3_public_url:
+    description: 'S3 Public URL'
+    required: false
+  aws_region:
+    description: 'AWS Region'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare Deployment Configuration
+      id: prep
+      shell: bash
+      env:
+        MONGO_PASS: ${{ inputs.mongo_password }}
+        MONGODB_URI: ${{ inputs.mongodb_uri }}
+        NAMESPACE: ${{ inputs.namespace }}
+        BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ inputs.jwt_private_key }}
+        BLAZE_FILES_S3_BUCKET: ${{ inputs.s3_bucket }}
+        BLAZE_AUTH_ADMIN_EMAIL: ${{ inputs.admin_email }}
+        BLAZE_AUTH_ADMIN_PASSWORD: ${{ inputs.admin_password }}
+        SERVICE_NAME: ${{ inputs.service_name }}
+        BASE_STAGE: ${{ inputs.stage_key }}
+        HOST_TAG: ${{ inputs.branch_name }}
+        REGISTRY: ${{ inputs.registry }}
+        CLIENT_KEY: ${{ inputs.client_key }}
+        PROJECT_KEY: ${{ inputs.project_key }}
+        CLOUD_PLATFORM: ${{ inputs.cloud_platform }}
+        DOMAIN_ROOT: ${{ inputs.domain_root }}
+        EFS_ID: ${{ inputs.efs_id }}
+        MONGO_AP_ID: ${{ inputs.mongo_ap_id }}
+        ES_AP_ID: ${{ inputs.es_ap_id }}
+        API_AP_ID: ${{ inputs.api_ap_id }}
+        NS_ID: ${{ inputs.ns_id }}
+        IMAGE_TAG: ${{ inputs.image_tag }}
+        AWS_REGION: ${{ inputs.aws_region }}
+        # New Envs
+        BLAZE_CLIENT_HEADER: ${{ inputs.blaze_client_header }}
+        DFP_NETWORK_ID: ${{ inputs.dfp_network_id }}
+        GTM_ID: ${{ inputs.gtm_id }}
+        BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ inputs.graphql_cache_settings }}
+        BLAZE_ELASTICSEARCH_ENDPOINT: ${{ inputs.elasticsearch_endpoint }}
+        BLAZE_ELASTICSEARCH_USERNAME: ${{ inputs.elasticsearch_username }}
+        BLAZE_ELASTICSEARCH_PASSWORD: ${{ inputs.elasticsearch_password }}
+        BLAZE_FILES_S3_ACCESS_KEY: ${{ inputs.s3_access_key }}
+        BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ inputs.s3_secret_key }}
+        BLAZE_FILES_S3_PUBLIC_URL: ${{ inputs.s3_public_url }}
+      run: |
+          # ---------------------------------------------------------
+          # 0. SETUP & CALCULATIONS (Pre-Config)
+          # ---------------------------------------------------------
+          SERVICE_NAME="$SERVICE_NAME"
+          BASE_STAGE="$BASE_STAGE"
+          HOST_TAG="$HOST_TAG"
+          
+          # Calculate STAGE_KEY consistently
+          # - Host:    dev
+          # - Feature: dev-bz-01
+          if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
+             STAGE_KEY="${BASE_STAGE}-${HOST_TAG}"
+             export HOST_TAG_SUFFIX="-${HOST_TAG}"
+             # Explicitly append suffix to S3 bucket if it's not already there
+             if [[ -n "$BLAZE_FILES_S3_BUCKET" && "$BLAZE_FILES_S3_BUCKET" != *"$HOST_TAG_SUFFIX"* ]]; then
+                 echo "   Updating BLAZE_FILES_S3_BUCKET with suffix..."
+                 export BLAZE_FILES_S3_BUCKET="${BLAZE_FILES_S3_BUCKET/-storage-origin/${HOST_TAG_SUFFIX}-storage-origin}"
+             fi
+          else
+             STAGE_KEY="${BASE_STAGE}"
+             export HOST_TAG_SUFFIX=""
+          fi
+          echo "   Host Tag Suffix: '$HOST_TAG_SUFFIX'"
+          echo "   Stage Key: '$STAGE_KEY'"
+          
+          # DEV-V2 MODEL: one shared cluster + one shared execution role
+          # Feature branches vary by *service name*, not by *cluster/role*.
+          CLUSTER_STAGE="$STAGE_KEY"
+          ROLE_STAGE="$STAGE_KEY"
+          if [[ "$BASE_STAGE" == "dev" ]]; then
+            CLUSTER_STAGE="dev"
+            ROLE_STAGE="dev"
+          fi
+          
+          # Cluster Name (shared for DEV features)
+          CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${CLUSTER_STAGE}-cluster"
+          
+          AWS_ACCOUNT_ID=$(echo "$REGISTRY" | cut -d'.' -f1)
+          
+          # Fix for AWS CLI Region Issues (S3 Invalid Endpoint)
+          export AWS_DEFAULT_REGION="${AWS_REGION}"
+          
+          echo "🔍 Config:"
+          echo "   Service: $SERVICE_NAME"
+          echo "   Cluster: $CLUSTER_NAME"
+          echo "   Stage: $STAGE_KEY"
+          echo "   Region: $AWS_REGION"
+          
+          # Set Outputs for Next Steps
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+
+          # ---------------------------------------------------------
+          # 1. LOAD CONFIG AS CODE (GitOps)
+          # ---------------------------------------------------------
+          echo "📋 Loading project configuration..."
+          GLOBAL_CONFIG="vars/blaze-env.json"
+          PROJECT_CONFIG="vars/${PROJECT_KEY}/blaze-env.json"
+          
+          if [[ -f "$GLOBAL_CONFIG" && -f "$PROJECT_CONFIG" ]]; then
+             # Merge configs: Project overrides Global
+             MERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")
+             
+             # Extract common variables
+             echo "   Loading common configuration..."
+             for key in $(echo "$MERGED_CONFIG" | jq -r '.common | keys[]'); do
+                # Skip section markers (keys starting with __)
+                if [[ ! "$key" =~ ^__ ]]; then
+                   value=$(echo "$MERGED_CONFIG" | jq -r ".common.${key}")
+                   # Perform variable substitution for values containing ${...}
+                   # This handles cases like BLAZE_SEARCH_INDEX_PREFIX with ${CLIENT_KEY} and ${PROJECT_KEY}
+                   value=$(eval echo "$value")
+                   export "${key}=${value}"
+                fi
+             done
+             
+             # Apply environment-specific overrides
+             ENV_KEY="$BASE_STAGE"
+             echo "   Loading environment-specific overrides for: $ENV_KEY"
+             if echo "$MERGED_CONFIG" | jq -e ".${ENV_KEY}" >/dev/null 2>&1; then
+                for key in $(echo "$MERGED_CONFIG" | jq -r ".${ENV_KEY} | keys[]"); do
+                   if [[ ! "$key" =~ ^__ ]]; then
+                      value=$(echo "$MERGED_CONFIG" | jq -r ".${ENV_KEY}.${key}")
+                      # Perform variable substitution
+                      value=$(eval echo "$value")
+                      export "${key}=${value}"
+                   fi
+                done
+             fi
+             
+             echo "✅ Loaded configuration from $PROJECT_CONFIG (environment: $ENV_KEY)"
+          else
+             echo "⚠️  Configuration files not found, using defaults only"
+             echo "   Expected: $GLOBAL_CONFIG and $PROJECT_CONFIG"
+          fi
+          
+          # ---------------------------------------------------------
+          # 2. TUNNEL TOKEN LOGIC
+          # ---------------------------------------------------------
+          TUNNEL_TOKEN=""
+          if [[ "$SERVICE_NAME" == "tunnel" ]]; then
+             echo "🔐 Fetching Tunnel Token..."
+             PLATFORM="$CLOUD_PLATFORM"
+             # Matched with calculate-config: {client}-{stage}-blaze-tfstate
+             CF_BUCKET="${CLIENT_KEY}-dev-blaze-tfstate"
+             
+             # Determine correct state path based on whether this is a feature branch or host
+             if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
+                # Feature branch: read from features state (tunnel is created in dev-app)
+                CF_KEY="infra/${PROJECT_KEY}/features/${HOST_TAG}.tfstate"
+                echo "   Using feature branch tunnel state"
+             else
+                # DEV host: read from third-party cloudflare state
+                CF_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
+                echo "   Using DEV host tunnel state"
+             fi
+             
+             # AWS CLI + JQ approach (no Terraform dependency)
+             STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
+             echo "📂 Reading state from $STATE_PATH"
+             
+             RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - | jq -r '.outputs.tunnel_token.value // empty')
+             
+             if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
+                echo "❌ ERROR: Failed to retrieve tunnel_token from S3 state."
+                echo "   State Path: $STATE_PATH"
+                echo "   This might mean the tunnel infrastructure hasn't been provisioned yet."
+                exit 1
+             fi
+             
+             TUNNEL_TOKEN=$(echo "$RAW_TOKEN" | tr -d '\n\r\t ')
+             echo "✅ Token fetched from S3."
+          fi
+          
+          # ---------------------------------------------------------
+          # 3. IAM ROLE WAIT LOOP
+          # ---------------------------------------------------------
+          ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${ROLE_STAGE}-exec-role"
+          echo "⏳ Verifying IAM Role: $ROLE_NAME..."
+          MAX_RETRIES=15
+          COUNT=0
+          while ! aws iam get-role --role-name $ROLE_NAME > /dev/null 2>&1; do
+            if [ $COUNT -ge $MAX_RETRIES ]; then
+              echo "❌ Error: Role $ROLE_NAME not found after waiting."
+              exit 1
+            fi
+            sleep 10
+            COUNT=$((COUNT+1))
+          done
+
+          # Optional: Service-specific task role (DEV-V2 API uses dedicated role for S3 access)
+          TASK_ROLE_NAME="$ROLE_NAME"
+          if [[ "$SERVICE_NAME" == "api" ]]; then
+            CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-api-task-role"
+            if aws iam get-role --role-name "$CANDIDATE_TASK_ROLE" > /dev/null 2>&1; then
+              echo "✅ Found API task role: $CANDIDATE_TASK_ROLE"
+              TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
+            else
+              echo "ℹ️ API task role not found ($CANDIDATE_TASK_ROLE); falling back to execution role."
+            fi
+          fi
+          
+          # ---------------------------------------------------------
+          if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/mongo:latest"
+          elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/elasticsearch:9.2.2"
+          elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/kibana:9.2.2"
+          elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/tunnel:latest"
+          else IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
+          fi
+          
+          echo "📦 Image: $IMAGE_URI"
+
+          # ---------------------------------------------------------
+          # 5. RENDER TASK DEFINITION
+          # ---------------------------------------------------------
+          export EXECUTION_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
+          export TASK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${TASK_ROLE_NAME}"
+          # Service discovery namespace is tied to the shared cluster stage (dev/stage/prod),
+          # not the feature tag.
+          export NAMESPACE_NAME="${PROJECT_KEY}-${BASE_STAGE}.local"
+
+          # MongoDB connection used by the API task definition template.
+          # - If MONGODB_URI is provided (typically STAGE/PROD Atlas), use it as-is.
+          # - Otherwise (typically DEV with in-cluster Mongo), build the internal URI using MONGO_PASS.
+          if [[ -n "${MONGODB_URI:-}" ]]; then
+            echo "✅ Using provided MONGODB_URI (external MongoDB, e.g. Atlas)."
+          else
+            if [[ -n "${MONGO_PASS:-}" ]]; then
+              export MONGODB_URI="mongodb://root:${MONGO_PASS}@mongo.${NAMESPACE_NAME}:27017/blaze_${PROJECT_KEY}_web?authSource=admin"
+              echo "✅ Using in-cluster MongoDB via service discovery."
+            else
+              # Warning only relevant for API service, as others don't typically use this Env Var
+              if [[ "$SERVICE_NAME" == "api" ]]; then
+                 echo "⚠️ Neither MONGODB_URI nor MONGO_PASS provided; API Mongo connection may be empty."
+              fi
+              export MONGODB_URI=""
+            fi
+          fi
+          export MONGODB_URI
+          
+          # Public URLs (Host header scheme)
+          # Host:
+          #   - frontend-dev.${DOMAIN_ROOT}
+          #   - api-dev.${DOMAIN_ROOT}
+          #   - admin-dev.${DOMAIN_ROOT}
+          # Feature (bz-01):
+          #   - frontend-dev-bz-01.${DOMAIN_ROOT}
+          #   - api-dev-bz-01.${DOMAIN_ROOT}
+          #   - admin-dev-bz-01.${DOMAIN_ROOT}
+          export API_URL="https://api-${STAGE_KEY}.${DOMAIN_ROOT}"
+          if [[ "${BASE_STAGE}" == "dev" ]]; then
+             export FRONTEND_URL="https://frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
+             export ADMIN_URL="https://admin-${STAGE_KEY}.${DOMAIN_ROOT}"
+          elif [[ "${STAGE_KEY}" == "prod" ]]; then
+             export API_URL="https://api.${DOMAIN_ROOT}"
+             export FRONTEND_URL="https://${DOMAIN_ROOT}"
+             export ADMIN_URL="https://admin.${DOMAIN_ROOT}"
+          else
+             export FRONTEND_URL="https://frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
+             export ADMIN_URL="https://admin-${STAGE_KEY}.${DOMAIN_ROOT}"
+          fi
+          export FRONTEND_HOST=$(echo $FRONTEND_URL | sed 's~http[s]*://~~g')
+          export API_URL
+          export FRONTEND_URL
+          export ADMIN_URL
+          export FRONTEND_HOST
+          # Calculated Vars
+          export BLAZE_GRAPHQL_URI="${API_URL}/graphql"
+          
+          export IMAGE_URI
+          export TUNNEL_TOKEN
+          export BLAZE_AUTH_JWT_PRIVATE_KEY
+          export BLAZE_FILES_S3_BUCKET
+          export BLAZE_AUTH_ADMIN_EMAIL
+          export BLAZE_AUTH_ADMIN_PASSWORD
+          export BLAZE_AUTH_ADMIN_PASSWORD
+          # Export New Vars
+          export BLAZE_CLIENT_HEADER
+          export DFP_NETWORK_ID
+          export GTM_ID
+          export AWS_ACCESS_KEY_ID
+          export AWS_SECRET_ACCESS_KEY
+          export BLAZE_GRAPHQL_CACHE_SETTINGS
+          export BLAZE_ELASTICSEARCH_ENDPOINT
+          export BLAZE_ELASTICSEARCH_USERNAME
+          export BLAZE_ELASTICSEARCH_PASSWORD
+          export BLAZE_FILES_S3_ACCESS_KEY
+          export BLAZE_FILES_S3_SECRET_ACCESS_KEY
+          export BLAZE_FILES_S3_PUBLIC_URL
+          # Other vars already exported by env block (EFS_ID, etc.)
+          export STAGE_KEY
+          export PROJECT_KEY
+          export CLIENT_KEY
+          
+          TEMPLATE=".github/aws/task-defs/${SERVICE_NAME}.json"
+          if [[ ! -f "$TEMPLATE" ]]; then
+             echo "❌ ERROR: Task definition template not found: $TEMPLATE"
+             exit 1
+          fi
+          
+          echo "📝 Rendering $TEMPLATE to task-def.json..."
+          envsubst < "$TEMPLATE" > task-def.json
+          
+          # Basic Validation
+          if ! jq empty task-def.json; then
+             echo "❌ ERROR: Rendered JSON is invalid."
+             exit 1
+          fi
+
+          # ---------------------------------------------------------
+          # 6. DEPLOYMENT CONFIG (CodeDeploy vs ECS)
+          # ---------------------------------------------------------
+          # Check Service Name (Full vs Simple)
+          TARGET_SERVICE="$SERVICE_NAME"
+           if ! aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+             NAMESPACED_SERVICE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
+             if aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$NAMESPACED_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+                TARGET_SERVICE="$NAMESPACED_SERVICE"
+             else
+                echo "❌ Service not found in cluster '$CLUSTER_NAME'."
+                echo "   Checked:"
+                echo "   1. $SERVICE_NAME"
+                echo "   2. $NAMESPACED_SERVICE"
+                echo ""
+                echo "👉 HINT: Has the Infrastructure been provisioned?"
+                echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
+                exit 1
+             fi
+          fi
+          
+          echo "service_name=$TARGET_SERVICE" >> $GITHUB_OUTPUT
+          
+          # ---------------------------------------------------------
+          # 6.1. INACTIVE SERVICE DETECTION & AUTO-CLEANUP
+          # ---------------------------------------------------------
+          # Check if service exists but is INACTIVE (desiredCount=0, stopped)
+          # This can happen if service was scaled down or manually stopped
+          SERVICE_STATUS=$(aws ecs describe-services \
+            --cluster "$CLUSTER_NAME" \
+            --services "$TARGET_SERVICE" \
+            --query 'services[0].status' \
+            --output text 2>/dev/null || echo "NOT_FOUND")
+          
+          if [[ "$SERVICE_STATUS" == "INACTIVE" ]]; then
+             echo "⚠️  Service $TARGET_SERVICE is INACTIVE (stopped/scaled to 0)"
+             echo "🔄 Deleting inactive service to allow fresh creation..."
+             
+             aws ecs delete-service \
+               --cluster "$CLUSTER_NAME" \
+               --service "$TARGET_SERVICE" \
+               --force \
+               --region "$AWS_REGION"
+             
+             echo "✅ Inactive service deletion initiated"
+             echo "⏳ Waiting for service to be fully removed..."
+             
+             # Wait for service to be fully deleted (max 60 seconds)
+             MAX_WAIT=60
+             ELAPSED=0
+             while [[ $ELAPSED -lt $MAX_WAIT ]]; do
+                CURRENT_STATUS=$(aws ecs describe-services \
+                  --cluster "$CLUSTER_NAME" \
+                  --services "$TARGET_SERVICE" \
+                  --query 'services[0].status' \
+                  --output text 2>/dev/null || echo "NOT_FOUND")
+                
+                # Service is gone or doesn't exist anymore
+                if [[ "$CURRENT_STATUS" == "NOT_FOUND" ]] || [[ -z "$CURRENT_STATUS" ]]; then
+                   echo "✅ Service fully deleted"
+                   break
+                fi
+                
+                sleep 2
+                ELAPSED=$((ELAPSED + 2))
+             done
+             
+             if [[ $ELAPSED -ge $MAX_WAIT ]]; then
+                echo "⚠️  Service deletion taking longer than expected, continuing anyway..."
+             fi
+              echo "ℹ️  ECS will create a new service during deployment"
+              # After deletion, set controller to ECS (service will be recreated)
+              CONTROLLER="ECS"
+           else
+              # Service exists and is ACTIVE, query the controller type
+              CONTROLLER=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$TARGET_SERVICE" --query 'services[0].deploymentController.type' --output text)
+           fi
+           
+           echo "🔍 Controller: $CONTROLLER"
+           
+          if [[ "$CONTROLLER" == "CODE_DEPLOY" ]]; then
+             echo "🚀 Configuring for CodeDeploy..."
+             if [[ "$SERVICE_NAME" == "api" ]]; then CONTAINER_PORT=3001; elif [[ "$SERVICE_NAME" == "admin" ]]; then CONTAINER_PORT=80; else CONTAINER_PORT=3000; fi
+             
+             # Get Task Def ARN (required for AppSpec) - register it now or get after update?
+             # The new action registers it. But we need the ARN for AppSpec.
+             # Actually, amazon-ecs-deploy-task-definition registers the task definition.
+             # Does it output the ARN before deployment?
+             # If we provide appspec, the action will replace <TASK_DEFINITION> placeholder in appspec?
+             # Official Action Docs: "The AppSpec file ... For ECS, the TaskDefinition field ... is optional. If omitted, the action will use the task definition registered by the action."
+             # PERFECT! We generate appspec WITHOUT specific TaskDefinition ARN, or with placeholder.
+             # AWS AppSpec for ECS:
+             # { "Resources": [ { "TargetService": { "Type": "AWS::ECS::Service", "Properties": { "TaskDefinition": "<TASK_DEFINITION>", ... } } } ] }
+             
+             # Generate generic AppSpec
+             printf '{"version":0.0,"Resources":[{"TargetService":{"Type":"AWS::ECS::Service","Properties":{"TaskDefinition":"<TASK_DEFINITION>","LoadBalancerInfo":{"ContainerName":"%s","ContainerPort":%d}}}}]}' "$SERVICE_NAME" "$CONTAINER_PORT" > appspec.json
+             
+             echo "appspec_path=appspec.json" >> $GITHUB_OUTPUT
+             echo "codedeploy_app=${NAMESPACE}-${SERVICE_NAME}-${STAGE_KEY}-app" >> $GITHUB_OUTPUT
+             echo "codedeploy_group=${NAMESPACE}-${SERVICE_NAME}-dg" >> $GITHUB_OUTPUT
+          else
+             echo "🚀 Configuring for ECS Rolling Update..."
+             echo "appspec_path=" >> $GITHUB_OUTPUT
+             echo "codedeploy_app=" >> $GITHUB_OUTPUT
+             echo "codedeploy_group=" >> $GITHUB_OUTPUT
+          fi
+
+
+    - name: Check & Stop Active CodeDeploy
+      if: ${{ steps.prep.outputs.codedeploy_group != '' }}
+      shell: bash
+      env:
+        APP_NAME: ${{ steps.prep.outputs.codedeploy_app }}
+        DG_NAME: ${{ steps.prep.outputs.codedeploy_group }}
+      run: |
+        echo "🔍 Checking for active deployments in $DG_NAME..."
+        
+        # List Active Deployments (Created, Queued, InProgress)
+        ACTIVE_DEPLOYMENT_ID=$(aws deploy list-deployments \
+          --application-name "$APP_NAME" \
+          --deployment-group-name "$DG_NAME" \
+          --include-only-statuses Created Queued InProgress \
+          --query 'deployments[0]' --output text)
+
+        if [[ "$ACTIVE_DEPLOYMENT_ID" != "None" && -n "$ACTIVE_DEPLOYMENT_ID" ]]; then
+           echo "⚠️  Found Active Deployment: $ACTIVE_DEPLOYMENT_ID. Stopping it..."
+           aws deploy stop-deployment --deployment-id "$ACTIVE_DEPLOYMENT_ID" --auto-rollback-enabled
+           
+           echo "⏳ Waiting for deployment to stop..."
+           aws deploy wait deployment-successful --deployment-id "$ACTIVE_DEPLOYMENT_ID" || true
+           # Wait a bit more for state transition
+           sleep 10
+           echo "✅ Previous deployment stopped."
+        else
+           echo "✅ No active deployments found."
+        fi
+
+    - name: Deploy to Amazon ECS
+
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: task-def.json
+        service: ${{ steps.prep.outputs.service_name }}
+        cluster: ${{ steps.prep.outputs.cluster_name }}
+        wait-for-service-stability: true
+        codedeploy-appspec: ${{ steps.prep.outputs.appspec_path }}
+        codedeploy-application: ${{ steps.prep.outputs.codedeploy_app }}
+        codedeploy-deployment-group: ${{ steps.prep.outputs.codedeploy_group }}

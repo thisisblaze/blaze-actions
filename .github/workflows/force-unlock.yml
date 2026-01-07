@@ -1,0 +1,58 @@
+name: Force Unlock Terraform State
+on:
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: "Lock ID to unlock"
+        required: true
+      environment:
+        description: "Environment (dev/stage/prod)"
+        required: true
+        default: "stage"
+      bucket:
+        description: "S3 State Bucket"
+        required: true
+      key:
+        description: "S3 State Key"
+        required: true
+      region:
+        description: "AWS Region (from vars/blaze-env.json)"
+        required: true
+        default: "eu-west-1" # Default matches blaze-env.json
+      dynamodb_table:
+        description: "DynamoDB Lock Table"
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          aws-region: ${{ inputs.region }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.9.0
+
+      - name: Force Unlock
+        working-directory: .github/aws/infra/live/${{ inputs.environment }}-app
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ inputs.bucket }}" \
+            -backend-config="key=${{ inputs.key }}" \
+            -backend-config="region=${{ inputs.region }}" \
+            -backend-config="dynamodb_table=${{ inputs.dynamodb_table }}"
+          terraform force-unlock -force ${{ inputs.lock_id }}

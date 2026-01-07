@@ -1,0 +1,201 @@
+name: ECS Service Management
+
+on:
+  workflow_call:
+    inputs:
+      cluster_name:
+        required: true
+        type: string
+      action:
+        required: true
+        type: string
+        description: "Action: start, stop, scale, restart"
+      service_name:
+        required: false
+        type: string
+        description: "Specific service name (optional, 'all' for all services)"
+      desired_count:
+        required: false
+        type: string
+        description: "Desired count for scale action"
+      aws_region:
+        required: true
+        type: string
+      stage_filter:
+        required: false
+        type: string
+        description: "Optional stage filter to only manage services for a specific stage handle (e.g. 'dev' or 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names."
+      environment:
+        required: false
+        type: string
+        description: "GitHub Environment to run in (access secrets)"
+    outputs:
+      service_status:
+        value: ${{ jobs.manage.outputs.status }}
+
+jobs:
+  manage:
+    name: ECS ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+
+    outputs:
+      status: ${{ steps.result.outputs.status }}
+    steps:
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-ECS-Manage
+          aws-region: ${{ inputs.aws_region || vars.AWS_REGION || 'eu-west-1' }}
+
+      - name: Discover Services
+        id: discover
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          INPUT_SVC="${{ inputs.service_name }}"
+          STAGE_FILTER="${{ inputs.stage_filter }}"
+
+          echo "🔍 Discovering services in cluster: $CLUSTER"
+          if [[ -n "$STAGE_FILTER" ]]; then
+            echo "   🎯 Stage filter enabled: $STAGE_FILTER"
+          fi
+
+          # List all services (get names only)
+          # Use max-items 100 to capture most services
+          SERVICES_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --max-items 100 --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null || echo "")
+
+          if [[ -z "$SERVICES_ARNS" || "$SERVICES_ARNS" == "None" ]]; then
+             echo "⚠️ No services found in cluster $CLUSTER"
+             echo "services=" >> "$GITHUB_OUTPUT"
+             exit 0
+          fi
+
+          # Clean names: Convert ARNs to Names
+          ALL_SERVICES=$(echo "$SERVICES_ARNS" | tr '\t' '\n' | sed 's|.*/||')
+
+          # Optional stage filtering (shared cluster model)
+          if [[ -n "$STAGE_FILTER" ]]; then
+            # Keep only names containing "-{stage_filter}-"
+            FILTERED=$(echo "$ALL_SERVICES" | grep -F -e "-${STAGE_FILTER}-" || echo "")
+            if [[ -z "$FILTERED" ]]; then
+              echo "⚠️ No services matched stage_filter='$STAGE_FILTER' in cluster $CLUSTER"
+              echo "services=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            ALL_SERVICES="$FILTERED"
+          fi
+
+          if [[ "$INPUT_SVC" == "all" || -z "$INPUT_SVC" ]]; then
+             # Use all found services
+             CHOSEN="$ALL_SERVICES"
+             echo "✅ Selected all $(echo "$CHOSEN" | wc -l | xargs) services"
+          else
+             # Find specific service (fuzzy match suffix or exact)
+             echo "🔍 Looking for service matching: '$INPUT_SVC'..."
+             
+             # 1. Try exact match
+             MATCH=$(echo "$ALL_SERVICES" | grep -F -x -e "$INPUT_SVC" || echo "")
+             
+             # 2. If no exact match, try suffix match (e.g. '...-frontend')
+             if [[ -z "$MATCH" ]]; then
+                MATCH=$(echo "$ALL_SERVICES" | grep -E -e "-${INPUT_SVC}$" || echo "")
+             fi
+             
+             if [[ -z "$MATCH" ]]; then
+                echo "❌ Service '$INPUT_SVC' not found in cluster."
+                echo "Available services:"
+                echo "$ALL_SERVICES"
+                exit 1
+             fi
+             
+             # Handle multiple matches (rare but possible)
+             COUNT=$(echo "$MATCH" | wc -l | xargs)
+             if [[ "$COUNT" -gt 1 ]]; then
+                 echo "⚠️ Multiple services matched '$INPUT_SVC':"
+                 echo "$MATCH"
+                 echo "👉 Picking the first one."
+                 MATCH=$(echo "$MATCH" | head -1)
+             fi
+             
+             CHOSEN="$MATCH"
+             echo "✅ Resolved '$INPUT_SVC' to: '$CHOSEN'"
+          fi
+
+          echo "services<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHOSEN" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Manage Services
+        id: result
+        run: |
+          set -e
+
+          CLUSTER="${{ inputs.cluster_name }}"
+          ACTION="${{ inputs.action }}"
+          SERVICES="${{ steps.discover.outputs.services }}"
+          DESIRED_COUNT="${{ inputs.desired_count }}"
+
+          if [[ -z "$SERVICES" ]]; then
+            echo "⚠️ No services to manage"
+            echo "status=no_services" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Process each service
+          while IFS= read -r SVC; do
+            [[ -z "$SVC" ]] && continue
+            
+            echo "🔄 Processing service: $SVC"
+            
+            case "$ACTION" in
+              "stop")
+                aws ecs update-service \
+                  --cluster "$CLUSTER" \
+                  --service "$SVC" \
+                  --desired-count 0 \
+                  --region "${{ inputs.aws_region }}" \
+                  > /dev/null
+                echo "   ✅ Stopped $SVC"
+                ;;
+              "start")
+                aws ecs update-service \
+                  --cluster "$CLUSTER" \
+                  --service "$SVC" \
+                  --desired-count 1 \
+                  --region "${{ inputs.aws_region }}" \
+                  > /dev/null
+                echo "   ✅ Started $SVC"
+                ;;
+              "scale")
+                if [[ -z "$DESIRED_COUNT" ]]; then
+                  echo "   ❌ desired_count required for scale action"
+                  exit 1
+                fi
+                aws ecs update-service \
+                  --cluster "$CLUSTER" \
+                  --service "$SVC" \
+                  --desired-count "$DESIRED_COUNT" \
+                  --region "${{ inputs.aws_region }}" \
+                  > /dev/null
+                echo "   ✅ Scaled $SVC to $DESIRED_COUNT"
+                ;;
+              "restart")
+                # Force new deployment
+                aws ecs update-service \
+                  --cluster "$CLUSTER" \
+                  --service "$SVC" \
+                  --force-new-deployment \
+                  --region "${{ inputs.aws_region }}" \
+                  > /dev/null
+                echo "   ✅ Restarted $SVC"
+                ;;
+              *)
+                echo "   ❌ Unknown action: $ACTION"
+                exit 1
+                ;;
+            esac
+          done <<< "$SERVICES"
+
+          echo "status=success" >> "$GITHUB_OUTPUT"

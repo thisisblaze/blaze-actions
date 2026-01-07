@@ -1,0 +1,151 @@
+name: 🧪 Terraform Module Tests
+
+on:
+  pull_request:
+    paths:
+      - ".github/aws/infra/modules/**"
+      - "test/**"
+      - ".github/workflows/terraform-tests.yml"
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - ".github/aws/infra/modules/**"
+      - "test/**"
+      - ".github/workflows/terraform-tests.yml"
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: "Run integration tests that create real AWS resources (costs money)."
+        type: boolean
+        default: false
+
+jobs:
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Format Check
+        run: |
+          terraform fmt -check -recursive .github/aws/infra/modules/
+          echo "✅ Terraform formatting is correct"
+
+      - name: Terraform Validate
+        run: |
+          echo "🔍 Validating Terraform modules..."
+          for module in .github/aws/infra/modules/*/; do
+            # Check if directory exists and contains any .tf files
+            # Using ls to avoid "too many arguments" error when glob expands to multiple files
+            if [ -d "$module" ] && ls "$module"/*.tf >/dev/null 2>&1; then
+              echo "Validating $module"
+              if cd "$module"; then
+                 terraform init -backend=false > /dev/null 2>&1
+                 terraform validate || exit 1
+                 cd - > /dev/null || exit 1
+              fi
+            fi
+          done
+          echo "✅ All modules validated successfully"
+
+  unit-tests:
+    name: Unit Tests (Label Module)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: static-analysis
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff  # v5.6.0
+        with:
+          go-version: "1.21"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.7.0
+
+      - name: Install Dependencies
+        working-directory: test
+        run: go mod download
+
+      - name: Run Unit Tests
+        working-directory: test
+        run: |
+          echo "🧪 Running unit tests (no AWS resources)..."
+          go test -v -run TestLabelModule -timeout 10m
+          echo "✅ Unit tests passed"
+
+  integration-tests:
+    name: Integration Tests (AWS Resources)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: static-analysis
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
+    environment: DEV
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Blaze
+        uses: ./.github/actions/setup-blaze
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+          terraform: "true"
+
+      - name: Setup Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff  # v5.6.0
+        with:
+          go-version: "1.21"
+
+      - name: Install Dependencies
+        working-directory: test
+        run: go mod download
+
+      - name: Run Integration Tests
+        working-directory: test
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+        run: |
+          echo "🧪 Running integration tests (creates AWS resources)..."
+          echo "⚠️  Note: These tests create real AWS resources and may incur costs"
+          go test -v -run TestNetworkingModule -timeout 30m
+          echo "✅ Integration tests passed"
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [static-analysis, unit-tests, integration-tests]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          {
+            echo "## 🧪 Terraform Test Results"
+            echo ""
+            echo "| Test Type | Status |"
+            echo "|-----------|--------|"
+            echo "| Static Analysis | ${{ needs.static-analysis.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
+            echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
+            if [[ "${{ needs.integration-tests.result }}" != "skipped" && "${{ needs.integration-tests.result }}" != "" ]]; then
+              echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
+            fi
+            echo ""
+            echo "**Note**: Integration tests only run on pull requests or manual dispatch."
+          } >> "$GITHUB_STEP_SUMMARY"

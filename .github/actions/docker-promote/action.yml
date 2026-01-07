@@ -1,0 +1,35 @@
+name: 'Docker promote'
+description: 'Promote docker image by retagging and pushing'
+inputs:
+  registry:
+    description: 'Docker registry (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com)'
+    required: true
+  image_name:
+    description: "Image name (e.g. blaze-prod-app/api)"
+    required: true
+  source_tag:
+    required: true
+    description: "Source tag to pull (e.g. sha-123abcde)"
+  target_tag:
+    required: true
+    description: "Target tag to push (e.g. release-v1.0.0)"
+  
+runs:
+  using: "composite"
+  steps:
+    - name: Promote
+      shell: bash
+      run: |
+        FULL_IMAGE="${{ inputs.registry }}/${{ inputs.image_name }}"
+        SOURCE="${FULL_IMAGE}:${{ inputs.source_tag }}"
+        TARGET="${FULL_IMAGE}:${{ inputs.target_tag }}"
+        
+        echo "🐳 Promoting Image..."
+        echo "   From: $SOURCE"
+        echo "   To:   $TARGET"
+        
+        docker pull "$SOURCE"
+        docker tag "$SOURCE" "$TARGET"
+        docker push "$TARGET"
+        
+        echo "✅ Promotion Complete."

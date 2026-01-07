@@ -1,0 +1,480 @@
+name: "02 - Deploy App"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        type: choice
+        options:
+          - DEV
+          - STAGE
+          - PROD
+        required: true
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze"
+        type: string
+        required: true
+        default: "thisisblaze"
+      branch_name:
+        description: "Feature Tag (e.g. jira-123). Leave empty for main."
+        required: false
+        type: string
+      target_services:
+        description: "Services to Deploy"
+        type: choice
+        options:
+          - "Blaze all"
+          - "api"
+          - "frontend"
+          - "admin"
+          - "tunnel"
+        default: "Blaze all"
+      build_images:
+        description: "Build Docker Images?"
+        type: boolean
+        default: true
+      deploy_services:
+        description: "Deploy to ECS/Pages?"
+        type: boolean
+        default: true
+      override_image_tag:
+        description: "Override Image Tag (if not building)"
+        type: string
+        default: "latest"
+
+  # Enable usage by other workflows (Stress Test)
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      project:
+        required: false
+        type: string
+        default: "thisisblaze"
+      branch_name:
+        required: false
+        type: string
+      target_services:
+        required: false
+        type: string
+        default: "Blaze all"
+      build_images:
+        required: false
+        type: boolean
+        default: true
+      deploy_services:
+        required: false
+        type: boolean
+        default: true
+      override_image_tag:
+        required: false
+        type: string
+        default: "latest"
+
+#   push:
+#     branches:
+#       - dev
+#     paths-ignore:
+#       - "docs/**"
+#       - ".github/aws/**"
+#       - "**.md"
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'DEV' }}-${{ github.event.inputs.branch_name || 'host' }}
+  cancel-in-progress: false
+
+jobs:
+  quality-check:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with: { node-version: "20", cache: "npm" }
+      - run: npm ci --legacy-peer-deps --ignore-scripts
+        env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
+      # - run: npm run lint
+      # - run: npm run test:coverage
+
+  configuration:
+    name: Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [quality-check]
+    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+      beta: ${{ steps.config.outputs.beta }}
+      dfp_network_id: ${{ steps.config.outputs.dfp_network_id }}
+      gtm_id: ${{ steps.config.outputs.gtm_id }}
+      aws_account_id: ${{ steps.config.outputs.aws_account_id }}
+      cluster_name: ${{ steps.config.outputs.cluster_name }}
+      config_env: ${{ steps.config.outputs.config_env }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Calculate Configuration
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          project: ${{ inputs.project }}
+          terraform_stack: "app"
+          branch_name: ${{ inputs.branch_name }}
+          deploy_infra: "false"
+          build_images: ${{ inputs.build_images || 'true' }}
+          deploy_services: ${{ inputs.deploy_services || 'true' }}
+          event_name: ${{ github.event_name }}
+
+  pre-flight-check:
+    name: 🛡️ Pre-Flight Checks
+    needs: [configuration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Check Infrastructure Existence
+        env:
+          CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
+          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api
+        run: |
+          echo "🔍 Checking Critical Infrastructure..."
+          echo "-------------------------------------"
+
+          # 1. Check ECS Cluster
+          echo "Checking ECS Cluster: $CLUSTER_NAME"
+          if ! aws ecs describe-clusters --clusters "$CLUSTER_NAME" | grep -q "ACTIVE"; then
+             echo "::error::❌ ECS Cluster '$CLUSTER_NAME' NOT FOUND or INACTIVE."
+             echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
+             exit 1
+          else
+             echo "✅ ECS Cluster found."
+          fi
+
+          # 2. Check ECR Repository
+          echo "Checking ECR Repository: $REPO_NAME"
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
+             echo "::error::❌ ECR Repository '$REPO_NAME' NOT FOUND."
+             echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
+             exit 1
+          else
+             echo "✅ ECR Repository found."
+          fi
+
+          echo "-------------------------------------"
+          echo "✅ All Systems Go. Proceeding to Build/Deploy."
+
+  # --- BUILD JOBS ---
+
+  build-api:
+    name: Build API
+    needs: [configuration, pre-flight-check]
+    if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-docker-build.yml
+    with:
+      dockerfile: packages/api/Dockerfile.api
+      context: .
+      tags: |
+        ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api:${{ github.sha }}
+        ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api:latest
+      build_args: |
+        BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
+        BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+    secrets: inherit
+
+  build-frontend:
+    name: Build Frontend
+    needs: [configuration, pre-flight-check]
+    if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-docker-build.yml
+    with:
+      dockerfile: packages/frontend/Dockerfile.frontend
+      context: .
+      tags: |
+        ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend:${{ github.sha }}
+        ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend:latest
+      build_args: |
+        BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
+        BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
+        BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+    secrets: inherit
+
+  build-admin:
+    name: Build Admin (Shared)
+    needs: [configuration, pre-flight-check]
+    if: ${{ needs.configuration.outputs.stage_key != 'dev' && (inputs.build_images == true || inputs.build_images == null || inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with: { node-version: "20", cache: "npm" }
+      - run: npm ci --legacy-peer-deps --ignore-scripts
+        env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
+      - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
+        env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
+      - name: Build Admin
+        run: npm run build:admin
+        working-directory: packages/admin
+        env:
+          BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
+          BLAZE_GRAPHQL_URI: ${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+
+      - name: Create Cloudflare _redirects
+        run: |
+          mkdir -p packages/admin/dist
+          echo "/* /index.html 200" > packages/admin/dist/_redirects
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: admin-build-assets
+          path: packages/admin/dist
+          retention-days: 1
+
+  package-admin-docker:
+    name: Package Admin (Docker)
+    needs: [configuration, pre-flight-check]
+    if: ${{ needs.configuration.outputs.stage_key == 'dev' && (inputs.build_images == true || inputs.build_images == null || inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076  # v2.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
+
+      - name: Create .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
+      - name: Build and Push
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25  # v5.4.0
+        with:
+          context: .
+          file: packages/admin/Dockerfile.admin
+          push: true
+          tags: |
+            ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/admin:${{ github.sha }}
+            ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/admin:latest
+          build-args: |
+            BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
+            BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+          secret-files: |
+            npmrc=.npmrc
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # --- DEPLOY JOBS ---
+
+  deploy-api:
+    name: Deploy API
+    needs: [configuration, build-api, pre-flight-check]
+    # Deploy if: explicit deploy OR auto-deploy (push)
+    if: ${{ (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      service_name: "api"
+      environment: ${{ inputs.environment || 'DEV' }}
+      # Pass forced uppercase env to prevent duplicates
+      config_environment: ${{ needs.configuration.outputs.config_env }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      cloud_platform: ${{ needs.configuration.outputs.platform }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
+      s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
+      s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+    secrets: inherit
+
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [configuration, build-frontend, pre-flight-check]
+    if: ${{ (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      service_name: "frontend"
+      environment: ${{ inputs.environment || 'DEV' }}
+      config_environment: ${{ needs.configuration.outputs.config_env }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      cloud_platform: ${{ needs.configuration.outputs.platform }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
+      dfp_network_id: ${{ needs.configuration.outputs.dfp_network_id }}
+      gtm_id: ${{ needs.configuration.outputs.gtm_id }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+    secrets: inherit
+
+  deploy-admin-ecs:
+    name: Deploy Admin (ECS)
+    needs: [configuration, package-admin-docker, pre-flight-check]
+
+    if: ${{ needs.configuration.outputs.stage_key == 'dev' && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      service_name: "admin"
+      environment: ${{ inputs.environment || 'DEV' }}
+      config_environment: ${{ needs.configuration.outputs.config_env }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      cloud_platform: ${{ needs.configuration.outputs.platform }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+    secrets: inherit
+
+  deploy-tunnel:
+    name: Deploy Tunnel
+    needs: [configuration, pre-flight-check]
+    if: ${{ (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel') }}
+    uses: ./.github/workflows/reusable-ecs-deploy.yml
+    with:
+      service_name: "tunnel"
+      environment: ${{ inputs.environment || 'DEV' }}
+      config_environment: ${{ needs.configuration.outputs.config_env }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: "latest"
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      cloud_platform: ${{ needs.configuration.outputs.platform }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
+    secrets: inherit
+
+  deploy-admin-pages:
+    name: Deploy Admin (Pages)
+    needs: [configuration, build-admin, pre-flight-check]
+
+    if: ${{ needs.configuration.outputs.stage_key != 'dev' && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: admin-build-assets
+          path: packages/admin/dist
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65  # v3.14.1
+        with:
+          wranglerVersion: "3"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: "pages deploy packages/admin/dist --project-name=blaze-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+
+  summary:
+    name: 📝 Deployment Summary
+    needs:
+      [
+        configuration,
+        deploy-api,
+        deploy-frontend,
+        deploy-admin-ecs,
+        deploy-admin-pages,
+        deploy-tunnel,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🚀 Deployment Summary: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🌍 Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ inputs.branch_name || 'main' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project** | \`${{ needs.configuration.outputs.project_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Client** | \`${{ needs.configuration.outputs.client_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Domain** | [${{ needs.configuration.outputs.domain_root }}](https://${{ needs.configuration.outputs.domain_root }}) |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Service Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | Type |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function for status icon
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
+
+          echo "| **API** | $(get_icon ${{ needs.deploy-api.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend** | $(get_icon ${{ needs.deploy-frontend.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Admin (ECS)** | $(get_icon ${{ needs.deploy-admin-ecs.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Admin (Pages)** | $(get_icon ${{ needs.deploy-admin-pages.result }}) | Cloudflare Pages |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Tunnel** | $(get_icon ${{ needs.deploy-tunnel.result }}) | Cloudflare Sidecar |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+          CLUSTER="blaze-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-cluster-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})" >> $GITHUB_STEP_SUMMARY
+          echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Load Balancer](https://${REGION}.console.aws.amazon.com/ec2/home?region=${REGION}#LoadBalancers:)" >> $GITHUB_STEP_SUMMARY

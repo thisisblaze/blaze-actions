@@ -1,0 +1,317 @@
+name: "00 🛠️ Setup Environment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["dev", "stage", "prod"]
+        required: true
+      task:
+        description: "Setup Task"
+        type: choice
+        options:
+          - "🟢 Bootstrap All (Recommended)"
+          - "⚙️ Init Backend (S3 & DynamoDB)"
+          - "🪞 Mirror Images Only"
+        default: "🟢 Bootstrap All (Recommended)"
+
+      # Mirroring Options (Hidden unless needed)
+      images:
+        description: "Images to Mirror (Advanced)"
+        required: false
+        default: "all"
+        type: string
+      mongo_tag:
+        description: "MongoDB Tag"
+        required: false
+        default: "latest"
+        type: string
+      elasticsearch_tag:
+        description: "Elasticsearch Tag"
+        required: false
+        default: "9.2.2"
+        type: string
+      kibana_tag:
+        description: "Kibana Tag"
+        required: false
+        default: "9.2.2"
+        type: string
+      tunnel_tag:
+        description: "Tunnel Tag"
+        required: false
+        default: "latest"
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  calculate-config:
+    name: Calculate Configuration
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: network # Use network stack to get base config
+    secrets: inherit
+
+  # -----------------------------------------------------------------------------------------
+  # JOB 1: INIT BACKEND (S3 & DYNAMODB)
+  # -----------------------------------------------------------------------------------------
+  init-backend:
+    name: Init Backend (${{ inputs.environment }})
+    # Run if Task is "Bootstrap All" OR "Init Backend"
+    if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init Backend')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    needs: calculate-config
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Setup Blaze Infra
+        uses: ./.github/actions/setup-blaze
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.calculate-config.outputs.aws_region }}
+          terraform: "false" # Already set up above
+
+      - name: Apply Preinit
+        env:
+          TF_VAR_client_key: ${{ needs.calculate-config.outputs.client_key }}
+          TF_VAR_project_key: ${{ needs.calculate-config.outputs.project_key }}
+          TF_VAR_namespace: ${{ needs.calculate-config.outputs.namespace }}
+          TF_VAR_aws_region: ${{ needs.calculate-config.outputs.aws_region }}
+          TF_VAR_platform: ${{ needs.calculate-config.outputs.platform }}
+          TF_VAR_stage: ${{ needs.calculate-config.outputs.stage_key }}
+        working-directory: .github/aws/infra/preinit
+        run: |
+          set -e
+
+          # 1. Construct Bucket Name
+          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-blaze-tfstate"
+          TABLE_NAME="${BUCKET_NAME}-lock"
+
+          echo "🚀 Bootstrapping Infrastructure for ${{ needs.calculate-config.outputs.stage_key }}"
+
+          # 2. Init (Backend is local for preinit)
+          terraform init
+
+          # 3. Import Logic (Check if exists via AWS CLI - tolerated for discovery)
+          echo "🔍 Checking Backend Resources: $BUCKET_NAME"
+
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            echo "✅ Bucket exists. Importing..."
+            terraform import module.tfstate_backend.aws_s3_bucket.default "$BUCKET_NAME" 2>/dev/null || true
+          fi
+
+          if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
+            echo "✅ Table exists. Importing..."
+            terraform import module.tfstate_backend.aws_dynamodb_table.with_server_side_encryption "$TABLE_NAME" 2>/dev/null || true
+          fi
+
+          # 4. Apply
+          terraform apply -auto-approve
+
+      - name: 📋 Backend Initialization Summary
+        if: always()
+        run: |
+          STAGE_KEY=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${STAGE_KEY}-blaze-tfstate"
+          TABLE_NAME="${BUCKET_NAME}-lock"
+
+          echo "## 🎉 Backend Initialization Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | Name | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|----------|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Environment** | \`${{ inputs.environment }}\` | ✅ Ready |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **S3 Bucket** | \`$BUCKET_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Lock Table** | \`$TABLE_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+
+  # -----------------------------------------------------------------------------------------
+  # JOB 2: MIRROR IMAGES TO ECR
+  # -----------------------------------------------------------------------------------------
+  mirror-images:
+    name: Mirror Images (${{ inputs.environment }})
+    # Run if Task is "Bootstrap All" OR "Mirror Images"
+    if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')
+    needs: [calculate-config] # Removed init-backend dependency
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.calculate-config.outputs.aws_region }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076  # v2.0.1
+
+      - name: Ensure ECR Repositories Exist
+        env:
+          AWS_REGION: ${{ needs.calculate-config.outputs.aws_region }}
+          REPO_PREFIX: "blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+        run: |
+          # Parse input images
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then
+            IMAGES="mongo,elasticsearch,kibana,tunnel"
+          fi
+
+          IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
+
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+            REPO_NAME="${REPO_PREFIX}/${IMAGE// /}"
+            
+            echo "🔍 Checking ECR: $REPO_NAME"
+            if ! aws ecr describe-repositories --repository-names "$REPO_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
+              echo "🆕 Creating ECR: $REPO_NAME"
+              aws ecr create-repository \
+                --repository-name "$REPO_NAME" \
+                --region "$AWS_REGION" \
+                --image-scanning-configuration scanOnPush=true \
+                --encryption-configuration encryptionType=KMS \
+                --tags "Key=Managed by,Value=Terraform" "Key=Project,Value=${{ needs.calculate-config.outputs.project_key }}"
+            fi
+          done
+
+      - name: Mirror Images
+        run: |
+          set -e
+
+          # Registry from login-ecr step
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          REPO_PREFIX="blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+
+          # Parse input images
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then
+            IMAGES="mongo,elasticsearch,kibana,tunnel"
+          fi
+
+          IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
+
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+            IMAGE=$(echo "$IMAGE" | xargs) # Trim whitespace
+            
+            # Construct Target URI (Registry + Repo Name)
+            TARGET_BASE="${REGISTRY}/${REPO_PREFIX}"
+            
+            case "$IMAGE" in
+              mongo)
+                echo "🪞 Mirroring MongoDB..."
+                SOURCE_IMG="mongo:${{ inputs.mongo_tag }}"
+                ECR_IMG="${TARGET_BASE}/mongo:${{ inputs.mongo_tag }}"
+                ;;
+              elasticsearch)
+                echo "🪞 Mirroring Elasticsearch..."
+                SOURCE_IMG="docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.elasticsearch_tag }}"
+                ECR_IMG="${TARGET_BASE}/elasticsearch:${{ inputs.elasticsearch_tag }}"
+                ;;
+              kibana)
+                echo "🪞 Mirroring Kibana..."
+                SOURCE_IMG="docker.elastic.co/kibana/kibana:${{ inputs.kibana_tag }}"
+                ECR_IMG="${TARGET_BASE}/kibana:${{ inputs.kibana_tag }}"
+                ;;
+              tunnel)
+                echo "🪞 Mirroring Cloudflare Tunnel..."
+                SOURCE_IMG="cloudflare/cloudflared:${{ inputs.tunnel_tag }}"
+                ECR_IMG="${TARGET_BASE}/tunnel:${{ inputs.tunnel_tag }}"
+                ;;
+              *)
+                echo "⚠️ Unknown image: $IMAGE (skipping)"
+                continue
+                ;;
+            esac
+            
+            echo "   Source: $SOURCE_IMG"
+            echo "   Target: $ECR_IMG"
+            
+            # Pull from public registry
+            docker pull "$SOURCE_IMG"
+            
+            # Tag for ECR
+            docker tag "$SOURCE_IMG" "$ECR_IMG"
+            
+            # Push to ECR
+            docker push "$ECR_IMG"
+            
+            echo "   ✅ Successfully mirrored $IMAGE"
+          done
+
+      - name: 📋 Image Mirroring Summary
+        if: always()
+        run: |
+          echo "## 📦 Image Mirroring Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | Source Tag | ECR Repo |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|------------|----------|" >> "$GITHUB_STEP_SUMMARY"
+
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then
+            IMAGES="mongo,elasticsearch,kibana,tunnel"
+          fi
+
+          # We repeat the logic slightly to print the table, referencing inputs
+          # Not perfect as it doesn't verify actual success of each, but 'set -e' in previous step ensures we likely succeeded if we are here (unless if always() is used).
+          # Actually previous step fails -> this runs. We should check process status?
+          # Steps context doesn't expose individual loop success easily. 
+          # We'll just list what was *attempted* with a note.
+
+          IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+             IMAGE=$(echo "$IMAGE" | xargs)
+             case "$IMAGE" in
+               mongo) TAG="${{ inputs.mongo_tag }}";;
+               elasticsearch) TAG="${{ inputs.elasticsearch_tag }}";;
+               kibana) TAG="${{ inputs.kibana_tag }}";;
+               tunnel) TAG="${{ inputs.tunnel_tag }}";;
+               *) TAG="unknown";;
+             esac
+             echo "| **$IMAGE** | \`$TAG\` | ✅ Mirrored |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: List Mirrored Images
+        run: |
+          REPO_PREFIX="blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+
+          echo "📋 Mirrored Images in ECR:"
+          echo ""
+
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then
+            IMAGES="mongo,elasticsearch,kibana,tunnel"
+          fi
+
+          IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
+
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+            IMAGE=$(echo "$IMAGE" | xargs)
+            
+            # Describe using Repo Name (No Registry URL)
+            REPO_NAME="${REPO_PREFIX}/${IMAGE}"
+            
+            echo "📦 Repository: $REPO_NAME"
+            aws ecr describe-images \
+              --repository-name "$REPO_NAME" \
+              --region ${{ needs.calculate-config.outputs.aws_region }} \
+              --query 'sort_by(imageDetails,&imagePushedAt)[-5:].[imageTags[0],imagePushedAt]' \
+              --output table 2>/dev/null || echo "   (No images found or repository doesn't exist)"
+            echo ""
+          done

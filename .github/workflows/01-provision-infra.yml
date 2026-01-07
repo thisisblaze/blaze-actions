@@ -1,0 +1,301 @@
+name: "01 - Provision Infrastructure"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "STAGE", "PROD"]
+        required: true
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze"
+        type: string
+        required: true
+        default: "thisisblaze"
+      stack:
+        description: "Infrastructure Layer"
+        type: choice
+        options:
+          - "network"
+          - "acm"
+          - "tunnel"
+          - "app"
+          - "third-party-mongodb"
+          - "third-party-elastic"
+        required: true
+      branch_name:
+        description: "Feature Tag (e.g. jira-123). Leave empty for main."
+        required: false
+        type: string
+      apply:
+        description: "Run Terraform Apply?"
+        type: boolean
+        default: false
+
+      # Third-Party Options
+      cluster_tier:
+        description: "MongoDB Tier (Auto: Dev=M2, Stage/Prod=M10)"
+        type: choice
+        options: ["auto", "M2", "M10", "M20", "M30"]
+        default: "auto"
+      kibana_size:
+        description: "Kibana RAM Size (Elastic only)"
+        type: choice
+        options: ["1g", "2g"]
+        default: "1g"
+      is_paused:
+        description: "Pause MongoDB Cluster? (MongoDB only)"
+        type: boolean
+        default: false
+      destroy:
+        description: "Destroy Infrastructure? (DANGER)"
+        type: boolean
+        default: false
+
+  # Enable usage by other workflows (Stress Test)
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      project:
+        required: false
+        type: string
+        default: "thisisblaze"
+      stack:
+        required: true
+        type: string
+      branch_name:
+        required: false
+        type: string
+      apply:
+        required: false
+        type: boolean
+        default: false
+      cluster_tier:
+        required: false
+        type: string
+        default: "auto"
+      kibana_size:
+        required: false
+        type: string
+        default: "1g"
+      is_paused:
+        required: false
+        type: boolean
+        default: false
+      destroy:
+        required: false
+        type: boolean
+        default: false
+      enable_tunnel:
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: infra-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
+  cancel-in-progress: false
+
+jobs:
+  configuration:
+    name: Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+      beta: ${{ steps.config.outputs.beta }}
+      cluster_tier: ${{ steps.config.outputs.cluster_tier }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: "eu-west-1" # Hardcoded default for config calculation or pass as input? Default to eu-west-1 is safe for ID check.
+
+      - name: Calculate Configuration
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: ${{ inputs.environment }}
+          project: ${{ inputs.project }}
+          terraform_stack: ${{ inputs.stack }}
+          branch_name: ${{ inputs.branch_name }}
+          deploy_infra: "true" # Always true for this workflow
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+          cluster_tier: ${{ inputs.cluster_tier }}
+
+  provision:
+    name: Provision ${{ inputs.stack }}
+    needs: [configuration]
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }}
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      terraform_version: "1.9.0"
+      apply: ${{ inputs.apply }}
+      destroy: ${{ inputs.destroy }}
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        branch_name=${{ inputs.branch_name }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        is_beta=${{ needs.configuration.outputs.beta }}
+        cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
+        kibana_ram=${{ inputs.kibana_size }}
+        is_paused=${{ inputs.is_paused }}
+        # enable_tunnel removed - uses terraform default (false)
+        # Pass secrets as env vars in reusable workflow, but mapped here if needed?
+        # Reusable workflow maps CLOUDFLARE_* secrets to TF_VAR defines automatically.
+
+      # Inject ACM Smart Import Logic (via Custom Action Script)
+      pre_apply_script: |
+        # Export Context for Importer Script
+        export INPUT_STACK="${{ inputs.stack }}"
+        export INPUT_DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+        export INPUT_AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
+        export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
+        export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
+        export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+
+        # Run Importer
+        echo "🚀 Triggering Resource Importer Action..."
+        bash "$GITHUB_WORKSPACE/.github/actions/resource-importer/import.sh"
+
+    secrets: inherit
+
+  post_provision:
+    name: ⚙️ Post-Provision Configuration
+    needs: [configuration, provision]
+    if: inputs.stack == 'third-party-mongodb' && inputs.apply == true && needs.provision.result == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Sync Connection String Secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          ENV_NAME: ${{ inputs.environment }}
+          CONNECTION_STRING: ${{ needs.provision.outputs.mongodb_uri }}
+        run: |
+          if [[ -z "$CONNECTION_STRING" ]]; then
+            echo "⚠️ No Connection String output found. Skipping Secret Sync."
+            exit 0
+          fi
+
+          echo "🔐 Syncing BLAZE_CONNECTION_STRING to GitHub Environment Secrets ($ENV_NAME)..."
+
+          # Check valid token
+          if ! gh auth status >/dev/null 2>&1; then
+             echo "⚠️ GitHub CLI not authenticated. Cannot update secrets."
+             exit 0 # Don't fail workflow
+          fi
+
+          gh secret set BLAZE_CONNECTION_STRING --env "$ENV_NAME" --body "$CONNECTION_STRING"
+          echo "✅ Secret BLAZE_CONNECTION_STRING updated."
+
+      - name: Trigger Sample Data Load
+        env:
+          CLUSTER_NAME: ${{ needs.provision.outputs.cluster_name }}
+          GROUP_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$CLUSTER_NAME" ]]; then
+             echo "⚠️ No Cluster Name output found. Skipping Sample Data Load."
+             exit 0
+          fi
+
+          echo "📂 Triggering Sample Data Load for Cluster: $CLUSTER_NAME..."
+
+          RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" --digest \
+            -u "${PUBLIC_KEY}:${PRIVATE_KEY}" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/${GROUP_ID}/sampleDatasetLoad/${CLUSTER_NAME}")
+
+          if [[ "$RESPONSE_CODE" == "201" ]]; then
+            echo "✅ Sample Dataset load triggered successfully."
+          elif [[ "$RESPONSE_CODE" == "409" ]]; then
+            echo "⚠️  Sample Dataset is already loaded or currently loading."
+          else
+            echo "❌ Failed to trigger Sample Dataset load (HTTP $RESPONSE_CODE)."
+            # Optional step, do not fail workflow
+          fi
+
+  summary:
+    name: 📝 Provisioning Summary
+    needs: [configuration, provision, post_provision]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🏗️ Infrastructure Provisioning: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🌍 Impact Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "| Context | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Apply?** | \`${{ inputs.apply }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **TfState Key** | \`${{ needs.configuration.outputs.state_key }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Status" >> $GITHUB_STEP_SUMMARY
+
+          RES="${{ needs.provision.result }}"
+          IS_APPLY="${{ inputs.apply }}"
+
+          if [[ "$RES" == "success" ]]; then
+            if [[ "$IS_APPLY" == "true" ]]; then
+              echo "✅ **Provisioning Successful**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **Plan Successful (Dry Run)**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "> [!IMPORTANT]" >> $GITHUB_STEP_SUMMARY
+              echo "> Terraform Apply was NOT run. Changes were NOT applied. To apply these changes, re-run the workflow with **Run Terraform Apply?** checked." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ **Provisioning Failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+
+          echo "- [S3 State Bucket](https://s3.console.aws.amazon.com/s3/buckets/${BUCKET}?region=${REGION})" >> $GITHUB_STEP_SUMMARY
+          echo "- [DynamoDB Lock Table](https://${REGION}.console.aws.amazon.com/dynamodbv2/home?region=${REGION}#table?name=${BUCKET})" >> $GITHUB_STEP_SUMMARY

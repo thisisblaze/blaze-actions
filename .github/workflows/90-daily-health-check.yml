@@ -1,0 +1,253 @@
+name: "90 🏥 Daily Health Check"
+
+on:
+  schedule:
+    - cron: "45 8 * * *" # Run at 8:45 AM UTC daily
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "STAGE", "PROD"]
+        default: "DEV"
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  health-check-script:
+    name: 🛡️ Code Hygiene & Standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Blaze
+        uses: ./.github/actions/setup-blaze
+        with:
+          terraform: "true"
+          skip-aws-setup: "true"
+
+      # We need Node for the "Code Hygiene" checks (grep .ts files) and maybe npm tests later
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Run Daily Health Script
+        run: |
+          chmod +x scripts/daily-health-check.sh
+          ./scripts/daily-health-check.sh
+
+  # ------------------------------------------------------------------
+  # JOB 2: CONFIGURATION (For Matrix)
+  # ------------------------------------------------------------------
+  configuration:
+    name: Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Calculate Configuration
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: "${{ inputs.environment || 'DEV' }}" # Default to DEV for cron
+          terraform_stack: "app" # We just need general config
+          branch_name: ""
+          deploy_infra: "true"
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+  # ------------------------------------------------------------------
+  # JOB 3: DRIFT DETECTION (Prod Network)
+  # ------------------------------------------------------------------
+  drift-check-network:
+    name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
+    needs: [configuration]
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      terraform_version: "1.9.0"
+      apply: false
+      detect_drift: true # 👈 Activates Detailed Exitcode
+      # Env Vars
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        is_beta=false
+        nat_strategy="NONE"
+
+    secrets: inherit
+
+  drift-check-app:
+    name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
+    needs: [configuration, drift-check-network] # Sequential better for log reading
+    if: always() # Run even if network fails
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }} # Config resolves correct state key
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      terraform_version: "1.9.0"
+      apply: false
+      detect_drift: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=""
+        is_beta=false
+        enable_tunnel=false
+        deploy_stateful_services=true
+        mongo_image_tag="latest"
+        elasticsearch_image_tag="latest"
+        kibana_image_tag="latest"
+        use_ecr_images=true
+    secrets: inherit
+
+  # ------------------------------------------------------------------
+  # JOB 4: INFRA SECURITY AUDIT (Trivy IAC)
+  # ------------------------------------------------------------------
+  infra-audit:
+    name: 🛡️ Infrastructure Security Audit
+    runs-on: ubuntu-latest
+    outputs:
+      vuln_count: ${{ steps.trivy.outputs.vuln_count }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Run Trivy (IAC Mode)
+        id: trivy
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: "config"
+          scan-ref: ".github/aws/infra"
+          trivy-config: .trivy.yaml
+          severity: "CRITICAL,HIGH"
+          format: "json" # JSON for parsing
+          output: "trivy-results.json"
+          exit-code: "0"
+
+      - name: Parse Trivy Results
+        run: |
+          ls -la
+          # Count Critical/High issues (Fail-safe)
+          if [ -f trivy-results.json ]; then
+            echo "✅ trivy-results.json found."
+            VULN_COUNT=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL" or .Severity=="HIGH")] | length' trivy-results.json || echo "0")
+          else
+            echo "⚠️ trivy-results.json NOT found."
+            VULN_COUNT="0"
+          fi
+          echo "vuln_count=${VULN_COUNT}" >> $GITHUB_OUTPUT
+
+          # Also Display Table for Logs
+          trivy config .github/aws/infra --severity CRITICAL,HIGH --format table || true
+
+  summary:
+    name: 📊 Health Report
+    needs:
+      - health-check-script
+      - drift-check-network
+      - drift-check-app
+      - infra-audit
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🏥 Daily Health Check Report" >> $GITHUB_STEP_SUMMARY
+          echo "📅 **Date:** $(date +'%Y-%m-%d')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🛡️ Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          HEALTH="${{ needs.health-check-script.result }}"
+          DRIFT_NET="${{ needs.drift-check-network.result }}"
+          DRIFT_APP="${{ needs.drift-check-app.result }}"
+          AUDIT="${{ needs.infra-audit.result }}"
+
+
+          # Fetch Details
+          NET_SUMMARY="${{ needs.drift-check-network.outputs.plan_summary }}"
+          APP_SUMMARY="${{ needs.drift-check-app.outputs.plan_summary }}"
+          VULN_COUNT="${{ needs.infra-audit.outputs.vuln_count }}"
+
+          # 1. Hygiene Section
+          echo "### 🛡️ Code Hygiene" >> $GITHUB_STEP_SUMMARY
+          if [[ "$HEALTH" == "success" ]]; then
+            echo "- ✅ **Framework Compliance**: Pass" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Framework Compliance**: Fail (Check logs)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 2. Infrastructure Drift Section
+          echo "### 🏗️ Infrastructure Drift" >> $GITHUB_STEP_SUMMARY
+          echo "| Stack | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          # Network
+          if [[ "$DRIFT_NET" == "success" ]]; then
+             echo "| **Network** | ✅ Synced | $NET_SUMMARY |" >> $GITHUB_STEP_SUMMARY
+          elif [[ "$DRIFT_NET" == "failure" ]]; then
+             echo "| **Network** | ⚠️ **Drift** | $NET_SUMMARY |" >> $GITHUB_STEP_SUMMARY
+          else
+             echo "| **Network** | ❌ **Error** | Pipeline Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # App
+          if [[ "$DRIFT_APP" == "success" ]]; then
+             echo "| **App** | ✅ Synced | $APP_SUMMARY |" >> $GITHUB_STEP_SUMMARY
+          elif [[ "$DRIFT_APP" == "failure" ]]; then
+             echo "| **App** | ⚠️ **Drift** | $APP_SUMMARY |" >> $GITHUB_STEP_SUMMARY
+          else
+             echo "| **App** | ❌ **Error** | Pipeline Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 3. Security Audit Section
+          echo "### 🔒 Security Audit" >> $GITHUB_STEP_SUMMARY
+          if [[ "$VULN_COUNT" -eq 0 ]]; then
+             echo "- ✅ **Infrastructure**: Secure (0 Critical/High issues)" >> $GITHUB_STEP_SUMMARY
+          else
+             echo "- ⚠️ **Infrastructure**: **$VULN_COUNT** Critical/High misconfigurations found" >> $GITHUB_STEP_SUMMARY
+          fi

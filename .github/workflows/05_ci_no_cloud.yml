@@ -1,0 +1,165 @@
+name: 05 ✅ CI (No Cloud)
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: 🧩 Workflow Lint (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1.7.4
+
+  python-tests:
+    name: 🐍 Script Unit Tests (no AWS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.11"
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements-test.txt
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s scripts/tests -p "test_*.py" -v
+
+  taskdef-templates:
+    name: 📦 Task Definition Templates (render + JSON)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Install envsubst
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+      - name: Validate task definitions render to JSON
+        run: |
+          bash scripts/validate-taskdef-templates.sh
+
+  go-unit-tests:
+    name: 🧪 Go Unit Tests (no AWS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff  # v5.6.0
+        with:
+          go-version: "1.21"
+          cache-dependency-path: test/go.sum
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.7.0
+      - name: Download deps
+        working-directory: test
+        run: go mod download
+      - name: Run unit tests (offline)
+        working-directory: test
+        run: |
+          go test -v -run TestLabelModule -timeout 10m
+
+  node-tests:
+    name: 🧪 Node Tests (no AWS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: |
+            packages/api/package-lock.json
+            packages/frontend/package-lock.json
+      - name: Setup & Bootstrap (Lerna)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          npm run setup
+      - name: API - lint, test
+        working-directory: packages/api
+        run: |
+          npm run lint
+          npm test
+      - name: Frontend - lint, test
+        working-directory: packages/frontend
+        run: |
+          echo "Skipping Frontend tests (no script defined)."
+
+  terraform-fmt:
+    name: 🏗 Terraform Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform fmt (infra)
+        run: |
+          terraform fmt -check -recursive .github/aws/infra
+
+  terraform-validate:
+    name: 🏗 Validate (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          # Modules
+          - .github/aws/infra/modules/blaze-service
+          - .github/aws/infra/modules/blaze-security-group
+          - .github/aws/infra/modules/blaze-iam-role
+          - .github/aws/infra/modules/blaze-bucket
+          - .github/aws/infra/modules/blaze-alb
+          - .github/aws/infra/modules/blaze-ingress
+          # Live Stacks
+          - .github/aws/infra/live/dev-network
+          - .github/aws/infra/live/dev-app
+          - .github/aws/infra/live/stage-network
+          - .github/aws/infra/live/stage-app
+          - .github/aws/infra/live/prod-network
+          - .github/aws/infra/live/prod-app
+          - .github/aws/infra/live/third-party/mongodb
+          - .github/aws/infra/live/third-party/elastic
+    defaults:
+      run:
+        working-directory: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+        with:
+          terraform_version: 1.7.0
+      - name: Terraform Init & Validate
+        env:
+          AWS_SKIP_CREDENTIALS_VALIDATION: true
+          AWS_SKIP_REQUESTING_ACCOUNT_ID: true
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_REGION: us-east-1
+        run: |
+          terraform init -backend=false
+          terraform validate
+      - name: Terraform Test (if exists)
+        run: |
+          if [ -d "tests" ] || ls *.tftest.hcl 1> /dev/null 2>&1; then
+            terraform test
+          fi

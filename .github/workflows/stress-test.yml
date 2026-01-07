@@ -1,0 +1,791 @@
+name: "🧪 Stress Test"
+
+# ============================================================================
+# STRESS TEST WORKFLOW - EXECUTION MODES
+# ============================================================================
+#
+# This workflow provides comprehensive infrastructure lifecycle testing with
+# multiple execution modes to suit different use cases.
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: standard (Default)
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Destroy → Provision → Deploy → Verify → KEEP
+#   Use:  Manual testing, debugging, infrastructure inspection
+#   Time: ~30-35 minutes
+#   Notes:
+#     - Infrastructure remains deployed after completion
+#     - Best for manual testing and debugging
+#     - Allows inspection of deployed resources
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: full-circle
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Destroy → Provision → Deploy → Verify → DESTROY
+#   Use:  Automated validation, CI/CD gates, true stress testing
+#   Time: ~35-40 minutes
+#   Notes:
+#     - Complete lifecycle validation
+#     - Only destroys if verification succeeds (safety feature)
+#     - Ideal for automated testing and cost optimization
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: quick-test
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Deploy → Verify (uses existing infrastructure)
+#   Use:  Fast validation after manual infrastructure changes
+#   Time: ~8-10 minutes
+#   Notes:
+#     - Skips destroy and provision phases
+#     - Requires infrastructure to already exist
+#     - Perfect for rapid iteration during development
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: destroy-only
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: DESTROY
+#   Use:  Manual cleanup, cost control
+#   Time: ~6-8 minutes
+#   Notes:
+#     - Removes all infrastructure
+#     - Use for cleanup when no longer needed
+#     - Destroys in proper dependency order
+#
+# ────────────────────────────────────────────────────────────────────────────
+# FEATURE: preserve_host
+# ────────────────────────────────────────────────────────────────────────────
+#   Purpose: Test feature branches without destroying host network
+#   Usage:   Set preserve_host=true when target_type=feature-branch
+#   Effect:  Skips network destroy/provision, only touches app/tunnel
+#   Benefit: Faster feature branch testing (~15-20 min vs ~30-35 min)
+#
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options: ["dev", "stage", "prod"]
+
+      target_type:
+        description: "What to test"
+        required: true
+        default: "host"
+        type: choice
+        options: ["host", "feature-branch"]
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode (see workflow documentation for details)"
+        required: true
+        default: "standard"
+        type: choice
+        options:
+          - "standard" # Full cycle, keep infrastructure (~30-35 min)
+          - "full-circle" # Full cycle + auto cleanup (~35-40 min)
+          - "quick-test" # Test existing infra only (~8-10 min)
+          - "destroy-only" # Cleanup only (~6-8 min)
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network (skip network destroy/provision for feature branch testing)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG
+  # --------------------------------------------------------------------------------
+  config:
+    name: "⚙️ Config"
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ inputs.target_type == 'feature-branch' && 'app' || 'network' }}
+      branch_tag: ${{ inputs.target_type == 'feature-branch' && inputs.branch_tag || '' }}
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # 1.5 PRODUCTION SAFETY CHECK
+  # --------------------------------------------------------------------------------
+  prod-safety-check:
+    if: inputs.environment == 'prod'
+    name: "⚠️ Production Safety Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: prod-stress-test-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Manual Approval Required
+        run: |
+          echo "🚨 PRODUCTION STRESS TEST"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Target: ${{ inputs.target_type }}"
+          echo "Mode: ${{ inputs.mode }}"
+          echo "Include Third-Party: ${{ inputs.include_third_party }}"
+          echo ""
+          echo "This will DESTROY and RECREATE production infrastructure."
+          echo "Ensure all pre-flight checks are complete before approving."
+
+  # --------------------------------------------------------------------------------
+  # 1.6 PRE-FLIGHT CHECKS (Verify What Exists)
+  # --------------------------------------------------------------------------------
+  check-app-exists:
+    name: "🔍 Check App State"
+    needs: config
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets: inherit
+
+  check-tunnel-exists:
+    name: "🔍 Check Tunnel State"
+    needs: config
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets: inherit
+
+  check-network-exists:
+    if: inputs.target_type == 'host'
+    name: "🔍 Check Network State"
+    needs: config
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets: inherit
+
+  check-mongodb-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check MongoDB State"
+    needs: config
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb-${{ inputs.environment }}.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets: inherit
+
+  check-elastic-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check Elastic State"
+    needs: config
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic-${{ inputs.environment }}.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
+  # --------------------------------------------------------------------------------
+  cleanup-services:
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') && needs.check-app-exists.outputs.exists == 'true' }}
+    needs:
+      - config
+      - prod-safety-check
+      - check-app-exists
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      force_delete: true
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # 3. TEARDOWN (Infrastructure)
+  # --------------------------------------------------------------------------------
+  destroy-app:
+    if: inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true'
+    name: "🧨 Destroy App"
+
+    needs: [config, cleanup-services, check-app-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-third-party-mongodb:
+    if: inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true'
+    name: "🧨 Destroy MongoDB"
+    needs: [config, destroy-app, check-mongodb-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/third-party/mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb-${{ inputs.environment }}.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-third-party-elastic:
+    if: inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true'
+    name: "🧨 Destroy Elastic"
+    needs: [config, destroy-app, check-elastic-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/third-party/elastic"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic-${{ inputs.environment }}.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-tunnel:
+    if: inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true'
+    name: "🧨 Destroy Tunnel"
+
+    needs: [config, destroy-app, check-tunnel-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-tunnel" # Assuming standard path
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-network:
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true'
+    name: "🧨 Destroy Network"
+
+    needs: [config, destroy-tunnel, check-network-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # 4. PROVISION (Rebuild)
+  # --------------------------------------------------------------------------------
+  provision-network:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
+    needs:
+      - destroy-network
+      - check-network-exists
+    name: "🏗️ Provision Network"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "network"
+      apply: true
+    secrets: inherit
+
+  provision-tunnel:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
+    needs:
+      - provision-network
+      - destroy-tunnel
+    name: "🏗️ Provision Tunnel"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "tunnel"
+      apply: true
+    secrets: inherit
+
+  provision-app:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-tunnel.result == 'success'
+    needs: provision-tunnel
+    name: "🏗️ Provision App"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "app"
+      apply: true
+      enable_tunnel: ${{ inputs.environment == 'dev' }}
+    secrets: inherit
+
+  provision-third-party-mongodb:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - check-mongodb-exists
+      - destroy-third-party-mongodb
+    name: "🏛️ Provision MongoDB"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-mongodb"
+      apply: true
+    secrets: inherit
+
+  provision-third-party-elastic:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - check-elastic-exists
+      - destroy-third-party-elastic
+    name: "🏛️ Provision Elastic"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-elastic"
+      apply: true
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # 5. DEPLOY & VERIFY
+  # --------------------------------------------------------------------------------
+  deploy-app:
+    if: always() && inputs.mode != 'destroy-only' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - provision-third-party-mongodb
+      - provision-third-party-elastic
+    name: "🚀 Deploy App"
+    uses: ./.github/workflows/02-deploy-app.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_services: "Blaze all"
+    secrets: inherit
+
+  # Aggregator job to signal deployment completion (needed because deploy-app is a reusable workflow)
+  deployment-complete:
+    if: always() && inputs.mode != 'destroy-only'
+    needs: deploy-app
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Signal Deployment Complete
+        run: echo "✅ Deployment phase completed"
+
+  verify:
+    if: always() && inputs.mode != 'destroy-only' && needs.deployment-complete.result == 'success'
+    needs: [config, deployment-complete]
+    name: "⚡ Verify Deployment"
+    timeout-minutes: 10
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.config.outputs.aws_region }}
+
+      - name: Verify ECS Services
+        id: ecs
+        run: |
+          echo "## 🎯 ECS Service Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+
+          # Get all services
+          SERVICES=$(aws ecs list-services --cluster $CLUSTER --region ${{ needs.config.outputs.aws_region }} --output json | jq -r '.serviceArns[]')
+
+          if [ -z "$SERVICES" ]; then
+            echo "❌ No services found in cluster $CLUSTER" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "| Service | Desired | Running | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          ALL_HEALTHY=true
+          for SERVICE_ARN in $SERVICES; do
+            SERVICE_NAME=$(echo $SERVICE_ARN | awk -F'/' '{print $NF}')
+            
+            DETAILS=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE_ARN --region ${{ needs.config.outputs.aws_region }} --query 'services[0].[desiredCount,runningCount,status]' --output text)
+            DESIRED=$(echo $DETAILS | awk '{print $1}')
+            RUNNING=$(echo $DETAILS | awk '{print $2}')
+            STATUS=$(echo $DETAILS | awk '{print $3}')
+            
+            if [ "$DESIRED" -eq "$RUNNING" ] && [ "$STATUS" = "ACTIVE" ]; then
+              echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ✅ Healthy |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ❌ Unhealthy |" >> $GITHUB_STEP_SUMMARY
+              ALL_HEALTHY=false
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_HEALTHY" = "false" ]; then
+            echo "❌ Some services are unhealthy" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Wait for DNS Propagation
+        run: |
+          echo "⏳ Waiting 90 seconds for DNS propagation and service stabilization..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          sleep 90
+
+      - name: Verify URLs (with retries)
+        id: urls
+        run: |
+          echo "## 🌐 URL Health Checks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | Status | Response Time | Attempts |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------------|----------|" >> $GITHUB_STEP_SUMMARY
+
+          ALL_URLS_OK=true
+
+          # Build URL suffix based on target type
+          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+            URL_SUFFIX="${{ inputs.environment }}-${{ inputs.branch_tag }}"
+          else
+            URL_SUFFIX="${{ inputs.environment }}"
+          fi
+
+          # Function to test URL with retries
+          test_url_with_retry() {
+            local url=$1
+            local name=$2
+            local valid_codes=$3  # Space-separated list of valid HTTP codes
+            local max_attempts=3
+            local wait_between=30
+            
+            for attempt in $(seq 1 $max_attempts); do
+              echo "Testing $name (attempt $attempt/$max_attempts)..."
+              
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" -m 15 --retry 2 --retry-delay 5 "$url" || echo "000")
+              TIME=$(curl -o /dev/null -s -w "%{time_total}s" -m 15 --retry 2 --retry-delay 5 "$url" 2>/dev/null || echo "timeout")
+              
+              # Check if status is valid
+              for valid_code in $valid_codes; do
+                if [ "$STATUS" = "$valid_code" ]; then
+                  echo "| $url | ✅ $STATUS | $TIME | $attempt/$max_attempts |" >> $GITHUB_STEP_SUMMARY
+                  return 0
+                fi
+              done
+              
+              # Not valid, try again if we have attempts left
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Got $STATUS, waiting ${wait_between}s before retry..."
+                sleep $wait_between
+              fi
+            done
+            
+            # All attempts failed
+            echo "| $url | ❌ $STATUS | $TIME | $max_attempts/$max_attempts |" >> $GITHUB_STEP_SUMMARY
+            return 1
+          }
+
+          # Test Frontend (accept 200)
+          FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/about-us"
+          if ! test_url_with_retry "$FRONTEND_URL" "Frontend" "200"; then
+            ALL_URLS_OK=false
+          fi
+
+          # Test Admin (accept 200)
+          ADMIN_URL="https://admin-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/"
+          if ! test_url_with_retry "$ADMIN_URL" "Admin" "200"; then
+            ALL_URLS_OK=false
+          fi
+
+          # Test API (accept 200, 400, 405 - GraphQL endpoint returns 400/405 for GET)
+          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/graphql"
+          if ! test_url_with_retry "$API_URL" "API" "200 400 405"; then
+            ALL_URLS_OK=false
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_URLS_OK" = "false" ]; then
+            echo "❌ **Verification Failed** - Not all URLs are responding correctly" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Note**: This may indicate DNS propagation delay, tunnel configuration issues, or service startup delays." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **All Checks Passed** - Deployment is healthy and accessible!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # --------------------------------------------------------------------------------
+  # 6. DEPLOYMENT SUMMARY
+  # --------------------------------------------------------------------------------
+  deployment-summary:
+    if: always() && inputs.mode != 'destroy-only'
+    needs: [config, deployment-complete, verify]
+    name: "📋 Deployment Summary"
+    timeout-minutes: 10
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.config.outputs.aws_region }}
+
+      - name: Generate Comprehensive Deployment Summary
+        run: |
+          echo "# ✅ Stress Test - Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ needs.verify.result == 'success' && '✅ SUCCESS' || '❌ FAILED' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ECS Service Status
+          echo "## 🎯 ECS Service Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+
+          # Get service ARNs first
+          SERVICE_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --region ${{ needs.config.outputs.aws_region }} --query 'serviceArns[*]' --output text)
+
+          echo "| Service | Desired | Running | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ -z "$SERVICE_ARNS" ]; then
+            echo "| - | - | - | ⚠️ No services found |" >> $GITHUB_STEP_SUMMARY
+          else
+            # Get service status
+            SERVICE_STATUS=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services $SERVICE_ARNS \
+              --region ${{ needs.config.outputs.aws_region }} \
+              --query 'services[*].[serviceName,desiredCount,runningCount]' \
+              --output text)
+
+            while IFS=$'\t' read -r service_name desired running; do
+              if [ "$desired" = "$running" ]; then
+                status="✅"
+              else
+                status="❌"
+              fi
+              # Extract short service name (e.g., "blaze-b9-thisisblaze-dev-api" -> "api")
+              short_name=$(echo "$service_name" | sed 's/.*-//')
+              echo "| **$short_name** | $desired | $running | $status |" >> $GITHUB_STEP_SUMMARY
+            done <<< "$SERVICE_STATUS"
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # URL Accessibility
+          echo "## 🌐 URL Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Build URL suffix
+          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+            URL_SUFFIX="${{ inputs.environment }}-${{ inputs.branch_tag }}"
+          else
+            URL_SUFFIX="${{ inputs.environment }}"
+          fi
+
+          FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/about-us"
+          ADMIN_URL="https://admin-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/"
+          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/graphql"
+
+          echo "| URL | Status | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          # Test frontend
+          FRONTEND_STATUS=$(curl -sI "$FRONTEND_URL" | head -1 | awk '{print $2}')
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Test admin
+          ADMIN_STATUS=$(curl -sI "$ADMIN_URL" | head -1 | awk '{print $2}')
+          if [ "$ADMIN_STATUS" = "200" ]; then
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Test API (405 is expected for GET on GraphQL)
+          API_STATUS=$(curl -sI "$API_URL" | head -1 | awk '{print $2}')
+          if [ "$API_STATUS" = "405" ] || [ "$API_STATUS" = "200" ]; then
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Deployment Details
+          echo "## 📦 Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Type**: \`${{ inputs.target_type }}\`" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+            echo "**Branch Tag**: \`${{ inputs.branch_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Feature Validation
+          echo "## 🚀 Feature Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.verify.result }}" = "success" ]; then
+            echo "✅ **Full lifecycle tested**: Destroy → Provision → Deploy → Verify" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All services deployed**: API, Frontend, Admin, Tunnel" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **URL verification working**: All endpoints tested automatically" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Verification failed** - Check the verify job for details" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.mode }}" = "full-circle" ]; then
+            if [ "${{ needs.verify.result }}" = "success" ]; then
+              echo "⚠️ **Note**: This deployment will be destroyed as part of the full-circle stress test." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **Deployment will persist** - Final destroy skipped due to verification failure." >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ inputs.mode }}" = "standard" ]; then
+            echo "✅ **Deployment will persist** - Infrastructure remains active." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ inputs.mode }}" = "quick-test" ]; then
+            echo "✅ **Deployment tested** - No infrastructure changes made." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # --------------------------------------------------------------------------------
+  # 7. FINAL DESTROY (full-circle mode only)
+  # --------------------------------------------------------------------------------
+  cleanup-services-final:
+    if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    needs:
+      - config
+      - deployment-summary
+      - verify
+
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      force_delete: true
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-app-final:
+    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy App"
+
+    needs: [config, cleanup-services-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-tunnel-final:
+    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy Tunnel"
+
+    needs: [config, destroy-app-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-tunnel"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-network-final:
+    if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy Network"
+
+    needs: [config, destroy-tunnel-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ needs.config.outputs.platform }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
