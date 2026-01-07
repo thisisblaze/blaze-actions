@@ -92,8 +92,6 @@ on:
         default: "0"
         required: false
     secrets:
-      AWS_ROLE_ARN:
-        required: false
       GH_PAT:
         required: false
       AWS_ACCESS_KEY_ID:
