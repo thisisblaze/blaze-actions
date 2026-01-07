@@ -119,7 +119,7 @@ jobs:
       platform: ${{ steps.config.outputs.platform }}
       domain_root: ${{ steps.config.outputs.domain_root }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Load AWS Region from Config
         id: load-region
@@ -133,7 +133,7 @@ jobs:
           echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -190,7 +190,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
@@ -241,7 +241,8 @@ jobs:
       desired_count: ${{ inputs.desired_count }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   pre-cleanup:
     name: Pre-Cleanup
@@ -253,7 +254,10 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   destroy-resources:
     name: Destroy
@@ -278,7 +282,8 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   sync-cloudflare-config:
     name: Sync Cloudflare Config
@@ -287,7 +292,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Parse blaze-env.json
         id: parse
@@ -398,7 +403,8 @@ jobs:
       service_name: "all"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
@@ -427,7 +433,8 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   nuke-destroy-tunnel:
     name: 🚇 Nuke 3/5 - Tunnel
@@ -451,7 +458,8 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   #  nuke-destroy-data-mongo:
   #    name: 💾 Nuke 4a/5 - Mongo
@@ -516,7 +524,8 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   summary:
     name: 📝 Ops Summary
