@@ -93,7 +93,7 @@ on:
         required: false
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
       GH_PAT:
         required: false
       AWS_ACCESS_KEY_ID:
