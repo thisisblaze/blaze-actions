@@ -274,6 +274,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'manage-environment'
     uses: ./.github/workflows/reusable-ecs-service-management.yml
+    secrets: inherit
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -289,6 +290,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'destroy-resources'
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets: inherit
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -303,6 +305,7 @@ jobs:
     needs: [configuration, pre-cleanup]
     if: inputs.action == 'destroy-resources'
     uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -445,6 +448,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-ecs-service-management.yml
+    secrets: inherit
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: "stop"
@@ -455,7 +459,7 @@ jobs:
     name: 🗑️ Nuke 2/5 - App Stack
     needs: [configuration, nuke-stop-services]
     if: inputs.action == 'nuke-environment'
-    uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit    uses: ./.github/workflows/reusable-terraform.yml
     with:
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
       tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-app"
@@ -483,7 +487,7 @@ jobs:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-destroy-app]
     if: inputs.action == 'nuke-environment'
-    uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit    uses: ./.github/workflows/reusable-terraform.yml
     with:
       tf_dir: ".github/aws/infra/live/third-party/cloudflare"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -551,7 +555,7 @@ jobs:
     # Wait for Tunnel (and implicit App) instead of Data
     needs: [configuration, nuke-destroy-tunnel]
     if: inputs.action == 'nuke-environment'
-    uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit    uses: ./.github/workflows/reusable-terraform.yml
     with:
       tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
