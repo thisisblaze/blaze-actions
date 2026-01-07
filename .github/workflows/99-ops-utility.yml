@@ -295,7 +295,6 @@ jobs:
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -323,7 +322,6 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -454,7 +452,34 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # Implicitly added or empty? Use empty block or remove secrets if role was only one?
+      # Wait, nuke-stop-services uses reusable-ecs-service-management.
+      # It takes role (which runs env lookup).
+      # Does it take OTHER secrets?
+      # reusable-ecs-service-management takes AWS_ACCESS_KEY_ID (optional)?
+      # Checked file view in Step 2562.
+      # inputs: ...
+      # secrets: AWS_ACCESS_KEY_ID (required: false)
+      # It does NOT take any other secrets.
+      # So if I remove AWS_ROLE_ARN, secrets block is empty?
+      # "secrets: {}" or just remove "secrets:"?
+      # Or pass ACCESS_KEY_ID if available?
+      # The caller block:
+      # secrets:
+      #   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+      # If I replace with nothing (just indentation?), YAML might be invalid if `secrets:` key is left hanging.
+      # I should remove the whole `secrets:` block if it's empty.
+
+      # Let's check `nuke-destroy-app`. It uses reusable-terraform.
+      # secrets: AWS_ROLE_ARN.
+      # reusable-terraform takes many secrets (GH_PAT, CLOUDFLARE, etc).
+      # But nuke-destroy-app block ONLY has AWS_ROLE_ARN listed in 99-ops-utility.
+      # Wait. Step 2582 View Line 484-485.
+      # secrets:
+      #   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+      # If I remove it, I should remove `secrets:` key too.
 
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
@@ -509,7 +534,6 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
