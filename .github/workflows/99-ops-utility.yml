@@ -302,6 +302,9 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   destroy-resources:
     name: Destroy
