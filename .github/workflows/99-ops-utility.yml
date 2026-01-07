@@ -295,6 +295,7 @@ jobs:
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources'
+    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     secrets: inherit
     with:
@@ -307,7 +308,9 @@ jobs:
     name: Destroy
     needs: [configuration, pre-cleanup]
     if: inputs.action == 'destroy-resources'
+    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-terraform.yml
+    secrets: inherit
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -326,17 +329,6 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-      EC_API_KEY: ${{ secrets.EC_API_KEY }}
-      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
   sync-cloudflare-config:
     name: Sync Cloudflare Config
