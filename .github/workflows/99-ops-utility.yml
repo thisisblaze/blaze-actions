@@ -284,6 +284,7 @@ jobs:
         branch_name=${{ inputs.branch_tag }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   sync-cloudflare-config:
     name: Sync Cloudflare Config
