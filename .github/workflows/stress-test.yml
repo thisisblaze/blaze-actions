@@ -106,6 +106,43 @@ on:
         default: false
         type: boolean
 
+  # Enable calling from other repositories
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+
 permissions:
   id-token: write
   contents: read
@@ -427,10 +464,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region }}
@@ -576,7 +613,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region }}
