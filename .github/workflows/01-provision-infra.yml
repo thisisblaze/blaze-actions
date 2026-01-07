@@ -97,6 +97,9 @@ on:
       AWS_ROLE_ARN:
         required: true
         description: "AWS OIDC Role ARN"
+      GH_PAT:
+        required: false
+        description: "Personal Access Token for Cross-Repo Access"
 
 permissions:
   id-token: write
@@ -196,6 +199,7 @@ jobs:
 
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration

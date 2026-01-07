@@ -59,6 +59,8 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: true
+      GH_PAT:
+        required: false
       CLOUDFLARE_API_TOKEN:
         required: false
       CLOUDFLARE_ZONE_ID:

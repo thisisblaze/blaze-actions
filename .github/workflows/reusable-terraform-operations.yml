@@ -58,6 +58,11 @@ on:
       domain_root:
         required: true
         type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      GH_PAT:
+        required: false
     outputs:
       apply_status:
         value: ${{ jobs.terraform.outputs.status }}

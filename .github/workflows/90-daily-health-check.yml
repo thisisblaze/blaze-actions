@@ -141,6 +141,7 @@ jobs:
         use_ecr_images=true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # ------------------------------------------------------------------
   # JOB 4: INFRA SECURITY AUDIT (Trivy IAC)

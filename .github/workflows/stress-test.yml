@@ -288,6 +288,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-third-party-mongodb:
     if: inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true'
@@ -328,6 +329,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
     if: inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true'
@@ -349,6 +351,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true'
@@ -370,6 +373,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # --------------------------------------------------------------------------------
   # 4. PROVISION (Rebuild)
@@ -388,6 +392,7 @@ jobs:
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-tunnel:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
@@ -403,6 +408,7 @@ jobs:
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-app:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-tunnel.result == 'success'
@@ -417,6 +423,7 @@ jobs:
       enable_tunnel: ${{ inputs.environment == 'dev' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-third-party-mongodb:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
@@ -432,6 +439,7 @@ jobs:
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-third-party-elastic:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
@@ -447,6 +455,7 @@ jobs:
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # --------------------------------------------------------------------------------
   # 5. DEPLOY & VERIFY
