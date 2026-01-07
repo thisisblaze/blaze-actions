@@ -115,6 +115,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
+      - name: Configure Git for Private Modules
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global url."https://oauth2:${TOKEN}@github.com".insteadOf "https://github.com"
+
       - name: Terraform Init
         id: init
         run: |
