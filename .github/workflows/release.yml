@@ -137,13 +137,7 @@ $COMMITS
           
           echo "Created and pushed tag: $NEXT"
 
-      - name: Trigger Mirror Sync
-        if: inputs.dry_run == false
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Triggering mirror sync workflow..."
-          gh workflow run sync-to-mirror.yml --ref dev || echo "Mirror sync will trigger automatically"
+
 
       - name: Create GitHub Release
         if: inputs.dry_run == false
