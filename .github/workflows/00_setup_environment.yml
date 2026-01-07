@@ -103,7 +103,7 @@ jobs:
           echo "🚀 Bootstrapping Infrastructure for ${{ needs.calculate-config.outputs.stage_key }}"
 
           # 2. Init (Backend is local for preinit)
-          git config --global url."https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
+          git config --global url."https://oauth2:${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
           terraform init
 
           # 3. Import Logic (Check if exists via AWS CLI - tolerated for discovery)
