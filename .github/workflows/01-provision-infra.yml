@@ -93,6 +93,10 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+        description: "AWS OIDC Role ARN"
 
 permissions:
   id-token: write
@@ -123,10 +127,10 @@ jobs:
       beta: ${{ steps.config.outputs.beta }}
       cluster_tier: ${{ steps.config.outputs.cluster_tier }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: "eu-west-1" # Hardcoded default for config calculation or pass as input? Default to eu-west-1 is safe for ID check.
@@ -200,7 +204,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Sync Connection String Secret
         env:
