@@ -112,10 +112,10 @@ jobs:
     environment: ${{ inputs.config_environment || inputs.environment }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Blaze (Credentials)
-        uses: ./.github/actions/setup-blaze
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
@@ -123,7 +123,7 @@ jobs:
           terraform: "false"
 
       - name: Deploy Service
-        uses: ./.github/actions/deploy-ecs-service
+        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@dev
         with:
           service_name: ${{ inputs.service_name }}
           environment: ${{ inputs.environment }}
