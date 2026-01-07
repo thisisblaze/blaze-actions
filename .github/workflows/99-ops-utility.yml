@@ -91,8 +91,12 @@ on:
         type: string
         default: "0"
         required: false
+    # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
+    # Currently explicitly defining secrets to ensure workflow_call compatibility
     secrets:
       GH_PAT:
+        required: false
+      AWS_ROLE_ARN:
         required: false
       AWS_ACCESS_KEY_ID:
         required: false
