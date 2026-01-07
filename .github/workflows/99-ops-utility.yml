@@ -296,15 +296,12 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'destroy-resources'
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets: inherit
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   destroy-resources:
     name: Destroy
