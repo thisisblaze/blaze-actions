@@ -23,8 +23,8 @@ on:
         type: string
         description: "GitHub Environment"
     secrets:
-      AWS_ROLE_ARN:
-        required: true
+      AWS_ACCESS_KEY_ID:
+        required: false
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
