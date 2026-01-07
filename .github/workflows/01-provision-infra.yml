@@ -90,25 +90,6 @@ on:
         type: boolean
         default: false
 
-    secrets:
-      AWS_ROLE_ARN:
-        required: true
-      GH_PAT:
-        required: false
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
-      MONGODB_ATLAS_PUBLIC_KEY:
-        required: false
-      MONGODB_ATLAS_PRIVATE_KEY:
-        required: false
-      MONGODB_ATLAS_PROJECT_ID:
-        required: false
-      MONGODB_ATLAS_ORG_ID:
-        required: false
       enable_tunnel:
         required: false
         type: boolean
