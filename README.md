@@ -1,137 +1,340 @@
-# Blaze Actions
+# Blaze GitHub Actions
 
-Reusable GitHub Actions workflows and composite actions for Blaze deployments - CI/CD Hub.
+**Reusable GitHub Actions workflows and composite actions for CI/CD**
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Version](https://img.shields.io/badge/version-v1.0.0-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+
+---
 
 ## Overview
 
-Centralized CI/CD workflows and actions used across all Blaze projects. All workflows support `workflow_call` for reusability.
+Centralized GitHub Actions workflows and composite actions for infrastructure provisioning, application deployment, and operations.
 
-## Workflows Catalog
+**Architecture**: Hub & Spoke  
+**Pattern**: DRY (Don't Repeat Yourself)  
+**Versioning**: Semantic Versioning  
+**Mirror**: Auto-synced to `thebyte9/blaze-actions`
+
+---
+
+## Quick Start
+
+### Using Workflows (Same Org Only)
+
+**From same organization** (`thebyte9`):
+
+```yaml
+# In thebyte9/blaze-template-deploy
+jobs:
+  provision:
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v1
+    with:
+      environment: dev
+    secrets: inherit
+```
+
+### Using Actions (Any Org)
+
+**From any organization**:
+
+```yaml
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: thebyte9/blaze-actions/.github/actions/setup-blaze@v1
+        with:
+          project_key: myproject
+```
+
+---
+
+## Mirror Architecture
+
+### Why Mirror?
+
+GitHub only allows calling reusable workflows from:
+
+- ✅ Public repos (anyone
+  )
+- ✅ Same repo
+- ✅ **Same organization** (only with GitHub Enterprise)
+
+Since we're **private + non-Enterprise**, we use a mirror:
+
+```
+thisisblaze/blaze-actions (source of truth)
+    ↓ auto-sync (< 15 seconds)
+thebyte9/blaze-actions (consumable mirror)
+    ↑ consumed by
+thebyte9/blaze-template-deploy
+```
+
+See [MIRROR_SYNC.md](MIRROR_SYNC.md) for setup details.
+
+---
+
+## Workflow Catalog (24 workflows)
 
 ### Main Workflows
 
-| Workflow | Purpose | Inputs |
-|:---------|:--------|:-------|
-| `00_setup_environment.yml` | Environment setup and validation | environment |
-| `01-provision-infra.yml` | Terraform infrastructure provisioning | environment, component |
-| `02-deploy-app.yml` | Application deployment to ECS | environment, service |
-| `stress-test.yml` | Full environment lifecycle test | - |
+**00_setup_environment.yml** - Initial project setup
+
+- Sets up OIDC, state backend, secrets
+
+**01-provision-infra.yml** - Infrastructure provisioning
+
+- Terraform plan/apply for network and app stacks
+
+**02-deploy-app.yml** - Application deployment
+
+- Docker build, push, ECS deploy
+
+**stress-test.yml** - Full environment testing
+
+- Complete lifecycle: provision → deploy → verify → cleanup
 
 ### Operations Workflows
 
-| Workflow | Purpose |
-|:---------|:--------|
-| `99-ops-utility.yml` | Multi-purpose ops tool (backup, restore, etc.) |
-| `90-daily-health-check.yml` | Automated health monitoring |
-| `sync-secrets-from-ssm.yml` | Sync secrets from AWS SSM to GitHub |
-| `smart-dashboard.yml` | Infrastructure dashboard generation |
+**99-ops-utility.yml** - Multi-purpose operations
 
-### Testing & Validation
+- View config, check stacks, manual interventions
 
-| Workflow | Purpose |
-|:---------|:--------|
-| `05_ci_no_cloud.yml` | CI tests (no cloud resources) |
-| `10_security_scan.yml` | Security scanning (Semgrep, Gitleaks) |
-| `terraform-tests.yml` | Terraform module tests |
+**90-daily-health-check.yml** - Automated monitoring
+
+- Daily health checks, alerts
+
+**sync-secrets-from-ssm.yml** - Secret synchronization
+
+- Sync AWS SSM → GitHub Secrets
+
+**smart-dashboard.yml** - Status dashboard
+
+- Real-time infrastructure status
+
+### Testing Workflows
+
+**05_ci_no_cloud.yml** - Local validation
+
+- Terraform fmt, validate, security scans
+
+**10_security_scan.yml** - Security scanning
+
+- Trivy, Terrascan, tfsec
+
+**terraform-tests.yml** - Terraform module tests
+
+- Automated module testing
 
 ### Utility Workflows
 
-| Workflow | Purpose |
-|:---------|:--------|
-| `debug-lock.yml` | Terraform state lock debugging |
-| `force-unlock.yml` | Force unlock Terraform state |
-| `fix-state-integrity.yml` | Fix Terraform state issues |
-| `fix-cname-conflict.yml` | Resolve CloudFront CNAME conflicts |
-| `nuke-cloudfront.yml` | Delete CloudFront distributions |
-| `check-stack-exists.yml` | Check if Terraform stack exists |
+**debug-lock.yml** - State lock debugging
+**force-unlock.yml** - Force unlock state
+**fix-state-integrity.yml** - State integrity repair
+**fix-cname-conflict.yml** - CNAME conflict resolution
+**nuke-cloudfront.yml** - CloudFront cleanup
+**check-stack-exists.yml** - Stack existence check
 
-### Reusable Workflows
+### Reusable Workflows (7)
 
-| Workflow | Purpose |
-|:---------|:--------|
-| `reusable-calculate-config.yml` | Load configuration from vars/*.json |
-| `reusable-terraform.yml` | Terraform init/plan/apply |
-| `reusable-terraform-operations.yml` | Advanced Terraform operations |
-| `reusable-docker-build.yml` | Build and push Docker images |
-| `reusable-ecs-deploy.yml` | Deploy to ECS |
-| `reusable-ecs-service-management.yml` | ECS service operations |
-| `reusable-pre-destroy-cleanup.yml` | Pre-destroy cleanup (scale down, etc.) |
+**reusable-calculate-config.yml** - Config loading
+**reusable-terraform.yml** - Terraform operations
+**reusable-docker-build.yml** - Docker build/push
+**reusable-ecs-deploy.yml** - ECS deployment
+**reusable-ecs-service-management.yml** - ECS service ops
+**reusable-pre-destroy-cleanup.yml** - Pre-destroy cleanup
+**reusable-terraform-operations.yml** - Terraform ops wrapper
 
-## Composite Actions
+---
 
-| Action | Purpose |
-|:-------|:--------|
-| `calculate-config` | Load and merge configuration files |
-| `deploy-ecs-service` | Deploy ECS service with task definition |
-| `setup-terraform` | Configure Terraform with backend |
-| `aws-credentials` | Configure AWS credentials via OIDC |
-| `docker-buildx-setup` | Setup Docker Buildx for multi-arch |
+## Composite Actions (5 actions)
 
-## Scripts
+### calculate-config
 
-| Script | Purpose |
-|:-------|:--------|
-| `health-check.sh` | Service health verification |
-
-## Usage
-
-### Calling a Reusable Workflow
+Loads configuration from `vars/*.json` files
 
 ```yaml
+- uses: thebyte9/blaze-actions/.github/actions/calculate-config@v1
+  with:
+    environment: dev
+```
+
+### deploy-ecs-service
+
+Deploys application to ECS
+
+```yaml
+- uses: thebyte9/blaze-actions/.github/actions/deploy-ecs-service@v1
+  with:
+    cluster_name: my-cluster
+    service_name: api
+    image_tag: v1.0.0
+```
+
+### docker-promote
+
+Promotes Docker images between environments
+
+```yaml
+- uses: thebyte9/blaze-actions/.github/actions/docker-promote@v1
+  with:
+    source_tag: dev-123
+    target_tag: stage-123
+```
+
+### resource-importer
+
+Imports existing AWS resources to Terraform
+
+```yaml
+- uses: thebyte9/blaze-actions/.github/actions/resource-importer@v1
+  with:
+    resource_type: aws_s3_bucket
+    resource_id: my-bucket
+```
+
+### setup-blaze
+
+Initial project setup and configuration
+
+```yaml
+- uses: thebyte9/blaze-actions/.github/actions/setup-blaze@v1
+  with:
+    project_key: myproject
+```
+
+---
+
+## Usage Examples
+
+### Example 1: Call Reusable Workflow
+
+```yaml
+# In your repo (.github/workflows/deploy.yml)
 name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    with:
+      environment: prod
+      project_key: myproject
+    secrets: inherit
+```
+
+### Example 2: Use Composite Action
+
+```yaml
+# In your repo (.github/workflows/build.yml)
+name: Build Application
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: thebyte9/blaze-actions/.github/actions/calculate-config@v1
+        with:
+          environment: dev
+
+      - name: Build
+        run: npm run build
+```
+
+### Example 3: Chain Multiple Workflows
+
+```yaml
+jobs:
+  provision:
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v1
     with:
-      environment: prod
-      service: frontend
+      environment: dev
+    secrets: inherit
+
+  deploy:
+    needs: provision
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    with:
+      environment: dev
     secrets: inherit
 ```
 
-### Using a Composite Action
+---
 
-```yaml
-steps:
-  - uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1
-    with:
-      project: myproject
-      environment: prod
-```
+## Features
+
+✅ **Centralized**: One place for all workflows/actions  
+✅ **Reusable**: Call from any project in same org  
+✅ **Versioned**: Pin to specific versions  
+✅ **Auto-Sync**: Mirror updates automatically  
+✅ **OIDC**: No long-lived AWS credentials  
+✅ **SHA-Pinned**: All actions pinned to commit SHAs  
+✅ **Timeout Protected**: All workflows have limits
+
+---
+
+## Documentation
+
+- [Workflow Catalog](docs/WORKFLOW_CATALOG.md) - All 24 workflows documented
+- [Reusable Workflows Guide](docs/REUSABLE_WORKFLOWS.md) - How to use
+- [Mirror Setup](MIRROR_SYNC.md) - Auto-sync configuration
+- [Contributing Guide](CONTRIBUTING.md) - How to add workflows
+- [CHANGELOG](CHANGELOG.md) - Version history
+
+---
+
+## Mirror Sync
+
+See [MIRROR_SYNC.md](MIRROR_SYNC.md) for details on the auto-sync architecture.
+
+**How it works**:
+
+1. Push to `thisisblaze/blaze-actions`
+2. GitHub Action detects push
+3. Auto-syncs to `thebyte9/blaze-actions` via SSH
+4. Takes < 15 seconds
+
+**Branches synced**: dev, main  
+**Tags synced**: All (v\*)
+
+---
 
 ## Versioning
 
-**Always pin to a specific version**:
-```yaml
-uses: thisisblaze/blaze-actions/.github/workflows/deploy-app.yml@v1.0.0  # ✅ Immutable
-uses: thisisblaze/blaze-actions/.github/workflows/deploy-app.yml@v1      # ❌ Mutable
-```
+**Current Version**: `v1.0.0`
 
-## Development
+Follow semantic versioning:
 
-### Testing Workflows Locally
+- **Major**: Breaking changes to workflow inputs/outputs
+- **Minor**: New workflows/actions (backwards-compatible)
+- **Patch**: Bug fixes, documentation
 
-```bash
-# Use act for local testing
-act -j deploy -s AWS_ROLE_ARN=arn:aws:iam::...
-```
+---
 
-### Adding a New Workflow
+## Support
 
-1. Create workflow file in `.github/workflows/`
-2. Add `workflow_call` trigger
-3. Document inputs/outputs
-4. Update this README
-5. Submit PR
+**Issues**: [GitHub Issues](https://github.com/thisisblaze/blaze-actions/issues)  
+**Organization**: thisisblaze (source) / thebyte9 (mirror)  
+**License**: Apache 2.0
 
-## License
+---
 
-Apache License 2.0
+## Quick Reference
 
-## Auto-Sync Test
+| Workflow               | Purpose                  | Inputs                 |
+| :--------------------- | :----------------------- | :--------------------- |
+| **01-provision-infra** | Provision infrastructure | environment, stack     |
+| **02-deploy-app**      | Deploy application       | environment, image_tag |
+| **stress-test**        | Full environment test    | environment, mode      |
+| **99-ops-utility**     | Operations utility       | operation, args        |
 
-This line added on 2026-01-07T12:14:01Z to test auto-sync to thebyte9/blaze-actions mirror.
+See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.
