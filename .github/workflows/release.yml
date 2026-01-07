@@ -1,0 +1,182 @@
+name: "🚀 Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: "Dry run (don't create release)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "📦 Create Release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0  # Need full history for changelog
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get Current Version
+        id: current_version
+        run: |
+          # Get latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          echo "current=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Current version: $LATEST_TAG"
+
+      - name: Calculate Next Version
+        id: next_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.current }}"
+          # Remove 'v' prefix
+          CURRENT_NUM="${CURRENT#v}"
+          
+          # Split into major.minor.patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_NUM"
+          
+          case "${{ inputs.version_type }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEXT_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "version_num=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          CURRENT="${{ steps.current_version.outputs.current }}"
+          NEXT="${{ steps.next_version.outputs.version }}"
+          
+          echo "Generating changelog from $CURRENT to HEAD..."
+          
+          # Get commits since last tag
+          COMMITS=$(git log ${CURRENT}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          
+          if [ -z "$COMMITS" ]; then
+            echo "No commits since last release"
+            COMMITS="- Maintenance release"
+          fi
+          
+          # Create changelog entry
+          CHANGELOG="## $NEXT ($(date +%Y-%m-%d))
+
+$COMMITS
+"
+          
+          # Save to file for later use
+          echo "$CHANGELOG" > /tmp/changelog.md
+          echo "Generated changelog"
+
+      - name: Update CHANGELOG.md
+        if: inputs.dry_run == false
+        run: |
+          CHANGELOG_ENTRY=$(cat /tmp/changelog.md)
+          
+          # Prepend to CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            echo -e "$CHANGELOG_ENTRY\n$(cat CHANGELOG.md)" > CHANGELOG.md
+          else
+            echo "$CHANGELOG_ENTRY" > CHANGELOG.md
+          fi
+          
+          echo "Updated CHANGELOG.md"
+
+      - name: Commit Version Changes
+        if: inputs.dry_run == false
+        run: |
+          NEXT="${{ steps.next_version.outputs.version }}"
+          
+          git add CHANGELOG.md
+          git commit -m "chore: release $NEXT
+
+[skip ci]" || echo "No changes to commit"
+          
+          git push origin dev
+
+      - name: Create Git Tag
+        if: inputs.dry_run == false
+        run: |
+          NEXT="${{ steps.next_version.outputs.version }}"
+          
+          git tag -a "$NEXT" -m "Release $NEXT"
+          git push origin "$NEXT"
+          
+          echo "Created and pushed tag: $NEXT"
+
+      - name: Trigger Mirror Sync
+        if: inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering mirror sync workflow..."
+          gh workflow run sync-to-mirror.yml --ref dev || echo "Mirror sync will trigger automatically"
+
+      - name: Create GitHub Release
+        if: inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEXT="${{ steps.next_version.outputs.version }}"
+          CHANGELOG=$(cat /tmp/changelog.md)
+          
+          gh release create "$NEXT" \
+            --title "Release $NEXT" \
+            --notes "$CHANGELOG" \
+            --target dev
+          
+          echo "Created GitHub release: $NEXT"
+
+      - name: Dry Run Summary
+        if: inputs.dry_run == true
+        run: |
+          echo "🔍 DRY RUN - No changes were made"
+          echo ""
+          echo "Next version would be: ${{ steps.next_version.outputs.version }}"
+          echo ""
+          echo "Changelog preview:"
+          cat /tmp/changelog.md
+
+      - name: Release Summary
+        if: inputs.dry_run == false
+        run: |
+          echo "✅ Release ${{ steps.next_version.outputs.version }} created successfully!"
+          echo ""
+          echo "Changes:"
+          echo "- Updated CHANGELOG.md"
+          echo "- Created git tag"
+          echo "- Triggered mirror sync"
+          echo "- Created GitHub release"
