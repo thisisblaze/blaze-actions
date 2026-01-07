@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Blaze
-        uses: ./.github/actions/setup-blaze
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           terraform: "true"
           skip-aws-setup: "true"
@@ -66,7 +66,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: ./.github/actions/calculate-config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
         with:
           environment: "${{ inputs.environment || 'DEV' }}" # Default to DEV for cron
           terraform_stack: "app" # We just need general config

@@ -105,7 +105,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Blaze
-        uses: ./.github/actions/setup-blaze
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}

@@ -78,7 +78,7 @@ jobs:
           terraform_version: "1.9.0"
 
       - name: Setup Blaze Infra
-        uses: ./.github/actions/setup-blaze
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
