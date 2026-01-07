@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Blaze
         uses: ./.github/actions/setup-blaze
@@ -33,7 +33,7 @@ jobs:
 
       # We need Node for the "Code Hygiene" checks (grep .ts files) and maybe npm tests later
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
 
@@ -62,7 +62,7 @@ jobs:
       aws_region: ${{ steps.config.outputs.aws_region }}
       domain_root: ${{ steps.config.outputs.domain_root }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Calculate Configuration
         id: config
@@ -105,7 +105,8 @@ jobs:
         is_beta=false
         nat_strategy="NONE"
 
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   drift-check-app:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
@@ -138,7 +139,8 @@ jobs:
         elasticsearch_image_tag="latest"
         kibana_image_tag="latest"
         use_ecr_images=true
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   # ------------------------------------------------------------------
   # JOB 4: INFRA SECURITY AUDIT (Trivy IAC)
@@ -150,7 +152,7 @@ jobs:
       vuln_count: ${{ steps.trivy.outputs.vuln_count }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run Trivy (IAC Mode)
         id: trivy
