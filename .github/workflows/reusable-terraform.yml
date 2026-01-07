@@ -125,6 +125,12 @@ jobs:
             echo "⚠️ GH_PAT is NOT DETECTED. Falling back to GITHUB_TOKEN."
           fi
 
+          if [ -n "${{ secrets.EC_API_KEY }}" ]; then
+             echo "✅ EC_API_KEY is DETECTED."
+          else
+             echo "❌ EC_API_KEY is NOT DETECTED (Empty)."
+          fi
+
       - name: Configure Git for Private Modules
         env:
           TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
