@@ -128,6 +128,8 @@ jobs:
              echo "⚠️  Both GH_PAT and GITHUB_TOKEN are empty. Git ops may fail."
           else
              echo "✅ Token is present (length: ${#TOKEN})"
+             # Remove conflicting credentials from actions/checkout
+             git config --global --unset-all http.https://github.com/.extraheader || true
              git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
           fi
 
