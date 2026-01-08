@@ -132,10 +132,9 @@ jobs:
              # 1. Unset existing headers (from actions/checkout)
              git config --global --unset-all http.https://github.com/.extraheader || true
              
-             # 2. Configure Basic Auth Header (more robust than URL rewrite)
-             # Use x-access-token as username for PATs
-             AUTH_HEADER="AUTHORIZATION: basic $(echo -n "x-access-token:${TOKEN}" | base64)"
-             git config --global http.https://github.com/.extraheader "$AUTH_HEADER"
+             # 2. Configure Credential Helper (most robust)
+             git config --global credential.helper store
+             echo "https://x-access-token:${TOKEN}@github.com" > ~/.git-credentials
           fi
 
       - name: Apply Preinit
