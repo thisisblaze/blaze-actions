@@ -43,6 +43,14 @@ jobs:
           terraform: "true"
           skip-aws-setup: "true"
 
+      - name: Configure Git for Private Modules
+        env:
+          TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
+          fi
+
       # We need Node for the "Code Hygiene" checks (grep .ts files) and maybe npm tests later
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
