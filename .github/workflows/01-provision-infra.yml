@@ -48,10 +48,6 @@ on:
         description: "Pause MongoDB Cluster? (MongoDB only)"
         type: boolean
         default: false
-      destroy:
-        description: "Destroy Infrastructure? (DANGER)"
-        type: boolean
-        default: false
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -82,10 +78,6 @@ on:
         type: string
         default: "1g"
       is_paused:
-        required: false
-        type: boolean
-        default: false
-      destroy:
         required: false
         type: boolean
         default: false
@@ -192,7 +184,6 @@ jobs:
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: "1.9.0"
       apply: ${{ inputs.apply }}
-      destroy: ${{ inputs.destroy }}
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
