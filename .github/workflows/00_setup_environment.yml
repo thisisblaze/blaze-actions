@@ -128,9 +128,14 @@ jobs:
              echo "⚠️  Both GH_PAT and GITHUB_TOKEN are empty. Git ops may fail."
           else
              echo "✅ Token is present (length: ${#TOKEN})"
-             # Remove conflicting credentials from actions/checkout
+             
+             # 1. Unset existing headers (from actions/checkout)
              git config --global --unset-all http.https://github.com/.extraheader || true
-             git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
+             
+             # 2. Configure Basic Auth Header (more robust than URL rewrite)
+             # Use x-access-token as username for PATs
+             AUTH_HEADER="AUTHORIZATION: basic $(echo -n "x-access-token:${TOKEN}" | base64)"
+             git config --global http.https://github.com/.extraheader "$AUTH_HEADER"
           fi
 
       - name: Apply Preinit
