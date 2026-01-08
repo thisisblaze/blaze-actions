@@ -140,6 +140,42 @@ jobs:
             fi
           fi
 
+  debug-context:
+    name: 🕵️ Debug Context
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 5
+    steps:
+      - name: Check Secrets Presence
+        run: |
+          echo "🔍 Checking Secret Availability..."
+
+          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
+            echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
+          else
+            echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
+          fi
+
+          if [[ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ]]; then
+            echo "✅ AWS_ACCESS_KEY_ID is SET"
+          else
+            echo "ℹ️ AWS_ACCESS_KEY_ID is NOT SET (OIDC might be used)"
+          fi
+
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+             echo "✅ CLOUDFLARE_API_TOKEN is SET"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
+          fi
+
+          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
+             echo "✅ GH_PAT is SET"
+          else
+             echo "ℹ️ GH_PAT is MISSING (This might be expected)"
+          fi
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
   configuration:
     name: Configuration
     needs: [validate]
