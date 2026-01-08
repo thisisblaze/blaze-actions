@@ -120,6 +120,7 @@ jobs:
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
           terraform: "false" # Already set up above
 
+      # CRITICAL: Configure git AFTER setup-blaze to override any AWS credential git config
       - name: Configure Git for Private Modules
         env:
           TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
