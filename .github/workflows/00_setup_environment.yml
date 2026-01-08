@@ -44,6 +44,39 @@ on:
         default: "latest"
         type: string
 
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      task:
+        required: false
+        type: string
+        default: "🟢 Bootstrap All (Recommended)"
+      images:
+        required: false
+        type: string
+        default: "all"
+      mongo_tag:
+        required: false
+        type: string
+        default: "latest"
+      elasticsearch_tag:
+        required: false
+        type: string
+        default: "9.2.2"
+      kibana_tag:
+        required: false
+        type: string
+        default: "9.2.2"
+      tunnel_tag:
+        required: false
+        type: string
+        default: "latest"
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+
 permissions:
   id-token: write
   contents: read
