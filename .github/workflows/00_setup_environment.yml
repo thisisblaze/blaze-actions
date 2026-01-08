@@ -76,6 +76,8 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: false
+      GH_PAT:
+        required: false
 
 permissions:
   id-token: write
@@ -125,6 +127,7 @@ jobs:
           TF_VAR_aws_region: ${{ needs.calculate-config.outputs.aws_region }}
           TF_VAR_platform: ${{ needs.calculate-config.outputs.platform }}
           TF_VAR_stage: ${{ needs.calculate-config.outputs.stage_key }}
+          TOKEN: ${{ secrets.GH_PAT }}
         working-directory: .github/aws/infra/preinit
         run: |
           set -e
