@@ -87,6 +87,9 @@ on:
         type: boolean
         default: false
     secrets:
+      AWS_ROLE_ARN:
+        required: false
+        description: "AWS IAM Role ARN for OIDC authentication"
       GH_PAT:
         required: false
         description: "Personal Access Token for Cross-Repo Access"
