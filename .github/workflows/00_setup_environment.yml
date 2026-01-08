@@ -124,18 +124,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          if [ -z "$TOKEN" ]; then
-             echo "⚠️  Both GH_PAT and GITHUB_TOKEN are empty. Git ops may fail."
-          else
-             echo "✅ Token is present (length: ${#TOKEN})"
-             
-             # 1. Unset existing headers (from actions/checkout)
-             git config --global --unset-all http.https://github.com/.extraheader || true
-             
-             # 2. Configure Credential Helper (most robust)
-             git config --global credential.helper store
-             echo "https://x-access-token:${TOKEN}@github.com" > ~/.git-credentials
-          fi
+          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Apply Preinit
         env:
