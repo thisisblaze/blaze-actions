@@ -12,6 +12,18 @@ on:
         default: "DEV"
         required: true
 
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        default: "DEV"
+        required: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+
 permissions:
   id-token: write
   contents: read
