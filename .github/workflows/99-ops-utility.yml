@@ -347,7 +347,10 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'destroy-resources'
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -549,7 +552,20 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
   #  nuke-destroy-data-mongo:
   #    name: 💾 Nuke 4a/5 - Mongo
