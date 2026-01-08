@@ -119,6 +119,18 @@ jobs:
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
           terraform: "false" # Already set up above
 
+      - name: Configure Git for Private Modules
+        env:
+          TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "❌ GH_PAT is empty/missing!"
+            exit 1
+          else
+             echo "✅ GH_PAT is present (length: ${#TOKEN})"
+          fi
+          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
+
       - name: Apply Preinit
         env:
           TF_VAR_client_key: ${{ needs.calculate-config.outputs.client_key }}
@@ -127,7 +139,6 @@ jobs:
           TF_VAR_aws_region: ${{ needs.calculate-config.outputs.aws_region }}
           TF_VAR_platform: ${{ needs.calculate-config.outputs.platform }}
           TF_VAR_stage: ${{ needs.calculate-config.outputs.stage_key }}
-          TOKEN: ${{ secrets.GH_PAT }}
         working-directory: .github/aws/infra/preinit
         run: |
           set -e
