@@ -111,6 +111,7 @@ jobs:
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: "1.9.0"
+          terraform_wrapper: false
 
       - name: Setup Blaze Infra
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
@@ -121,15 +122,14 @@ jobs:
 
       - name: Configure Git for Private Modules
         env:
-          TOKEN: ${{ secrets.GH_PAT }}
+          TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           if [ -z "$TOKEN" ]; then
-            echo "❌ GH_PAT is empty/missing!"
-            exit 1
+             echo "⚠️  Both GH_PAT and GITHUB_TOKEN are empty. Git ops may fail."
           else
-             echo "✅ GH_PAT is present (length: ${#TOKEN})"
+             echo "✅ Token is present (length: ${#TOKEN})"
+             git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
           fi
-          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Apply Preinit
         env:
