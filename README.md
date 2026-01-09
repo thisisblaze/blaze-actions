@@ -13,8 +13,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 
 **Architecture**: Hub & Spoke  
 **Pattern**: DRY (Don't Repeat Yourself)  
-**Versioning**: Semantic Versioning  
-**Mirror**: Auto-synced to `thebyte9/blaze-actions`
+**Versioning**: Semantic Versioning
 
 ---
 
@@ -22,7 +21,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 
 ### Using Workflows (Same Org Only)
 
-**From same organization** (`thebyte9`):
+**From any organization**:
 
 ```yaml
 # In thebyte9/blaze-template-deploy
@@ -50,10 +49,6 @@ jobs:
 
 ---
 
-## Mirror Architecture
-
-### Why Mirror?
-
 GitHub only allows calling reusable workflows from:
 
 - ✅ Public repos (anyone
@@ -61,17 +56,7 @@ GitHub only allows calling reusable workflows from:
 - ✅ Same repo
 - ✅ **Same organization** (only with GitHub Enterprise)
 
-Since we're **private + non-Enterprise**, we use a mirror:
-
-```
-thisisblaze/blaze-actions (source of truth)
-    ↓ auto-sync (< 15 seconds)
-thebyte9/blaze-actions (consumable mirror)
-    ↑ consumed by
-thebyte9/blaze-template-deploy
-```
-
-See [MIRROR_SYNC.md](MIRROR_SYNC.md) for setup details.
+For cross-organization workflow usage in non-Enterprise accounts, ensure repositories are public or use proper OIDC setups.
 
 ---
 
@@ -275,7 +260,7 @@ jobs:
 ✅ **Centralized**: One place for all workflows/actions  
 ✅ **Reusable**: Call from any project in same org  
 ✅ **Versioned**: Pin to specific versions  
-✅ **Auto-Sync**: Mirror updates automatically  
+✅ **Versioned**: Pin to specific versions  
 ✅ **OIDC**: No long-lived AWS credentials  
 ✅ **SHA-Pinned**: All actions pinned to commit SHAs  
 ✅ **Timeout Protected**: All workflows have limits
@@ -286,27 +271,7 @@ jobs:
 
 - [Workflow Catalog](docs/WORKFLOW_CATALOG.md) - All 24 workflows documented
 - [Reusable Workflows Guide](docs/REUSABLE_WORKFLOWS.md) - How to use
-- [Mirror Setup](MIRROR_SYNC.md) - Auto-sync configuration
 - [Contributing Guide](CONTRIBUTING.md) - How to add workflows
-- [CHANGELOG](CHANGELOG.md) - Version history
-
----
-
-## Mirror Sync
-
-See [MIRROR_SYNC.md](MIRROR_SYNC.md) for details on the auto-sync architecture.
-
-**How it works**:
-
-1. Push to `thisisblaze/blaze-actions`
-2. GitHub Action detects push
-3. Auto-syncs to `thebyte9/blaze-actions` via SSH
-4. Takes < 15 seconds
-
-**Branches synced**: dev, main  
-**Tags synced**: All (v\*)
-
----
 
 ## Versioning
 
@@ -323,7 +288,7 @@ Follow semantic versioning:
 ## Support
 
 **Issues**: [GitHub Issues](https://github.com/thisisblaze/blaze-actions/issues)  
-**Organization**: thisisblaze (source) / thebyte9 (mirror)  
+**Organization**: thisisblaze  
 **License**: Apache 2.0
 
 ---

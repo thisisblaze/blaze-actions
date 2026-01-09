@@ -32,4 +32,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of blaze-actions repository
 - 24 reusable workflows extracted
 - 5 composite actions
-- Auto-sync to thebyte9/blaze-actions mirror

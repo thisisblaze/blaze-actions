@@ -181,7 +181,7 @@ Brief description
 - Maintainer reviews within 2 business days
 - Address feedback
 - Squash commits before merge
-- Auto-sync to mirror after merge
+- Squash commits before merge
 
 ---
 
@@ -215,12 +215,6 @@ git tag -a v1.1.0 -m "Release v1.1.0
 
 git push origin v1.1.0
 ```
-
-### 3. Mirror Auto-Syncs
-
-Tag automatically syncs to `thebyte9/blaze-actions` within 15 seconds.
-
----
 
 ## Security Requirements
 

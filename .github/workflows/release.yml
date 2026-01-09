@@ -172,5 +172,4 @@ $COMMITS
           echo "Changes:"
           echo "- Updated CHANGELOG.md"
           echo "- Created git tag"
-          echo "- Triggered mirror sync"
           echo "- Created GitHub release"
