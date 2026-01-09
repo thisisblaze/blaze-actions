@@ -204,8 +204,8 @@ runs:
         echo "cluster_tier=$CLUSTER_TIER" >> $GITHUB_OUTPUT
 
         # Calculate Bucket & Lock using loaded vars
-        # New naming: {client}-{stage}-blaze-tfstate
-        BUCKET="${CLIENT_KEY}-${STAGE_KEY}-blaze-tfstate"
+        # New naming: {client}-{stage}-{namespace}-tfstate
+        BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
         LOCK_TABLE="${BUCKET}-lock"
 
         # 2. Dynamic Directory & State Key Selection
