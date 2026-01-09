@@ -712,23 +712,19 @@ jobs:
 
       - name: Generate Comprehensive Deployment Summary
         run: |
-          echo "# ✅ Stress Test - Deployment Complete!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-          echo "**Status**: ${{ needs.verify.result == 'success' && '✅ SUCCESS' || '❌ FAILED' }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "# ✅ Stress Test - Deployment Complete!"
+            echo ""
+            echo "**Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "**Status**: ${{ needs.verify.result == 'success' && '✅ SUCCESS' || '❌ FAILED' }}"
+            echo ""
 
-          # ECS Service Status
-          echo "## 🎯 ECS Service Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          CLUSTER="${{ needs.config.outputs.cluster_name }}"
-
-          # Get service ARNs first
-          SERVICE_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --region ${{ needs.config.outputs.aws_region }} --query 'serviceArns[*]' --output text)
-
-          echo "| Service | Desired | Running | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+            # ECS Service Status
+            echo "## 🎯 ECS Service Status"
+            echo ""
+            echo "| Service | Desired | Running | Status |"
+            echo "|---------|---------|---------|--------|"
+          } >> $GITHUB_STEP_SUMMARY
 
           if [ -z "$SERVICE_ARNS" ]; then
             echo "| - | - | - | ⚠️ No services found |" >> $GITHUB_STEP_SUMMARY
@@ -736,7 +732,7 @@ jobs:
             # Get service status
             SERVICE_STATUS=$(aws ecs describe-services \
               --cluster "$CLUSTER" \
-              --services $SERVICE_ARNS \
+              --services "$SERVICE_ARNS" \
               --region ${{ needs.config.outputs.aws_region }} \
               --query 'services[*].[serviceName,desiredCount,runningCount]' \
               --output text)
@@ -859,8 +855,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   destroy-app-final:
     if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
