@@ -27,9 +27,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0  # Need full history for changelog
+          fetch-depth: 0 # Need full history for changelog
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -51,10 +51,10 @@ jobs:
           CURRENT="${{ steps.current_version.outputs.current }}"
           # Remove 'v' prefix
           CURRENT_NUM="${CURRENT#v}"
-          
+
           # Split into major.minor.patch
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_NUM"
-          
+
           case "${{ inputs.version_type }}" in
             major)
               MAJOR=$((MAJOR + 1))
@@ -69,7 +69,7 @@ jobs:
               PATCH=$((PATCH + 1))
               ;;
           esac
-          
+
           NEXT_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           echo "version_num=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
@@ -80,23 +80,23 @@ jobs:
         run: |
           CURRENT="${{ steps.current_version.outputs.current }}"
           NEXT="${{ steps.next_version.outputs.version }}"
-          
+
           echo "Generating changelog from $CURRENT to HEAD..."
-          
+
           # Get commits since last tag
           COMMITS=$(git log ${CURRENT}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          
+
           if [ -z "$COMMITS" ]; then
             echo "No commits since last release"
             COMMITS="- Maintenance release"
           fi
-          
+
           # Create changelog entry
           CHANGELOG="## $NEXT ($(date +%Y-%m-%d))
 
-$COMMITS
-"
-          
+          $COMMITS
+          "
+
           # Save to file for later use
           echo "$CHANGELOG" > /tmp/changelog.md
           echo "Generated changelog"
@@ -105,39 +105,37 @@ $COMMITS
         if: inputs.dry_run == false
         run: |
           CHANGELOG_ENTRY=$(cat /tmp/changelog.md)
-          
+
           # Prepend to CHANGELOG.md
           if [ -f CHANGELOG.md ]; then
             echo -e "$CHANGELOG_ENTRY\n$(cat CHANGELOG.md)" > CHANGELOG.md
           else
             echo "$CHANGELOG_ENTRY" > CHANGELOG.md
           fi
-          
+
           echo "Updated CHANGELOG.md"
 
       - name: Commit Version Changes
         if: inputs.dry_run == false
         run: |
           NEXT="${{ steps.next_version.outputs.version }}"
-          
+
           git add CHANGELOG.md
           git commit -m "chore: release $NEXT
 
-[skip ci]" || echo "No changes to commit"
-          
+          [skip ci]" || echo "No changes to commit"
+
           git push origin dev
 
       - name: Create Git Tag
         if: inputs.dry_run == false
         run: |
           NEXT="${{ steps.next_version.outputs.version }}"
-          
+
           git tag -a "$NEXT" -m "Release $NEXT"
           git push origin "$NEXT"
-          
+
           echo "Created and pushed tag: $NEXT"
-
-
 
       - name: Create GitHub Release
         if: inputs.dry_run == false
@@ -146,12 +144,12 @@ $COMMITS
         run: |
           NEXT="${{ steps.next_version.outputs.version }}"
           CHANGELOG=$(cat /tmp/changelog.md)
-          
+
           gh release create "$NEXT" \
             --title "Release $NEXT" \
             --notes "$CHANGELOG" \
             --target dev
-          
+
           echo "Created GitHub release: $NEXT"
 
       - name: Dry Run Summary
