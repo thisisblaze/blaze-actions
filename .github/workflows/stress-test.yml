@@ -726,6 +726,11 @@ jobs:
             echo "|---------|---------|---------|--------|"
           } >> $GITHUB_STEP_SUMMARY
 
+          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+
+          # Get service ARNs first
+          SERVICE_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --region "${{ needs.config.outputs.aws_region }}" --query 'serviceArns[*]' --output text)
+
           if [ -z "$SERVICE_ARNS" ]; then
             echo "| - | - | - | ⚠️ No services found |" >> $GITHUB_STEP_SUMMARY
           else
