@@ -534,40 +534,42 @@ jobs:
     steps:
       - name: Generate Summary
         run: |
-          echo "# 🚀 Deployment Summary: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "# 🚀 Deployment Summary: ${{ inputs.environment }}"
+            echo ""
 
-          echo "## 🌍 Context" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Branch** | \`${{ inputs.branch_name || 'main' }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Project** | \`${{ needs.configuration.outputs.project_key }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Client** | \`${{ needs.configuration.outputs.client_key }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Domain** | [${{ needs.configuration.outputs.domain_root }}](https://${{ needs.configuration.outputs.domain_root }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "## 🌍 Context"
+            echo "| Metric | Value |"
+            echo "| :--- | :--- |"
+            echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |"
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |"
+            echo "| **Branch** | \`${{ inputs.branch_name || 'main' }}\` |"
+            echo "| **Project** | \`${{ needs.configuration.outputs.project_key }}\` |"
+            echo "| **Client** | \`${{ needs.configuration.outputs.client_key }}\` |"
+            echo "| **Domain** | [${{ needs.configuration.outputs.domain_root }}](https://${{ needs.configuration.outputs.domain_root }}) |"
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📦 Service Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | Status | Type |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo ""
+            echo "## 📦 Service Status"
+            echo "| Service | Status | Type |"
+            echo "| :--- | :--- | :--- |"
 
-          # Helper function for status icon
-          get_icon() {
-            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
-          }
+            # Helper function for status icon
+            get_icon() {
+              if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+            }
 
-          echo "| **API** | $(get_icon ${{ needs.deploy-api.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend** | $(get_icon ${{ needs.deploy-frontend.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Admin (ECS)** | $(get_icon ${{ needs.deploy-admin-ecs.result }}) | ECS Fargate |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Admin (Pages)** | $(get_icon ${{ needs.deploy-admin-pages.result }}) | Cloudflare Pages |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Tunnel** | $(get_icon ${{ needs.deploy-tunnel.result }}) | Cloudflare Sidecar |" >> $GITHUB_STEP_SUMMARY
+            echo "| **API** | $(get_icon "${{ needs.deploy-api.result }}") | ECS Fargate |"
+            echo "| **Frontend** | $(get_icon "${{ needs.deploy-frontend.result }}") | ECS Fargate |"
+            echo "| **Admin (ECS)** | $(get_icon "${{ needs.deploy-admin-ecs.result }}") | ECS Fargate |"
+            echo "| **Admin (Pages)** | $(get_icon "${{ needs.deploy-admin-pages.result }}") | Cloudflare Pages |"
+            echo "| **Tunnel** | $(get_icon "${{ needs.deploy-tunnel.result }}") | Cloudflare Sidecar |"
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          REGION="${{ needs.configuration.outputs.aws_region }}"
-          CLUSTER="blaze-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-cluster-${{ needs.configuration.outputs.stage_key }}"
+            echo ""
+            echo "## 🔗 Quick Links"
+            REGION="${{ needs.configuration.outputs.aws_region }}"
+            CLUSTER="blaze-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-cluster-${{ needs.configuration.outputs.stage_key }}"
 
-          echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})" >> $GITHUB_STEP_SUMMARY
-          echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Load Balancer](https://${REGION}.console.aws.amazon.com/ec2/home?region=${REGION}#LoadBalancers:)" >> $GITHUB_STEP_SUMMARY
+            echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})"
+            echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)"
+            echo "- [Load Balancer](https://${REGION}.console.aws.amazon.com/ec2/home?region=${REGION}#LoadBalancers:)"
+          } >> "$GITHUB_STEP_SUMMARY"
