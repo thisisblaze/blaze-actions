@@ -297,7 +297,7 @@ jobs:
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
   # --------------------------------------------------------------------------------
   cleanup-services:
-    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') && needs.check-app-exists.outputs.exists == 'true' }}
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') }}
     needs:
       - config
       - prod-safety-check
