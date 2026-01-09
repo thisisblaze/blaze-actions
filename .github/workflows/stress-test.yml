@@ -724,7 +724,7 @@ jobs:
             echo ""
             echo "| Service | Desired | Running | Status |"
             echo "|---------|---------|---------|--------|"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
           CLUSTER="${{ needs.config.outputs.cluster_name }}"
 
@@ -732,7 +732,7 @@ jobs:
           SERVICE_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --region "${{ needs.config.outputs.aws_region }}" --query 'serviceArns[*]' --output text)
 
           if [ -z "$SERVICE_ARNS" ]; then
-            echo "| - | - | - | ⚠️ No services found |" >> $GITHUB_STEP_SUMMARY
+            echo "| - | - | - | ⚠️ No services found |" >> "$GITHUB_STEP_SUMMARY"
           else
             # Get service status
             SERVICE_STATUS=$(aws ecs describe-services \
@@ -751,10 +751,10 @@ jobs:
               # Extract short service name (e.g., "blaze-b9-thisisblaze-dev-api" -> "api")
               short_name=$(echo "$service_name" | sed 's/.*-//')
               echo "| **$short_name** | $desired | $running | $status |"
-            done <<< "$SERVICE_STATUS" >> $GITHUB_STEP_SUMMARY
+            done <<< "$SERVICE_STATUS" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # URL Accessibility
           {
@@ -762,30 +762,30 @@ jobs:
             echo ""
             echo "| URL | Status | Result |"
             echo "|-----|--------|--------|"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Test frontend
           FRONTEND_STATUS=$(curl -sI "$FRONTEND_URL" | head -1 | awk '{print $2}')
           if [ "$FRONTEND_STATUS" = "200" ]; then
-            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Test admin
           ADMIN_STATUS=$(curl -sI "$ADMIN_URL" | head -1 | awk '{print $2}')
           if [ "$ADMIN_STATUS" = "200" ]; then
-            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Test API (405 is expected for GET on GraphQL)
           API_STATUS=$(curl -sI "$API_URL" | head -1 | awk '{print $2}')
           if [ "$API_STATUS" = "405" ] || [ "$API_STATUS" = "200" ]; then
-            echo "| [API]($API_URL) | HTTP $API_STATUS | ✅ OK |" >> $GITHUB_STEP_SUMMARY
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "| [API]($API_URL) | HTTP $API_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Deployment Details
@@ -801,7 +801,7 @@ jobs:
             echo ""
             echo "## 🚀 Feature Validation"
             echo ""
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${{ needs.verify.result }}" = "success" ]; then
             {
@@ -810,27 +810,27 @@ jobs:
               echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service"
               echo "✅ **URL verification working**: All endpoints tested automatically"
               echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks"
-            } >> $GITHUB_STEP_SUMMARY
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ **Verification failed** - Check the verify job for details" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Verification failed** - Check the verify job for details" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           {
             echo ""
             echo "---"
             echo ""
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${{ inputs.mode }}" = "full-circle" ]; then
             if [ "${{ needs.verify.result }}" = "success" ]; then
-              echo "⚠️ **Note**: This deployment will be destroyed as part of the full-circle stress test." >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **Note**: This deployment will be destroyed as part of the full-circle stress test." >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "✅ **Deployment will persist** - Final destroy skipped due to verification failure." >> $GITHUB_STEP_SUMMARY
+              echo "✅ **Deployment will persist** - Final destroy skipped due to verification failure." >> "$GITHUB_STEP_SUMMARY"
             fi
           elif [ "${{ inputs.mode }}" = "standard" ]; then
-            echo "✅ **Deployment will persist** - Infrastructure remains active." >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Deployment will persist** - Infrastructure remains active." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ inputs.mode }}" = "quick-test" ]; then
-            echo "✅ **Deployment tested** - No infrastructure changes made." >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Deployment tested** - No infrastructure changes made." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # --------------------------------------------------------------------------------
