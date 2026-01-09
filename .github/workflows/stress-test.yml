@@ -743,7 +743,7 @@ jobs:
             # Get service status
             SERVICE_STATUS=$(aws ecs describe-services \
               --cluster "$CLUSTER" \
-              --services "$SERVICE_ARNS" \
+              --services $SERVICE_ARNS \
               --region "${{ needs.config.outputs.aws_region }}" \
               --query 'services[*].[serviceName,desiredCount,runningCount]' \
               --output text)
