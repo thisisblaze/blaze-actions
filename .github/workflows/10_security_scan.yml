@@ -177,7 +177,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: "fs"
-          scan-ref: "packages/"
+          scan-ref: "."
           ignore-unfixed: false
           format: "table"
           severity: "CRITICAL,HIGH"
@@ -189,7 +189,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: "fs"
-          scan-ref: "packages/"
+          scan-ref: "."
           ignore-unfixed: false
           format: "sarif"
           output: "trivy.sarif"
