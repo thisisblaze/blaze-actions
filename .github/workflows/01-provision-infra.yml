@@ -32,6 +32,10 @@ on:
         description: "Run Terraform Apply?"
         type: boolean
         default: false
+      terraform_version:
+        description: "Terraform Version"
+        type: string
+        default: "1.9.0"
 
       # Third-Party Options
       cluster_tier:
@@ -81,6 +85,10 @@ on:
         required: false
         type: boolean
         default: false
+      terraform_version:
+        required: false
+        type: string
+        default: "1.9.0"
 
       enable_tunnel:
         required: false
@@ -157,7 +165,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: "eu-west-1" # Hardcoded default for config calculation or pass as input? Default to eu-west-1 is safe for ID check.
+          aws-region: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }} # Dynamic with fallback
 
       - name: Calculate Configuration
         id: config
@@ -196,7 +204,7 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      terraform_version: "1.9.0"
+      terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
@@ -224,6 +232,8 @@ jobs:
         export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
         export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
         export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+        export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
+        export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
 
         # Run Importer (Fetch from blaze-actions)
         echo "🚀 Fetching Resource Importer Logic..."

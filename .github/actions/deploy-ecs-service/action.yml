@@ -250,18 +250,44 @@ runs:
           if [[ "$SERVICE_NAME" == "tunnel" ]]; then
              echo "🔐 Fetching Tunnel Token..."
              PLATFORM="$CLOUD_PLATFORM"
-             # Matched with calculate-config: {client}-{stage}-blaze-tfstate
-             CF_BUCKET="${CLIENT_KEY}-dev-blaze-tfstate"
+             # Matched with calculate-config: {client}-{stage}-{namespace}-tfstate (Convention)
+             # Default to dev host state if feature branch
+             # NOTE: This assumes a convention where the bucket name includes the namespace suffix if provided
+             # If namespace is 'blaze', bucket is: client-stage-blaze-tfstate
              
+             # Logic refactored to be dynamic:
+             # 1. Base Bucket Name components
+             BUCKET_NAMESPACE="${NAMESPACE:-blaze}" # Default to blaze if empty (though input default handles this)
+             
+             # 2. Determine State Bucket Stage
+             # Tunnel state usually lives in the host environment (dev/stage/prod), not feature specific buckets?
+             # Actually, code below shows feature branch logic.
+             
+             if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
+                # Feature Branch:
+                # State is in the features/ key within the HOST bucket (usually dev)
+                 BUCKET_STAGE="dev" # Features usually on DEV host? Or should this be $BASE_STAGE?
+                 # Safest assumption for now matching previous behavior:
+                 # previous was: ${CLIENT_KEY}-dev-blaze-tfstate
+                 # So we stick to dev/base_stage logic?
+                 # If BASE_STAGE is passed (e.g. stage), we should use it.
+                 BUCKET_STAGE="${BASE_STAGE}"
+             else
+                 # Host Environment
+                 BUCKET_STAGE="${BASE_STAGE}"
+             fi
+             
+             CF_BUCKET="${CLIENT_KEY}-${BUCKET_STAGE}-${BUCKET_NAMESPACE}-tfstate"
+
              # Determine correct state path based on whether this is a feature branch or host
              if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
                 # Feature branch: read from features state (tunnel is created in dev-app)
                 CF_KEY="infra/${PROJECT_KEY}/features/${HOST_TAG}.tfstate"
-                echo "   Using feature branch tunnel state"
+                echo "   Using feature branch tunnel state (Bucket: $CF_BUCKET)"
              else
-                # DEV host: read from third-party cloudflare state
+                # DEV/Host: read from third-party cloudflare state
                 CF_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
-                echo "   Using DEV host tunnel state"
+                echo "   Using host tunnel state (Bucket: $CF_BUCKET)"
              fi
              
              # AWS CLI + JQ approach (no Terraform dependency)

@@ -145,7 +145,7 @@ jobs:
              exit 1
           fi
 
-          BUCKET="${CLIENT_KEY}-${STAGE_KEY}-blaze-tfstate"
+          BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
           LOCK_TABLE="${BUCKET}-lock"
 
           # Determine Terraform directory and state key based on stack type
@@ -218,7 +218,7 @@ jobs:
               fi
               
               STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}.tfstate"
-              CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-dev-${BRANCH_TAG}-cluster"
+              CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-dev-${BRANCH_TAG}-cluster"
               ;;
             "host-environment")
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
@@ -252,13 +252,13 @@ jobs:
           # Calculate cluster name if not set
           if [[ -z "$CLUSTER_NAME" ]]; then
             if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
-              CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+              CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
             else
               if [[ -n "$BRANCH_TAG" ]]; then
-                 CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${BRANCH_TAG}-cluster"
+                 CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${BRANCH_TAG}-cluster"
               else
                  # DEV HOST (Standard 3.0 Naming)
-                 CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+                 CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
               fi
             fi
           fi
