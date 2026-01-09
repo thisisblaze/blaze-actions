@@ -207,11 +207,7 @@ uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
 #     └─ org/repo ─┘  └──────── path ────────────┘ └─ ref ─┘
 ```
 
-### Error: "Permission denied"
-
-**Cause**: Cross-org workflow calls not allowed (non-Enterprise GitHub)
-
-**Solution**: Use mirror architecture (thisisblaze → thebyte9)
+**Solution**: Use proper permissions or public repositories.
 
 ### Error: "Required input not provided"
 
@@ -374,7 +370,7 @@ jobs:
 ## FAQ
 
 **Q: Can I call workflows from other organizations?**  
-A: Only with GitHub Enterprise. For non-Enterprise, use mirror architecture.
+A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
 A: `@main` for development, `@v1.0.0` for production.
@@ -394,7 +390,7 @@ A: Version pinning protects you. Clients on `@v1.0.0` unaffected. Test fixes on 
 
 - [GitHub Docs: Reusing Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
 - [Workflow Catalog](WORKFLOW_CATALOG.md) - All available workflows
-- [MIRROR_SYNC.md](../MIRROR_SYNC.md) - Mirror architecture details
+- [Workflow Catalog](WORKFLOW_CATALOG.md) - All available workflows
 
 ---
 
