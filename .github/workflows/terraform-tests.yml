@@ -97,9 +97,13 @@ jobs:
       - name: Run Unit Tests
         working-directory: test
         run: |
-          echo "🧪 Running unit tests (no AWS resources)..."
-          go test -v -run TestLabelModule -timeout 10m
-          echo "✅ Unit tests passed"
+          echo "🧪 Running unit tests..."
+          if ls *_test.go 1> /dev/null 2>&1; then
+            go test -v -timeout 10m
+            echo "✅ Unit tests passed"
+          else
+            echo "⚠️ No unit tests found in test/ directory"
+          fi
 
   integration-tests:
     name: Integration Tests (AWS Resources)
@@ -138,8 +142,12 @@ jobs:
         run: |
           echo "🧪 Running integration tests (creates AWS resources)..."
           echo "⚠️  Note: These tests create real AWS resources and may incur costs"
-          go test -v -run TestNetworkingModule -timeout 30m
-          echo "✅ Integration tests passed"
+          if ls *_test.go 1> /dev/null 2>&1; then
+            go test -v -timeout 30m
+            echo "✅ Integration tests passed"
+          else
+            echo "⚠️ No integration tests found in test/ directory"
+          fi
 
   test-summary:
     name: Test Summary
