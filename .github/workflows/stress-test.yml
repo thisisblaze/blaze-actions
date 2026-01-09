@@ -567,38 +567,40 @@ jobs:
       - name: Verify ECS Services
         id: ecs
         run: |
-          echo "## 🎯 ECS Service Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🎯 ECS Service Status"
+            echo ""
 
-          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+            CLUSTER="${{ needs.config.outputs.cluster_name }}"
 
-          # Get all services
-          SERVICES=$(aws ecs list-services --cluster $CLUSTER --region ${{ needs.config.outputs.aws_region }} --output json | jq -r '.serviceArns[]')
+            # Get all services
+            SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "${{ needs.config.outputs.aws_region }}" --output json | jq -r '.serviceArns[]')
 
-          if [ -z "$SERVICES" ]; then
-            echo "❌ No services found in cluster $CLUSTER" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
-          echo "| Service | Desired | Running | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          ALL_HEALTHY=true
-          for SERVICE_ARN in $SERVICES; do
-            SERVICE_NAME=$(echo $SERVICE_ARN | awk -F'/' '{print $NF}')
-            
-            DETAILS=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE_ARN --region ${{ needs.config.outputs.aws_region }} --query 'services[0].[desiredCount,runningCount,status]' --output text)
-            DESIRED=$(echo $DETAILS | awk '{print $1}')
-            RUNNING=$(echo $DETAILS | awk '{print $2}')
-            STATUS=$(echo $DETAILS | awk '{print $3}')
-            
-            if [ "$DESIRED" -eq "$RUNNING" ] && [ "$STATUS" = "ACTIVE" ]; then
-              echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ✅ Healthy |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ❌ Unhealthy |" >> $GITHUB_STEP_SUMMARY
-              ALL_HEALTHY=false
+            if [ -z "$SERVICES" ]; then
+              echo "❌ No services found in cluster $CLUSTER"
+              exit 1
             fi
-          done
+
+            echo "| Service | Desired | Running | Status |"
+            echo "|---------|---------|---------|--------|"
+
+            ALL_HEALTHY=true
+            for SERVICE_ARN in $SERVICES; do
+              SERVICE_NAME=${SERVICE_ARN##*/}
+              
+              DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" --region "${{ needs.config.outputs.aws_region }}" --query 'services[0].[desiredCount,runningCount,status]' --output text)
+              DESIRED=$(echo "$DETAILS" | awk '{print $1}')
+              RUNNING=$(echo "$DETAILS" | awk '{print $2}')
+              STATUS=$(echo "$DETAILS" | awk '{print $3}')
+              
+              if [ "$DESIRED" -eq "$RUNNING" ] && [ "$STATUS" = "ACTIVE" ]; then
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ✅ Healthy |"
+              else
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ❌ Unhealthy |"
+                ALL_HEALTHY=false
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -609,8 +611,10 @@ jobs:
 
       - name: Wait for DNS Propagation
         run: |
-          echo "⏳ Waiting 90 seconds for DNS propagation and service stabilization..." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "⏳ Waiting 90 seconds for DNS propagation and service stabilization..."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
           sleep 90
 
       - name: Verify URLs (with retries)
