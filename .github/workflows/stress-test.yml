@@ -752,22 +752,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # URL Accessibility
-          echo "## 🌐 URL Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Build URL suffix
-          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
-            URL_SUFFIX="${{ inputs.environment }}-${{ inputs.branch_tag }}"
-          else
-            URL_SUFFIX="${{ inputs.environment }}"
-          fi
-
-          FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/about-us"
-          ADMIN_URL="https://admin-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/"
-          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/graphql"
-
-          echo "| URL | Status | Result |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🌐 URL Validation"
+            echo ""
+            echo "| URL | Status | Result |"
+            echo "|-----|--------|--------|"
+          } >> $GITHUB_STEP_SUMMARY
 
           # Test frontend
           FRONTEND_STATUS=$(curl -sI "$FRONTEND_URL" | head -1 | awk '{print $2}')
@@ -793,37 +783,38 @@ jobs:
             echo "| [API]($API_URL) | HTTP $API_STATUS | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-
           # Deployment Details
-          echo "## 📦 Deployment Details" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Target Type**: \`${{ inputs.target_type }}\`" >> $GITHUB_STEP_SUMMARY
-
-          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
-            echo "**Branch Tag**: \`${{ inputs.branch_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Feature Validation
-          echo "## 🚀 Feature Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "## 📦 Deployment Details"
+            echo ""
+            echo "**Environment**: \`${{ inputs.environment }}\`"
+            echo "**Target Type**: \`${{ inputs.target_type }}\`"
+            if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+              echo "**Branch Tag**: \`${{ inputs.branch_tag }}\`"
+            fi
+            echo ""
+            echo "## 🚀 Feature Validation"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.verify.result }}" = "success" ]; then
-            echo "✅ **Full lifecycle tested**: Destroy → Provision → Deploy → Verify" >> $GITHUB_STEP_SUMMARY
-            echo "✅ **All services deployed**: API, Frontend, Admin, Tunnel" >> $GITHUB_STEP_SUMMARY
-            echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service" >> $GITHUB_STEP_SUMMARY
-            echo "✅ **URL verification working**: All endpoints tested automatically" >> $GITHUB_STEP_SUMMARY
-            echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "✅ **Full lifecycle tested**: Destroy → Provision → Deploy → Verify"
+              echo "✅ **All services deployed**: API, Frontend, Admin, Tunnel"
+              echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service"
+              echo "✅ **URL verification working**: All endpoints tested automatically"
+              echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks"
+            } >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Verification failed** - Check the verify job for details" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "---"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ inputs.mode }}" = "full-circle" ]; then
             if [ "${{ needs.verify.result }}" = "success" ]; then
