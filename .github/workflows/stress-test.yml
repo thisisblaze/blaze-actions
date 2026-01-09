@@ -733,7 +733,7 @@ jobs:
             SERVICE_STATUS=$(aws ecs describe-services \
               --cluster "$CLUSTER" \
               --services "$SERVICE_ARNS" \
-              --region ${{ needs.config.outputs.aws_region }} \
+              --region "${{ needs.config.outputs.aws_region }}" \
               --query 'services[*].[serviceName,desiredCount,runningCount]' \
               --output text)
 
@@ -745,8 +745,8 @@ jobs:
               fi
               # Extract short service name (e.g., "blaze-b9-thisisblaze-dev-api" -> "api")
               short_name=$(echo "$service_name" | sed 's/.*-//')
-              echo "| **$short_name** | $desired | $running | $status |" >> $GITHUB_STEP_SUMMARY
-            done <<< "$SERVICE_STATUS"
+              echo "| **$short_name** | $desired | $running | $status |"
+            done <<< "$SERVICE_STATUS" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
