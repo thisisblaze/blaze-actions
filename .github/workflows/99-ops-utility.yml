@@ -262,9 +262,9 @@ jobs:
           BRANCH_FILTER="${{ inputs.branch_tag }}"
           if [[ -n "$BRANCH_FILTER" ]]; then
             echo "🎯 Filtering by branch: $BRANCH_FILTER"
-            RUNS=$(gh run list --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
+            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
           else
-            RUNS=$(gh run list --status in_progress --json databaseId,name --limit 50)
+            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
           fi
           CURRENT_ID="${{ github.run_id }}"
           TARGET_ID="${{ inputs.run_id }}"
