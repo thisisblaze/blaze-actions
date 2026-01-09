@@ -169,7 +169,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .trivy
-          key: ${{ runner.os }}-trivy-db-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-trivy-db
           restore-keys: |
             ${{ runner.os }}-trivy-db-
 
