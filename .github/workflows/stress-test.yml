@@ -616,10 +616,12 @@ jobs:
       - name: Verify URLs (with retries)
         id: urls
         run: |
-          echo "## 🌐 URL Health Checks" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| URL | Status | Response Time | Attempts |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|---------------|----------|" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🌐 URL Health Checks"
+            echo ""
+            echo "| URL | Status | Response Time | Attempts |"
+            echo "|-----|--------|---------------|----------|"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           ALL_URLS_OK=true
 
@@ -749,7 +751,7 @@ jobs:
                 status="❌"
               fi
               # Extract short service name (e.g., "blaze-b9-thisisblaze-dev-api" -> "api")
-              short_name=$(echo "$service_name" | sed 's/.*-//')
+              short_name=${service_name##*-}
               echo "| **$short_name** | $desired | $running | $status |"
             done <<< "$SERVICE_STATUS" >> "$GITHUB_STEP_SUMMARY"
           fi
