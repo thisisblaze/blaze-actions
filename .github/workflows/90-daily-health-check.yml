@@ -181,12 +181,6 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=""
         is_beta=false
-        enable_tunnel=false
-        deploy_stateful_services=true
-        mongo_image_tag="latest"
-        elasticsearch_image_tag="latest"
-        kibana_image_tag="latest"
-        use_ecr_images=true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
