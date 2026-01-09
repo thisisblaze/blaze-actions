@@ -27,7 +27,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 # In thebyte9/blaze-template-deploy
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1
     with:
       environment: dev
     secrets: inherit
@@ -42,7 +42,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: thebyte9/blaze-actions/.github/actions/setup-blaze@v1
+      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1
         with:
           project_key: myproject
 ```
@@ -140,7 +140,7 @@ For cross-organization workflow usage in non-Enterprise accounts, ensure reposit
 Loads configuration from `vars/*.json` files
 
 ```yaml
-- uses: thebyte9/blaze-actions/.github/actions/calculate-config@v1
+- uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1
   with:
     environment: dev
 ```
@@ -150,7 +150,7 @@ Loads configuration from `vars/*.json` files
 Deploys application to ECS
 
 ```yaml
-- uses: thebyte9/blaze-actions/.github/actions/deploy-ecs-service@v1
+- uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v1
   with:
     cluster_name: my-cluster
     service_name: api
@@ -162,7 +162,7 @@ Deploys application to ECS
 Promotes Docker images between environments
 
 ```yaml
-- uses: thebyte9/blaze-actions/.github/actions/docker-promote@v1
+- uses: thisisblaze/blaze-actions/.github/actions/docker-promote@v1
   with:
     source_tag: dev-123
     target_tag: stage-123
@@ -173,7 +173,7 @@ Promotes Docker images between environments
 Imports existing AWS resources to Terraform
 
 ```yaml
-- uses: thebyte9/blaze-actions/.github/actions/resource-importer@v1
+- uses: thisisblaze/blaze-actions/.github/actions/resource-importer@v1
   with:
     resource_type: aws_s3_bucket
     resource_id: my-bucket
@@ -184,7 +184,7 @@ Imports existing AWS resources to Terraform
 Initial project setup and configuration
 
 ```yaml
-- uses: thebyte9/blaze-actions/.github/actions/setup-blaze@v1
+- uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1
   with:
     project_key: myproject
 ```
@@ -204,7 +204,7 @@ on:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1
     with:
       environment: prod
       project_key: myproject
@@ -227,7 +227,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: thebyte9/blaze-actions/.github/actions/calculate-config@v1
+      - uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1
         with:
           environment: dev
 
@@ -240,14 +240,14 @@ jobs:
 ```yaml
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1
     with:
       environment: dev
     secrets: inherit
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1
     with:
       environment: dev
     secrets: inherit
