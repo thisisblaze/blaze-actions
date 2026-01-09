@@ -37,7 +37,14 @@ elif [[ "$STACK" == "third-party-mongodb" ]]; then
   # Required Env Vars: MONGODB_ATLAS_PROJECT_ID, MONGODB_ATLAS_PUBLIC_KEY, MONGODB_ATLAS_PRIVATE_KEY
   # Plus context variables passed from workflow
   
-  CLUSTER_NAME="blaze-${INPUT_CLIENT_KEY}-${INPUT_PROJECT_KEY}-ecs-${INPUT_STAGE_KEY}"
+  CLUSTER_NAME="${INPUT_CLUSTER_NAME}"
+  
+  if [[ -z "$CLUSTER_NAME" ]]; then
+     echo "❌ ERROR: INPUT_CLUSTER_NAME not provided. Cannot import MongoDB cluster."
+     echo "   Ensure calculate-config outputs a valid cluster_name."
+     exit 1
+  fi
+
   PROJECT_ID="$MONGODB_ATLAS_PROJECT_ID"
   
   if [[ -z "$PROJECT_ID" ]]; then
@@ -61,7 +68,15 @@ elif [[ "$STACK" == "third-party-elastic" ]]; then
   echo "🔍 Running Elastic Smart Import Logic..."
   # Required Env Vars: EC_API_KEY
   
-  DEPLOYMENT_NAME="blaze-${INPUT_CLIENT_KEY}-${INPUT_PROJECT_KEY}-ecs-${INPUT_STAGE_KEY}"
+  # Elastic deployments often follow specific naming.
+  # We rely on INPUT_CLUSTER_NAME passed from the workflow.
+  
+  DEPLOYMENT_NAME="${INPUT_CLUSTER_NAME}"
+  
+  if [[ -z "$DEPLOYMENT_NAME" ]]; then
+      echo "❌ ERROR: INPUT_CLUSTER_NAME not provided. Cannot import Elastic deployment."
+      exit 1
+  fi
   
   if [[ -z "$EC_API_KEY" ]]; then
       echo "⚠️ EC_API_KEY is not set. Skipping import."
