@@ -101,7 +101,7 @@ on:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
-      # ECS Application Runtime Secrets
+      # ECS Application Runtime Secrets (Explicitly defined for workflow_call)
       MONGO_INITDB_ROOT_PASSWORD:
         required: false
       BLAZE_AUTH_JWT_PRIVATE_KEY:
