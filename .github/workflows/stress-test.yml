@@ -241,7 +241,7 @@ jobs:
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -252,7 +252,7 @@ jobs:
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -264,7 +264,7 @@ jobs:
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -276,7 +276,7 @@ jobs:
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb-${{ inputs.environment }}.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -288,7 +288,7 @@ jobs:
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic-${{ inputs.environment }}.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -326,7 +326,7 @@ jobs:
       action: "destroy"
       tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
@@ -347,7 +347,7 @@ jobs:
       action: "destroy"
       tf_dir: ".github/aws/infra/live/third-party/mongodb"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb-${{ inputs.environment }}.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
@@ -367,7 +367,7 @@ jobs:
       action: "destroy"
       tf_dir: ".github/aws/infra/live/third-party/elastic"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic-${{ inputs.environment }}.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
@@ -389,7 +389,7 @@ jobs:
       action: "destroy"
       tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-tunnel" # Assuming standard path
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
@@ -411,7 +411,7 @@ jobs:
       action: "destroy"
       tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
