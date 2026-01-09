@@ -23,6 +23,24 @@ on:
         required: false
       GH_PAT:
         required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
 
 permissions:
   id-token: write
