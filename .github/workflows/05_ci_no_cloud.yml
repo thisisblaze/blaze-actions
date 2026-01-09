@@ -19,4 +19,4 @@ jobs:
       - name: Run actionlint
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint .github/workflows/05_ci_no_cloud.yml .github/workflows/stress-test.yml .github/workflows/sync-secrets-from-ssm.yml .github/workflows/02-deploy-app.yml
+          ./actionlint .github/workflows/05_ci_no_cloud.yml .github/workflows/sync-secrets-from-ssm.yml .github/workflows/02-deploy-app.yml
