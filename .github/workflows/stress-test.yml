@@ -317,7 +317,7 @@ jobs:
   # 3. TEARDOWN (Infrastructure)
   # --------------------------------------------------------------------------------
   destroy-app:
-    if: inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true'
+    if: ${{ inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy App"
 
     needs: [config, cleanup-services, check-app-exists]
@@ -339,7 +339,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-third-party-mongodb:
-    if: inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true'
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy MongoDB"
     needs: [config, destroy-app, check-mongodb-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
@@ -359,7 +359,7 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   destroy-third-party-elastic:
-    if: inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true'
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Elastic"
     needs: [config, destroy-app, check-elastic-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
@@ -380,7 +380,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
-    if: inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true'
+    if: ${{ inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-tunnel-exists]
@@ -402,7 +402,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
-    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true'
+    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Network"
 
     needs: [config, destroy-tunnel, check-network-exists]
