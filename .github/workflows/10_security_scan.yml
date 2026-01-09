@@ -10,7 +10,7 @@ on:
   push:
     branches: [main, master, dev]
   schedule:
-    - cron: '0 0 * * 0' # Weekly deep scan on Sunday
+    - cron: "0 0 * * 0" # Weekly deep scan on Sunday
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 1 # Scan current state only (faster)
 
@@ -40,13 +40,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-          GITLEAKS_CONFIG: .github/security/.gitleaks.toml
           GITLEAKS_ENABLE_SUMMARY: true
           GITLEAKS_EXIT_CODE: 1 # Fail on secrets found
 
       - name: Upload Gitleaks Results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gitleaks-results
           path: |
@@ -65,7 +64,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # Needed for diff calculation
 
@@ -76,14 +75,14 @@ jobs:
           git fetch origin "${{ github.base_ref }}"
           git diff --name-only "origin/${{ github.base_ref }}...HEAD" | \
             grep -E '\.(js|ts|jsx|tsx)$' > changed_files.txt || true
-          
+
           if [ -s changed_files.txt ]; then
             echo "files=$(cat changed_files.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
-          
+
           echo "Changed files:"
           cat changed_files.txt || echo "No changed files"
 
@@ -97,14 +96,14 @@ jobs:
         run: |
           # Build config list
           CONFIGS="p/default p/react p/security-audit p/typescript"
-          
+
           # Build paths - scan changed files in PRs, full scan otherwise
           if [[ "${{ github.event_name }}" == "pull_request" && "${{ steps.changed-files.outputs.has_changes }}" == "true" ]]; then
             PATHS="${{ steps.changed-files.outputs.files }}"
           else
             PATHS="."
           fi
-          
+
           # Run Semgrep scan with SARIF output
           semgrep scan \
             --config "$CONFIGS" \
@@ -118,7 +117,7 @@ jobs:
             --exclude="**/*.spec.js" \
             --exclude="**/*.spec.ts" \
             "$PATHS" || true
-          
+
           # Count findings
           if [ -f "semgrep.sarif" ]; then
             FINDINGS=$(jq -r '.runs[0].results | length // 0' semgrep.sarif 2>/dev/null || echo "0")
@@ -147,13 +146,12 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: semgrep-results
           path: semgrep.sarif
           if-no-files-found: ignore
           retention-days: 7
-
 
   # ------------------------------------------------------------------
   # JOB 3: SCA (Trivy) & Lockfile Validation
@@ -165,7 +163,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
@@ -178,31 +176,31 @@ jobs:
       - name: Run Trivy (Console Log)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          scan-type: 'fs'
-          scan-ref: 'packages/'
+          scan-type: "fs"
+          scan-ref: "packages/"
           ignore-unfixed: false
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0' # Don't fail yet, just show logs
-          cache-dir: '.trivy'
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0" # Don't fail yet, just show logs
+          cache-dir: ".trivy"
           hide-progress: true
 
       - name: Run Trivy (Filesystem)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          scan-type: 'fs'
-          scan-ref: 'packages/'
+          scan-type: "fs"
+          scan-ref: "packages/"
           ignore-unfixed: false
-          format: 'sarif'
-          output: 'trivy.sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          cache-dir: '.trivy'
-          exit-code: '0' # Don't fail on app vulnerabilities (User Request: Focus on Infra/CI only)
+          format: "sarif"
+          output: "trivy.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          cache-dir: ".trivy"
+          exit-code: "0" # Don't fail on app vulnerabilities (User Request: Focus on Infra/CI only)
 
       - name: Validate Lockfile Integrity
         run: |
           echo "🔍 Validating lockfile integrity..."
-          
+
           # Check for lockfiles
           if [ -f "package-lock.json" ]; then
             echo "Found package-lock.json"
@@ -223,13 +221,12 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: trivy-results
           path: trivy.sarif
           if-no-files-found: ignore
           retention-days: 7
-
 
   # ------------------------------------------------------------------
   # JOB 4: REPOSITORY INTEGRITY (OSSF Scorecard)
@@ -243,7 +240,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run OSSF Scorecard
         uses: ossf/scorecard-action@v2.4.3
@@ -255,7 +252,7 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: scorecard-results
           path: scorecard-results.sarif
@@ -273,9 +270,9 @@ jobs:
     needs: [sast, dependencies, integrity]
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          pattern: '*-results'
+          pattern: "*-results"
           merge-multiple: false
 
       - name: Generate Job Summary
@@ -316,7 +313,7 @@ jobs:
         run: |
           # Generate Markdown from SARIF
           python3 scripts/sarif_to_markdown.py semgrep-results/semgrep.sarif "🔍 SAST Findings (Semgrep)" > semgrep-comment.md
-          
+
           # Post comment if content exists (and not empty)
           if [ -s semgrep-comment.md ]; then
             gh pr comment ${{ github.event.pull_request.number }} --body-file semgrep-comment.md
@@ -329,7 +326,7 @@ jobs:
         run: |
           # Generate Markdown from SARIF
           python3 scripts/sarif_to_markdown.py trivy-results/trivy.sarif "📦 Dependency Vulnerabilities (Trivy)" > trivy-comment.md
-          
+
           # Post comment if content exists (and not empty)
           if [ -s trivy-comment.md ]; then
              gh pr comment ${{ github.event.pull_request.number }} --body-file trivy-comment.md
