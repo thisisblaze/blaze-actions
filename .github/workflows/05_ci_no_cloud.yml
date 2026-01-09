@@ -19,4 +19,4 @@ jobs:
       - name: Run actionlint
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -ignore 'stress-test.yml'
+          find .github/workflows -name '*.yml' ! -name 'stress-test.yml' -print0 | xargs -0 ./actionlint
