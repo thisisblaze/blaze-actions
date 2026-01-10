@@ -313,6 +313,7 @@ jobs:
           echo "@blaze-cms:registry=https://npm.pkg.github.com/" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
       - run: npm install --legacy-peer-deps --ignore-scripts
+      - run: rm -f packages/admin/package-lock.json
       - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
       - name: Build Admin
         run: npm run build:admin
