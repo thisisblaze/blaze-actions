@@ -398,8 +398,9 @@ jobs:
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
     secrets:
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
@@ -433,8 +434,9 @@ jobs:
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       dfp_network_id: ${{ needs.configuration.outputs.dfp_network_id }}
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
     secrets:
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
@@ -468,8 +470,9 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
     secrets:
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}

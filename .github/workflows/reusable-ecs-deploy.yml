@@ -99,6 +99,8 @@ on:
         required: false
       BLAZE_CLIENT_HEADER:
         required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
 
 jobs:
   deploy:
@@ -150,7 +152,7 @@ jobs:
           admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
           admin_password: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
           mongodb_uri: ${{ secrets.BLAZE_CONNECTION_STRING }}
-          elasticsearch_endpoint: ${{ inputs.elasticsearch_endpoint }}
+          elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || inputs.elasticsearch_endpoint }}
 
           elasticsearch_username: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
           elasticsearch_password: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
