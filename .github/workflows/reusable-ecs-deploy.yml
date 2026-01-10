@@ -104,7 +104,7 @@ jobs:
   deploy:
     name: Deploy ${{ inputs.service_name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 18
     # Use config_environment if provided (uppercase), otherwise fallback.
     # We force uppercase via shell logic usually, but here we bind to the GitHub Environment.
     # GitHub Environments ARE case-sensitive. 'STAGE' != 'stage'.
