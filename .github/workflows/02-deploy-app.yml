@@ -116,6 +116,8 @@ on:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
         required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
       BLAZE_FILES_S3_ACCESS_KEY:
         required: false
       BLAZE_FILES_S3_SECRET_ACCESS_KEY:
