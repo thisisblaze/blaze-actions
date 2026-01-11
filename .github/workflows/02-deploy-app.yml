@@ -276,7 +276,7 @@ jobs:
 
   build-frontend:
     name: Build Frontend
-    needs: [configuration, pre-flight-check, build-api]
+    needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
