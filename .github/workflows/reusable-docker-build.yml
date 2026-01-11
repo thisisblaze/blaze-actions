@@ -59,6 +59,13 @@ jobs:
         if: ${{ env.NPM_TOKEN_VAL != '' }}
         run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
 
+      - name: Debug NPM Token
+        if: ${{ env.NPM_TOKEN_VAL != '' }}
+        run: |
+          echo "Verifying NPM Token..."
+          npm whoami --registry=https://registry.npmjs.org/ --userconfig=.npmrc || echo "WARNING: npm whoami failed. Token might be invalid."
+          echo "Token verification complete."
+
       - name: Build and Push
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
