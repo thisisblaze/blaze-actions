@@ -903,6 +903,14 @@ jobs:
              echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
 
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-pages" ]]; then
+             echo "| **Delete CF Pages** | $(get_icon ${{ needs.destroy-cloudflare-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-tunnel" ]]; then
+             echo "| **Delete CF Tunnels** | $(get_icon ${{ needs.destroy-cloudflare-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
           if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
              echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
