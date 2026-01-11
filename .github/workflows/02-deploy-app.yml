@@ -311,6 +311,10 @@ jobs:
       - name: Create .npmrc
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+      - name: Debug NPM Token (Admin)
+        run: |
+          echo "Verifying NPM Token in Admin Job..."
+          npm whoami --registry=https://registry.npmjs.org/ --userconfig=.npmrc || echo "WARNING: npm whoami failed. Token might be invalid."
       - run: npm install --legacy-peer-deps --ignore-scripts
       - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
       - name: Build Admin
