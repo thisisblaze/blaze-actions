@@ -3,7 +3,7 @@
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.0.0-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v1.4.0-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 ---
 
@@ -19,44 +19,69 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 
 ## Quick Start
 
-### Using Workflows (Same Org Only)
+### For New Projects
 
-**From any organization**:
+📚 **See [CLIENT_ONBOARDING.md](https://github.com/thebyte9/blaze-template-deploy/blob/main/CLIENT_ONBOARDING.md)** for complete setup guide
+
+### Using Workflows (Any Organization)
+
+**From any organization** (public repository):
 
 ```yaml
-# In thebyte9/blaze-template-deploy
+# Recommended: Pin to specific version for stability
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.0
     with:
       environment: dev
-    secrets: inherit
+      project: myproject
+      stack: app
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # ... other required secrets
 ```
 
-### Using Actions (Any Org)
+**For development/testing**:
 
-**From any organization**:
+```yaml
+uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+```
+
+### Using Actions (Any Organization)
 
 ```yaml
 jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1
+      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.0
         with:
           project_key: myproject
 ```
 
 ---
 
-GitHub only allows calling reusable workflows from:
+## Version Pinning Recommendations
 
-- ✅ Public repos (anyone
-  )
-- ✅ Same repo
-- ✅ **Same organization** (only with GitHub Enterprise)
+> [!IMPORTANT] > **Production environments** should always pin to specific versions (e.g., `@v1.4.0`) for stability and predictability. **Development environments** can use `@dev` for latest features.
 
-For cross-organization workflow usage in non-Enterprise accounts, ensure repositories are public or use proper OIDC setups.
+| Use Case                 | Recommended Version              | Example            |
+| :----------------------- | :------------------------------- | :----------------- |
+| **Production**           | Specific version                 | `@v1.4.0`          |
+| **Staging**              | Specific version or latest minor | `@v1.4.0` or `@v1` |
+| **Development**          | Latest dev branch                | `@dev`             |
+| **Testing new features** | Specific commit SHA              | `@abc123f`         |
+
+**Benefits of version pinning**:
+
+- ✅ Predictable deployments (no surprise breaking changes)
+- ✅ Easy rollback (revert to previous version)
+- ✅ Clear change management (review CHANGELOG before upgrading)
+- ✅ Testing isolation (test new versions in dev before production)
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and upgrade notes.
 
 ---
 
