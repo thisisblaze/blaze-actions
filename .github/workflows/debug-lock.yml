@@ -1,0 +1,125 @@
+name: "Debug Lock Table"
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "Target Environment"
+                type: choice
+                options: ["DEV", "STAGE", "PROD"]
+                required: true
+            stack:
+                description: "Terraform Stack"
+                type: choice
+                options:
+                    - "network"
+                    - "acm"
+                    - "tunnel"
+                    - "app"
+                    - "third-party-mongodb"
+                    - "third-party-elastic"
+                required: true
+            branch_tag:
+                description: "Feature Tag (if applicable)"
+                required: false
+                type: string
+
+    workflow_call:
+        inputs:
+            environment:
+                type: string
+                required: true
+            stack:
+                type: string
+                required: true
+            branch_tag:
+                type: string
+                required: false
+        secrets:
+            AWS_ROLE_ARN:
+                required: true
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    configuration:
+        name: Configuration
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        timeout-minutes: 5
+        outputs:
+            bucket: ${{ steps.config.outputs.bucket }}
+            state_key: ${{ steps.config.outputs.state_key }}
+            lock_table: ${{ steps.config.outputs.lock_table }}
+            aws_region: ${{ steps.config.outputs.aws_region }}
+        steps:
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+            - name: Calculate Configuration
+              id: config
+              uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+              with:
+                  environment: ${{ inputs.environment }}
+                  terraform_stack: ${{ inputs.stack }}
+                  branch_name: ${{ inputs.branch_tag }}
+                  deploy_infra: "true"
+                  build_images: "false"
+                  deploy_services: "false"
+                  event_name: "workflow_dispatch"
+
+    debug-lock:
+        name: 🔍 Debug Lock Table
+        needs: [configuration]
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        timeout-minutes: 10
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+            - name: Debug Lock Table
+              run: |
+                  BUCKET="${{ needs.configuration.outputs.bucket }}"
+                  KEY="${{ needs.configuration.outputs.state_key }}"
+                  TABLE="${{ needs.configuration.outputs.lock_table }}"
+                  REGION="${{ needs.configuration.outputs.aws_region }}"
+
+                  # Fallback for table if not specified
+                  if [[ -z "$TABLE" ]]; then
+                    TABLE="$BUCKET"
+                  fi
+
+                  LOCK_ID="${BUCKET}/${KEY}"
+
+                  echo "🔍 Debugging lock table for Terraform state..."
+                  echo "   Bucket: $BUCKET"
+                  echo "   Key: $KEY"
+                  echo "   Lock ID: $LOCK_ID"
+                  echo "   Table: $TABLE"
+                  echo ""
+
+                  # Check if lock exists
+                  echo "📋 Checking for lock in DynamoDB table..."
+                  LOCK_DATA=$(aws dynamodb get-item \
+                    --table-name "$TABLE" \
+                    --region "$REGION" \
+                    --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" 2>&1 || true)
+
+                  if echo "$LOCK_DATA" | grep -q "Item"; then
+                    echo "🔒 LOCK FOUND:"
+                    echo "$LOCK_DATA" | jq '.Item' || echo "$LOCK_DATA"
+                  else
+                    echo "✅ No lock found for this state"
+                  fi
+
+                  echo ""
+                  echo "📋 Listing all locks in table..."
+                  aws dynamodb scan \
+                    --table-name "$TABLE" \
+                    --region "$REGION" \
+                    --max-items 10 | jq '.Items[] | {LockID: .LockID.S, Info: .Info.S}' || true
