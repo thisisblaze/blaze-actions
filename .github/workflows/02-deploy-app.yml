@@ -315,6 +315,11 @@ jobs:
         run: |
           echo "Verifying NPM Token in Admin Job..."
           npm whoami --registry=https://registry.npmjs.org/ --userconfig=.npmrc || echo "WARNING: npm whoami failed. Token might be invalid."
+      - name: Debug Package Versions
+        run: |
+          npm view @blaze-cms/setup-ui versions --json --userconfig=.npmrc || echo "Could not view setup-ui versions"
+          npm view @blaze-cms/webpack-build-tools versions --json --userconfig=.npmrc || echo "Could not view webpack-build-tools versions"
+          npm view @blaze-cms/admin versions --json --userconfig=.npmrc || echo "Could not view admin versions"
       - run: npm install --legacy-peer-deps --ignore-scripts
       - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
       - name: Build Admin
