@@ -24,6 +24,10 @@ These workflows handle automated checks and background tasks:
 - **`sync-secrets-from-ssm.yml`**: Sync AWS SSM parameters (MongoDB/Elastic credentials) to GitHub Secrets for CI/CD use.
 - **`Daily Health Check`**: Automated daily validation of repository integrity and basic infrastructure health.
 - **`Terraform Module Tests`**: Validation of shared Terraform modules.
+- **`force-unlock.yml`**: Unlock Terraform state locks (DynamoDB + S3 cleanup).
+- **`debug-lock.yml`**: Inspect Terraform state locks for troubleshooting.
+- **`fix-state-integrity.yml`**: Verify and repair Terraform state file integrity.
+- **`fix-cname-conflict.yml`**: Remove CNAMEs from CloudFront distributions.
 
 ---
 
