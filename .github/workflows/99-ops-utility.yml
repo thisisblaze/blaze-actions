@@ -12,6 +12,9 @@ on:
           - "manage-environment"
           - "destroy-resources"
           - "nuke-environment"
+          - "--- ☁️ CLOUDFLARE CLEANUP ---"
+          - "destroy-cloudflare-pages"
+          - "destroy-cloudflare-tunnel"
           - "--- 🔐 SECRETS & CONFIG ---"
           - "sync-cloudflare-config"
           - "--- 🔐 TERRAFORM STATE RECOVERY ---"
@@ -497,6 +500,169 @@ jobs:
         if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
         run: |
           echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
+
+  # ------------------------------------------------------------------
+  # ☁️ CLOUDFLARE CLEANUP OPERATIONS
+  # ------------------------------------------------------------------
+
+  destroy-cloudflare-pages:
+    name: 🗑️ Delete Cloudflare Pages Project
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+            exit 1
+          fi
+
+      - name: Calculate Project Name
+        id: calc
+        run: |
+          NAMESPACE="blaze"
+          PROJECT="thisisblaze"
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Determine project name
+          if [ "$STAGE" = "prod" ]; then
+            PROJECT_NAME="${NAMESPACE}-${PROJECT}-admin"
+          else
+            PROJECT_NAME="${NAMESPACE}-${PROJECT}-${STAGE}-admin"
+          fi
+
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Project name: $PROJECT_NAME"
+
+      - name: Delete Cloudflare Pages Project
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT_NAME: ${{ steps.calc.outputs.project_name }}
+        run: |
+          echo "🗑️ Deleting Cloudflare Pages project: $PROJECT_NAME"
+
+          # Delete project via API
+          RESPONSE=$(curl -X DELETE \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -w "\n%{http_code}" \
+            -s)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Successfully deleted Pages project"
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "⚠️ Project not found (already deleted?)"
+          else
+            echo "❌ Failed to delete project (HTTP $HTTP_CODE)"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "### ✅ Cloudflare Pages Project Deleted" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Project**: \`${{ steps.calc.outputs.project_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+
+  destroy-cloudflare-tunnel:
+    name: 🗑️ Delete Cloudflare Tunnels
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-tunnel'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+            exit 1
+          fi
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Calculate Config
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: tunnel
+          branch_tag: ${{ inputs.branch_tag }}
+
+      - name: List Cloudflare Tunnels
+        id: list
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: blaze
+          PROJECT: thisisblaze
+          STAGE: ${{ steps.config.outputs.stage_key }}
+        run: |
+          echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-*"
+
+          # List all tunnels
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          # Filter tunnels by name pattern
+          TUNNEL_IDS=$(echo "$RESPONSE" | jq -r \
+            ".result[] | select(.name | startswith(\"${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-\")) | .id")
+
+          if [ -z "$TUNNEL_IDS" ]; then
+            echo "⚠️ No tunnels found matching pattern"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "$TUNNEL_IDS" > /tmp/tunnel_ids.txt
+            echo "📋 Found tunnels:"
+            echo "$TUNNEL_IDS"
+          fi
+
+      - name: Delete Tunnels
+        if: steps.list.outputs.found == 'true'
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          while read TUNNEL_ID; do
+            echo "🗑️ Deleting tunnel: $TUNNEL_ID"
+            
+            RESPONSE=$(curl -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -w "\n%{http_code}" \
+              -s)
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Deleted tunnel $TUNNEL_ID"
+            else
+              echo "⚠️ Failed to delete tunnel $TUNNEL_ID (HTTP $HTTP_CODE)"
+            fi
+          done < /tmp/tunnel_ids.txt
+
+      - name: Summary
+        run: |
+          echo "### ✅ Cloudflare Tunnels Cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.list.outputs.found }}" = "true" ]; then
+            TUNNEL_COUNT=$(wc -l < /tmp/tunnel_ids.txt)
+            echo "**Tunnels Deleted**: $TUNNEL_COUNT" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Result**: No tunnels found" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # ------------------------------------------------------------------
   # ☢️ NUKE SEQUENCE (Chained Destruction)
