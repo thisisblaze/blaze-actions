@@ -85,6 +85,62 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and upgrade notes.
 
 ---
 
+## Welcome to Blaze Actions! 👋
+
+This repository provides **production-ready GitHub Actions workflows** for deploying cloud infrastructure and applications. Whether you're a new user or an existing team member, we're here to help you get started quickly.
+
+### 🚀 Getting Started
+
+**New to Blaze Actions?** Follow these steps:
+
+1. **Read the Client Onboarding Guide**: Start with [CLIENT_ONBOARDING.md](https://github.com/thebyte9/blaze-template-deploy/blob/main/CLIENT_ONBOARDING.md) for a complete 1-hour setup walkthrough
+
+2. **Clone the Template**: Get started with a pre-configured repository structure
+
+   ```bash
+   git clone https://github.com/thebyte9/blaze-template-deploy my-project
+   ```
+
+3. **Review Examples**: Check out [workflow examples](https://github.com/thebyte9/blaze-template-deploy/tree/main/docs/examples) for different deployment patterns
+
+4. **Configure Secrets**: Set up required GitHub secrets (see [secret requirements](https://github.com/thebyte9/blaze-template-deploy/blob/main/CLIENT_ONBOARDING.md#secret-requirements))
+
+5. **Deploy**: Run your first workflow from the GitHub Actions tab
+
+### 🎯 What You Can Do
+
+- ✅ Deploy multi-environment infrastructure (DEV, STAGE, PROD)
+- ✅ Automated ECS deployments with circuit breakers
+- ✅ Cloudflare Pages and Tunnels management
+- ✅ MongoDB Atlas and Elastic Cloud provisioning
+- ✅ Feature branch deployments for testing
+- ✅ Comprehensive health checks and monitoring
+
+### 📚 Key Resources
+
+| Resource                                                                                                                            | Description                       |
+| :---------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- |
+| [CLIENT_ONBOARDING.md](https://github.com/thebyte9/blaze-template-deploy/blob/main/CLIENT_ONBOARDING.md)                            | Complete setup guide (~1 hour)    |
+| [Workflow Examples](https://github.com/thebyte9/blaze-template-deploy/tree/main/docs/examples)                                      | Ready-to-use templates            |
+| [CHANGELOG.md](./CHANGELOG.md)                                                                                                      | Version history and release notes |
+| [Architecture Guide](https://github.com/thebyte9/blaze-template-deploy/blob/main/docs/plans/hybrid_workflow_implementation_plan.md) | How it all works                  |
+
+### 💬 Need Help?
+
+- **Questions**: Open a [GitHub Discussion](https://github.com/thisisblaze/blaze-actions/discussions)
+- **Issues**: Report bugs via [GitHub Issues](https://github.com/thisisblaze/blaze-actions/issues)
+- **Documentation**: Browse the full [workflow catalog](#workflow-catalog-24-workflows) below
+
+### 🌟 Why Choose Blaze Actions?
+
+- **Production-Ready**: Used by multiple organizations in production
+- **Secure by Default**: OIDC authentication, SHA-pinned actions, zero long-lived credentials
+- **Cost-Optimized**: Timeout protection, Fargate Spot, efficient caching
+- **Well-Documented**: Comprehensive guides, examples, and inline comments
+- **Actively Maintained**: Regular updates, security patches, and improvements
+
+---
+
 ## Workflow Catalog (24 workflows)
 
 ### Main Workflows
