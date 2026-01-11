@@ -1,0 +1,176 @@
+name: Update CHANGELOG
+
+# Automatically updates CHANGELOG.md when creating a new release tag
+# Generates changelog entries from commit messages between tags
+
+on:
+    push:
+        tags:
+            - "v*.*.*" # Triggers on version tags like v1.4.0, v2.0.0, etc.
+
+permissions:
+    contents: write # Needed to commit CHANGELOG updates
+    pull-requests: write # Needed to create PR if desired
+
+jobs:
+    update-changelog:
+        name: Generate and Update CHANGELOG
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+              with:
+                  fetch-depth: 0 # Fetch all history for changelog generation
+                  ref: dev # Update changelog on dev branch
+
+            - name: Extract Tag Version
+              id: tag
+              run: |
+                  TAG_NAME=${GITHUB_REF#refs/tags/}
+                  echo "version=${TAG_NAME}" >> $GITHUB_OUTPUT
+                  echo "📌 Processing tag: $TAG_NAME"
+
+            - name: Get Previous Tag
+              id: prev_tag
+              run: |
+                  PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+                  echo "previous=${PREV_TAG}" >> $GITHUB_OUTPUT
+                  echo "📜 Previous tag: ${PREV_TAG:-<none>}"
+
+            - name: Generate Changelog Entry
+              id: changelog
+              run: |
+                  VERSION="${{ steps.tag.outputs.version }}"
+                  PREV_TAG="${{ steps.prev_tag.outputs.previous }}"
+                  DATE=$(date +%Y-%m-%d)
+
+                  echo "Generating changelog for ${VERSION}..."
+
+                  # Create changelog entry file
+                  cat > /tmp/new-changelog.md << EOF
+                  ## ${VERSION} (${DATE})
+
+                  ### Added
+
+                  EOF
+
+                  # Get commits with 'feat:' or 'add:' prefix
+                  if [[ -n "$PREV_TAG" ]]; then
+                    git log ${PREV_TAG}..HEAD --oneline --grep="^feat:" --grep="^add:" -i >> /tmp/feat.txt || true
+                  else
+                    git log HEAD --oneline --grep="^feat:" --grep="^add:" -i >> /tmp/feat.txt || true
+                  fi
+
+                  if [[ -s /tmp/feat.txt ]]; then
+                    while IFS= read -r line; do
+                      msg=$(echo "$line" | sed 's/^[a-f0-9]* //')
+                      echo "- ${msg}" >> /tmp/new-changelog.md
+                    done < /tmp/feat.txt
+                  else
+                    echo "- No new features in this release" >> /tmp/new-changelog.md
+                  fi
+
+                  cat >> /tmp/new-changelog.md << EOF
+
+                  ### Changed
+
+                  EOF
+
+                  # Get commits with 'chore:', 'refactor:', or 'docs:' prefix
+                  if [[ -n "$PREV_TAG" ]]; then
+                    git log ${PREV_TAG}..HEAD --oneline --grep="^chore:" --grep="^refactor:" --grep="^docs:" -i >> /tmp/change.txt || true
+                  else
+                    git log HEAD --oneline --grep="^chore:" --grep="^refactor:" --grep="^docs:" -i >> /tmp/change.txt || true
+                  fi
+
+                  if [[ -s /tmp/change.txt ]]; then
+                    while IFS= read -r line; do
+                      msg=$(echo "$line" | sed 's/^[a-f0-9]* //')
+                      echo "- ${msg}" >> /tmp/new-changelog.md
+                    done < /tmp/change.txt
+                  fi
+
+                  cat >> /tmp/new-changelog.md << EOF
+
+                  ### Fixed
+
+                  EOF
+
+                  # Get commits with 'fix:' prefix
+                  if [[ -n "$PREV_TAG" ]]; then
+                    git log ${PREV_TAG}..HEAD --oneline --grep="^fix:" -i >> /tmp/fix.txt || true
+                  else
+                    git log HEAD --oneline --grep="^fix:" -i >> /tmp/fix.txt || true
+                  fi
+
+                  if [[ -s /tmp/fix.txt ]]; then
+                    while IFS= read -r line; do
+                      msg=$(echo "$line" | sed 's/^[a-f0-9]* //')
+                      echo "- ${msg}" >> /tmp/new-changelog.md
+                    done < /tmp/fix.txt
+                  fi
+
+                  echo "" >> /tmp/new-changelog.md
+
+                  echo "Generated changelog entry:"
+                  cat /tmp/new-changelog.md
+
+            - name: Update CHANGELOG.md
+              run: |
+                  # Check if CHANGELOG.md exists
+                  if [[ ! -f CHANGELOG.md ]]; then
+                    echo "# Changelog" > CHANGELOG.md
+                    echo "" >> CHANGELOG.md
+                    echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+                    echo "" >> CHANGELOG.md
+                    echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)," >> CHANGELOG.md
+                    echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md
+                    echo "" >> CHANGELOG.md
+                  fi
+
+                  # Insert new changelog entry after the header
+                  # Find the line number after "## [Unreleased]" or start of version entries
+                  LINE_NUM=$(grep -n "^## " CHANGELOG.md | head -1 | cut -d: -f1)
+
+                  if [[ -z "$LINE_NUM" ]]; then
+                    # No existing entries, append after header
+                    cat CHANGELOG.md /tmp/new-changelog.md > /tmp/updated-changelog.md
+                  else
+                    # Insert before first version entry
+                    head -n $((LINE_NUM - 1)) CHANGELOG.md > /tmp/updated-changelog.md
+                    cat /tmp/new-changelog.md >> /tmp/updated-changelog.md
+                    tail -n +${LINE_NUM} CHANGELOG.md >> /tmp/updated-changelog.md
+                  fi
+
+                  mv /tmp/updated-changelog.md CHANGELOG.md
+
+                  echo "✅ CHANGELOG.md updated"
+
+            - name: Commit CHANGELOG
+              run: |
+                  git config --local user.email "github-actions[bot]@users.noreply.github.com"
+                  git config --local user.name "github-actions[bot]"
+
+                  git add CHANGELOG.md
+
+                  if git diff --staged --quiet; then
+                    echo "No changes to commit"
+                  else
+                    git commit -m "chore: update CHANGELOG for ${{ steps.tag.outputs.version }}"
+                    git push origin dev
+                    echo "✅ CHANGELOG committed and pushed to dev branch"
+                  fi
+
+            - name: Summary
+              run: |
+                  echo "# 📝 CHANGELOG Updated" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "**Version**: ${{ steps.tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Previous Version**: ${{ steps.prev_tag.outputs.previous || 'Initial release' }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "CHANGELOG.md has been automatically updated on the \`dev\` branch." >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
+                  echo "> Review and edit CHANGELOG.md if needed before merging to main." >> $GITHUB_STEP_SUMMARY
