@@ -495,7 +495,7 @@ jobs:
   deploy-tunnel:
     name: Deploy Tunnel
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.environment == 'DEV' || inputs.environment == null) && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == 'tunnel') }}
+    if: ${{ (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel' || (inputs.branch_name != '' && inputs.branch_name != null && inputs.target_services == 'admin')) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       service_name: "tunnel"
