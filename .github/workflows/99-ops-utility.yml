@@ -569,8 +569,12 @@ jobs:
         run: |
           echo "### ✅ Cloudflare Pages Project Deleted" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Project**: \`${{ steps.calc.outputs.project_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project Name** | \`${{ steps.calc.outputs.project_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
 
   destroy-cloudflare-tunnel:
     name: 🗑️ Delete Cloudflare Tunnels
@@ -656,12 +660,16 @@ jobs:
         run: |
           echo "### ✅ Cloudflare Tunnels Cleanup" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ steps.config.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Pattern** | \`blaze-thisisblaze-${{ steps.config.outputs.stage_key }}-tunnel-*\` |" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.list.outputs.found }}" = "true" ]; then
             TUNNEL_COUNT=$(wc -l < /tmp/tunnel_ids.txt)
-            echo "**Tunnels Deleted**: $TUNNEL_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "| **Tunnels Deleted** | $TUNNEL_COUNT |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**Result**: No tunnels found" >> $GITHUB_STEP_SUMMARY
+            echo "| **Result** | No tunnels found |" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ------------------------------------------------------------------
