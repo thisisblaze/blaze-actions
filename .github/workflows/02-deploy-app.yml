@@ -528,6 +528,33 @@ jobs:
         with:
           name: admin-build-assets
           path: packages/admin/public
+
+      - name: Set Cloudflare Pages Production Branch
+        run: |
+          PROJECT_NAME="blaze-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+
+          echo "Setting production branch to: $BRANCH for project: $PROJECT_NAME"
+
+          # Get project details to find project ID
+          PROJECT_ID=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            | jq -r '.result.name')
+
+          if [ "$PROJECT_ID" != "$PROJECT_NAME" ]; then
+            echo "⚠️  Project not found, will be created on first deployment"
+          else
+            # Update production branch
+            curl -s -X PATCH \
+              "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data "{\"production_branch\":\"$BRANCH\"}"
+            
+            echo "✅ Production branch set to: $BRANCH"
+          fi
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
         with:
