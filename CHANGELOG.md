@@ -5,7 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.3.0 (2026-01-11)
+## v1.4.0 (2026-01-11)
+
+### Added
+
+**Cloudflare Pages Lifecycle Management**:
+
+- **`cleanup-cloudflare-deployments`**: New action in `99-ops-utility.yml` to clean up old Cloudflare Pages deployments
+  - Dual retention policy: by count (default: keep 5) OR age (default: 30 days)
+  - Dry-run mode enabled by default for safety
+  - Smart filtering keeps latest deployments and recent ones
+  - Reduces storage costs and deployment clutter
+- **`destroy-cloudflare-pages-bulk`**: New action for pattern-based bulk deletion of Pages projects
+  - Pattern matching using shell globs (e.g., `blaze-*-test*-admin`)
+  - Safety limit: maximum 10 projects per run
+  - Requires special `BULK_DESTROY` confirmation to prevent accidents
+  - Dry-run support for preview before deletion
+  - Useful for cleaning up test/feature branch projects
+
+**New Workflow Inputs**:
+
+- `retention_count`: Number of deployments to keep (default: 5)
+- `retention_days`: Delete deployments older than N days (default: 30)
+- `dry_run`: Preview mode without making changes (default: true)
+- `bulk_pattern`: Project name pattern for bulk operations
+
+### Changed
+
+**Enhanced Cloudflare Pages Destruction**:
+
+- **Dynamic Configuration**: Replaced hardcoded `"blaze"` and `"thisisblaze"` with configuration outputs
+
+  - Now uses `needs.configuration.outputs.namespace` and `needs.configuration.outputs.project_key`
+  - Ensures naming consistency with creation logic in `02-deploy-app.yml`
+  - Improves reusability across different projects
+
+- **Enhanced Error Handling**: Added comprehensive HTTP status code handling
+  - **HTTP 403 (Forbidden)**: Clear permission error messages with actionable advice
+  - **HTTP 429 (Rate Limit)**: Automatic retry with exponential backoff (3 attempts: 2s → 4s → 8s)
+  - **HTTP 404 (Not Found)**: Graceful handling for already-deleted projects
+  - Improved debugging with detailed error context
+
+### Security
+
+**Safety Features**:
+
+- All destructive Cloudflare operations default to dry-run mode
+- Bulk operations require special `BULK_DESTROY` confirmation vs standard `DESTROY`
+- Maximum 10 projects per bulk deletion to prevent accidental mass deletion
+- Rate limiting protection prevents API abuse
+
+## [1.3.3] - 2026-01-11)
 
 ### Added
 
