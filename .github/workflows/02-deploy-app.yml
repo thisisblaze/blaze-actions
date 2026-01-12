@@ -563,6 +563,21 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: "pages deploy packages/admin/public --project-name=blaze-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
+      - name: Purge Cloudflare Cache
+        run: |
+          DOMAIN="admin-${{ needs.configuration.outputs.stage_key }}.${{ needs.configuration.outputs.domain_root }}"
+
+          echo "Purging cache for: $DOMAIN"
+
+          # Purge everything for this hostname
+          curl -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"hosts":["'$DOMAIN'"]}'
+
+          echo "✅ Cache purged for $DOMAIN"
+
   summary:
     name: 📝 Deployment Summary
     needs:
