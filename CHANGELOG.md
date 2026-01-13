@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **reusable-terraform.yml**: Added `-upgrade` flag to `terraform init` (commit: 9e2e469)
+  - Forces fresh module downloads from git refs
+  - Prevents cached module issues when module source refs are updated
+  - Ensures latest module versions are always used
+  - Critical for consuming updated modules from `blaze-terraform-infra-core`
+
+### Fixed
+
+- Terraform module caching issues that prevented updated modules from being used
+
+---
+
 ## v1.4.0 (2026-01-11)
 
 ### Added
