@@ -195,26 +195,65 @@ jobs:
 
       - name: Check & Release Stale Locks
         run: |
-          # Simplified lock check logic
+          # Fixed lock check logic - properly parse Info JSON blob
           BUCKET="${{ inputs.bucket }}"
           STATE_KEY="${{ inputs.state_key }}"
           TABLE_NAME="${{ inputs.lock_table }}"
           TABLE_NAME="${TABLE_NAME:-$BUCKET}"
           LOCK_ID="${BUCKET}/${STATE_KEY}"
+          REGION="${{ inputs.aws_region }}"
 
-          LOCK_DATA=$(aws dynamodb get-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "${{ inputs.aws_region }}" 2>/dev/null)
+          echo "🔍 Checking for stale locks..."
+          LOCK_DATA=$(aws dynamodb get-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "$REGION" 2>/dev/null)
 
           if echo "$LOCK_DATA" | grep -q "Item"; then
-             CREATED=$(echo "$LOCK_DATA" | jq -r '.Item.Created.S // empty')
-             if [[ -n "$CREATED" ]]; then
-                LOCK_EPOCH=$(date -d "$CREATED" +%s)
-                NOW_EPOCH=$(date +%s)
-                AGE_MIN=$(( (NOW_EPOCH - LOCK_EPOCH) / 60 ))
-                if [[ $AGE_MIN -gt 15 ]]; then
-                   echo "🔓 Releasing stale lock (Age: ${AGE_MIN}m)..."
-                   aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "${{ inputs.aws_region }}"
+             echo "📋 Lock found, checking age..."
+             
+             # CRITICAL FIX: Extract Info JSON blob (Created is inside this)
+             INFO=$(echo "$LOCK_DATA" | jq -r '.Item.Info.S // empty')
+             
+             if [[ -n "$INFO" ]]; then
+                # Parse Created timestamp from Info JSON
+                CREATED=$(echo "$INFO" | jq -r '.Created // empty')
+                
+                if [[ -n "$CREATED" ]]; then
+                   echo "   Created: $CREATED"
+                   
+                   # Parse timestamp using Python (handles nanoseconds, cross-platform)
+                   LOCK_EPOCH=$(python3 -c "
+from datetime import datetime
+ts = '$CREATED'.replace(' UTC', '').split('.')[0]
+dt = datetime.strptime(ts + ' +0000', '%Y-%m-%d %H:%M:%S %z')
+print(int(dt.timestamp()))
+" 2>/dev/null)
+                   
+                   if [[ -n "$LOCK_EPOCH" ]]; then
+                      NOW_EPOCH=$(date +%s)
+                      AGE_SEC=$((NOW_EPOCH - LOCK_EPOCH))
+                      AGE_MIN=$((AGE_SEC / 60))
+                      AGE_HOURS=$((AGE_MIN / 60))
+                      
+                      echo "   Age: ${AGE_HOURS}h ${AGE_MIN}m (${AGE_SEC}s)"
+                      
+                      # Release if older than 15 minutes
+                      if [[ $AGE_MIN -gt 15 ]]; then
+                         echo "🔓 Releasing stale lock (Age: ${AGE_HOURS}h ${AGE_MIN}m)..."
+                         aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "$REGION"
+                         echo "✅ Stale lock released successfully"
+                      else
+                         echo "⏳ Lock is recent (${AGE_MIN}m old), keeping it"
+                      fi
+                   else
+                      echo "⚠️ Could not parse timestamp"
+                   fi
+                else
+                   echo "⚠️ No Created field in lock Info"
                 fi
+             else
+                echo "⚠️ Lock has no Info field"
              fi
+          else
+             echo "✅ No existing lock found"
           fi
 
       - name: Load TF Vars
