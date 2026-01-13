@@ -20,3 +20,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local diagnostic scripts and artifacts (security: never commit)
+.agent/
