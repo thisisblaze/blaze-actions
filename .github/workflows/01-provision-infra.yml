@@ -182,9 +182,76 @@ jobs:
           event_name: "workflow_dispatch"
           cluster_tier: ${{ inputs.cluster_tier }}
 
+  # Build Sharp Lambda Layer (Required for Image Resize Functionality)
+  build_sharp_layer:
+    name: 🔨 Build Sharp Lambda Layer
+    needs: [configuration]
+    # Only run for network stack (where image resize is configured)
+    if: inputs.stack == 'network'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 15
+    outputs:
+      layer_arn: ${{ steps.build.outputs.layer-arn }}
+      s3_uri: ${{ steps.build.outputs.s3-uri }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1 # Lambda@Edge requires us-east-1
+
+      - name: Check if Sharp Layer Exists
+        id: check
+        run: |
+          echo "Checking for existing Sharp layer..."
+
+          LAYER_NAME="sharp-image-processing"
+          LAYER_ARN=$(aws lambda list-layer-versions \
+            --region us-east-1 \
+            --layer-name ${LAYER_NAME} \
+            --query 'LayerVersions[0].LayerVersionArn' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -n "$LAYER_ARN" && "$LAYER_ARN" != "None" ]]; then
+            echo "✅ Found existing layer: ${LAYER_ARN}"
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "layer_arn=${LAYER_ARN}" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ No existing layer found, will build new one"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Publish Sharp Layer
+        id: build
+        if: steps.check.outputs.exists == 'false'
+        uses: ./.github/actions/build-sharp-layer
+        with:
+          aws-region: us-east-1
+          sharp-version: "^0.33.0"
+          layer-name: "sharp-image-processing"
+          upload-to-s3: "true"
+          s3-bucket: ${{ needs.configuration.outputs.bucket }}
+          s3-key: "lambda-layers/sharp-layer.zip"
+
+      - name: Use Existing Layer
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          echo "layer-arn=${{ steps.check.outputs.layer_arn }}" >> $GITHUB_OUTPUT
+          echo "✅ Using existing Sharp layer"
+
   provision:
     name: Provision ${{ inputs.stack }}
-    needs: [configuration]
+    needs: [configuration, build_sharp_layer]
+    # Run provision after Sharp layer is ready (or skipped if not network stack)
+    if: |
+      always() && 
+      needs.configuration.result == 'success' &&
+      (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
+
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -220,6 +287,7 @@ jobs:
         cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
         kibana_ram=${{ inputs.kibana_size }}
         is_paused=${{ inputs.is_paused }}
+        sharp_layer_arn=${{ inputs.stack == 'network' && needs.build_sharp_layer.outputs.layer_arn || '' }}
         # enable_tunnel removed - uses terraform default (false)
         # Pass secrets as env vars in reusable workflow, but mapped here if needed?
         # Reusable workflow maps CLOUDFLARE_* secrets to TF_VAR defines automatically.
