@@ -146,5 +146,5 @@ runs:
       if: always()
       shell: bash
       run: |
-        rm -rf /tmp/sharp-layer
+        sudo rm -rf /tmp/sharp-layer
         echo "🧹 Cleaned up build artifacts"
