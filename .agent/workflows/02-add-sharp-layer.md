@@ -6,6 +6,12 @@ description: Add Sharp Lambda Layer automation for CloudFront image resize funct
 
 **When to use:** Setting up CloudFront image resize with Lambda@Edge for a new environment or project
 
+> [!IMPORTANT] > **Environment Compatibility**
+>
+> - ✅ **STAGE**: Has CloudFront → Sharp Layer + Image Resize supported
+> - ✅ **PROD**: Has CloudFront → Sharp Layer + Image Resize supported
+> - ❌ **DEV**: Cloudflare only (no CloudFront) → No AWS image resize
+
 ## Overview
 
 This workflow automates building and deploying the Sharp Lambda Layer required for CloudFront image resizing. Sharp compiles native binaries, so it must be built for Amazon Linux 2 (Lambda runtime).

@@ -6,6 +6,12 @@ description: Troubleshoot and fix CloudFront cache behaviors, dependency issues,
 
 **When to use:** CloudFront distribution issues, cache behavior problems, or image resize failures
 
+> [!IMPORTANT] > **Environment Availability**
+>
+> - ✅ **STAGE**: CloudFront enabled
+> - ✅ **PROD**: CloudFront enabled
+> - ❌ **DEV**: Cloudflare only (no CloudFront)
+
 ## Quick Health Check
 
 ```bash
