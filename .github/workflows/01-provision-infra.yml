@@ -412,6 +412,33 @@ jobs:
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add CloudFront Image Resize details for network stack
+          if [[ "${{ inputs.stack }}" == "network" ]] && [[ "${{ inputs.environment }}" != "DEV" ]]; then
+            echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
+            
+            SHARP_ARN="${{ needs.configuration.outputs.sharp_layer_arn }}"
+            if [[ -n "$SHARP_ARN" ]]; then
+              echo "| Component | Value |" >> $GITHUB_STEP_SUMMARY
+              echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Sharp Layer** | \`${SHARP_ARN}\` |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Lambda Functions** | • \`normalize-params\` (Viewer Request)<br>• \`resize-image\` (Origin Response) |" >> $GITHUB_STEP_SUMMARY
+              echo "| **S3 Buckets** | • ALB Logs: \`blaze-b9-thisisblaze-${{ needs.configuration.outputs.stage_key }}-alb-logs\`<br>• Image Resize: \`blaze-b9-ecs-thisisblaze-${{ needs.configuration.outputs.stage_key }}-image-resize\` |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Cache Policy** | Query string parameters (w, h, format, quality) |" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
+              echo "> Image resize requests: \`https://yourdomain.com/convert/image.jpg?w=800&h=600\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Component | Value |" >> $GITHUB_STEP_SUMMARY
+              echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Status** | ⚠️ Disabled (no Sharp layer ARN provided) |" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+              echo "> To enable image resize, provide \`SHARP_LAYER_ARN\` secret in your repository/environment settings." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
           REGION="${{ needs.configuration.outputs.aws_region }}"
           BUCKET="${{ needs.configuration.outputs.bucket }}"
