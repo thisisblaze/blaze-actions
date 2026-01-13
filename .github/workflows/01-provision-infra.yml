@@ -257,7 +257,7 @@ jobs:
         run: |
           if [[ "${{ steps.check.outputs.exists }}" == "true" ]]; then
             echo "layer_arn=${{ steps.check.outputs.layer_arn }}" >> $GITHUB_OUTPUT
-            echo "✅ Using existing Sharp ${steps.check.outputs.layer_arn}"
+            echo "✅ Using existing Sharp layer: ${{ steps.check.outputs.layer_arn }}"
           else
             echo "layer_arn=${{ steps.build.outputs.layer-arn }}" >> $GITHUB_OUTPUT
             echo "✅ Built new Sharp layer: ${{ steps.build.outputs.layer-arn }}"
