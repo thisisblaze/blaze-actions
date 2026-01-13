@@ -90,11 +90,11 @@ runs:
           npm install --platform=linux --arch=x64 --production
 
         # Create Lambda Layer structure
-        mkdir -p nodejs
-        mv node_modules nodejs/
+        sudo mkdir -p nodejs
+        sudo mv node_modules nodejs/
 
         # Package as zip
-        zip -r sharp-layer.zip nodejs
+        sudo zip -r sharp-layer.zip nodejs
 
         echo "✅ Sharp layer built successfully"
         ls -lh sharp-layer.zip
