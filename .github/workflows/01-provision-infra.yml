@@ -210,16 +210,31 @@ jobs:
           echo "Checking for existing Sharp layer..."
 
           LAYER_NAME="sharp-image-processing"
-          LAYER_ARN=$(aws lambda list-layer-versions \
+          DESIRED_SHARP_VERSION="0.33.0"
+
+          # Get latest layer version details
+          LAYER_INFO=$(aws lambda list-layer-versions \
             --region us-east-1 \
             --layer-name ${LAYER_NAME} \
-            --query 'LayerVersions[0].LayerVersionArn' \
-            --output text 2>/dev/null || echo "")
+            --query 'LayerVersions[0]' \
+            --output json 2>/dev/null || echo "{}")
 
-          if [[ -n "$LAYER_ARN" && "$LAYER_ARN" != "None" ]]; then
-            echo "✅ Found existing layer: ${LAYER_ARN}"
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "layer_arn=${LAYER_ARN}" >> $GITHUB_OUTPUT
+          LAYER_ARN=$(echo "$LAYER_INFO" | jq -r '.LayerVersionArn // ""')
+          LAYER_DESC=$(echo "$LAYER_INFO" | jq -r '.Description // ""')
+
+          if [[ -n "$LAYER_ARN" && "$LAYER_ARN" != "null" ]]; then
+            echo "Found layer: ${LAYER_ARN}"
+            echo "Description: ${LAYER_DESC}"
+            
+            # Check if description contains desired Sharp version
+            if [[ "$LAYER_DESC" == *"${DESIRED_SHARP_VERSION}"* ]]; then
+              echo "✅ Layer is up to date (Sharp ${DESIRED_SHARP_VERSION})"
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "layer_arn=${LAYER_ARN}" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Layer exists but outdated. Will rebuild with Sharp ${DESIRED_SHARP_VERSION}"
+              echo "exists=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "⚠️ No existing layer found, will build new one"
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -231,17 +246,22 @@ jobs:
         uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@dev
         with:
           aws-region: us-east-1
-          sharp-version: "^0.33.0"
+          sharp-version: "0.33.0" # Explicit version for cache control
           layer-name: "sharp-image-processing"
           upload-to-s3: "true"
           s3-bucket: ${{ needs.configuration.outputs.bucket }}
           s3-key: "lambda-layers/sharp-layer.zip"
 
       - name: Use Existing Layer
-        if: steps.check.outputs.exists == 'true'
+        id: output
         run: |
-          echo "layer-arn=${{ steps.check.outputs.layer_arn }}" >> $GITHUB_OUTPUT
-          echo "✅ Using existing Sharp layer"
+          if [[ "${{ steps.check.outputs.exists }}" == "true" ]]; then
+            echo "layer_arn=${{ steps.check.outputs.layer_arn }}" >> $GITHUB_OUTPUT
+            echo "✅ Using existing Sharp ${steps.check.outputs.layer_arn}"
+          else
+            echo "layer_arn=${{ steps.build.outputs.layer-arn }}" >> $GITHUB_OUTPUT
+            echo "✅ Built new Sharp layer: ${{ steps.build.outputs.layer-arn }}"
+          fi
 
   provision:
     name: Provision ${{ inputs.stack }}
@@ -417,7 +437,8 @@ jobs:
           if [[ "${{ inputs.stack }}" == "network" ]] && [[ "${{ inputs.environment }}" != "DEV" ]]; then
             echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
             
-            SHARP_ARN="${{ needs.configuration.outputs.sharp_layer_arn }}"
+            # Use the layer ARN from the build job (not a secret!)
+            SHARP_ARN="${{ needs.build_sharp_layer.outputs.layer_arn }}"
             if [[ -n "$SHARP_ARN" ]]; then
               echo "| Component | Value |" >> $GITHUB_STEP_SUMMARY
               echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY

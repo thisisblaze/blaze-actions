@@ -125,7 +125,7 @@ runs:
         LAYER_ARN=$(aws lambda publish-layer-version \
           --region ${{ inputs.aws-region }} \
           --layer-name ${{ inputs.layer-name }} \
-          --description "Sharp library for image processing (built $(date +%Y-%m-%d))" \
+          --description "Sharp ${{ inputs.sharp-version }} for Lambda@Edge image resize (built $(date +%Y-%m-%d))" \
           --zip-file fileb:///tmp/sharp-layer/sharp-layer.zip \
           --compatible-runtimes nodejs18.x nodejs20.x \
           --compatible-architectures x86_64 \
