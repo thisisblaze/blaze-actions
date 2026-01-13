@@ -219,13 +219,9 @@ jobs:
                 if [[ -n "$CREATED" ]]; then
                    echo "   Created: $CREATED"
                    
-                   # Parse timestamp using Python (handles nanoseconds, cross-platform)
-                   LOCK_EPOCH=$(python3 -c "
-from datetime import datetime
-ts = '$CREATED'.replace(' UTC', '').split('.')[0]
-dt = datetime.strptime(ts + ' +0000', '%Y-%m-%d %H:%M:%S %z')
-print(int(dt.timestamp()))
-" 2>/dev/null)
+                   # Parse timestamp (strip nanoseconds)
+                   CLEAN_TS=$(echo "$CREATED" | awk '{print $1, $2}')
+                   LOCK_EPOCH=$(date -d "$CLEAN_TS" +%s 2>/dev/null || echo "")
                    
                    if [[ -n "$LOCK_EPOCH" ]]; then
                       NOW_EPOCH=$(date +%s)
