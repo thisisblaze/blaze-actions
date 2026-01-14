@@ -198,6 +198,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      # Critical: Build Sharp for Linux (Lambda Runtime) - NOT macOS
+      # This builds Sharp in the Lambda function's node_modules before Terraform packages it
+      - name: Build Sharp for Lambda Function (Linux x64)
+        run: |
+          LAMBDA_DIR="modules/aws/lambda/edge-functions/functions/resize-image"
+
+          if [[ -d "$LAMBDA_DIR" ]]; then
+            cd "$LAMBDA_DIR"
+            
+            echo "🧹 Removing existing node_modules..."
+            rm -rf node_modules package-lock.json
+            
+            echo "🔨 Building Sharp for Amazon Linux 2 (Lambda runtime)..."
+            docker run --rm \
+              -v $(pwd):/build \
+              -w /build \
+              public.ecr.aws/lambda/nodejs:18 \
+              npm install --platform=linux --arch=x64 --production
+            
+            echo "✅ Sharp built for Linux x64"
+            
+            # Verify correct architecture
+            if ls node_modules/@img/sharp-linux-x64 2>/dev/null; then
+              echo "✅ Verified: sharp-linux-x64 binaries present"
+            else
+              echo "❌ ERROR: Linux binaries not found!"
+              ls node_modules/@img/ || echo "No @img directory"
+              exit 1
+            fi
+          else
+            echo "❌ ERROR: Lambda function directory not found at $LAMBDA_DIR"
+            exit 1
+          fi
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
