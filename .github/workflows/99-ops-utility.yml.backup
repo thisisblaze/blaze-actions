@@ -1,0 +1,991 @@
+name: "99 - Ops Utility"
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "🛠️ Select Action"
+        type: choice
+        options:
+          - "manage-environment"
+          - "destroy-resources"
+          - "nuke-environment"
+          - "destroy-cloudflare-pages"
+          - "cleanup-cloudflare-deployments"
+          - "destroy-cloudflare-pages-bulk"
+          - "destroy-cloudflare-tunnel"
+          - "sync-cloudflare-config"
+          - "unlock-state"
+          - "wipe-state"
+          - "kill-workflows"
+        required: true
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "STAGE", "PROD"]
+        required: false
+      stack:
+        description: "Terraform Stack (for state/destroy)"
+        type: choice
+        options:
+          [
+            "network",
+            "acm",
+            "tunnel",
+            "app",
+            "third-party-mongodb",
+            "third-party-elastic",
+          ]
+        default: "app"
+        required: false
+      branch_tag:
+        description: "Feature Tag (if applicable)"
+        required: false
+        type: string
+      confirmation:
+        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+        required: false
+        type: string
+      # Action-specific inputs
+      run_id:
+        description: "GitHub Run ID (for kill-workflows)"
+        required: false
+        type: string
+      manage_action:
+        description: "Service Action (for manage-environment)"
+        type: choice
+        options: ["start", "stop", "restart", "scale"]
+        default: "stop"
+      desired_count:
+        description: "Desired Instance Count (for scale)"
+        type: string
+        default: "0"
+      # Cloudflare cleanup inputs
+      retention_count:
+        description: "Deployments to Keep (for cleanup-deployments)"
+        type: string
+        default: "5"
+      retention_days:
+        description: "Delete Deployments Older Than (days)"
+        type: string
+        default: "30"
+      dry_run:
+        description: "Dry Run (preview without deleting)"
+        type: boolean
+        default: true
+      bulk_pattern:
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        type: string
+        required: false
+
+  workflow_call:
+    inputs:
+      action:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: false
+      stack:
+        type: string
+        required: false
+      branch_tag:
+        type: string
+        required: false
+      confirmation:
+        type: string
+        required: false
+      run_id:
+        type: string
+        required: false
+      manage_action:
+        type: string
+        default: "stop"
+        required: false
+      desired_count:
+        type: string
+        default: "0"
+        required: false
+      retention_count:
+        type: string
+        default: "5"
+        required: false
+      retention_days:
+        type: string
+        default: "30"
+        required: false
+      dry_run:
+        type: boolean
+        default: true
+        required: false
+      bulk_pattern:
+        type: string
+        required: false
+    # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
+    # Currently explicitly defining secrets to ensure workflow_call compatibility
+    secrets:
+      GH_PAT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  validate:
+    name: Validate Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate Input
+        run: |
+          ACTION="${{ inputs.action }}"
+          CONF="${{ inputs.confirmation }}"
+
+          echo "🔍 Selected Action: $ACTION"
+
+          # Block separators and headers
+          if [[ "$ACTION" == "-"* ]]; then
+            echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
+            echo "   Please select a real action (e.g., 'manage-environment')."
+            exit 1
+          fi
+
+          # Validation for destructive actions
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" ]]; then
+            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
+              exit 1
+            fi
+          fi
+
+  debug-context:
+    name: 🕵️ Debug Context
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 5
+    steps:
+      - name: Check Secrets Presence
+        run: |
+          echo "🔍 Checking Secret Availability..."
+
+          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
+            echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
+          else
+            echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
+          fi
+
+          if [[ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ]]; then
+            echo "✅ AWS_ACCESS_KEY_ID is SET"
+          else
+            echo "ℹ️ AWS_ACCESS_KEY_ID is NOT SET (OIDC might be used)"
+          fi
+
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+             echo "✅ CLOUDFLARE_API_TOKEN is SET"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
+          fi
+
+          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
+             echo "✅ GH_PAT is SET"
+          else
+             echo "ℹ️ GH_PAT is MISSING (This might be expected)"
+          fi
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  configuration:
+    name: Configuration
+    needs: [validate]
+    # Explicitly run only for actions that need Terraform/ECR config
+    if: contains(fromJSON('["manage-environment", "destroy-resources", "unlock-state", "wipe-state", "nuke-environment"]'), inputs.action)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      cluster_name: ${{ steps.config.outputs.cluster_name }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      # TODO: Re-enable if calculate-config needs AWS Account ID
+      # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
+      # The calculate-config action handles missing AWS credentials gracefully
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+      #   with:
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      #     aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          terraform_stack: ${{ inputs.stack || 'app' }}
+          branch_name: ${{ inputs.branch_tag }}
+          # Ops Utility implies infra operations, so we must pass true to bypass safety check
+          deploy_infra: true
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+  kill-workflows:
+    name: 🧟‍♂️ Kill Workflows
+    needs: [validate]
+    if: inputs.action == 'kill-workflows'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Kill Zombies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_FILTER="${{ inputs.branch_tag }}"
+          if [[ -n "$BRANCH_FILTER" ]]; then
+            echo "🎯 Filtering by branch: $BRANCH_FILTER"
+            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
+          else
+            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
+          fi
+          CURRENT_ID="${{ github.run_id }}"
+          TARGET_ID="${{ inputs.run_id }}"
+
+          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
+            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
+            id=$(_jq '.databaseId')
+            name=$(_jq '.name')
+            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
+            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
+            echo "🔪 Killing Run $id ($name)..."
+            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
+          done
+
+  state-operations:
+    name: State Ops
+    needs: [configuration]
+    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Execute Ops
+        run: |
+          ACTION="${{ inputs.action }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+          KEY="${{ needs.configuration.outputs.state_key }}"
+          TABLE="${{ needs.configuration.outputs.lock_table }}"
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+
+          # Fallback for table if not specified
+          if [[ -z "$TABLE" ]]; then
+            TABLE="$BUCKET"
+          fi
+
+          LOCK_ID="${BUCKET}/${KEY}"
+
+          if [[ "$ACTION" == "unlock-state" ]]; then
+            echo "🔓 Unlocking State: $LOCK_ID"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+            
+            # Optional: Remove .tflock file if it exists in S3 (legacy/emergency check)
+            aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+            
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING STATE: $LOCK_ID"
+            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+          fi
+
+  manage-environment:
+    name: Manage Env
+    needs: [configuration]
+    if: inputs.action == 'manage-environment'
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: ${{ inputs.manage_action }}
+      service_name: "all"
+      desired_count: ${{ inputs.desired_count }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  pre-cleanup:
+    name: Pre-Cleanup
+    needs: [configuration]
+    if: inputs.action == 'destroy-resources'
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      stage_filter: ${{ inputs.branch_tag }}
+      environment: ${{ inputs.environment || 'DEV' }}
+
+  destroy-resources:
+    name: Destroy
+    needs: [configuration, pre-cleanup]
+    if: inputs.action == 'destroy-resources'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }}
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+
+  sync-cloudflare-config:
+    name: Sync Cloudflare Config
+    needs: [configuration]
+    if: inputs.action == 'sync-cloudflare-config'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Parse blaze-env.json
+        id: parse
+        run: |
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Read and parse JSON
+          COMMON=$(jq -r '.common' vars/blaze-env.json)
+          STAGE_OVERRIDES=$(jq -r ".${STAGE} // {}" vars/blaze-env.json)
+
+          # Extract key values (PROJECT IDENTITY)
+          CLIENT_KEY=$(echo "$COMMON" | jq -r '.CLIENT_KEY')
+          PROJECT_KEY=$(echo "$COMMON" | jq -r '.PROJECT_KEY')
+          NAMESPACE=$(echo "$COMMON" | jq -r '.NAMESPACE')
+          SITE_NAME=$(echo "$COMMON" | jq -r '.BLAZE_FRONTEND_SITE_NAME')
+
+          # Extract infrastructure values
+          AWS_REGION=$(echo "$COMMON" | jq -r '.AWS_REGION')
+          CLOUD_PLATFORM=$(echo "$COMMON" | jq -r '.CLOUD_PLATFORM')
+          DOMAIN_ROOT=$(echo "$COMMON" | jq -r '.DOMAIN_ROOT')
+
+          # Extract app config
+          NODE_ENV=$(echo "$COMMON" | jq -r '.NODE_ENV')
+          DEBUG=$(echo "$COMMON" | jq -r '.DEBUG')
+
+          # Extract stage-specific overrides
+          S3_BUCKET=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_BUCKET // empty')
+          S3_PUBLIC_URL=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_PUBLIC_URL // empty')
+          GRAPHQL_PLAYGROUND=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_GRAPHQL_PLAYGROUND_ENABLED // empty')
+
+          # Export to outputs
+          echo "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT
+          echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
+          echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
+          echo "site_name=$SITE_NAME" >> $GITHUB_OUTPUT
+          echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+          echo "cloud_platform=$CLOUD_PLATFORM" >> $GITHUB_OUTPUT
+          echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
+          echo "node_env=$NODE_ENV" >> $GITHUB_OUTPUT
+          echo "debug=$DEBUG" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
+          echo "s3_public_url=$S3_PUBLIC_URL" >> $GITHUB_OUTPUT
+          echo "graphql_playground=$GRAPHQL_PLAYGROUND" >> $GITHUB_OUTPUT
+
+          echo "✅ Parsed blaze-env.json for $STAGE environment"
+
+      - name: Sync to Cloudflare Pages (Admin)
+        if: ${{ needs.configuration.outputs.stage_key != 'dev' }}
+        run: |
+          # Install Wrangler
+          npm install -g wrangler
+
+          # Project name
+          PROJECT_NAME="blaze-${{ steps.parse.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+
+          echo "🔄 Syncing config to Cloudflare Pages project: $PROJECT_NAME"
+
+          # Sync PROJECT IDENTITY
+          echo "${{ steps.parse.outputs.client_key }}" | wrangler pages secret put CLIENT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.project_key }}" | wrangler pages secret put PROJECT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.namespace }}" | wrangler pages secret put NAMESPACE --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.site_name }}" | wrangler pages secret put BLAZE_FRONTEND_SITE_NAME --project-name="$PROJECT_NAME"
+
+          # Sync Infrastructure
+          echo "${{ steps.parse.outputs.aws_region }}" | wrangler pages secret put AWS_REGION --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.cloud_platform }}" | wrangler pages secret put CLOUD_PLATFORM --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.domain_root }}" | wrangler pages secret put DOMAIN_ROOT --project-name="$PROJECT_NAME"
+
+          # Sync App Config
+          echo "${{ steps.parse.outputs.node_env }}" | wrangler pages secret put NODE_ENV --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.debug }}" | wrangler pages secret put DEBUG --project-name="$PROJECT_NAME"
+
+          # Sync Stage-specific overrides (if they exist)
+          if [ -n "${{ steps.parse.outputs.s3_bucket }}" ]; then
+            echo "${{ steps.parse.outputs.s3_bucket }}" | wrangler pages secret put BLAZE_FILES_S3_BUCKET --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.s3_public_url }}" ]; then
+            echo "${{ steps.parse.outputs.s3_public_url }}" | wrangler pages secret put BLAZE_FILES_S3_PUBLIC_URL --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.graphql_playground }}" ]; then
+            echo "${{ steps.parse.outputs.graphql_playground }}" | wrangler pages secret put BLAZE_GRAPHQL_PLAYGROUND_ENABLED --project-name="$PROJECT_NAME"
+          fi
+
+          echo "✅ Successfully synced application config to Cloudflare Pages"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Skip DEV
+        if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
+        run: |
+          echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
+
+  # ------------------------------------------------------------------
+  # ☁️ CLOUDFLARE CLEANUP OPERATIONS
+  # ------------------------------------------------------------------
+
+  destroy-cloudflare-pages:
+    name: 🗑️ Delete Cloudflare Pages Project
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+            exit 1
+          fi
+
+      - name: Calculate Project Name
+        id: calc
+        run: |
+          # Use dynamic configuration outputs for consistency
+          NAMESPACE="${{ needs.configuration.outputs.namespace }}"
+          PROJECT="${{ needs.configuration.outputs.project_key }}"
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Determine project name (matches creation logic in 02-deploy-app.yml)
+          if [ "$STAGE" = "prod" ]; then
+            PROJECT_NAME="${NAMESPACE}-${PROJECT}-admin"
+          else
+            PROJECT_NAME="${NAMESPACE}-${PROJECT}-${STAGE}-admin"
+          fi
+
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Calculated Pages project name: $PROJECT_NAME"
+          echo "   (Namespace: $NAMESPACE, Project: $PROJECT, Stage: $STAGE)"
+
+      - name: Delete Cloudflare Pages Project
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT_NAME: ${{ steps.calc.outputs.project_name }}
+        run: |
+          echo "🗑️ Deleting Cloudflare Pages project: $PROJECT_NAME"
+
+          # Retry configuration
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          RETRY_DELAY=2
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            # Delete project via API
+            RESPONSE=$(curl -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -w "\n%{http_code}" \
+              -s)
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n-1)
+            
+            # Success cases
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Successfully deleted Pages project"
+              exit 0
+            elif [ "$HTTP_CODE" = "404" ]; then
+              echo "⚠️ Project not found (already deleted or never existed)"
+              exit 0
+            fi
+            
+            # Retry cases
+            if [ "$HTTP_CODE" = "429" ]; then
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️ Rate limited (HTTP 429). Retrying in ${RETRY_DELAY}s... (Attempt $RETRY_COUNT/$MAX_RETRIES)"
+                sleep $RETRY_DELAY
+                RETRY_DELAY=$((RETRY_DELAY * 2))  # Exponential backoff
+                continue
+              fi
+            fi
+            
+            # Error cases
+            if [ "$HTTP_CODE" = "403" ]; then
+              echo "❌ Permission denied (HTTP 403)"
+              echo "   Check that CLOUDFLARE_API_TOKEN has 'Cloudflare Pages:Edit' permission"
+              echo "Response: $BODY"
+              exit 1
+            else
+              echo "❌ Failed to delete project (HTTP $HTTP_CODE)"
+              echo "Response: $BODY"
+              exit 1
+            fi
+          done
+
+          # Max retries exceeded
+          echo "❌ Failed after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Summary
+        run: |
+          echo "### ✅ Cloudflare Pages Project Deleted" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project Name** | \`${{ steps.calc.outputs.project_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+
+  destroy-cloudflare-tunnel:
+    name: 🗑️ Delete Cloudflare Tunnels
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-tunnel'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+            exit 1
+          fi
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Calculate Config
+        id: config
+        uses: ./.github/actions/calculate-config
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: tunnel
+          branch_tag: ${{ inputs.branch_tag }}
+
+      - name: List Cloudflare Tunnels
+        id: list
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: blaze
+          PROJECT: thisisblaze
+          STAGE: ${{ steps.config.outputs.stage_key }}
+        run: |
+          echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-*"
+
+          # List all tunnels
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          # Filter tunnels by name pattern
+          TUNNEL_IDS=$(echo "$RESPONSE" | jq -r \
+            ".result[] | select(.name | startswith(\"${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-\")) | .id")
+
+          if [ -z "$TUNNEL_IDS" ]; then
+            echo "⚠️ No tunnels found matching pattern"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "$TUNNEL_IDS" > /tmp/tunnel_ids.txt
+            echo "📋 Found tunnels:"
+            echo "$TUNNEL_IDS"
+          fi
+
+      - name: Delete Tunnels
+        if: steps.list.outputs.found == 'true'
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          while read TUNNEL_ID; do
+            echo "🗑️ Deleting tunnel: $TUNNEL_ID"
+            
+            RESPONSE=$(curl -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -w "\n%{http_code}" \
+              -s)
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Deleted tunnel $TUNNEL_ID"
+            else
+              echo "⚠️ Failed to delete tunnel $TUNNEL_ID (HTTP $HTTP_CODE)"
+            fi
+          done < /tmp/tunnel_ids.txt
+
+      - name: Summary
+        run: |
+          echo "### ✅ Cloudflare Tunnels Cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ steps.config.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Pattern** | \`blaze-thisisblaze-${{ steps.config.outputs.stage_key }}-tunnel-*\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.list.outputs.found }}" = "true" ]; then
+            TUNNEL_COUNT=$(wc -l < /tmp/tunnel_ids.txt)
+            echo "| **Tunnels Deleted** | $TUNNEL_COUNT |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| **Result** | No tunnels found |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ------------------------------------------------------------------
+  # ☢️ NUKE SEQUENCE (Chained Destruction)
+  # ------------------------------------------------------------------
+
+  nuke-stop-services:
+    name: 🛑 Nuke 1/5 - Stop Services
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: "stop"
+      service_name: "all"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+  nuke-destroy-app:
+    name: 🗑️ Nuke 2/5 - App Stack
+    needs: [configuration, nuke-stop-services]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      # Force explicit path for App stack instead of using config output (which relies on input.stack)
+      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-app"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      # Backend Config (Must match calculate-config logic)
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      # Key format: infra/{project}/{stage}/{stack}.tfstate
+      # We must reconstruct the key for each stack.
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/app.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+
+  nuke-destroy-tunnel:
+    name: 🚇 Nuke 3/5 - Tunnel
+    needs: [configuration, nuke-destroy-app]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      tf_dir: ".github/aws/infra/live/third-party/cloudflare"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/cloudflare.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      # Tunnel stack needs specific vars?
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+
+  #  nuke-destroy-data-mongo:
+  #    name: 💾 Nuke 4a/5 - Mongo
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/mongodb.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+  #
+  #  nuke-destroy-data-elastic:
+  #    name: 💾 Nuke 4b/5 - Elastic
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/elastic"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/elastic.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+
+  nuke-destroy-network:
+    name: 💥 Nuke 5/5 - Network (Host)
+    # Wait for Tunnel (and implicit App) instead of Data
+    needs: [configuration, nuke-destroy-tunnel]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+  summary:
+    name: 📝 Ops Summary
+    needs:
+      [
+        configuration,
+        kill-workflows,
+        state-operations,
+        manage-environment,
+        destroy-resources,
+        sync-cloudflare-config,
+        nuke-destroy-network,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
+
+          echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          # If configuration ran successfully, we have more info
+          if [[ "${{ needs.configuration.result }}" == "success" ]]; then
+            echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
+             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "unlock-state" || "${{ inputs.action }}" == "wipe-state" ]]; then
+             echo "| **State Ops** | $(get_icon ${{ needs.state-operations.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "manage-environment" ]]; then
+             echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
+             echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
+             echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-pages" ]]; then
+             echo "| **Delete CF Pages** | $(get_icon ${{ needs.destroy-cloudflare-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-tunnel" ]]; then
+             echo "| **Delete CF Tunnels** | $(get_icon ${{ needs.destroy-cloudflare-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
+             echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Mongo** | $(get_icon ${{ needs.nuke-destroy-data-mongo.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Elastic** | $(get_icon ${{ needs.nuke-destroy-data-elastic.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
