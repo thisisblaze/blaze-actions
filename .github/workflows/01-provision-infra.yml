@@ -195,8 +195,12 @@ jobs:
       layer_arn: ${{ steps.build.outputs.layer-arn }}
       s3_uri: ${{ steps.build.outputs.s3-uri }}
     steps:
-      - name: Checkout
+      - name: Checkout Infrastructure Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          repository: thisisblaze/blaze-terraform-infra-core
+          ref: ${{ needs.configuration.outputs.infra_ref }}
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       # Critical: Build Sharp for Linux (Lambda Runtime) - NOT macOS
       # This builds Sharp in the Lambda function's node_modules before Terraform packages it
