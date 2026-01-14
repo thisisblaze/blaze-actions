@@ -6,12 +6,12 @@ This directory contains the modernized CI/CD pipeline for the Blaze project, org
 
 The system is centered around four primary workflows that manage the entire lifecycle of an environment:
 
-| Workflow                          | ID   | Purpose                         | Key Features                                                                                     |
-| :-------------------------------- | :--- | :------------------------------ | :----------------------------------------------------------------------------------------------- |
-| **00 - Setup Environment**        | `00` | **Initial Bootstrap**           | One-time creation of S3 Backend, DynamoDB Locks, and ECR Image Mirroring.                        |
-| **01 - Provision Infrastructure** | `01` | **Infrastructure Provisioning** | Creates VPC, ECS Clusters, ALB, EFS, SSL Certificates, and 3rd Party (Mongo/Elastic).            |
-| **02 - Deploy App**               | `02` | **Application Delivery**        | Builds Docker images and deploys to ECS or Cloudflare Pages. Supports selective service deploys. |
-| **99 - Ops Utility**              | `99` | **Operational Maintenance**     | Manage environment state (Scale/Stop), unlock Terraform, wipe state, and destroy resources.      |
+| Workflow                          | ID   | Purpose                         | Key Features                                                                                                                             |
+| :-------------------------------- | :--- | :------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| **00 - Setup Environment**        | `00` | **Initial Bootstrap**           | One-time creation of S3 Backend, DynamoDB Locks, and ECR Image Mirroring.                                                                |
+| **01 - Provision Infrastructure** | `01` | **Infrastructure Provisioning** | Creates VPC, ECS Clusters, ALB, EFS, SSL Certificates, and 3rd Party (Mongo/Elastic).                                                    |
+| **02 - Deploy App**               | `02` | **Application Delivery**        | Builds Docker images and deploys to ECS or Cloudflare Pages. Supports selective service deploys.                                         |
+| **99 - Ops Utility**              | `99` | **Operational Maintenance**     | Manage environment state (Scale/Stop), unlock Terraform, wipe state, destroy resources, and Cloudflare cleanup (Pages/Deployments/Bulk). |
 
 ---
 
@@ -28,6 +28,30 @@ These workflows handle automated checks and background tasks:
 - **`debug-lock.yml`**: Inspect Terraform state locks for troubleshooting.
 - **`fix-state-integrity.yml`**: Verify and repair Terraform state file integrity.
 - **`fix-cname-conflict.yml`**: Remove CNAMEs from CloudFront distributions.
+
+---
+
+## ☁️ Cloudflare Operations
+
+Specialized workflows for managing Cloudflare Pages lifecycle:
+
+- **`destroy-cloudflare-pages`** (in `99-ops-utility.yml`): Delete a single Cloudflare Pages project
+  - Dynamic project naming from configuration (no hardcoded values)
+  - Enhanced error handling with retry logic for rate limits
+  - Requires `DESTROY` confirmation
+- **`cleanup-cloudflare-deployments`** (in `99-ops-utility.yml`): Clean up old deployments while keeping recent ones
+  - Dual retention: by count (keep last N) OR age (keep newer than N days)
+  - Dry-run mode enabled by default
+  - Reduces storage costs and clutter
+- **`destroy-cloudflare-pages-bulk`** (in `99-ops-utility.yml`): Pattern-based bulk deletion
+
+  - Pattern matching (e.g., `blaze-*-test*-admin`)
+  - Safety limit: max 10 projects per run
+  - Requires `BULK_DESTROY` confirmation
+  - Dry-run support for preview
+
+- **`destroy-cloudflare-tunnel`** (in `99-ops-utility.yml`): Delete Cloudflare Tunnels by pattern
+- **`sync-cloudflare-config`** (in `99-ops-utility.yml`): Sync environment variables to Cloudflare Pages
 
 ---
 
