@@ -111,7 +111,9 @@ jobs:
 
       # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
       # Lambda runs on Linux, not macOS - must use linux-x64 binaries
+      # Only runs for STAGE/PROD where image resize is enabled
       - name: Build Sharp for Lambda@Edge (Linux x64)
+        if: contains(fromJSON('["STAGE", "PROD"]'), inputs.environment)
         run: |
           LAMBDA_DIR="modules/aws/lambda/edge-functions/functions/resize-image"
 
