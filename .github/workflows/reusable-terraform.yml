@@ -109,6 +109,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
+      # Lambda runs on Linux, not macOS - must use linux-x64 binaries
+      - name: Build Sharp for Lambda@Edge (Linux x64)
+        run: |
+          LAMBDA_DIR="modules/aws/lambda/edge-functions/functions/resize-image"
+
+          if [[ -d "$LAMBDA_DIR" ]]; then
+            cd "$LAMBDA_DIR"
+            
+            echo "🧹 Removing existing node_modules (likely macOS binaries)..."
+            rm -rf node_modules package-lock.json
+            
+            echo "🔨 Building Sharp for Amazon Linux 2 (Lambda runtime)..."
+            docker run --rm \
+              -v $(pwd):/build \
+              -w /build \
+              public.ecr.aws/lambda/nodejs:18 \
+              npm install --platform=linux --arch=x64 --production
+            
+            echo "✅ Sharp built for Linux x64"
+            
+            # Verify correct architecture
+            if ls node_modules/@img/sharp-linux-x64 2>/dev/null; then
+              echo "✅ Correct binaries: sharp-linux-x64"
+            else
+              echo "❌ WARNING: Linux binaries not found!"
+              ls node_modules/@img/ || echo "No @img directory"
+            fi
+          else
+            echo "ℹ️ No Lambda function directory found - skipping Sharp build"
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.23
         with:
