@@ -283,10 +283,15 @@ jobs:
         if: ${{ inputs.action == 'destroy' }}
         working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
         env:
-          TF_VAR_cluster_name: ${{ env.TF_VAR_cluster_name }}
-          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          # Pass through TF variables for cluster name calculation
+          TF_VAR_client_key: ${{ inputs.client_key }}
+          TF_VAR_namespace: ${{ inputs.namespace }}
+          TF_VAR_platform: ${{ inputs.cloud_platform }}
+          TF_VAR_stage: ${{ inputs.stage_key }}
+          # MongoDB Atlas credentials
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
         run: |
           # Check if pre-destroy.sh exists in current directory
           if [ -f "pre-destroy.sh" ]; then
