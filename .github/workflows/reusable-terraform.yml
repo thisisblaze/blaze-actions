@@ -387,15 +387,27 @@ jobs:
       # Automatically disables termination protection before cluster destruction
       - name: Run Pre-Destroy Hook
         if: ${{ inputs.destroy == true && inputs.apply == true }}
+        working-directory: ${{ inputs.tf_dir }}
         env:
-          TF_VAR_cluster_name: ${{ env.TF_VAR_cluster_name }}
-          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          # MongoDB Atlas credentials - use direct env var names
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          # TF variables for cluster name calculation (passed from parent)
+          TF_VARS: ${{ inputs.tf_vars }}
         run: |
           # Check if pre-destroy.sh exists in current directory
           if [ -f "pre-destroy.sh" ]; then
             echo "🔧 Found pre-destroy.sh - executing smart pre-destroy hooks..."
+            
+            # Parse tf_vars and export as environment variables
+            if [ -n "$TF_VARS" ]; then
+              echo "$TF_VARS" | while IFS='=' read -r key value; do
+                # Export as TF_VAR_ prefixed
+                export "TF_VAR_${key}=${value}"
+              done
+            fi
+            
             chmod +x pre-destroy.sh
             ./pre-destroy.sh
           else
