@@ -383,6 +383,25 @@ jobs:
              fi
           fi
 
+      # Smart Pre-Destroy Hook for MongoDB
+      # Automatically disables termination protection before cluster destruction
+      - name: Run Pre-Destroy Hook
+        if: ${{ inputs.destroy == true && inputs.apply == true }}
+        env:
+          TF_VAR_cluster_name: ${{ env.TF_VAR_cluster_name }}
+          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        run: |
+          # Check if pre-destroy.sh exists in current directory
+          if [ -f "pre-destroy.sh" ]; then
+            echo "🔧 Found pre-destroy.sh - executing smart pre-destroy hooks..."
+            chmod +x pre-destroy.sh
+            ./pre-destroy.sh
+          else
+            echo "ℹ️  No pre-destroy.sh found - skipping pre-destroy hooks"
+          fi
+
       - name: Terraform Apply
         if: ${{ inputs.apply == true }}
         env:
