@@ -103,6 +103,46 @@ elif [[ "$STACK" == "third-party-elastic" ]]; then
 elif [[ "$STACK" == "network" ]]; then
   echo "🔍 Running Network Smart Import & Cleanup Logic..."
   
+  CLIENT_KEY="${INPUT_CLIENT_KEY}"
+  PROJECT_KEY="${INPUT_PROJECT_KEY}"
+  STAGE_KEY="${INPUT_STAGE_KEY}"
+  
+  # Import existing S3 ALB Logs Bucket
+  S3_ALB_LOGS="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-alb-logs"
+  if aws s3api head-bucket --bucket "$S3_ALB_LOGS" 2>/dev/null; then
+    if ! terraform state list | grep -q "module.environment_network.module.access_logs_bucket\[0\].aws_s3_bucket.this"; then
+      echo "📥 Importing S3 ALB logs bucket: $S3_ALB_LOGS"
+      terraform import 'module.environment_network.module.access_logs_bucket[0].aws_s3_bucket.this' "$S3_ALB_LOGS" || true
+    fi
+  fi
+  
+  # Import WAF Web ACL (CloudFront scope in us-east-1)
+  WAF_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cloudfront"
+  WAF_ID=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1 --query "WebACLs[?Name=='$WAF_NAME'].Id" --output text 2>/dev/null || echo "")
+  if [[ -n "$WAF_ID" && "$WAF_ID" != "None" ]]; then
+    if ! terraform state list | grep -q "module.environment_network.module.waf_global\[0\].aws_wafv2_web_acl.this"; then
+      echo "📥 Importing WAF Web ACL: $WAF_NAME"
+      ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      WAF_ARN="arn:aws:wafv2:us-east-1:${ACCOUNT_ID}:global/webacl/${WAF_NAME}/${WAF_ID}"
+      terraform import 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' "${WAF_ARN}/${WAF_NAME}/${WAF_ID}" || true
+    fi
+  fi
+  
+  # Import Target Groups (Blue/Green for Admin, Frontend, API)
+  for TG in admin-blue admin-green frontend-blue frontend-green api-blue api-green; do
+    RESOURCE_NAME=$(echo "$TG" | tr '-' '_')
+    TG_NAME="blaze-${STAGE_KEY}-${TG}-tg"
+    TG_ARN=$(aws elbv2 describe-target-groups --names "$TG_NAME" --region "$REGION" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
+    
+    if [[ -n "$TG_ARN" && "$TG_ARN" != "None" ]]; then
+      if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
+        echo "📥 Importing target group: $TG_NAME"
+        terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" || true
+      fi
+    fi
+  done
+  
+  # Cloudflare ACM Validation Cleanup
   if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" ]]; then
     echo "   🧹 Checking for clashing validation records in Cloudflare..."
     
