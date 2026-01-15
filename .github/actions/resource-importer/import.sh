@@ -129,8 +129,9 @@ elif [[ "$STACK" == "network" ]]; then
   fi
   
   # Import Target Groups (Blue/Green for Admin, Frontend, API)
-  for TG in admin-blue admin-green frontend-blue frontend-green api-blue api-green; do
-    RESOURCE_NAME=$(echo "$TG" | tr '-' '_')
+  # Note: frontend is abbreviated as 'fe' in target group names
+  for TG in admin-blue admin-green fe-blue fe-green api-blue api-green; do
+    RESOURCE_NAME=$(echo "$TG" | sed 's/fe-/frontend_/' | tr '-' '_')
     TG_NAME="blaze-${STAGE_KEY}-${TG}-tg"
     TG_ARN=$(aws elbv2 describe-target-groups --names "$TG_NAME" --region "$REGION" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
     
