@@ -402,10 +402,14 @@ jobs:
             
             # Parse tf_vars and export as environment variables
             if [ -n "$TF_VARS" ]; then
-              echo "$TF_VARS" | while IFS='=' read -r key value; do
+              echo "📝 Parsing TF variables..."
+              while IFS='=' read -r key value; do
+                # Skip empty lines
+                [ -z "$key" ] && continue
                 # Export as TF_VAR_ prefixed
-                export "TF_VAR_${key}=${value}"
-              done
+                eval "export TF_VAR_${key}='${value}'"
+                echo "   Exported: TF_VAR_${key}"
+              done <<< "$TF_VARS"
             fi
             
             chmod +x pre-destroy.sh
