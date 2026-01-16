@@ -95,6 +95,7 @@ jobs:
               CANDIDATES=(
                 "blaze-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
                 "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+                "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
               )
 
               for BUCKET_NAME in "${CANDIDATES[@]}"; do
