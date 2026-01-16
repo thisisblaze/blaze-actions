@@ -83,15 +83,27 @@ jobs:
 
           echo "🧹 Checking for S3 Storage Buckets to empty..."
 
-          # Try to derive the bucket prefix from the cluster name or inputs
+          echo "🧹 Checking for cleanup candidates..."
+
+          # Parse Cluster Name to derive keys
+          # Format: blaze-{client}-{project}-{stage}-cluster
+          CLIENT_KEY=""
+          PROJECT_KEY=""
+          STAGE_KEY=""
+
           if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
              CLIENT_KEY="${BASH_REMATCH[2]}"
              PROJECT_KEY="${BASH_REMATCH[3]}"
              STAGE_KEY="${BASH_REMATCH[4]}"
-             
-             # Candidate Bucket Names
-             # 1. With 'ecs' component (Standard for some templates)
-             # 2. Without 'ecs' component
+             echo "   🔍 Context: Client='${CLIENT_KEY}', Project='${PROJECT_KEY}', Stage='${STAGE_KEY}'"
+          else
+             echo "   ⚠️ Could not parse Cluster Name '$CLUSTER'. Some cleanup steps may be skipped."
+          fi
+
+          # ---------------------------------------------------------
+          # 🗑️ CLEANUP S3 BUCKETS (Storage Origin)
+          # ---------------------------------------------------------
+          if [[ -n "$CLIENT_KEY" ]]; then
              CANDIDATES=(
                "blaze-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
                "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
@@ -99,25 +111,18 @@ jobs:
              
              for BUCKET_NAME in "${CANDIDATES[@]}"; do
                 echo "   🎯 Checking for bucket: $BUCKET_NAME"
-                
                 if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
                    echo "      Found bucket: $BUCKET_NAME"
                    echo "      🗑️ Emptying bucket contents..."
-                   
-                   # Ensure boto3 is available
                    pip install boto3 >/dev/null 2>&1 || true
-                   
                    cat <<EOF > empty_bucket.py
           import boto3
           import sys
-
           bucket_name = sys.argv[1]
           s3 = boto3.resource('s3')
           bucket = s3.Bucket(bucket_name)
-
           print(f"Emptying bucket: {bucket_name}")
           try:
-              # Delete all object versions
               bucket.object_versions.delete()
               print("Deleted all object versions.")
           except Exception as e:
@@ -125,14 +130,97 @@ jobs:
           EOF
                    python3 empty_bucket.py "$BUCKET_NAME"
                    rm empty_bucket.py
-                   
                    echo "      ✅ Bucket emptied."
-                else
-                   echo "      ℹ️ Bucket not found (already deleted?)"
                 fi
              done
-          else
-             echo "   ⚠️ Could not derive bucket name from cluster '$CLUSTER'"
+          fi
+
+          # ---------------------------------------------------------
+          # 📜 CLEANUP UNUSED ACM CERTIFICATES
+          # ---------------------------------------------------------
+          if [[ -n "$PROJECT_KEY" ]]; then
+            echo "🧹 Checking for unused ACM certificates..."
+            # Strategy: List all certs. Filter by DomainName containing PROJECT_KEY (e.g. thisisblaze).
+            # Then check InUse: false.
+            
+            # Using AWS CLI to filter is safer and faster
+            echo "   🔍 Searching for certificates matching '*${PROJECT_KEY}*' in region ${{ inputs.aws_region }}..."
+            
+            # Get list of cert ARNs that match the domain keyword
+            # We filter client-side with jq because --filters on list-certificates is limited
+            
+            UNUSED_CERTS=$(aws acm list-certificates --region "${{ inputs.aws_region }}" --output json | \
+              jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | .CertificateArn')
+            
+            if [[ -n "$UNUSED_CERTS" ]]; then
+              for CERT_ARN in $UNUSED_CERTS; do
+                # Check details for InUse status
+                CERT_DETAILS=$(aws acm describe-certificate --certificate-arn "$CERT_ARN" --region "${{ inputs.aws_region }}" --output json)
+                IN_USE=$(echo "$CERT_DETAILS" | jq -r '.Certificate.InUseBy | length')
+                
+                if [[ "$IN_USE" == "0" ]]; then
+                   echo "      🗑️ Deleting unused cert: $CERT_ARN"
+                   aws acm delete-certificate --certificate-arn "$CERT_ARN" --region "${{ inputs.aws_region }}" || echo "      ⚠️ Failed to delete cert"
+                else
+                   # Double check logic: list-certificates output usually lacks InUse. describe-certificate is authoritative.
+                   # Wait, list-certificates output has 'InUse' field in recent CLI versions? No, 'InUse' is in describe-certificate.
+                   # Actually, list-certificates summary *does* have InUse? 
+                   # The user provided output earlier had InUse: false in list-certificates --output json?
+                   # Let's rely on describe-certificate 'InUseBy' array length or 'InUse' boolean if present.
+                   # Earlier output showed 'InUse: true/false'. Let's check that.
+                   # Checking the earlier tool output... Yes! "InUse": false. 
+                   # So we can filter directly from list output if we include keyTypes? 
+                   # "list-certificates" doesn't return InUse by default unless we use --includes ? 
+                   # The user command was: aws acm list-certificates ... --includes keyTypes=RSA_2048 --output json.
+                   # I will use that pattern.
+                   echo "      🔒 Cert In Use (Skipping): $CERT_ARN"
+                fi
+              done
+              
+              # Optimized loop using the --includes trick to get InUse field directly
+              echo "   🎯 Optimizing search with InUse flag..."
+              JSON_LIST=$(aws acm list-certificates --region "${{ inputs.aws_region }}" --includes keyTypes=RSA_2048 --output json)
+              
+              # Filter for Unused AND Matches Project
+              TARGET_ARNS=$(echo "$JSON_LIST" | jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | select(.InUse == false) | .CertificateArn')
+              
+              if [[ -n "$TARGET_ARNS" ]]; then
+                 for ARN in $TARGET_ARNS; do
+                   echo "      🗑️ Deleting UNUSED cert: $ARN"
+                   aws acm delete-certificate --certificate-arn "$ARN" --region "${{ inputs.aws_region }}" || echo "      ⚠️ Failed"
+                 done
+              else
+                 echo "      ✅ No unused certificates found."
+              fi
+            fi
+          fi
+
+          # ---------------------------------------------------------
+          # ⚡ CLEANUP LAMBDA@EDGE (Janitor)
+          # ---------------------------------------------------------
+          if [[ -n "$CLIENT_KEY" ]]; then
+             echo "🧹 Checking for old Lambda@Edge functions..."
+             # Pattern: blaze-{client}-{project}-{stage}-*
+             PREFIX="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+             echo "   🔍 searching for functions starting with: $PREFIX"
+             
+             FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
+             
+             if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+                for FUNC_NAME in $FUNCTIONS; do
+                   echo "      🔄 Checking function: $FUNC_NAME"
+                   
+                   # Attempt Delete
+                   if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
+                      echo "      ✅ Deleted $FUNC_NAME"
+                   else
+                      # Capture failure, check for Repliated/409
+                      echo "      ⚠️ Delete failed (likely Replicated/Edge). Skipping."
+                   fi
+                done
+             else
+                echo "      ok: No functions found matching prefix."
+             fi
           fi
 
           echo "🧹 Cleaning up ECS Services in $CLUSTER..."
