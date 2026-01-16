@@ -56,6 +56,10 @@ on:
         description: "Pause MongoDB Cluster? (MongoDB only)"
         type: boolean
         default: false
+      enable_image_resize:
+        description: "Enable CloudFront for Image Resizing"
+        type: boolean
+        default: false
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -99,6 +103,10 @@ on:
         default: "1.9.0"
 
       enable_tunnel:
+        required: false
+        type: boolean
+        default: false
+      enable_image_resize:
         required: false
         type: boolean
         default: false
@@ -251,6 +259,7 @@ jobs:
         cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
         kibana_ram=${{ inputs.kibana_size }}
         is_paused=${{ inputs.is_paused }}
+        enable_image_resize=${{ inputs.enable_image_resize }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
