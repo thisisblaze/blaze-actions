@@ -305,6 +305,20 @@ jobs:
             fi
           done < _github_vars.env
 
+      - name: Run VPC Integrity Check
+        working-directory: ${{ inputs.tf_dir }}
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          CLIENT_KEY: ${{ env.TF_VAR_client_key }}
+          PROJECT_KEY: ${{ env.TF_VAR_project_key }}
+          STAGE: ${{ env.TF_VAR_stage }}
+        run: |
+          if [[ -f "check-vpc-integrity.sh" ]]; then
+            echo "🔍 Found VPC Integrity Check script. Executing..."
+            chmod +x check-vpc-integrity.sh
+            ./check-vpc-integrity.sh
+          fi
+
       - name: Run Pre-Apply Script
         if: ${{ inputs.pre_apply_script != '' }}
         env:
