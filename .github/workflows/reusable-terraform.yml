@@ -96,7 +96,7 @@ jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     outputs:
       mongodb_uri: ${{ steps.tf_outputs.outputs.mongodb_uri }}
       cluster_name: ${{ steps.tf_outputs.outputs.cluster_name }}
