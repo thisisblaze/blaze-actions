@@ -202,23 +202,28 @@ jobs:
           if [[ $INIT_EXIT_CODE -ne 0 ]]; then
             if grep -qi "checksum" /tmp/init_output.log || grep -qi "does not have the expected content" /tmp/init_output.log; then
 
+
                echo "⚠️ Checksum mismatch / Stale Lock detected. Attempting recovery..."
                LOCK_ID="${BUCKET}/${STATE_KEY}"
                
-               echo "🔎 DEBUG: Scanning Lock Table matching LockID..."
-               aws dynamodb scan --table-name "${TABLE_NAME}" \
-                 --filter-expression "LockID = :l" \
-                 --expression-attribute-values "{\":l\": {\"S\": \"${LOCK_ID}\"}}" \
-                 --region "${REGION}"
+               echo "🔎 DEBUG: Dumping ALL Items in Lock Table to find true key..."
+               aws dynamodb scan --table-name "${TABLE_NAME}" --region "${REGION}"
                
-               echo "🗑️ DEBUG: Deleting LockID: ${LOCK_ID} from Table: ${TABLE_NAME}"
+               echo "🗑️ DEBUG: Attempting to delete expected LockID: ${LOCK_ID}"
                
                # Delete Lock from DynamoDB
                aws dynamodb delete-item \
                  --table-name "${TABLE_NAME}" \
                  --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" \
                  --region "${REGION}"
-                 
+
+               # Attempt to delete without bucket prefix as fallback
+               echo "🗑️ DEBUG: Attempting to delete fallback LockID: ${STATE_KEY}"
+               aws dynamodb delete-item \
+                 --table-name "${TABLE_NAME}" \
+                 --key "{\"LockID\": {\"S\": \"${STATE_KEY}\"}}" \
+                 --region "${REGION}"
+
                # Delete .tflock from S3
                aws s3 rm "s3://${BUCKET}/${STATE_KEY}.tflock" --region "${REGION}" || true
                
