@@ -995,6 +995,49 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
 
+  nuke-destroy-pages:
+    name: 🗑️ Nuke 2b/5 - Pages Projects
+    needs: [configuration, nuke-pre-cleanup]
+    if: inputs.action == 'nuke-environment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete Pages Projects
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          if [ "${{ env.STAGE }}" = "prod" ]; then
+             PREFIX="${NAMESPACE}-${PROJECT}"
+          else
+             PREFIX="${NAMESPACE}-${PROJECT}-${STAGE}"
+          fi
+
+          PROJECTS=("${PREFIX}-admin" "${PREFIX}-frontend")
+
+          echo "🗑️ Preparing to delete Pages projects..."
+
+          for PROJ in "${PROJECTS[@]}"; do
+             echo "   Target: $PROJ"
+             
+             RESPONSE=$(curl -s -X DELETE \
+               "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}" \
+               -H "Authorization: Bearer ${CF_API_TOKEN}" \
+               -H "Content-Type: application/json" \
+               -w "\n%{http_code}" )
+
+             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+             
+             if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "404" ]; then
+                echo "      ✅ Deleted (or not found)"
+             else
+                echo "      ⚠️ Failed to delete (HTTP $HTTP_CODE)"
+             fi
+          done
+
   nuke-destroy-tunnel:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-destroy-app]
@@ -1127,6 +1170,7 @@ jobs:
         destroy-resources,
         sync-cloudflare-config,
         nuke-destroy-network,
+        nuke-destroy-pages,
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -1190,6 +1234,7 @@ jobs:
           if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
              echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Pages** | $(get_icon ${{ needs.nuke-destroy-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Mongo** | $(get_icon ${{ needs.nuke-destroy-data-mongo.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Elastic** | $(get_icon ${{ needs.nuke-destroy-data-elastic.result }}) |" >> $GITHUB_STEP_SUMMARY
