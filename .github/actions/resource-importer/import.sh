@@ -167,6 +167,29 @@ elif [[ "$STACK" == "network" ]]; then
     echo "   ⚠️ Cloudflare credentials missing. Skipping cleanup."
   fi
 
+elif [[ "$STACK" == "app" ]]; then
+  echo "🔍 Running App Smart Import Logic..."
+
+  # Cloudflare Pages Custom Domain
+  if [[ -n "$TF_VAR_cloudflare_account_id" && -n "$TF_VAR_project_key" && -n "$TF_VAR_stage" ]]; then
+     NAMESPACE="${INPUT_NAMESPACE:-blaze}"
+     PROJECT_NAME="${NAMESPACE}-${TF_VAR_project_key}-${TF_VAR_stage}-admin"
+     DOMAIN="admin-${TF_VAR_stage}.${TF_VAR_domain_root}"
+     ACCOUNT_ID="$TF_VAR_cloudflare_account_id"
+
+     if [[ "$ACCOUNT_ID" != "dummy" ]]; then
+        IMPORT_ID="${ACCOUNT_ID}/${PROJECT_NAME}/${DOMAIN}"
+
+        if ! terraform state list | grep -q "cloudflare_pages_domain.admin"; then
+           echo "📥 Importing Cloudflare Pages Domain: $DOMAIN"
+           echo "   ID: $IMPORT_ID"
+           terraform import cloudflare_pages_domain.admin "$IMPORT_ID" || echo "   ⚠️ Import failed (or already imported)"
+        fi
+     else
+        echo "   ⚠️ Cloudflare Account ID is dummy. Skipping import."
+     fi
+  fi
+
 else
   echo "ℹ️ No smart import logic defined for stack: $STACK"
 fi
