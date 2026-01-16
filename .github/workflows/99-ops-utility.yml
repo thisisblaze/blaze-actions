@@ -1114,6 +1114,14 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
+      pre_apply_script: |
+        # ORPHAN LAMBDA@EDGE
+        # Lambda@Edge replicas take hours to delete. We must remove it from state to proceed.
+        # This allows Terraform to ignore the existing resources (AWS will delete eventually).
+        echo "🔪 ORPHANING LAMBDA@EDGE FUNCTIONS FROM STATE..."
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" || true
+        echo "✅ Lambda@Edge orphaned."
 
   summary:
     name: 📝 Ops Summary
