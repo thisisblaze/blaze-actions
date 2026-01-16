@@ -364,27 +364,25 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Add CloudFront Image Resize details for network stack
+          # Add CloudFront Image Resize details for network stack
           if [[ "${{ inputs.stack }}" == "network" ]]; then
             echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Component | Value |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
             
-            SHARP_LAYER_ARN="${{ needs.build_sharp_layer.outputs.layer_arn }}"
-            if [[ -n "$SHARP_LAYER_ARN" ]]; then
-              echo "| **Status** | ✅ Enabled (Sharp layer built automatically) |" >> $GITHUB_STEP_SUMMARY
-              echo "| **Lambda Layer** | \`$SHARP_LAYER_ARN\` |" >> $GITHUB_STEP_SUMMARY
-              echo "| **Lambda Functions** | • \`viewer-request\` (request parsing)<br>• \`origin-response\` (image processing with Sharp) |" >> $GITHUB_STEP_SUMMARY
-              echo "| **S3 Buckets** | • ALB Logs: \`blaze-b9-thisisblaze-${{ needs.configuration.outputs.stage_key }}-alb-logs\`<br>• Image Resize: \`blaze-b9-ecs-thisisblaze-${{ needs.configuration.outputs.stage_key }}-image-resize\` |" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ inputs.enable_image_resize }}" == "true" ]]; then
+              echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Architecture** | Lambda@Edge (Origin Response) + OAC |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Functions** | • \`viewer-request\` (URL Normalizer)<br>• \`origin-response\` (Image Processor) |" >> $GITHUB_STEP_SUMMARY
+              echo "| **Logs** | \`/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image\` |" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "> **Usage**: Access resized images via CloudFront CDN:" >> $GITHUB_STEP_SUMMARY
-              echo "> \`https://cdn-${{ needs.configuration.outputs.stage_key }}.yourdomain.com/convert/400/path/to/image.jpg\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width only: \`/convert/800/image.jpg\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width x Height: \`/convert/800x600/image.jpg\`" >> $GITHUB_STEP_SUMMARY
+              echo "> \`https://cdn-${{ needs.configuration.outputs.stage_key }}.yourdomain.com/convert/path/to/image.jpg?width=400\`" >> $GITHUB_STEP_SUMMARY
+              echo "> - Width only: \`?width=800\`" >> $GITHUB_STEP_SUMMARY
+              echo "> - Width x Height: \`?width=800&height=600\`" >> $GITHUB_STEP_SUMMARY
             else
-              echo "| **Status** | ⚠️ Sharp layer build failed or not run |" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "> **Note**: Sharp layer is built automatically for network stack. Check build logs above for errors." >> $GITHUB_STEP_SUMMARY
+              echo "| **Status** | ⚪ Disabled |" >> $GITHUB_STEP_SUMMARY
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
