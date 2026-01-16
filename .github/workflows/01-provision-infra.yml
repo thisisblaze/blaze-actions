@@ -246,6 +246,7 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
+      pre_apply_script: "if [[ -f import-existing-resources.sh ]]; then chmod +x import-existing-resources.sh && ./import-existing-resources.sh; fi"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
