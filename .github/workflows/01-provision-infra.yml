@@ -378,9 +378,9 @@ jobs:
               echo "| **Logs** | \`/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image\` |" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "> **Usage**: Access resized images via CloudFront CDN:" >> $GITHUB_STEP_SUMMARY
-              echo "> \`https://cdn-${{ needs.configuration.outputs.stage_key }}.yourdomain.com/convert/path/to/image.jpg?width=400\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width only: \`?width=800\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width x Height: \`?width=800&height=600\`" >> $GITHUB_STEP_SUMMARY
+              echo "> \`https://cdn-${{ needs.configuration.outputs.stage_key }}.yourdomain.com/convert/path/to/image.jpg?w=400\`" >> $GITHUB_STEP_SUMMARY
+              echo "> - Width only: \`?w=800\`" >> $GITHUB_STEP_SUMMARY
+              echo "> - Width x Height: \`?w=800&h=600\`" >> $GITHUB_STEP_SUMMARY
             else
               echo "| **Status** | ⚪ Disabled |" >> $GITHUB_STEP_SUMMARY
             fi
