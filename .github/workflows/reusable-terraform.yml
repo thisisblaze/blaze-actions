@@ -206,6 +206,7 @@ jobs:
                echo "⚠️ Checksum mismatch / Stale Lock detected. Attempting recovery..."
                LOCK_ID="${BUCKET}/${STATE_KEY}"
                
+
                echo "🔎 DEBUG: Dumping ALL Items in Lock Table to find true key..."
                aws dynamodb scan --table-name "${TABLE_NAME}" --region "${REGION}"
                
@@ -217,11 +218,23 @@ jobs:
                  --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" \
                  --region "${REGION}"
 
+               # Delete Lock MD5 (Digest) from DynamoDB
+               echo "🗑️ DEBUG: Attempting to delete expected LockID (MD5): ${LOCK_ID}-md5"
+               aws dynamodb delete-item \
+                 --table-name "${TABLE_NAME}" \
+                 --key "{\"LockID\": {\"S\": \"${LOCK_ID}-md5\"}}" \
+                 --region "${REGION}"
+
                # Attempt to delete without bucket prefix as fallback
                echo "🗑️ DEBUG: Attempting to delete fallback LockID: ${STATE_KEY}"
                aws dynamodb delete-item \
                  --table-name "${TABLE_NAME}" \
                  --key "{\"LockID\": {\"S\": \"${STATE_KEY}\"}}" \
+                 --region "${REGION}"
+
+               aws dynamodb delete-item \
+                 --table-name "${TABLE_NAME}" \
+                 --key "{\"LockID\": {\"S\": \"${STATE_KEY}-md5\"}}" \
                  --region "${REGION}"
 
                # Delete .tflock from S3
