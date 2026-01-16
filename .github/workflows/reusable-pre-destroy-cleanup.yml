@@ -214,11 +214,16 @@ jobs:
               done
 
          - name: Cleanup Zombie Cloudflare Records
-           if: env.PROJECT_KEY != '' && secrets.CLOUDFLARE_API_TOKEN != ''
+           if: env.PROJECT_KEY != ''
            env:
               CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
               CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
            run: |
+              if [[ -z "$CF_API_TOKEN" ]]; then
+                 echo "Skipping Cloudflare cleanup: CLOUDFLARE_API_TOKEN not provided."
+                 exit 0
+              fi
+
               DOMAIN="thisisblaze.uk" # Fallback/Default
               # In a real scenario we might want to pass domain_root as input, but for this specific "validation" record issue:
 
