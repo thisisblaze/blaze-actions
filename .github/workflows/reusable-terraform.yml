@@ -319,6 +319,17 @@ jobs:
             ./check-vpc-integrity.sh
           fi
 
+      - name: Run Import Resource Script
+        working-directory: ${{ inputs.tf_dir }}
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+        run: |
+          if [[ -f "import-existing-resources.sh" ]]; then
+            echo "📥 Found Import Script. Executing..."
+            chmod +x import-existing-resources.sh
+            ./import-existing-resources.sh
+          fi
+
       - name: Run Pre-Apply Script
         if: ${{ inputs.pre_apply_script != '' }}
         env:
