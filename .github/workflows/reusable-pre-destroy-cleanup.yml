@@ -225,28 +225,15 @@ jobs:
               fi
 
               DOMAIN="thisisblaze.uk" # Fallback/Default
+              # In a real scenario we might want to pass domain_root as input, but for this specific "validation" record issue:
 
-              echo "🔍 Dynamically searching for ACM validation records..."
+              echo "🔍 Checking for zombie Cloudflare records..."
 
-              # 1. CLEANUP ACM VALIDATION RECORDS (CNAMEs pointing to AWS)
-              # List all CNAME records
-              ALL_CNAMES=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?type=CNAME&per_page=100" \
-                -H "Authorization: Bearer $CF_API_TOKEN" \
-                -H "Content-Type: application/json")
-                
-              # Filter for records pointing to acm-validations.aws
-              ACM_IDS=$(echo "$ALL_CNAMES" | jq -r '.result[] | select(.content | contains("acm-validations.aws")) | .id')
+              # Patterns to clean
+              # 1. Validation records (ACM)
+              # 2. Specific host records for the stage being destroyed
 
-              for REC_ID in $ACM_IDS; do
-                 REC_NAME=$(echo "$ALL_CNAMES" | jq -r --arg id "$REC_ID" '.result[] | select(.id == $id) | .name')
-                 echo "      🗑️ Deleting ACM Validation Record: $REC_NAME ($REC_ID)"
-                 curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
-                    -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
-              done
-
-              # 2. CLEANUP STAGE SPECIFIC RECORDS
-              # Specific host records for the stage being destroyed
-              RECORDS=("${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
+              RECORDS=("validation.${DOMAIN}" "${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
 
               for REC_NAME in "${RECORDS[@]}"; do
                  echo "   Checking $REC_NAME"
