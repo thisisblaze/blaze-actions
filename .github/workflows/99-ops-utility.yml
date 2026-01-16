@@ -638,7 +638,6 @@ jobs:
           echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
 
-
   cleanup-cloudflare-deployments:
     name: 🧹 Cleanup Old Deployments
     needs: [configuration]
@@ -672,17 +671,17 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           echo "🔍 Listing deployments for: $PROJECT_NAME"
-          
+
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY RUN MODE - No deletions will be performed"
           fi
-          
+
           # Fetch all deployments
           RESPONSE=$(curl -s -X GET \
             "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json")
-          
+
           # Check for errors
           SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
           if [ "$SUCCESS" != "true" ]; then
@@ -690,22 +689,22 @@ jobs:
             echo "$RESPONSE" | jq -r '.errors'
             exit 1
           fi
-          
+
           # Get current timestamp
           CURRENT_TIME=$(date +%s)
           CUTOFF_TIME=$((CURRENT_TIME - (RETENTION_DAYS * 86400)))
-          
+
           # Sort by created_on descending
           DEPLOYMENTS=$(echo "$RESPONSE" | jq -r '.result | sort_by(.created_on) | reverse | .[] | "\(.id)|\(.created_on)|\(.environment)"')
-          
+
           TOTAL_COUNT=$(echo "$DEPLOYMENTS" | wc -l | tr -d ' ')
           echo "📊 Total deployments: $TOTAL_COUNT"
           echo "🎯 Retention: Keep $RETENTION_COUNT latest OR newer than $RETENTION_DAYS days"
-          
+
           DELETED=0
           KEPT=0
           INDEX=0
-          
+
           echo "$DEPLOYMENTS" | while IFS='|' read -r DEPLOY_ID CREATED_AT ENV; do
             INDEX=$((INDEX + 1))
             
@@ -731,20 +730,20 @@ jobs:
               fi
             fi
           done
-          
+
           echo ""
           echo "📊 Summary: Total=$TOTAL_COUNT, Kept=$KEPT, Deleted=$DELETED"
 
       - name: Summary
         run: |
           DRY_RUN="${{ inputs.dry_run }}"
-          
+
           if [ "$DRY_RUN" = "true" ]; then
             echo "### 🔍 Deployment Cleanup Preview" >> $GITHUB_STEP_SUMMARY
           else
             echo "### ✅ Deployment Cleanup Complete" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
@@ -783,30 +782,30 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           echo "🔍 Finding projects matching: $PATTERN"
-          
+
           # List projects
           RESPONSE=$(curl -s -X GET \
             "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects" \
             -H "Authorization: Bearer ${CF_API_TOKEN}")
-          
+
           # Convert pattern to regex
           REGEX=$(echo "$PATTERN" | sed 's/\*/.\*/g')
           PROJECTS=$(echo "$RESPONSE" | jq -r ".result[] | select(.name | test(\"^${REGEX}$\")) | .name")
-          
+
           COUNT=$(echo "$PROJECTS" | wc -l | tr -d ' ')
-          
+
           if [ -z "$PROJECTS" ]; then
             echo "⚠️ No projects found"
             exit 0
           fi
-          
+
           if [ $COUNT -gt 10 ]; then
             echo  "❌ Safety limit: $COUNT projects found, max 10 allowed"
             exit 1
           fi
-          
+
           echo "📊 Found $COUNT projects"
-          
+
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY RUN - Would delete:"
             echo "$PROJECTS"
@@ -942,9 +941,26 @@ jobs:
       service_name: "all"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
+
+  nuke-pre-cleanup:
+    name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
+    needs: [configuration, nuke-stop-services]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      stage_filter: ${{ inputs.branch_tag }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      force_delete: true
+
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
-    needs: [configuration, nuke-stop-services]
+    needs: [configuration, nuke-pre-cleanup]
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
