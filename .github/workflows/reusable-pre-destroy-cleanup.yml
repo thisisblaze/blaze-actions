@@ -136,9 +136,77 @@ jobs:
                echo "   🗑️ Deleting UNUSED cert: $ARN"
                aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
              done
+
+      - name: Cleanup Zombie Resources (OAC/IAM)
+        if: env.PROJECT_KEY != ''
+        run: |
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          NAMESPACE="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🧟 Cleanup Zombie Resources for $NAMESPACE in $REGION"
+
+          # ---------------------------------------------------------
+          # 1. CloudFront Origin Access Control (OAC)
+          # ---------------------------------------------------------
+          OAC_NAME="${NAMESPACE}-cdn-oac"
+          echo "   🔍 Checking OAC: $OAC_NAME"
+          OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
+
+          if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
+             echo "      🗑️ Deleting OAC: $OAC_ID"
+             # Check for distribution association before deletion? 
+             # For nuke, we assume we want it gone. Assuming distributions are gone or will be.
+             # If distributions exist, this might fail unless we update them first. 
+             # But usually OAC is deleted after distribution. 
+             # If distribution exists, we can't delete OAC easily. 
+             # However, the error was 'AlreadyExists' during create, implying we want to delete it.
+             aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
           else
-             echo "   ✅ No unused certificates found."
+             echo "      ✅ OAC not found"
           fi
+
+          # ---------------------------------------------------------
+          # 2. IAM Roles
+          # ---------------------------------------------------------
+          ROLES=("${NAMESPACE}-exec-role" "${NAMESPACE}-codedeploy-role" "${NAMESPACE}-task-role")
+
+          for ROLE in "${ROLES[@]}"; do
+             echo "   🔍 Checking Role: $ROLE"
+             if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
+                echo "      🗑️ Deleting Role: $ROLE"
+                # Detach all policies first
+                POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
+                for POLICY in $POLICIES; do
+                   echo "         About to detach $POLICY"
+                   aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$POLICY"
+                done
+                
+                # Delete inline policies
+                pst=$(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames' --output text)
+                for p in $pst; do
+                   if [ "$p" != "None" ]; then
+                     echo "         Deleting inline policy $p"
+                     aws iam delete-role-policy --role-name "$ROLE" --policy-name "$p"
+                   fi
+                done
+
+                # Delete instance profiles
+                PROFILES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text)
+                 for PROFILE in $PROFILES; do
+                   if [ "$PROFILE" != "None" ]; then
+                     echo "         Removing role from instance profile $PROFILE"
+                     aws iam remove-role-from-instance-profile --instance-profile-name "$PROFILE" --role-name "$ROLE"
+                   fi
+                done
+
+                aws iam delete-role --role-name "$ROLE" || echo "      ⚠️ Failed to delete role"
+             else
+                echo "      ✅ Role not found"
+             fi
+          done
 
       - name: Cleanup Lambda@Edge
         if: env.CLIENT_KEY != ''
