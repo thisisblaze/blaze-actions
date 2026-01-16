@@ -75,14 +75,14 @@ jobs:
           # 🗑️ CLEANUP S3 BUCKETS (Storage Origin)
           # ---------------------------------------------------------
           # Terraform fails to destroy non-empty buckets. We must empty them first.
-          
+
           # Construct Bucket Name Pattern
           # Pattern: blaze-{client}-{project}-{stage}-storage-origin
           # We can try to derive it or find it via tags.
           # Safer: List buckets matching a pattern derived from inputs.
-          
+
           echo "🧹 Checking for S3 Storage Buckets to empty..."
-          
+
           # Try to derive the bucket prefix from the cluster name or inputs
           if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
              CLIENT_KEY="${BASH_REMATCH[2]}"
@@ -104,20 +104,20 @@ jobs:
                 # Inline python is reliable for versioned buckets.
                 
                 cat <<EOF > empty_bucket.py
-import boto3
-import sys
+          import boto3
+          import sys
 
-bucket_name = sys.argv[1]
-s3 = boto3.resource('s3')
-bucket = s3.Bucket(bucket_name)
+          bucket_name = sys.argv[1]
+          s3 = boto3.resource('s3')
+          bucket = s3.Bucket(bucket_name)
 
-print(f"Emptying bucket: {bucket_name}")
-try:
-    bucket.object_versions.delete()
-    print("Deleted all object versions.")
-except Exception as e:
-    print(f"Error: {e}")
-EOF
+          print(f"Emptying bucket: {bucket_name}")
+          try:
+              bucket.object_versions.delete()
+              print("Deleted all object versions.")
+          except Exception as e:
+              print(f"Error: {e}")
+          EOF
                 python3 empty_bucket.py "$BUCKET_NAME"
                 rm empty_bucket.py
                 
