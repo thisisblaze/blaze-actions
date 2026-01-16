@@ -139,6 +139,7 @@ jobs:
                    echo "   🗑️ Deleting UNUSED cert: $ARN"
                    aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
                  done
+               fi
 
          - name: Cleanup Zombie Resources (OAC/IAM)
            if: env.PROJECT_KEY != ''
