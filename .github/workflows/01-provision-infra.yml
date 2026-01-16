@@ -190,32 +190,26 @@ jobs:
           event_name: "workflow_dispatch"
           cluster_tier: ${{ inputs.cluster_tier }}
 
-        is_paused=${{ inputs.is_paused }}
-        # enable_tunnel removed - uses terraform default (false)
-        # Pass secrets as env vars in reusable workflow, but mapped here if needed?
-        # Reusable workflow maps CLOUDFLARE_* secrets to TF_VAR defines automatically.
-        # enable_tunnel removed - uses terraform default (false)
-        # Pass secrets as env vars in reusable workflow, but mapped here if needed?
-        # Reusable workflow maps CLOUDFLARE_* secrets to TF_VAR defines automatically.
+      - name: Pre Apply Script (Import Zombies)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }} # Required for gh api
+        run: |
+          # Export Context for Importer Script
+          export INPUT_STACK="${{ inputs.stack }}"
+          export INPUT_DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+          export INPUT_AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
+          export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
+          export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
+          export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+          export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
+          export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
 
-      # Inject ACM Smart Import Logic (via Custom Action Script)
-      pre_apply_script: |
-        # Export Context for Importer Script
-        export INPUT_STACK="${{ inputs.stack }}"
-        export INPUT_DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
-        export INPUT_AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
-        export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
-        export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
-        export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
-        export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
-        export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
-
-        # Run Importer (Fetch from blaze-actions)
-        echo "🚀 Fetching Resource Importer Logic..."
-        gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh \
-          -H "Accept: application/vnd.github.v3.raw" > import.sh
-        chmod +x import.sh
-        bash import.sh
+          # Run Importer (Fetch from blaze-actions)
+          echo "🚀 Fetching Resource Importer Logic..."
+          gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh \
+            -H "Accept: application/vnd.github.v3.raw" > import.sh
+          chmod +x import.sh
+          bash import.sh
 
   provision:
     name: Provision ${{ inputs.stack }}
