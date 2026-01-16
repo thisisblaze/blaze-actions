@@ -1,328 +1,365 @@
 name: Pre-Destroy Cleanup
 
 on:
-  workflow_call:
-    inputs:
-      cluster_name:
-        required: true
-        type: string
-      aws_region:
-        required: true
-        type: string
-      stage_filter:
-        required: false
-        type: string
-        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
-      force_delete:
-        required: false
-        type: boolean
-        default: false
-        description: "Force delete services even if tasks are running"
-      environment:
-        required: false
-        type: string
-        description: "GitHub Environment"
-    secrets:
-      AWS_ROLE_ARN:
-        required: false
-      AWS_ACCESS_KEY_ID:
-        required: false
-      AWS_SECRET_ACCESS_KEY:
-        required: false
-    outputs:
-      cleanup_status:
-        value: ${{ jobs.cleanup.outputs.status }}
-      services_deleted:
-        value: ${{ jobs.cleanup.outputs.services }}
-      tasks_deleted:
-        value: ${{ jobs.cleanup.outputs.tasks_deleted }}
+   workflow_call:
+      inputs:
+         cluster_name:
+            required: true
+            type: string
+         aws_region:
+            required: true
+            type: string
+         stage_filter:
+            required: false
+            type: string
+            description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
+         force_delete:
+            required: false
+            type: boolean
+            default: false
+            description: "Force delete services even if tasks are running"
+         environment:
+            required: false
+            type: string
+            description: "GitHub Environment"
+      secrets:
+         AWS_ROLE_ARN:
+            required: false
+         AWS_ACCESS_KEY_ID:
+            required: false
+
+         CLOUDFLARE_API_TOKEN:
+            required: false
+         CLOUDFLARE_ZONE_ID:
+            required: false
+         CLOUDFLARE_ACCOUNT_ID:
+            required: false
+      outputs:
+         cleanup_status:
+            value: ${{ jobs.cleanup.outputs.status }}
+         services_deleted:
+            value: ${{ jobs.cleanup.outputs.services }}
+         tasks_deleted:
+            value: ${{ jobs.cleanup.outputs.tasks_deleted }}
 
 permissions:
-  id-token: write
-  contents: read
+   id-token: write
+   contents: read
 
 jobs:
-  cleanup:
-    name: Pre-Destroy Cleanup
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: ${{ inputs.environment }}
+   cleanup:
+      name: Pre-Destroy Cleanup
+      runs-on: ubuntu-latest
+      timeout-minutes: 15
+      environment: ${{ inputs.environment }}
 
-    outputs:
-      status: ${{ steps.cleanup.outputs.status }}
-      services: ${{ steps.cleanup.outputs.services }}
-      tasks_deleted: ${{ steps.cleanup.outputs.tasks_deleted }}
+      outputs:
+         status: ${{ steps.cleanup.outputs.status }}
+         services: ${{ steps.cleanup.outputs.services }}
+         tasks_deleted: ${{ steps.cleanup.outputs.tasks_deleted }}
 
-    steps:
-      - name: Setup AWS CLI
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-session-name: GitHubActions-PreDestroy
-          aws-region: ${{ inputs.aws_region || 'eu-west-1' }}
+      steps:
+         - name: Setup AWS CLI
+           uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+           with:
+              role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+              role-session-name: GitHubActions-PreDestroy
+              aws-region: ${{ inputs.aws_region || 'eu-west-1' }}
 
-      - name: Parse Context
-        id: context
-        run: |
-          CLUSTER="${{ inputs.cluster_name }}"
-          echo "Parsing context from Cluster: $CLUSTER"
+         - name: Parse Context
+           id: context
+           run: |
+              CLUSTER="${{ inputs.cluster_name }}"
+              echo "Parsing context from Cluster: $CLUSTER"
 
-          if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
-             CLIENT_KEY="${BASH_REMATCH[2]}"
-             PROJECT_KEY="${BASH_REMATCH[3]}"
-             STAGE_KEY="${BASH_REMATCH[4]}"
-             echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
-             echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
-             echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
-             echo "Parsed: Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
-          else
-             echo "⚠️ Could not parse Cluster Name. Keys will be empty."
-             echo "CLIENT_KEY=" >> $GITHUB_ENV
-             echo "PROJECT_KEY=" >> $GITHUB_ENV
-             echo "STAGE_KEY=" >> $GITHUB_ENV
-          fi
+              if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+                 CLIENT_KEY="${BASH_REMATCH[2]}"
+                 PROJECT_KEY="${BASH_REMATCH[3]}"
+                 STAGE_KEY="${BASH_REMATCH[4]}"
+                 echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
+                 echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
+                 echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
+                 echo "Parsed: Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+              else
+                 echo "⚠️ Could not parse Cluster Name. Keys will be empty."
+                 echo "CLIENT_KEY=" >> $GITHUB_ENV
+                 echo "PROJECT_KEY=" >> $GITHUB_ENV
+                 echo "STAGE_KEY=" >> $GITHUB_ENV
+              fi
 
-      - name: Cleanup S3 Buckets
-        if: env.CLIENT_KEY != ''
-        run: |
-          CLIENT_KEY="${{ env.CLIENT_KEY }}"
-          PROJECT_KEY="${{ env.PROJECT_KEY }}"
-          STAGE_KEY="${{ env.STAGE_KEY }}"
+         - name: Cleanup S3 Buckets
+           if: env.CLIENT_KEY != ''
+           run: |
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          CANDIDATES=(
-            "blaze-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-            "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-          )
+              CANDIDATES=(
+                "blaze-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+                "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+              )
 
-          for BUCKET_NAME in "${CANDIDATES[@]}"; do
-             echo "Checking bucket: $BUCKET_NAME"
-             if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
-                echo "   Found bucket. Emptying..."
-                pip install boto3 >/dev/null 2>&1 || true
-                
-                cat <<EOF > empty_bucket.py
-          import boto3
-          import sys
-          bucket_name = sys.argv[1]
-          s3 = boto3.resource('s3')
-          bucket = s3.Bucket(bucket_name)
-          try:
-              bucket.object_versions.delete()
-              print("Deleted contents.")
-          except Exception as e:
-              print(f"Error: {e}")
-          EOF
-                python3 empty_bucket.py "$BUCKET_NAME"
-                rm empty_bucket.py
-             fi
-          done
+              for BUCKET_NAME in "${CANDIDATES[@]}"; do
+                 echo "Checking bucket: $BUCKET_NAME"
+                 if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
+                    echo "   Found bucket. Emptying..."
+                    pip install boto3 >/dev/null 2>&1 || true
+                    
+                    cat <<EOF > empty_bucket.py
+              import boto3
+              import sys
+              bucket_name = sys.argv[1]
+              s3 = boto3.resource('s3')
+              bucket = s3.Bucket(bucket_name)
+              try:
+                  bucket.object_versions.delete()
+                  print("Deleted contents.")
+              except Exception as e:
+                  print(f"Error: {e}")
+              EOF
+                    python3 empty_bucket.py "$BUCKET_NAME"
+                    rm empty_bucket.py
+                 fi
+              done
 
-      - name: Cleanup ACM Certificates
-        if: env.PROJECT_KEY != ''
-        run: |
-          PROJECT_KEY="${{ env.PROJECT_KEY }}"
-          REGION="${{ inputs.aws_region }}"
+         - name: Cleanup ACM Certificates
+           if: env.PROJECT_KEY != ''
+           run: |
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              REGION="${{ inputs.aws_region }}"
 
-          echo "Searching unused certificates for *${PROJECT_KEY}* in $REGION..."
+              echo "Searching unused certificates for *${PROJECT_KEY}* in $REGION..."
 
-          JSON_LIST=$(aws acm list-certificates --region "$REGION" --includes keyTypes=RSA_2048 --output json)
+              JSON_LIST=$(aws acm list-certificates --region "$REGION" --includes keyTypes=RSA_2048 --output json)
 
-          # Filter: Domain matches Project AND InUse is false
-          # We use jq to handle the filtering safely
-          TARGET_ARNS=$(echo "$JSON_LIST" | jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | select(.InUse == false) | .CertificateArn')
+              # Filter: Domain matches Project AND InUse is false
+              # We use jq to handle the filtering safely
+              TARGET_ARNS=$(echo "$JSON_LIST" | jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | select(.InUse == false) | .CertificateArn')
 
-          if [[ -n "$TARGET_ARNS" ]]; then
-             for ARN in $TARGET_ARNS; do
-               echo "   🗑️ Deleting UNUSED cert: $ARN"
-               aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
-             done
+              if [[ -n "$TARGET_ARNS" ]]; then
+                 for ARN in $TARGET_ARNS; do
+                   echo "   🗑️ Deleting UNUSED cert: $ARN"
+                   aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
+                 done
 
-      - name: Cleanup Zombie Resources (OAC/IAM)
-        if: env.PROJECT_KEY != ''
-        run: |
-          CLIENT_KEY="${{ env.CLIENT_KEY }}"
-          PROJECT_KEY="${{ env.PROJECT_KEY }}"
-          STAGE_KEY="${{ env.STAGE_KEY }}"
-          NAMESPACE="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
-          REGION="${{ inputs.aws_region }}"
+         - name: Cleanup Zombie Resources (OAC/IAM)
+           if: env.PROJECT_KEY != ''
+           run: |
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
+              NAMESPACE="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+              REGION="${{ inputs.aws_region }}"
 
-          echo "🧟 Cleanup Zombie Resources for $NAMESPACE in $REGION"
+              echo "🧟 Cleanup Zombie Resources for $NAMESPACE in $REGION"
 
-          # ---------------------------------------------------------
-          # 1. CloudFront Origin Access Control (OAC)
-          # ---------------------------------------------------------
-          OAC_NAME="${NAMESPACE}-cdn-oac"
-          echo "   🔍 Checking OAC: $OAC_NAME"
-          OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
+              # ---------------------------------------------------------
+              # 1. CloudFront Origin Access Control (OAC)
+              # ---------------------------------------------------------
+              OAC_NAME="${NAMESPACE}-cdn-oac"
+              echo "   🔍 Checking OAC: $OAC_NAME"
+              OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
 
-          if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
-             echo "      🗑️ Deleting OAC: $OAC_ID"
-             # Check for distribution association before deletion? 
-             # For nuke, we assume we want it gone. Assuming distributions are gone or will be.
-             # If distributions exist, this might fail unless we update them first. 
-             # But usually OAC is deleted after distribution. 
-             # If distribution exists, we can't delete OAC easily. 
-             # However, the error was 'AlreadyExists' during create, implying we want to delete it.
-             aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
-          else
-             echo "      ✅ OAC not found"
-          fi
+              if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
+                 echo "      🗑️ Deleting OAC: $OAC_ID"
+                 # Check for distribution association before deletion? 
+                 # For nuke, we assume we want it gone. Assuming distributions are gone or will be.
+                 # If distributions exist, this might fail unless we update them first. 
+                 # But usually OAC is deleted after distribution. 
+                 # If distribution exists, we can't delete OAC easily. 
+                 # However, the error was 'AlreadyExists' during create, implying we want to delete it.
+                 aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
+              else
+                 echo "      ✅ OAC not found"
+              fi
 
-          # ---------------------------------------------------------
-          # 2. IAM Roles
-          # ---------------------------------------------------------
-          ROLES=("${NAMESPACE}-exec-role" "${NAMESPACE}-codedeploy-role" "${NAMESPACE}-task-role")
+              # ---------------------------------------------------------
+              # 2. IAM Roles
+              # ---------------------------------------------------------
+              ROLES=("${NAMESPACE}-exec-role" "${NAMESPACE}-codedeploy-role" "${NAMESPACE}-task-role")
 
-          for ROLE in "${ROLES[@]}"; do
-             echo "   🔍 Checking Role: $ROLE"
-             if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
-                echo "      🗑️ Deleting Role: $ROLE"
-                # Detach all policies first
-                POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
-                for POLICY in $POLICIES; do
-                   echo "         About to detach $POLICY"
-                   aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$POLICY"
-                done
-                
-                # Delete inline policies
-                pst=$(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames' --output text)
-                for p in $pst; do
-                   if [ "$p" != "None" ]; then
-                     echo "         Deleting inline policy $p"
-                     aws iam delete-role-policy --role-name "$ROLE" --policy-name "$p"
-                   fi
-                done
+              for ROLE in "${ROLES[@]}"; do
+                 echo "   🔍 Checking Role: $ROLE"
+                 if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
+                    echo "      🗑️ Deleting Role: $ROLE"
+                    # Detach all policies first
+                    POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
+                    for POLICY in $POLICIES; do
+                       echo "         About to detach $POLICY"
+                       aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$POLICY"
+                    done
+                    
+                    # Delete inline policies
+                    pst=$(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames' --output text)
+                    for p in $pst; do
+                       if [ "$p" != "None" ]; then
+                         echo "         Deleting inline policy $p"
+                         aws iam delete-role-policy --role-name "$ROLE" --policy-name "$p"
+                       fi
+                    done
 
-                # Delete instance profiles
-                PROFILES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text)
-                 for PROFILE in $PROFILES; do
-                   if [ "$PROFILE" != "None" ]; then
-                     echo "         Removing role from instance profile $PROFILE"
-                     aws iam remove-role-from-instance-profile --instance-profile-name "$PROFILE" --role-name "$ROLE"
-                   fi
-                done
+                    # Delete instance profiles
+                    PROFILES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text)
+                     for PROFILE in $PROFILES; do
+                       if [ "$PROFILE" != "None" ]; then
+                         echo "         Removing role from instance profile $PROFILE"
+                         aws iam remove-role-from-instance-profile --instance-profile-name "$PROFILE" --role-name "$ROLE"
+                       fi
+                    done
 
-                aws iam delete-role --role-name "$ROLE" || echo "      ⚠️ Failed to delete role"
-             else
-                echo "      ✅ Role not found"
-             fi
-          done
+                    aws iam delete-role --role-name "$ROLE" || echo "      ⚠️ Failed to delete role"
+                 else
+                    echo "      ✅ Role not found"
+                 fi
+              done
 
-      - name: Cleanup Lambda@Edge
-        if: env.CLIENT_KEY != ''
-        run: |
-          CLIENT_KEY="${{ env.CLIENT_KEY }}"
-          PROJECT_KEY="${{ env.PROJECT_KEY }}"
-          STAGE_KEY="${{ env.STAGE_KEY }}"
+         - name: Cleanup Zombie Cloudflare Records
+           if: env.PROJECT_KEY != '' && secrets.CLOUDFLARE_API_TOKEN != ''
+           env:
+              CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+              CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+           run: |
+              DOMAIN="thisisblaze.uk" # Fallback/Default
+              # In a real scenario we might want to pass domain_root as input, but for this specific "validation" record issue:
 
-          PREFIX="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
-          echo "Searching for functions starting with: $PREFIX"
+              echo "🔍 Checking for zombie Cloudflare records..."
 
-          FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
+              # Patterns to clean
+              # 1. Validation records (ACM)
+              # 2. Specific host records for the stage being destroyed
 
-          if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
-             for FUNC_NAME in $FUNCTIONS; do
-                echo "   🔄 Checking function: $FUNC_NAME"
-                if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
-                   echo "   ✅ Deleted $FUNC_NAME"
-                else
-                   echo "   ⚠️ Delete failed (likely Replicated). Skipping."
-                fi
-             done
-          else
-             echo "   ok: No functions found."
-          fi
+              RECORDS=("validation.${DOMAIN}" "${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
 
-      - name: Cleanup ECS Services
-        id: cleanup
-        run: |
-          set -e
-          CLUSTER="${{ inputs.cluster_name }}"
-          STAGE_FILTER="${{ inputs.stage_filter }}"
+              for REC_NAME in "${RECORDS[@]}"; do
+                 echo "   Checking $REC_NAME"
+                 REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$REC_NAME" \
+                   -H "Authorization: Bearer $CF_API_TOKEN" \
+                   -H "Content-Type: application/json" | jq -r '.result[0].id // empty')
+                   
+                 if [[ -n "$REC_ID" ]]; then
+                    echo "      🗑️ Deleting $REC_NAME ($REC_ID)"
+                    curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
+                       -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
+                 else
+                    echo "      ✅ Not found"
+                 fi
+              done
 
-          echo "🧹 Cleaning up ECS Services in $CLUSTER..."
+         - name: Cleanup Lambda@Edge
+           if: env.CLIENT_KEY != ''
+           run: |
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          if [[ -n "$STAGE_FILTER" ]]; then
-             echo "   🎯 Stage filter enabled: $STAGE_FILTER"
-          fi
+              PREFIX="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+              echo "Searching for functions starting with: $PREFIX"
 
-          SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null || echo "")
+              FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
 
-          if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
-             echo "✅ No active services found"
-             echo "status=no_services" >> "$GITHUB_OUTPUT"
-             echo "services=" >> "$GITHUB_OUTPUT"
-             exit 0
-          fi
+              if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+                 for FUNC_NAME in $FUNCTIONS; do
+                    echo "   🔄 Checking function: $FUNC_NAME"
+                    if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
+                       echo "   ✅ Deleted $FUNC_NAME"
+                    else
+                       echo "   ⚠️ Delete failed (likely Replicated). Skipping."
+                    fi
+                 done
+              else
+                 echo "   ok: No functions found."
+              fi
 
-          if [[ -n "$STAGE_FILTER" ]]; then
-             SERVICES_FILTERED=$(echo "$SERVICES" | tr '\t' '\n' | grep -F "-${STAGE_FILTER}-" || echo "")
-             if [[ -z "$SERVICES_FILTERED" ]]; then
-               echo "✅ No services matched stage_filter"
-               echo "status=no_services" >> "$GITHUB_OUTPUT"
-               echo "services=" >> "$GITHUB_OUTPUT"
-               exit 0
-             fi
-             SERVICES=$(echo "$SERVICES_FILTERED" | tr '\n' '\t')
-          fi
+         - name: Cleanup ECS Services
+           id: cleanup
+           run: |
+              set -e
+              CLUSTER="${{ inputs.cluster_name }}"
+              STAGE_FILTER="${{ inputs.stage_filter }}"
 
-          DELETED_SERVICES=""
-          while IFS= read -r SVC_ARN; do
-             [[ -z "$SVC_ARN" ]] && continue
-             SVC_NAME=$(echo "$SVC_ARN" | sed 's|.*/||')
-             echo "🔄 Processing service: $SVC_NAME"
-             
-             aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-             
-             # Wait for tasks to stop (Simplified)
-             timeout=300
-             elapsed=0
-             while [ $elapsed -lt $timeout ]; do
-                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/dev/null || echo "0")
-                if [[ "$RUNNING_TASKS" == "0" ]]; then
-                   break
-                fi
-                sleep 10
-                elapsed=$((elapsed+10))
-             done
+              echo "🧹 Cleaning up ECS Services in $CLUSTER..."
 
-             # Force Stop if needed
-             if [[ $elapsed -ge $timeout ]]; then
-                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/dev/null || echo "")
-                if [[ -n "$RUNNING_TASKS" && "$RUNNING_TASKS" != "None" ]]; then
-                   for TASK in $RUNNING_TASKS; do
-                      aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-                   done
-                   sleep 30
-                fi
-             fi
-             
-             aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-             echo "   ✅ Deleted $SVC_NAME"
-             DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
-          done <<< "$SERVICES"
+              if [[ -n "$STAGE_FILTER" ]]; then
+                 echo "   🎯 Stage filter enabled: $STAGE_FILTER"
+              fi
 
-          echo "status=success" >> "$GITHUB_OUTPUT"
-          echo "services=$DELETED_SERVICES" >> "$GITHUB_OUTPUT"
+              SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null || echo "")
 
-          # ---------------------------------------------------------
-          # 📋 CLEANUP TASK DEFINITIONS (Attempt)
-          # ---------------------------------------------------------
-          # Only if stage filter is NOT set (shared cluster safety)
-          if [[ -z "$STAGE_FILTER" && "$CLUSTER" =~ (.+)-cluster ]]; then
-             BASE_PREFIX="${BASH_REMATCH[1]}"
-             KNOWN_SERVICES=("api" "frontend" "admin" "tunnel" "mongo" "elasticsearch" "kibana")
-             for SVC in "${KNOWN_SERVICES[@]}"; do
-                FAMILY="${BASE_PREFIX}-${SVC}"
-                TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
-                if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
-                   echo "      Cleaning task defs for $FAMILY..."
-                   for ARN in $TASK_DEF_ARNS; do
-                      aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
-                      aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
-                   done
-                fi
-             done
-          fi
+              if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
+                 echo "✅ No active services found"
+                 echo "status=no_services" >> "$GITHUB_OUTPUT"
+                 echo "services=" >> "$GITHUB_OUTPUT"
+                 exit 0
+              fi
 
-          echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
+              if [[ -n "$STAGE_FILTER" ]]; then
+                 SERVICES_FILTERED=$(echo "$SERVICES" | tr '\t' '\n' | grep -F "-${STAGE_FILTER}-" || echo "")
+                 if [[ -z "$SERVICES_FILTERED" ]]; then
+                   echo "✅ No services matched stage_filter"
+                   echo "status=no_services" >> "$GITHUB_OUTPUT"
+                   echo "services=" >> "$GITHUB_OUTPUT"
+                   exit 0
+                 fi
+                 SERVICES=$(echo "$SERVICES_FILTERED" | tr '\n' '\t')
+              fi
+
+              DELETED_SERVICES=""
+              while IFS= read -r SVC_ARN; do
+                 [[ -z "$SVC_ARN" ]] && continue
+                 SVC_NAME=$(echo "$SVC_ARN" | sed 's|.*/||')
+                 echo "🔄 Processing service: $SVC_NAME"
+                 
+                 aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+                 
+                 # Wait for tasks to stop (Simplified)
+                 timeout=300
+                 elapsed=0
+                 while [ $elapsed -lt $timeout ]; do
+                    RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/dev/null || echo "0")
+                    if [[ "$RUNNING_TASKS" == "0" ]]; then
+                       break
+                    fi
+                    sleep 10
+                    elapsed=$((elapsed+10))
+                 done
+
+                 # Force Stop if needed
+                 if [[ $elapsed -ge $timeout ]]; then
+                    RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/dev/null || echo "")
+                    if [[ -n "$RUNNING_TASKS" && "$RUNNING_TASKS" != "None" ]]; then
+                       for TASK in $RUNNING_TASKS; do
+                          aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+                       done
+                       sleep 30
+                    fi
+                 fi
+                 
+                 aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+                 echo "   ✅ Deleted $SVC_NAME"
+                 DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
+              done <<< "$SERVICES"
+
+              echo "status=success" >> "$GITHUB_OUTPUT"
+              echo "services=$DELETED_SERVICES" >> "$GITHUB_OUTPUT"
+
+              # ---------------------------------------------------------
+              # 📋 CLEANUP TASK DEFINITIONS (Attempt)
+              # ---------------------------------------------------------
+              # Only if stage filter is NOT set (shared cluster safety)
+              if [[ -z "$STAGE_FILTER" && "$CLUSTER" =~ (.+)-cluster ]]; then
+                 BASE_PREFIX="${BASH_REMATCH[1]}"
+                 KNOWN_SERVICES=("api" "frontend" "admin" "tunnel" "mongo" "elasticsearch" "kibana")
+                 for SVC in "${KNOWN_SERVICES[@]}"; do
+                    FAMILY="${BASE_PREFIX}-${SVC}"
+                    TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
+                    if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
+                       echo "      Cleaning task defs for $FAMILY..."
+                       for ARN in $TASK_DEF_ARNS; do
+                          aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
+                          aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
+                       done
+                    fi
+                 done
+              fi
+
+              echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
