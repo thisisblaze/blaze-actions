@@ -201,8 +201,17 @@ jobs:
 
           if [[ $INIT_EXIT_CODE -ne 0 ]]; then
             if grep -qi "checksum" /tmp/init_output.log || grep -qi "does not have the expected content" /tmp/init_output.log; then
+
                echo "⚠️ Checksum mismatch / Stale Lock detected. Attempting recovery..."
                LOCK_ID="${BUCKET}/${STATE_KEY}"
+               
+               echo "🔎 DEBUG: Scanning Lock Table matching LockID..."
+               aws dynamodb scan --table-name "${TABLE_NAME}" \
+                 --filter-expression "LockID = :l" \
+                 --expression-attribute-values "{\":l\": {\"S\": \"${LOCK_ID}\"}}" \
+                 --region "${REGION}"
+               
+               echo "🗑️ DEBUG: Deleting LockID: ${LOCK_ID} from Table: ${TABLE_NAME}"
                
                # Delete Lock from DynamoDB
                aws dynamodb delete-item \
