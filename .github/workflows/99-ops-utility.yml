@@ -9,6 +9,7 @@ on:
         options:
           - "manage-environment"
           - "destroy-resources"
+          - "cleanup-orphaned-lambdas"
           - "nuke-environment"
           - "destroy-cloudflare-pages"
           - "cleanup-cloudflare-deployments"
@@ -432,6 +433,75 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
+
+  cleanup-orphaned-lambdas:
+    name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
+    needs: [configuration]
+    if: inputs.action == 'cleanup-orphaned-lambdas'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "EXECUTE" ] && [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+             echo "⚠️ Confirmation not set to EXECUTE/DESTROY. Running in DRY-RUN mode."
+             echo "CONFIRM_MODE=DRY_RUN" >> $GITHUB_ENV
+          else
+             echo "🚨 EXECUTION MODE CONFIRMED"
+             echo "CONFIRM_MODE=EXECUTE" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          # Lambda@Edge is ALWAYS in us-east-1
+          aws-region: us-east-1
+
+      - name: Find and Destroy Zombies
+        env:
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          STAGE_KEY: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          # 1. Pattern Matching
+          # Matches: blaze-stage-lambda-edge-resize-image-c533830b
+          # Pattern: [namespace]-[stage]-lambda-edge-*
+          PATTERN="${NAMESPACE}-${STAGE_KEY}-lambda-edge-.*"
+
+          echo "🔎 Scanning us-east-1 for Lambda functions matching: $PATTERN"
+
+          # 2. Find Functions
+          # Note: AWS CLI output text is tab separated
+          FOUND_COUNT=0
+
+          aws lambda list-functions --region us-east-1 --query "Functions[].FunctionName" --output text | tr '\t' '\n' | grep -E "$PATTERN" > found_lambdas.txt || true
+
+          if [ ! -s found_lambdas.txt ]; then
+             echo "✅ No orphaned Lambda functions found matching pattern."
+             exit 0
+          fi
+
+          echo "🧟 Found the following candidates:"
+          cat found_lambdas.txt
+          echo "--------------------------------"
+
+          while read func; do
+            if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                echo "🗑️ Deleting $func..."
+                aws lambda delete-function --function-name "$func" --region us-east-1 || echo "⚠️ Failed to delete $func (might be attached or already gone)"
+            else
+                echo "ℹ️ [DRY RUN] Would delete $func"
+            fi
+            FOUND_COUNT=$((FOUND_COUNT+1))
+          done < found_lambdas.txt
+
+          if [ "$CONFIRM_MODE" != "EXECUTE" ]; then
+             echo ""
+             echo "⚠️ This was a DRY RUN. To actually delete these resources, set 'Confirmation' to 'EXECUTE'."
+          else
+             echo "✅ Garbage Collection Complete."
+          fi
 
   sync-cloudflare-config:
     name: Sync Cloudflare Config
