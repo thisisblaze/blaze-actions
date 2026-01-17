@@ -36,6 +36,11 @@ on:
         description: "Destroy Infrastructure (NUKE)"
         type: boolean
         default: false
+      skip_lambda_destroy:
+        description: "Orphan Lambda@Edge before destroy (prevents hang)"
+        type: boolean
+        required: false
+        default: true
       terraform_version:
         description: "Terraform Version"
         type: string
@@ -85,6 +90,10 @@ on:
         required: false
         type: boolean
         default: false
+      skip_lambda_destroy:
+        required: false
+        type: boolean
+        default: true
       cluster_tier:
         required: false
         type: string
@@ -261,6 +270,7 @@ jobs:
         kibana_ram=${{ inputs.kibana_size }}
         is_paused=${{ inputs.is_paused }}
         enable_image_resize=${{ inputs.enable_image_resize }}
+      orphan_lambda: ${{ inputs.skip_lambda_destroy }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
