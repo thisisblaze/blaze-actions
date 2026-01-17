@@ -618,6 +618,17 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Image Resize
+        if: contains(fromJson('["stage", "prod"]'), inputs.environment)
+        run: |
+          {
+            echo "## 🖼️ Image Resize Verification"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          chmod +x tests/image-resize-test.sh
+          ./tests/image-resize-test.sh "${{ inputs.environment }}" "cdn-${{ inputs.environment }}.${{ needs.config.outputs.domain_root }}"
+
       - name: Wait for DNS Propagation
         run: |
           {

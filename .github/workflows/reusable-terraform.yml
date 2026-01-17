@@ -55,6 +55,11 @@ on:
         required: false
         type: boolean
         default: false
+      orphan_lambda:
+        description: "Skip Lambda@Edge destruction by removing from state (prevents 1h hang)"
+        required: false
+        type: boolean
+        default: false
 
     secrets:
       AWS_ROLE_ARN:
@@ -357,6 +362,26 @@ jobs:
         run: |
           echo "📜 Running Pre-Apply Script..."
           ${{ inputs.pre_apply_script }}
+
+      - name: Orphan Lambda Resources (Prevent Hang)
+        if: ${{ inputs.orphan_lambda == true }}
+        working-directory: ${{ inputs.tf_dir }}
+        run: |
+          echo "🧹 Orphaning Lambda@Edge resources to prevent destroy hang..."
+
+          # 1. Current Image Resize Lambda (Module)
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' || echo "resize-image module not in state"
+
+          # 2. Vestigial/Phantom Normalize Lambda (Legacy Module)
+          terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]' || echo "normalize module not in state"
+
+          # 3. Specific Function Resource targeting (Safety Net)
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]' || echo "origin_response function already gone"
+
+          # 4. Remove time_sleep dependencies
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].time_sleep.wait_for_edge_propagation[0]' || echo "time_sleep not in state"
+
+          echo "✅ Lambda resources removed from state"
 
       - name: Terraform Plan
         id: plan

@@ -77,6 +77,11 @@ on:
         description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
         type: string
         required: false
+      skip_lambda_destroy:
+        description: "Orphan Lambda@Edge before destroy (prevents hang)"
+        type: boolean
+        required: false
+        default: false
 
   workflow_call:
     inputs:
@@ -121,6 +126,10 @@ on:
       bulk_pattern:
         type: string
         required: false
+      skip_lambda_destroy:
+        type: boolean
+        required: false
+        default: false
     # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
     # Currently explicitly defining secrets to ensure workflow_call compatibility
     secrets:
@@ -413,6 +422,7 @@ jobs:
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: true
       destroy: true
+      orphan_lambda: ${{ inputs.skip_lambda_destroy }}
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
