@@ -46,7 +46,7 @@
 - `cluster_tier` (optional): MongoDB tier (auto|M2|M10|M20|M30)
 - `kibana_size` (optional): Elastic Kibana size (1g|2g)
 - `is_paused` (boolean): Pause MongoDB cluster?
-- `destroy` (boolean): Destroy infrastructure?
+- `is_paused` (boolean): Pause MongoDB cluster?
 
 **What it does**:
 
@@ -128,7 +128,8 @@
 **What it does**:
 
 - Checks ECS service status
-- Validates URLs
+- Validates URLs and API health
+- Reports Live Metrics (ECS Task Counts, Active Certs)
 - Alerts on failures
 
 **When to run**: Scheduled (cron) or manual
@@ -193,6 +194,8 @@
 - `view-config`: Display environment configuration
 - `list-stacks`: Show Terraform states
 - `check-health`: Service health check
+- `destroy-resources`: Safe destruction of infrastructure (defaulting to safe lambda cleanup)
+- `cleanup-orphaned-lambdas`: Post-destroy lambda cleanup
 - Manual interventions
 
 **Inputs**:
