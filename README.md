@@ -376,11 +376,11 @@ Follow semantic versioning:
 
 ## Quick Reference
 
-| Workflow               | Purpose                  | Inputs                      |
-| :--------------------- | :----------------------- | :-------------------------- |
-| **01-provision-infra** | Provision infrastructure | environment, stack          |
-| **02-deploy-app**      | Deploy application       | environment, image_tag      |
-| **stress-test**        | Full environment test    | environment, mode           |
-| **99-ops-utility**     | Operations utility       | action, skip_lambda_destroy |
+| Workflow               | Purpose                  | Inputs                                      |
+| :--------------------- | :----------------------- | :------------------------------------------ |
+| **01-provision-infra** | Provision infrastructure | environment, stack                          |
+| **02-deploy-app**      | Deploy application       | environment, image_tag                      |
+| **stress-test**        | Full environment test    | environment, mode                           |
+| **99-ops-utility**     | Operations utility       | action, skip_lambda_destroy (prevents hang) |
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.
