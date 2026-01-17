@@ -82,7 +82,7 @@ on:
         description: "Orphan Lambda@Edge before destroy (prevents hang)"
         type: boolean
         required: false
-        default: false
+        default: true
 
   workflow_call:
     inputs:
@@ -130,7 +130,7 @@ on:
       skip_lambda_destroy:
         type: boolean
         required: false
-        default: false
+        default: true
     # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
     # Currently explicitly defining secrets to ensure workflow_call compatibility
     secrets:
