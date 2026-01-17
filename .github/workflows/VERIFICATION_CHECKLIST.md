@@ -12,7 +12,9 @@
   - ✅ Properly structured with `workflow_call`
   - ✅ Has correct inputs (tf_dir, bucket, state_key, action, aws_region, terraform_vars)
   - ✅ Has correct outputs (apply_status, terraform_outputs)
+  - ✅ Has correct outputs (apply_status, terraform_outputs)
   - ✅ Handles init, plan, apply, destroy actions
+  - ✅ Handles orphan_lambda for Lambda@Edge cleanup safety
 
 - [x] `.github/workflows/reusable/ecs-service-management.yml`
   - ✅ Properly structured with `workflow_call`
@@ -116,4 +118,3 @@
 ## Status
 
 ✅ **Migration Complete** - All old workflows have been removed. The repository now uses only the optimized workflow structure.
-
