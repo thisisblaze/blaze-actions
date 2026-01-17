@@ -15,6 +15,7 @@
   - ✅ Has correct outputs (apply_status, terraform_outputs)
   - ✅ Handles init, plan, apply, destroy actions
   - ✅ Handles orphan_lambda for Lambda@Edge cleanup safety
+  - ✅ Handles cleanup-orphaned-lambdas action (us-east-1 constraint)
 
 - [x] `.github/workflows/reusable/ecs-service-management.yml`
   - ✅ Properly structured with `workflow_call`
