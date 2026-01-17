@@ -151,7 +151,7 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 
 **01-provision-infra.yml** - Infrastructure provisioning
 
-- Terraform plan/apply for network and app stacks
+- Terraform plan/apply for network and app stacks (Creation only - use 99 for destroy)
 
 **02-deploy-app.yml** - Application deployment
 
