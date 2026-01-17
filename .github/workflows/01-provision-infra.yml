@@ -29,7 +29,7 @@ on:
         required: false
         type: string
       apply:
-        description: "Run Terraform Apply?"
+        description: "APPLY ( vs DRY RUN )"
         type: boolean
         default: false
 
