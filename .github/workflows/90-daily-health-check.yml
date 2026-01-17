@@ -51,6 +51,8 @@ jobs:
     name: 🛡️ Code Hygiene & Standards
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      live_summary: ${{ steps.script_run.outputs.live_summary }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -59,7 +61,7 @@ jobs:
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           terraform: "true"
-          skip-aws-setup: "true"
+          skip-aws-setup: "false" # Needed for Live Checks
 
       - name: Configure Git for Private Modules
         env:
@@ -76,6 +78,7 @@ jobs:
           node-version: "20"
 
       - name: Run Daily Health Script
+        id: script_run
         run: |
           chmod +x scripts/daily-health-check.sh
           ./scripts/daily-health-check.sh
@@ -264,6 +267,7 @@ jobs:
           NET_SUMMARY="${{ needs.drift-check-network.outputs.plan_summary }}"
           APP_SUMMARY="${{ needs.drift-check-app.outputs.plan_summary }}"
           VULN_COUNT="${{ needs.infra-audit.outputs.vuln_count }}"
+          LIVE_METRICS="${{ needs.health-check-script.outputs.live_summary }}"
 
           # 1. Hygiene Section
           echo "### 🛡️ Code Hygiene" >> $GITHUB_STEP_SUMMARY
@@ -273,6 +277,14 @@ jobs:
             echo "- ❌ **Framework Compliance**: Fail (Check logs)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 1.5 Live Metrics (New)
+          if [[ -n "$LIVE_METRICS" ]]; then
+             echo "### 🩺 Live System Health" >> $GITHUB_STEP_SUMMARY
+             echo "$LIVE_METRICS" >> $GITHUB_STEP_SUMMARY
+             echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
 
           # 2. Infrastructure Drift Section
           echo "### 🏗️ Infrastructure Drift" >> $GITHUB_STEP_SUMMARY
