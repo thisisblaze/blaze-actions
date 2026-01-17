@@ -564,7 +564,7 @@ jobs:
           npm install -g wrangler
 
           # Project name
-          PROJECT_NAME="blaze-${{ steps.parse.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ steps.parse.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
 
           echo "🔄 Syncing config to Cloudflare Pages project: $PROJECT_NAME"
 
@@ -847,7 +847,7 @@ jobs:
         run: |
           PATTERN="${{ inputs.bulk_pattern }}"
           if [ -z "$PATTERN" ]; then
-            echo "❌ bulk_pattern required (e.g., 'blaze-*-dev-*')"
+            echo "❌ bulk_pattern required (e.g., 'namespace-*-dev-*')"
             exit 1
           fi
           echo "📋 Pattern: $PATTERN"
@@ -933,8 +933,8 @@ jobs:
         env:
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NAMESPACE: blaze
-          PROJECT: thisisblaze
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
           STAGE: ${{ steps.config.outputs.stage_key }}
         run: |
           echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-*"
