@@ -107,6 +107,9 @@ on:
       log_group_name:
         description: "CloudWatch Log Group Name"
         value: ${{ jobs.terraform.outputs.log_group_name }}
+      image_resize_enabled:
+        description: "Image Resize Status"
+        value: ${{ jobs.terraform.outputs.image_resize_enabled }}
 
 jobs:
   terraform:
@@ -124,7 +127,9 @@ jobs:
       log_group_name: ${{ steps.tf_outputs.outputs.log_group_name }}
       vpc_id: ${{ steps.tf_outputs.outputs.vpc_id }}
       efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
+      efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
       service_discovery_id: ${{ steps.tf_outputs.outputs.service_discovery_id }}
+      image_resize_enabled: ${{ steps.tf_outputs.outputs.image_resize_enabled }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -558,3 +563,4 @@ jobs:
           extract_output "iam_role_name" "execution_role_name" # TF output is execution_role_name
           extract_output "service_discovery_namespace" "service_discovery_namespace"
           extract_output "log_group_name" "log_group_name"
+          extract_output "image_resize_enabled" "image_resize_enabled"
