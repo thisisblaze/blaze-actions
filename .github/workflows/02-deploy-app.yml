@@ -405,6 +405,7 @@ jobs:
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -441,6 +442,7 @@ jobs:
       dfp_network_id: ${{ needs.configuration.outputs.dfp_network_id }}
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -477,6 +479,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -510,6 +513,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
+      namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -531,7 +535,7 @@ jobs:
 
       - name: Set Cloudflare Pages Production Branch
         run: |
-          PROJECT_NAME="blaze-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
           BRANCH="${{ github.head_ref || github.ref_name }}"
 
           echo "Setting production branch to: $BRANCH for project: $PROJECT_NAME"
@@ -543,7 +547,7 @@ jobs:
             | jq -r '.result.name')
 
           if [ "$PROJECT_ID" != "$PROJECT_NAME" ]; then
-            echo "⚠️  Project not found, will be created on first deployment"
+            echo "⚠️  Project ($PROJECT_NAME) not found. Typically it should be created via Terraform first."
           else
             # Update production branch
             curl -s -X PATCH \
@@ -561,7 +565,7 @@ jobs:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: "pages deploy packages/admin/public --project-name=blaze-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+          command: "pages deploy packages/admin/public --project-name=${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
       - name: Purge Cloudflare Cache
         run: |

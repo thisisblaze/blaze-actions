@@ -22,7 +22,7 @@ These workflows handle automated checks and background tasks:
 - **`05 CI (No Cloud)`**: Fast validation (Lint, Unit Tests) that runs on every PR and push. No cloud credentials required.
 - **`10_security_scan.yml`**: Holistic security auditing (Gitleaks, Semgrep, Trivy).
 - **`sync-secrets-from-ssm.yml`**: Sync AWS SSM parameters (MongoDB/Elastic credentials) to GitHub Secrets for CI/CD use.
-- **`Daily Health Check`**: Automated daily validation of repository integrity and basic infrastructure health.
+- **`Daily System Monitor`**: Automated daily validation of live system health (API, ECS, SSL).
 - **`Terraform Module Tests`**: Validation of shared Terraform modules.
 - **`force-unlock.yml`**: Unlock Terraform state locks (DynamoDB + S3 cleanup).
 - **`debug-lock.yml`**: Inspect Terraform state locks for troubleshooting.
@@ -44,7 +44,6 @@ Specialized workflows for managing Cloudflare Pages lifecycle:
   - Dry-run mode enabled by default
   - Reduces storage costs and clutter
 - **`destroy-cloudflare-pages-bulk`** (in `99-ops-utility.yml`): Pattern-based bulk deletion
-
   - Pattern matching (e.g., `blaze-*-test*-admin`)
   - Safety limit: max 10 projects per run
   - Requires `BULK_DESTROY` confirmation
