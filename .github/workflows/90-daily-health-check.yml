@@ -48,7 +48,7 @@ permissions:
 
 jobs:
   health-check-script:
-    name: 🛡️ Code Hygiene & Standards
+    name: 🩺 System Monitor
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -77,11 +77,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run Daily Health Script
+      - name: Run System Monitor
         id: script_run
         run: |
-          chmod +x scripts/daily-health-check.sh
-          ./scripts/daily-health-check.sh
+          chmod +x scripts/monitor-system.sh
+          ./scripts/monitor-system.sh
 
   # ------------------------------------------------------------------
   # JOB 2: CONFIGURATION (For Matrix)
