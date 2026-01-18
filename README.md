@@ -381,8 +381,8 @@ Follow semantic versioning:
 | Workflow               | Purpose                  | Inputs                                             |
 | :--------------------- | :----------------------- | :------------------------------------------------- |
 | **01-provision-infra** | Provision infrastructure | environment, stack, orphan_lambda (default: false) |
-| **02-deploy-app**      | Deploy application       | environment, image_tag, services                   |
+| **02-deploy-app**      | Deploy App (Hybrid)      | environment, target_services (e.g. "admin, api")   |
 | **stress-test**        | Full environment test    | environment, mode                                  |
-| **99-ops-utility**     | Operations utility       | action, skip_lambda_destroy (default: true)        |
+| **99-ops-utility**     | Operations utility       | action, confirmation (for destructive actions)     |
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.
