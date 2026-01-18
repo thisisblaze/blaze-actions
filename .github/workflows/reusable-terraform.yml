@@ -534,10 +534,11 @@ jobs:
              echo "mongodb_uri=$MONGO_URI" >> $GITHUB_OUTPUT
           fi
 
-          # Cluster Name
+          # Cluster Name (and alias to ecs_cluster_name for consistency)
           CLUSTER_NAME=$(jq -r '.cluster_name.value // empty' tf_outputs.json)
           if [[ -n "$CLUSTER_NAME" ]]; then
              echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+             echo "ecs_cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
           fi
 
           # Generic Output Extractor
