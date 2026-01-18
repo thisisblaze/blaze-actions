@@ -184,7 +184,7 @@ Delete multiple Cloudflare Pages projects matching a pattern.
 ```yaml
 Workflow: 99 - Ops Utility
 Action: destroy-cloudflare-pages-bulk
-bulk_pattern: "blaze-*-test*-admin" # Shell glob pattern
+bulk_pattern: "${NAMESPACE}-*-test*-admin" # Shell glob pattern
 dry_run: true # Preview mode (default)
 confirmation: BULK_DESTROY # Required
 ```
@@ -211,7 +211,7 @@ confirmation: BULK_DESTROY # Required
 
 ```yaml
 Action: destroy-cloudflare-pages-bulk
-bulk_pattern: "blaze-thisisblaze-test*-admin"
+bulk_pattern: "${NAMESPACE}-thisisblaze-test*-admin"
 dry_run: true
 confirmation: BULK_DESTROY
 bulk_pattern: "${NAMESPACE}-thisisblaze-test*-admin"
