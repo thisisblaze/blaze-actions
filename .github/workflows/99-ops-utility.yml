@@ -231,7 +231,7 @@ jobs:
     name: Configuration
     needs: [validate]
     # Explicitly run only for actions that need Terraform/ECR config
-    if: contains(fromJSON('["manage-environment", "destroy-resources", "unlock-state", "wipe-state", "nuke-environment"]'), inputs.action)
+    if: contains(fromJSON('["manage-environment", "destroy-resources", "unlock-state", "wipe-state", "nuke-environment", "cleanup-orphaned-lambdas"]'), inputs.action)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
