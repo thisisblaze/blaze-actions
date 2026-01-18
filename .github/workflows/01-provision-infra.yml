@@ -329,84 +329,107 @@ jobs:
           echo "# 🏗️ Infrastructure Provisioning: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "## 🌍 Impact Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "| Context | Value |" >> $GITHUB_STEP_SUMMARY
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+
+          # ------------------------------------------------------------------
+          # 1. High Level Context
+          # ------------------------------------------------------------------
+          echo "## 🌍 Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Apply?** | \`${{ inputs.apply }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **TfState Key** | \`${{ needs.configuration.outputs.state_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Region** | \`$REGION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Type** | ${{ inputs.apply == true && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
 
+          if [[ "${{ inputs.apply }}" == "false" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+            echo "> This was a Dry Run. No changes were made." >> $GITHUB_STEP_SUMMARY
+          fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ------------------------------------------------------------------
+          # 2. Resource Details (With Deep Links)
+          # ------------------------------------------------------------------
           echo "## 🧱 Infrastructure Details" >> $GITHUB_STEP_SUMMARY
           echo "| Resource | Name / Value |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
 
-          # Helper function to add row if value exists
+          # Helper to add row with optional link
           add_row() {
             NAME=$1
             VALUE=$2
+            LINK=$3
             if [[ -n "$VALUE" && "$VALUE" != "null" ]]; then
-               echo "| **$NAME** | \`$VALUE\` |" >> $GITHUB_STEP_SUMMARY
+               if [[ -n "$LINK" ]]; then
+                 echo "| **$NAME** | [$VALUE]($LINK) |" >> $GITHUB_STEP_SUMMARY
+               else
+                 echo "| **$NAME** | \`$VALUE\` |" >> $GITHUB_STEP_SUMMARY
+               fi
             fi
           }
 
-          add_row "ALB DNS" "${{ needs.provision.outputs.alb_dns_name }}"
-          add_row "ECS Cluster" "${{ needs.provision.outputs.ecs_cluster_name }}"
-          add_row "IAM Role" "${{ needs.provision.outputs.iam_role_name }}"
-          add_row "Service Discovery" "${{ needs.provision.outputs.service_discovery_namespace }}"
-          add_row "Log Group" "${{ needs.provision.outputs.log_group_name }}"
-          add_row "MongoDB URI" "${{ needs.provision.outputs.mongodb_uri }}"
+          # Provision Outputs
+          VPC_ID="${{ needs.provision.outputs.vpc_id }}"
+          EFS_ID="${{ needs.provision.outputs.efs_id }}"
+          CLUSTER="${{ needs.provision.outputs.ecs_cluster_name }}"
+          ALB="${{ needs.provision.outputs.alb_dns_name }}"
+          ROLE="${{ needs.provision.outputs.iam_role_name }}"
+          NS_NAME="${{ needs.provision.outputs.service_discovery_namespace }}"
+          NS_ID="${{ needs.provision.outputs.service_discovery_id }}"
+          MONGO="${{ needs.provision.outputs.mongodb_uri }}"
 
+          # Links
+          LINK_VPC="https://${REGION}.console.aws.amazon.com/vpc/home?region=${REGION}#VpcDetails:VpcId=${VPC_ID}"
+          LINK_EFS="https://${REGION}.console.aws.amazon.com/efs/home?region=${REGION}#/file-systems/${EFS_ID}"
+          LINK_ECS="https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION}"
+          LINK_IAM="https://${REGION}.console.aws.amazon.com/iam/home?region=${REGION}#/roles/${ROLE}"
+          LINK_CM="https://${REGION}.console.aws.amazon.com/cloud_map/home/namespaces/${NS_ID}"
+
+          add_row "VPC" "$VPC_ID" "$LINK_VPC"
+          add_row "ECS Cluster" "$CLUSTER" "$LINK_ECS"
+          add_row "ALB DNS" "$ALB" "http://$ALB"
+          add_row "Service Discovery" "$NS_NAME" "$LINK_CM"
+          add_row "EFS Filesystem" "$EFS_ID" "$LINK_EFS"
+          add_row "IAM Role" "$ROLE" "$LINK_IAM"
+          add_row "MongoDB URI" "$MONGO" ""
+
+          # ------------------------------------------------------------------
+          # 3. Status Check
+          # ------------------------------------------------------------------
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🚦 Status" >> $GITHUB_STEP_SUMMARY
 
-          RES="${{ needs.provision.result }}"
-          IS_APPLY="${{ inputs.apply }}"
-
-          if [[ "$RES" == "success" ]]; then
-            if [[ "$IS_APPLY" == "true" ]]; then
-              echo "✅ **Provisioning Successful**" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ **Plan Successful (Dry Run)**" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "> [!IMPORTANT]" >> $GITHUB_STEP_SUMMARY
-              echo "> Terraform Apply was NOT run. Changes were NOT applied. To apply these changes, re-run the workflow with **Run Terraform Apply?** checked." >> $GITHUB_STEP_SUMMARY
-            fi
+          if [[ "${{ needs.provision.result }}" == "success" ]]; then
+             echo "✅ **Provisioning Complete**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **Provisioning Failed**" >> $GITHUB_STEP_SUMMARY
+             echo "❌ **Provisioning Failed**" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Add CloudFront Image Resize details for network stack
-          # Add CloudFront Image Resize details for network stack
+          # ------------------------------------------------------------------
+          # 4. Feature: Image Resize
+          # ------------------------------------------------------------------
           if [[ "${{ inputs.stack }}" == "network" ]]; then
             echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Component | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-            
             if [[ "${{ inputs.enable_image_resize }}" == "true" ]]; then
-              echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
-              echo "| **Architecture** | Lambda@Edge (Origin Response) + OAC |" >> $GITHUB_STEP_SUMMARY
-              echo "| **Functions** | • \`viewer-request\` (URL Normalizer)<br>• \`origin-response\` (Image Processor) |" >> $GITHUB_STEP_SUMMARY
-              echo "| **Logs** | \`/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image\` |" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "> **Usage**: Access resized images via CloudFront CDN:" >> $GITHUB_STEP_SUMMARY
-              echo "> \`https://cdn-${{ needs.configuration.outputs.stage_key }}.yourdomain.com/convert/path/to/image.jpg?w=400\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width only: \`?w=800\`" >> $GITHUB_STEP_SUMMARY
-              echo "> - Width x Height: \`?w=800&h=600\`" >> $GITHUB_STEP_SUMMARY
+               echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
+               echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+               echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
+               echo "| **Architecture** | Lambda@Edge + S3 + OAC |" >> $GITHUB_STEP_SUMMARY
+               echo "| **Logs** | [View Logs (us-east-1)](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image) |" >> $GITHUB_STEP_SUMMARY
             else
-              echo "| **Status** | ⚪ Disabled |" >> $GITHUB_STEP_SUMMARY
+               echo "ℹ️ _Image Resize is disabled._" >> $GITHUB_STEP_SUMMARY
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          REGION="${{ needs.configuration.outputs.aws_region }}"
-          BUCKET="${{ needs.configuration.outputs.bucket }}"
 
-          echo "- [S3 State Bucket](https://s3.console.aws.amazon.com/s3/buckets/${BUCKET}?region=${REGION})" >> $GITHUB_STEP_SUMMARY
+          # ------------------------------------------------------------------
+          # 5. Quick Links
+          # ------------------------------------------------------------------
+          echo "## 🔗 State & Locks" >> $GITHUB_STEP_SUMMARY
+          echo "- [S3 State Details](https://s3.console.aws.amazon.com/s3/buckets/${BUCKET}?region=${REGION}&prefix=${{ needs.configuration.outputs.stage_key }}/)" >> $GITHUB_STEP_SUMMARY
           echo "- [DynamoDB Lock Table](https://${REGION}.console.aws.amazon.com/dynamodbv2/home?region=${REGION}#table?name=${BUCKET})" >> $GITHUB_STEP_SUMMARY

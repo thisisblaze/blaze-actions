@@ -344,7 +344,9 @@ jobs:
 ✅ **Versioned**: Pin to specific versions  
 ✅ **OIDC**: No long-lived AWS credentials  
 ✅ **SHA-Pinned**: All actions pinned to commit SHAs  
+✅ **SHA-Pinned**: All actions pinned to commit SHAs  
 ✅ **Timeout Protected**: All workflows have limits
+✅ **Observability**: Detailed provisioning summaries (ALB, IAM, Cluster)
 
 ---
 
@@ -376,11 +378,11 @@ Follow semantic versioning:
 
 ## Quick Reference
 
-| Workflow               | Purpose                  | Inputs                                      |
-| :--------------------- | :----------------------- | :------------------------------------------ |
-| **01-provision-infra** | Provision infrastructure | environment, stack                          |
-| **02-deploy-app**      | Deploy application       | environment, image_tag                      |
-| **stress-test**        | Full environment test    | environment, mode                           |
-| **99-ops-utility**     | Operations utility       | action, skip_lambda_destroy (default: true) |
+| Workflow               | Purpose                  | Inputs                                             |
+| :--------------------- | :----------------------- | :------------------------------------------------- |
+| **01-provision-infra** | Provision infrastructure | environment, stack, orphan_lambda (default: false) |
+| **02-deploy-app**      | Deploy application       | environment, image_tag, services                   |
+| **stress-test**        | Full environment test    | environment, mode                                  |
+| **99-ops-utility**     | Operations utility       | action, skip_lambda_destroy (default: true)        |
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.

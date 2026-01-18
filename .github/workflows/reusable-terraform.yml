@@ -122,13 +122,18 @@ jobs:
       iam_role_name: ${{ steps.tf_outputs.outputs.iam_role_name }}
       service_discovery_namespace: ${{ steps.tf_outputs.outputs.service_discovery_namespace }}
       log_group_name: ${{ steps.tf_outputs.outputs.log_group_name }}
+      vpc_id: ${{ steps.tf_outputs.outputs.vpc_id }}
+      efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
+      service_discovery_id: ${{ steps.tf_outputs.outputs.service_discovery_id }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: ${{ inputs.tf_dir }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@v4.1.1
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
 
       # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
       # Lambda runs on Linux, not macOS - must use linux-x64 binaries
@@ -171,7 +176,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
