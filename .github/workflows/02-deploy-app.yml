@@ -326,6 +326,16 @@ jobs:
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
           BLAZE_GRAPHQL_URI: ${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
 
+      - name: 🕵️ Debug Build Output
+        run: |
+          echo "Current Dir: $(pwd)"
+          echo "Listing packages/admin/dist:"
+          ls -R packages/admin/dist || echo "packages/admin/dist not found"
+          echo "Listing packages/admin:"
+          ls -R packages/admin || echo "packages/admin not found"
+          echo "Listing root dist (just in case):"
+          ls -R dist || echo "root dist not found"
+
       - name: Create Cloudflare _redirects
         run: |
           mkdir -p packages/admin/dist
