@@ -58,10 +58,10 @@ The project name is calculated automatically:
 
 ```
 PROD:  {namespace}-{project}-admin
-       Example: blaze-thisisblaze-admin
+       Example: ${NAMESPACE}-thisisblaze-admin
 
 OTHER: {namespace}-{project}-{stage}-admin
-       Example: blaze-thisisblaze-dev-admin
+       Example: ${NAMESPACE}-thisisblaze-dev-admin
 ```
 
 #### Error Handling
@@ -198,12 +198,12 @@ confirmation: BULK_DESTROY # Required
 
 #### Pattern Examples
 
-| Pattern                         | Matches                                | Use Case                     |
-| :------------------------------ | :------------------------------------- | :--------------------------- |
-| `blaze-*-dev-*`                 | All dev projects                       | Cleanup all dev environments |
-| `blaze-thisisblaze-test*-admin` | Test environments for specific project | Cleanup test branches        |
-| `*-preview-*`                   | All preview deployments                | Cleanup PR previews          |
-| `blaze-*-jira-*-admin`          | Feature branches with JIRA tags        | Cleanup completed features   |
+| Pattern                                | Matches                                | Use Case                     |
+| :------------------------------------- | :------------------------------------- | :--------------------------- |
+| `${NAMESPACE}-*-dev-*`                 | All dev projects                       | Cleanup all dev environments |
+| `${NAMESPACE}-thisisblaze-test*-admin` | Test environments for specific project | Cleanup test branches        |
+| `*-preview-*`                          | All preview deployments                | Cleanup PR previews          |
+| `${NAMESPACE}-*-jira-*-admin`          | Feature branches with JIRA tags        | Cleanup completed features   |
 
 #### Usage Examples
 
@@ -214,23 +214,26 @@ Action: destroy-cloudflare-pages-bulk
 bulk_pattern: "blaze-thisisblaze-test*-admin"
 dry_run: true
 confirmation: BULK_DESTROY
+bulk_pattern: "${NAMESPACE}-thisisblaze-test*-admin"
+dry_run: true
+confirmation: BULK_DESTROY
 ```
 
 Output:
 
 ```
-🔍 Finding projects matching: blaze-thisisblaze-test*-admin
+🔍 Finding projects matching: ${NAMESPACE}-thisisblaze-test*-admin
 📊 Found 3 projects
 🔍 DRY RUN - Would delete:
-  blaze-thisisblaze-test1-admin
-  blaze-thisisblaze-test2-admin
-  blaze-thisisblaze-test-deploy-admin
+  ${NAMESPACE}-thisisblaze-test1-admin
+  ${NAMESPACE}-thisisblaze-test2-admin
+  ${NAMESPACE}-thisisblaze-test-deploy-admin
 ```
 
 **Example 2: Delete feature branch projects**
 
 ```yaml
-bulk_pattern: "blaze-*-jira-123-*"
+bulk_pattern: "${NAMESPACE}-*-jira-123-*"
 dry_run: false
 confirmation: BULK_DESTROY
 ```
@@ -238,7 +241,7 @@ confirmation: BULK_DESTROY
 **Example 3: Cleanup all dev projects**
 
 ```yaml
-bulk_pattern: "blaze-*-dev-*"
+bulk_pattern: "${NAMESPACE}-*-dev-*"
 dry_run: true # ALWAYS preview first!
 confirmation: BULK_DESTROY
 ```
@@ -255,8 +258,8 @@ If more than 10 projects match:
 **Solution**: Use more specific patterns:
 
 ```
-Instead of: blaze-*-*
-Use:        blaze-thisisblaze-dev-*   (more specific)
+Instead of: ${NAMESPACE}-*-*
+Use:        ${NAMESPACE}-thisisblaze-dev-*   (more specific)
 Or run:     Multiple batches with different patterns
 ```
 
@@ -336,7 +339,7 @@ dry_run: false
 
 ### 3. Pattern Matching Tips
 
-- **Be specific**: `blaze-thisisblaze-dev-*` > `blaze-*-*`
+- **Be specific**: `${NAMESPACE}-thisisblaze-dev-*` > `${NAMESPACE}-*-*`
 - **Test patterns**: Use dry-run to verify matches
 - **Batching**: If > 10 projects, use multiple targeted patterns
 
@@ -393,7 +396,7 @@ schedule:
 
 1. Use more specific pattern
 2. Delete in batches
-3. Example: `blaze-*-test1*` then `blaze-*-test2*`
+3. Example: `${NAMESPACE}-*-test1*` then `${NAMESPACE}-*-test2*`
 
 ---
 
