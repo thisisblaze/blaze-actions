@@ -338,6 +338,28 @@ jobs:
           echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **TfState Key** | \`${{ needs.configuration.outputs.state_key }}\` |" >> $GITHUB_STEP_SUMMARY
 
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧱 Infrastructure Details" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Name / Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function to add row if value exists
+          add_row() {
+            NAME=$1
+            VALUE=$2
+            if [[ -n "$VALUE" && "$VALUE" != "null" ]]; then
+               echo "| **$NAME** | \`$VALUE\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+          }
+
+          add_row "ALB DNS" "${{ needs.provision.outputs.alb_dns_name }}"
+          add_row "ECS Cluster" "${{ needs.provision.outputs.ecs_cluster_name }}"
+          add_row "IAM Role" "${{ needs.provision.outputs.iam_role_name }}"
+          add_row "Service Discovery" "${{ needs.provision.outputs.service_discovery_namespace }}"
+          add_row "Log Group" "${{ needs.provision.outputs.log_group_name }}"
+          add_row "MongoDB URI" "${{ needs.provision.outputs.mongodb_uri }}"
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🚦 Status" >> $GITHUB_STEP_SUMMARY
 

@@ -92,6 +92,21 @@ on:
       cluster_name:
         description: "MongoDB Cluster Name"
         value: ${{ jobs.terraform.outputs.cluster_name }}
+      alb_dns_name:
+        description: "Load Balancer DNS Name"
+        value: ${{ jobs.terraform.outputs.alb_dns_name }}
+      ecs_cluster_name:
+        description: "ECS Cluster Name"
+        value: ${{ jobs.terraform.outputs.ecs_cluster_name }}
+      iam_role_name:
+        description: "IAM Execution Role Name"
+        value: ${{ jobs.terraform.outputs.iam_role_name }}
+      service_discovery_namespace:
+        description: "Service Discovery Namespace"
+        value: ${{ jobs.terraform.outputs.service_discovery_namespace }}
+      log_group_name:
+        description: "CloudWatch Log Group Name"
+        value: ${{ jobs.terraform.outputs.log_group_name }}
 
 jobs:
   terraform:
@@ -102,6 +117,11 @@ jobs:
       mongodb_uri: ${{ steps.tf_outputs.outputs.mongodb_uri }}
       cluster_name: ${{ steps.tf_outputs.outputs.cluster_name }}
       plan_summary: ${{ steps.plan.outputs.summary }}
+      alb_dns_name: ${{ steps.tf_outputs.outputs.alb_dns_name }}
+      ecs_cluster_name: ${{ steps.tf_outputs.outputs.ecs_cluster_name }}
+      iam_role_name: ${{ steps.tf_outputs.outputs.iam_role_name }}
+      service_discovery_namespace: ${{ steps.tf_outputs.outputs.service_discovery_namespace }}
+      log_group_name: ${{ steps.tf_outputs.outputs.log_group_name }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -514,3 +534,21 @@ jobs:
           if [[ -n "$CLUSTER_NAME" ]]; then
              echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
           fi
+
+          # Generic Output Extractor
+          extract_output() {
+            KEY=$1
+            JSON_KEY=$2
+            VAL=$(jq -r ".$JSON_KEY.value // empty" tf_outputs.json)
+            if [[ -n "$VAL" ]]; then
+               echo "::add-mask::$VAL" # Mask sensitive values if any, safe for others
+               echo "$KEY=$VAL" >> $GITHUB_OUTPUT
+            fi
+          }
+
+          # Extract Additional Infra Details
+          extract_output "alb_dns_name" "alb_dns_name"
+          extract_output "ecs_cluster_name" "ecs_cluster_name"
+          extract_output "iam_role_name" "execution_role_name" # TF output is execution_role_name
+          extract_output "service_discovery_namespace" "service_discovery_namespace"
+          extract_output "log_group_name" "log_group_name"
