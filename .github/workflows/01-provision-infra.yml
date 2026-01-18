@@ -415,7 +415,7 @@ jobs:
           # ------------------------------------------------------------------
           if [[ "${{ inputs.stack }}" == "network" ]]; then
             echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ inputs.enable_image_resize }}" == "true" ]]; then
+            if [[ "${{ needs.provision.outputs.image_resize_enabled }}" == "true" ]]; then
                echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
                echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
                echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
