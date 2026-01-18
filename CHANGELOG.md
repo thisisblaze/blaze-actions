@@ -13,7 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Forces fresh module downloads from git refs
   - Prevents cached module issues when module source refs are updated
   - Ensures latest module versions are always used
-  - Critical for consuming updated modules from `blaze-terraform-infra-core`
+  - Critical for consuming consuming updated modules from `blaze-terraform-infra-core`
+
+### Added
+
+- **Provisioning Summary**: `01-provision-infra.yml` now generates a detailed infrastructure summary (ALB DNS, ECS Cluster, IAM Role).
+  - Uses new outputs from `reusable-terraform.yml`.
+- **Policy Deletion**: `reusable-pre-destroy-cleanup` now supports deleting IAM policies by ARN prefix.
 
 ### Fixed
 
@@ -51,7 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Enhanced Cloudflare Pages Destruction**:
 
 - **Dynamic Configuration**: Replaced hardcoded `"blaze"` and `"thisisblaze"` with configuration outputs
-
   - Now uses `needs.configuration.outputs.namespace` and `needs.configuration.outputs.project_key`
   - Ensures naming consistency with creation logic in `02-deploy-app.yml`
   - Improves reusability across different projects
