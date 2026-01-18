@@ -53,7 +53,10 @@
 ## 🤖 4. AI Rules of Engagement
 
 1.  **No Hardcoding**: Never hardcode versions or environment names. Use inputs.
-2.  **Hybrid Awareness**: Understand the Hybrid Architecture (Cloudflare for Edge/Dev, AWS for Compute).
+2.  **Hybrid Awareness**:
+    - **AWS ECS**: Hosts API and Frontend services.
+    - **Cloudflare Pages**: Hosts Admin app (Static/SPA).
+    - **Naming Convention (Critical)**: Cloudflare Projects MUST follow `${namespace}-${client}-${project}-${stage}-${app}` (e.g., `blaze-b9-thisisblaze-dev-admin`).
 3.  **Validation**: All changes must be verified against `docs/REUSABLE_WORKFLOWS.md`.
 
 ---
