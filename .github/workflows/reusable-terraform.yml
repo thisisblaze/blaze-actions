@@ -127,7 +127,6 @@ jobs:
       log_group_name: ${{ steps.tf_outputs.outputs.log_group_name }}
       vpc_id: ${{ steps.tf_outputs.outputs.vpc_id }}
       efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
-      efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
       service_discovery_id: ${{ steps.tf_outputs.outputs.service_discovery_id }}
       image_resize_enabled: ${{ steps.tf_outputs.outputs.image_resize_enabled }}
     environment: ${{ inputs.environment }}
