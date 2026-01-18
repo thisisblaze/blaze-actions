@@ -328,13 +328,13 @@ jobs:
 
       - name: Create Cloudflare _redirects
         run: |
-          mkdir -p packages/admin/public
-          echo "/* /index.html 200" > packages/admin/public/_redirects
+          mkdir -p packages/admin/dist
+          echo "/* /index.html 200" > packages/admin/dist/_redirects
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: admin-build-assets
-          path: packages/admin/public
+          path: packages/admin/dist
           retention-days: 1
 
   package-admin-docker:
@@ -531,7 +531,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: admin-build-assets
-          path: packages/admin/public
+          path: packages/admin/dist
 
       - name: Set Cloudflare Pages Production Branch
         run: |
@@ -565,7 +565,7 @@ jobs:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: "pages deploy packages/admin/public --project-name=${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+          command: "pages deploy packages/admin/dist --project-name=${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
       - name: Purge Cloudflare Cache
         run: |
