@@ -447,15 +447,23 @@ runs:
           # ---------------------------------------------------------
           # Check Service Name (Full vs Simple)
           TARGET_SERVICE="$SERVICE_NAME"
+          # 1. Check Simple Name (e.g. "api")
            if ! aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
              NAMESPACED_SERVICE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
+             PARTIAL_SERVICE="${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
+             
+             # 2. Check Namespaced Name (e.g. "blaze-b9-thisisblaze-stage-api")
              if aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$NAMESPACED_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
                 TARGET_SERVICE="$NAMESPACED_SERVICE"
+             # 3. Check Partial/Non-Namespaced Name (e.g. "b9-thisisblaze-stage-api")
+             elif aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$PARTIAL_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+                TARGET_SERVICE="$PARTIAL_SERVICE"
              else
                 echo "❌ Service not found in cluster '$CLUSTER_NAME'."
                 echo "   Checked:"
                 echo "   1. $SERVICE_NAME"
                 echo "   2. $NAMESPACED_SERVICE"
+                echo "   3. $PARTIAL_SERVICE"
                 echo ""
                 echo "👉 HINT: Has the Infrastructure been provisioned?"
                 echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
