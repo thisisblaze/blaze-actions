@@ -11,12 +11,20 @@ This guide documents the Cloudflare Pages lifecycle management operations availa
 
 The Cloudflare Pages operations provide comprehensive lifecycle management:
 
-1. **Single Project Deletion** - Delete one Pages project at a time
-2. **Deployment Cleanup** - Remove old deployments while keeping recent ones
-3. **Bulk Deletion** - Pattern-based deletion of multiple projects
-4. **Configuration Sync** - Update environment variables in Pages projects
+1. **Project Provisioning** - via Terraform (Container & Config)
+2. **Content Deployment** - via Wrangler (Code & Assets)
+3. **Cleanup/Destruction** - via Ops Utility (Project & Deployments)
 
-All operations use the Cloudflare API and include safety features like dry-run modes and confirmation requirements.
+### ⚠️ IMPORTANT: The Hybrid Model
+
+We use a **Hybrid Deployment Model** for Cloudflare Pages to ensure stability and Infrastructure-as-Code compliance:
+
+| Component     | Tool          | Responsibility                                                                                        |
+| :------------ | :------------ | :---------------------------------------------------------------------------------------------------- |
+| **Container** | **Terraform** | Creates the Project, binds custom domains, sets production branch, and manages Environment Variables. |
+| **Content**   | **Wrangler**  | Deploys the actual HTML/JS/CSS assets into the project during CI/CD.                                  |
+
+**Critical Rule**: You **MUST** provision the project via Terraform (Workflow `01 - Provision Infrastructure`) **BEFORE** the first Wrangler deployment. Attempts to deploy code to a non-existent project will fail with `Project not found`.
 
 ---
 
