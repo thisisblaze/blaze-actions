@@ -464,21 +464,38 @@ jobs:
           NAMESPACE: ${{ needs.configuration.outputs.namespace }}
           STAGE_KEY: ${{ needs.configuration.outputs.stage_key }}
         run: |
-          # 1. Pattern Matching
+          # 1. Debug & Setup
+          set -o pipefail
+          echo "🔎 PARAMETER CHECK:"
+          echo "   - NAMESPACE: '$NAMESPACE'"
+          echo "   - STAGE_KEY: '$STAGE_KEY'"
+
+          if [[ -z "$NAMESPACE" ]]; then
+             echo "❌ CRITICAL ERROR: NAMESPACE is empty. Check configuration."
+             exit 1
+          fi
+
+          # 2. Pattern Matching
           # Matches: blaze-stage-lambda-edge-resize-image-c533830b
           # Pattern: [namespace]-[stage]-lambda-edge-*
           PATTERN="${NAMESPACE}-${STAGE_KEY}-lambda-edge-.*"
+          echo "   - PATTERN:   '$PATTERN'"
 
-          echo "🔎 Scanning us-east-1 for Lambda functions matching: $PATTERN"
+          echo "--------------------------------"
+          echo "📡 Connectivity Check (us-east-1)..."
 
-          # 2. Find Functions
-          # Note: AWS CLI output text is tab separated
-          FOUND_COUNT=0
+          # Fetch ALL function names first to verify access
+          ALL_FUNCS=$(aws lambda list-functions --region us-east-1 --query "Functions[].FunctionName" --output text | tr '\t' '\n')
+          TOTAL_COUNT=$(echo "$ALL_FUNCS" | grep -v "^$" | wc -l)
 
-          aws lambda list-functions --region us-east-1 --query "Functions[].FunctionName" --output text | tr '\t' '\n' | grep -E "$PATTERN" > found_lambdas.txt || true
+          echo "✅ AWS Connectivity OK. Total Lambdas found in region: $TOTAL_COUNT"
+
+          # 3. Filter
+          echo "$ALL_FUNCS" | grep -E "$PATTERN" > found_lambdas.txt || true
 
           if [ ! -s found_lambdas.txt ]; then
-             echo "✅ No orphaned Lambda functions found matching pattern."
+             echo "⚠️  No orphaned Lambda functions found matching pattern: $PATTERN"
+             echo "   (This means either they are already deleted, or the pattern is wrong)"
              exit 0
           fi
 
