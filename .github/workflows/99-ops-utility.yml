@@ -1094,7 +1094,7 @@ jobs:
 
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
-    needs: [configuration, nuke-pre-cleanup]
+    needs: [configuration, nuke-destroy-app]
     if: inputs.action == 'nuke-environment'
     runs-on: ubuntu-latest
     timeout-minutes: 10
