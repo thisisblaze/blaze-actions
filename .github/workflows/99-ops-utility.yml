@@ -1170,6 +1170,10 @@ jobs:
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+      pre_apply_script: |
+        echo "🔪 ORPHANING PAGES DOMAIN FROM STATE..."
+        terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
+        echo "✅ Pages domain orphaned."
 
   #  nuke-destroy-data-mongo:
   #    name: 💾 Nuke 4a/5 - Mongo
