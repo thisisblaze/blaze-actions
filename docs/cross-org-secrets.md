@@ -1,3 +1,8 @@
+**Last Updated**: 2026-01-08
+**Owner**: Infrastructure Team
+
+---
+
 # Cross-Organization Secret Propagation in GitHub Actions
 
 ## Problem Statement

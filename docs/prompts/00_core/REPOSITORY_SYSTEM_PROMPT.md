@@ -1,3 +1,8 @@
+**Last Updated**: 2026-01-18
+**Owner**: Infrastructure Team
+
+---
+
 # System Constitution: blaze-actions (Hub)
 
 > **Version**: ACTIONS_CONSTITUTION_V1
