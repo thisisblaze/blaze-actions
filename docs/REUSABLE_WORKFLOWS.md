@@ -1,3 +1,8 @@
+**Last Updated**: 2026-01-09
+**Owner**: Infrastructure Team
+
+---
+
 # Reusable Workflows Guide
 
 **Repository**: blaze-actions  
