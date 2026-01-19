@@ -49,10 +49,6 @@ on:
         type: choice
         options: ["1g", "2g"]
         default: "1g"
-      is_paused:
-        description: "Pause MongoDB Cluster? (MongoDB only)"
-        type: boolean
-        default: false
       enable_image_resize:
         description: "Enable CloudFront for Image Resizing"
         type: boolean
@@ -87,10 +83,6 @@ on:
         required: false
         type: string
         default: "1g"
-      is_paused:
-        required: false
-        type: boolean
-        default: false
       terraform_version:
         required: false
         type: string
@@ -253,7 +245,6 @@ jobs:
         is_beta=${{ needs.configuration.outputs.beta }}
         cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
         kibana_ram=${{ inputs.kibana_size }}
-        is_paused=${{ inputs.is_paused }}
         enable_image_resize=${{ inputs.enable_image_resize }}
       orphan_lambda: false
 
