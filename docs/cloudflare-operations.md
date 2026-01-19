@@ -1,3 +1,8 @@
+**Last Updated**: 2026-01-18
+**Owner**: Infrastructure Team
+
+---
+
 # Cloudflare Pages Operations Guide
 
 **Version**: 1.4.0  
