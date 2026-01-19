@@ -1157,6 +1157,11 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
+      pre_apply_script: |
+        echo "🔪 ORPHANING PAGES DOMAIN FROM STATE..."
+        terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
+        echo "✅ Pages domain orphaned."
+
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -1170,10 +1175,6 @@ jobs:
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
-      pre_apply_script: |
-        echo "🔪 ORPHANING PAGES DOMAIN FROM STATE..."
-        terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
-        echo "✅ Pages domain orphaned."
 
   #  nuke-destroy-data-mongo:
   #    name: 💾 Nuke 4a/5 - Mongo
