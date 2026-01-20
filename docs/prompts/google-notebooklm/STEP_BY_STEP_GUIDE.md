@@ -67,206 +67,226 @@ Sources (5)
 
 ---
 
-## Step 3: Generate Short Presentation (5-10 minutes)
+## Step 3: Use Studio Features (Right Panel)
 
-### Copy This Exact Prompt:
+**IMPORTANT:** Don't use the chat! Use the **Studio** panel on the RIGHT side of NotebookLM.
+
+### What You'll See:
+
+After uploading files, look at the **RIGHT SIDE** of the screen:
 
 ```
-Create a professional 5-10 minute presentation about the Blaze Infrastructure Platform.
-
-Structure:
-1. Opening: The Problem (1-2 minutes)
-   - Show pain points before Blaze
-   - Business impact (cost, time, security)
-
-2. The Solution: Architecture Overview (2-3 minutes)
-   - The 3-repository architecture
-   - Hub & Spoke pattern visual
-   - How it reduces 400 lines to 15 lines
-
-3. Key Workflows (2-3 minutes)
-   - Workflow 00: Bootstrap
-   - Workflow 01: Provision Infrastructure
-   - Workflow 02: Deploy Application
-   - Show timeline: Zero to production in 2 hours
-
-4. Real-World Impact (1-2 minutes)
-   - Time savings: 95%+ faster deployments
-   - Cost savings: $100K/year
-   - Security: Zero incidents
-
-5. Closing: Next Steps (1 minute)
-   - How to get started
-   - ROI summary
-
-Visual Requirements:
-- Include diagram showing hub & spoke pattern
-- Show before/after code comparison (400 vs 15 lines)
-- Display success metrics in charts
-- Use timeline graphic for deployment workflow
-
-Audience: Technical leadership, CTOs, Engineering VPs
-Tone: Professional, results-focused, visual-heavy
-Goal: Get buy-in to adopt the platform
+┌─────────────────────┬─────────────────────┐
+│  Your notes         │   ← STUDIO →       │
+│  (left side)        │  (right side)       │
+│                     │  [Notebook guide]   │
+│  Chat here...       │  [Study guide]      │
+│                     │  [Briefing doc]     │
+│                     │  [Audio overview]   │
+└─────────────────────┴─────────────────────┘
 ```
-
-### What to Do:
-
-1. Paste the prompt above into the NotebookLM chat
-2. Press Enter
-3. Wait 30-60 seconds
-4. NotebookLM will generate the presentation outline
-
-### What You'll Get:
-
-NotebookLM will provide:
-
-- **Slide-by-slide outline** with talking points
-- **Content for each slide**
-- **Suggested visuals**
-- **Time estimates** per section
 
 ---
 
-## Step 4: Generate Long Technical Presentation (15 minutes)
+### Option A: Generate "Briefing Doc" (Best for Presentations)
 
-### Copy This Exact Prompt:
+**This is what you want for presentations!**
 
-```
-Create a comprehensive 15-minute technical deep-dive presentation about the Blaze Infrastructure Platform.
+1. Look at RIGHT PANEL (Studio)
+2. Click **"Briefing doc"** button
+3. Wait 20-30 seconds
+4. NotebookLM generates a structured document with:
+   - Executive summary
+   - Key points organized by topic
+   - Supporting details
+   - Perfect structure for slides!
 
-Structure:
-1. Problem Statement & Context (2 minutes)
-   - Infrastructure chaos before Blaze
-   - Manual deployment nightmares
-   - Security gaps and compliance issues
-   - Real cost: $100K/year wasted
+**What you get:**
 
-2. Solution Architecture (4 minutes)
-   - The 3-repository ecosystem explained
-   - blaze-actions: The automation hub
-   - blaze-terraform-infra-core: Module library
-   - blaze-template-deploy: Project templates
-   - Hub & Spoke pattern deep-dive
-   - Show Mermaid diagram of system integration
-
-3. Repository Deep-Dive (3 minutes)
-   - blaze-actions: 24 workflows, 5 composite actions
-   - Key workflows: 00 (setup), 01 (provision), 02 (deploy), 99 (ops)
-   - Terraform modules: VPC, ECS, ALB, CloudFront
-   - Workflow wrapper example: 15 lines vs 400
-
-4. Complete Workflow Example (3 minutes)
-   - Walk through: New environment from zero
-   - Step 1: Bootstrap (5 min)
-   - Step 2: Network stack (8 min)
-   - Step 3: SSL certificates (wait)
-   - Step 4: Application stack (12 min)
-   - Step 5: Deploy code (10 min)
-   - Total: ~2 hours to full production
-
-5. Advanced Features (2 minutes)
-   - Dynamic namespace for multi-tenancy
-   - OIDC security (no long-lived keys)
-   - Automated security scanning
-   - Hybrid deployment (AWS + Cloudflare)
-
-6. Results & Lessons Learned (1 minute)
-   - Time savings: 95%+
-   - Cost savings: $100K/year
-   - Zero security incidents
-   - 96% less code to maintain
-
-Visual Requirements:
-- Architecture diagram showing all 3 repositories
-- Workflow sequence diagrams
-- Resource naming pattern examples
-- Code comparison slides (before/after)
-- Timeline visualization for complete deployment
-- Success metrics dashboard
-- Multi-tenant namespace example
-
-Audience: Engineering teams, DevOps practitioners, Solutions architects
-Tone: Technical but accessible, code-heavy, detailed
-Goal: Enable engineers to understand and use the platform
-Include: Real code examples, actual resource names, specific metrics
-```
-
-### What to Do:
-
-1. Paste the prompt above into NotebookLM chat
-2. Press Enter
-3. Wait 30-60 seconds
-4. Review the detailed technical presentation
+- Professional document format
+- Bullet points ready for slides
+- Organized sections
+- Can export to Google Docs
 
 ---
 
-## Step 5: Request Specific Outputs
+### Option B: Generate "Study Guide"
 
-After generating the presentation, you can ask NotebookLM for specific formats:
+1. In RIGHT PANEL, click **"Study guide"**
+2. Wait 20-30 seconds
+3. Gets:
+   - Overview of the system
+   - Key concepts explained
+   - Q&A format
+   - Good for onboarding docs
 
-### Get PowerPoint-Style Outline:
+---
+
+### Option C: Generate "Audio Overview" (Bonus!)
+
+1. Click **"Audio overview"** in RIGHT PANEL
+2. Wait 1-2 minutes
+3. Gets an AI-generated podcast/discussion about Blaze!
+4. Two AI voices discuss the platform
+5. Great for listening while commuting
+
+**Time:** ~5-10 minutes of audio
+
+---
+
+## Step 4: Customize the Output
+
+After generating Briefing Doc or Study Guide, you can refine it:
+
+### In the Chat (Left Side), Ask:
 
 ```
-Convert the presentation into a slide-by-slide outline with:
-- Slide title
-- Bullet points for each slide
-- Speaker notes
-- Suggested visuals
+"Focus the briefing doc on these sections:
+1. Problem statement
+2. 3-repository architecture
+3. Deployment workflow
+4. ROI and benefits
 
-Format as a numbered list of slides.
+Make it suitable for a 10-minute executive presentation."
 ```
 
-### Get Mermaid Diagrams:
+Or:
 
 ```
-Create Mermaid diagram code for:
+"Reorganize the briefing doc into a presentation format:
+- Opening slide: Problem
+- Slide 2-3: Architecture
+- Slide 4-5: Workflows
+- Slide 6: Results
+- Closing: Next steps"
+```
+
+### Generate New Version:
+
+After refining with chat, click **"Briefing doc"** again to regenerate with your feedback!
+
+---
+
+## Step 5: Export to Google Docs/Slides
+
+### From Briefing Doc:
+
+1. Click the **"⋮"** (three dots) menu
+2. Select **"Open in Google Docs"**
+3. Now you have editable document
+4. Copy sections into Google Slides
+5. Add visuals
+
+### Creating Slides:
+
+1. Open Google Slides
+2. Copy section headings as slide titles
+3. Copy bullet points as slide content
+4. Add diagrams from our mermaid files
+
+---
+
+## Step 6: Create Specific Presentation Formats
+
+### For 5-10 Minute Executive Presentation:
+
+**In Chat, type:**
+
+```
+Create an executive presentation outline covering:
+- Problem: Infrastructure chaos (1 min)
+- Solution: Hub & spoke architecture (2 min)
+- Key workflows in action (2 min)
+- ROI: Time and cost savings (1 min)
+- Next steps (1 min)
+
+Focus on business value and metrics, not technical details.
+Use conversational tone suitable for execs.
+Include specific numbers from the sources.
+```
+
+**Then click "Briefing doc"** → Get formatted output
+
+---
+
+### For 15-Minute Technical Deep-Dive:
+
+**In Chat, type:**
+
+```
+Create a technical presentation outline covering:
+- Problem and context (2 min)
+- 3-repository architecture detailed (4 min)
+- Complete workflow walkthrough (3 min)
+- Namespace and multi-tenancy (2 min)
+- Security and best practices (2 min)
+- Lessons learned (2 min)
+
+Include code examples, resource naming patterns, and technical details.
+Target audience: Engineers and DevOps teams.
+Reference specific workflows (00, 01, 02, 99) from the sources.
+```
+
+**Then click "Briefing doc"** → Get technical outline
+
+---
+
+## Step 7: Generate Mermaid Diagrams
+
+**In Chat, ask:**
+
+```
+Create Mermaid diagram code showing:
 1. The 3-repository architecture
-2. Hub & spoke pattern
-3. Complete deployment workflow
-4. Resource naming pattern
+2. How blaze-template-deploy calls blaze-actions
+3. How blaze-actions uses blaze-terraform-infra-core
+4. AWS resources created
 
-Provide the raw Mermaid code I can copy-paste.
+Provide raw Mermaid markdown code.
 ```
 
-### Get Script for Video:
+**Copy the code** → Paste at https://mermaid.live → Download as PNG → Add to slides
+
+---
+
+## Quick Reference: Studio vs Chat
+
+| Feature            | Where                               | When to Use                   |
+| ------------------ | ----------------------------------- | ----------------------------- |
+| **Briefing Doc**   | RIGHT (Studio)                      | Create presentation outline   |
+| **Study Guide**    | RIGHT (Studio)                      | Create onboarding material    |
+| **Audio Overview** | RIGHT (Studio)                      | Get podcast-style explanation |
+| **Chat**           | LEFT                                | Refine content, ask questions |
+| **Customize**      | LEFT (Chat) then RIGHT (regenerate) | Improve outputs               |
+
+---
+
+## The Right Workflow
 
 ```
-Create a word-for-word script for a video presentation.
-
-Include:
-- Exact words to say for each slide
-- Timing cues
-- Transition phrases
-- Emphasis points
-
-Target length: [5-10 or 15] minutes
+1. Upload 5 files ✓
+2. Click "Briefing doc" (RIGHT PANEL) → Wait
+3. Review generated briefing doc
+4. In CHAT: "Focus on [specific topics]"
+5. Click "Briefing doc" again → Get refined version
+6. Export to Google Docs
+7. Convert to slides
+8. Add diagrams
+9. Present! 🎉
 ```
 
 ---
 
-## Step 6: Export or Use the Content
+## Common Mistakes
 
-### Option 1: Copy to Google Slides
+❌ **Wrong:** Typing long prompts in chat and expecting presentation  
+✅ **Right:** Use chat to guide, then click Studio buttons
 
-1. Create new Google Slides presentation
-2. Copy slide titles from NotebookLM
-3. Paste content into slides
-4. Add visuals (diagrams, charts)
+❌ **Wrong:** Looking for presentation in chat responses  
+✅ **Right:** Check RIGHT PANEL for generated docs
 
-### Option 2: Export as Document
-
-1. In NotebookLM, click "Export note"
-2. Opens in Google Docs
-3. Edit and format as needed
-4. Share with team
-
-### Option 3: Use for Conference Talk
-
-1. Use NotebookLM outline as structure
-2. Create slides in your preferred tool
-3. Add generated Mermaid diagrams
-4. Include code examples provided
+❌ **Wrong:** Uploading README.md  
+✅ **Right:** Upload only PART_01 through PART_05
 
 ---
 
