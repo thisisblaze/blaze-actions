@@ -76,19 +76,70 @@ Sources (5)
 After uploading files, look at the **RIGHT SIDE** of the screen:
 
 ```
-┌─────────────────────┬─────────────────────┐
-│  Your notes         │   ← STUDIO →       │
-│  (left side)        │  (right side)       │
-│                     │  [Notebook guide]   │
-│  Chat here...       │  [Study guide]      │
-│                     │  [Briefing doc]     │
-│                     │  [Audio overview]   │
-└─────────────────────┴─────────────────────┘
+┌─────────────────────┬──────────────────────┐
+│  Your notes         │   ← STUDIO →        │
+│  (left side)        │  (right side)        │
+│                     │                      │
+│  Chat here...       │  [Slide deck] 🎯    │
+│                     │  [Infographic] 📊   │
+│                     │  [Notebook guide]    │
+│                     │  [Study guide]       │
+│                     │  [Briefing doc]      │
+│                     │  [Audio overview]    │
+└─────────────────────┴──────────────────────┘
 ```
 
 ---
 
-### Option A: Generate "Briefing Doc" (Best for Presentations)
+### Option A: Generate "Slide deck" (🎯 BEST FOR PRESENTATIONS!)
+
+**THIS IS EXACTLY WHAT YOU WANT!**
+
+1. Look at RIGHT PANEL (Studio)
+2. Click **"Slide deck"** button
+3. Wait 30-60 seconds
+4. NotebookLM creates a **complete Google Slides presentation**!
+
+**What you get:**
+
+- ✅ **Ready-to-use Google Slides** (opens automatically!)
+- ✅ 10-15 professional slides
+- ✅ Title slide + content slides
+- ✅ Clean design and layout
+- ✅ Immediately editable
+
+**Perfect for:**
+
+- Executive presentations
+- Team meetings
+- Conference talks
+- Client demos
+
+---
+
+### Option B: Generate "Infographic" (📊 VISUAL ONE-PAGER!)
+
+**Great for executive summaries!**
+
+1. In RIGHT PANEL, click **"Infographic"**
+2. Wait 20-30 seconds
+3. Gets a beautiful visual one-pager with:
+   - Key facts as graphics
+   - Timeline or process flow
+   - Stats and metrics highlighted
+   - Professional design
+
+**Perfect for:**
+
+- Email attachments
+- Slack/Teams shares
+- Quick overviews
+- Executive briefings
+- Social media
+
+---
+
+### Option C: Generate "Briefing Doc"
 
 **This is what you want for presentations!**
 
