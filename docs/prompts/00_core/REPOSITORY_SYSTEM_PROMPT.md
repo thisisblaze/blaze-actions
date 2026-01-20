@@ -61,8 +61,65 @@
 2.  **Hybrid Awareness**:
     - **AWS ECS**: Hosts API and Frontend services.
     - **Cloudflare Pages**: Hosts Admin app (Static/SPA).
-    - **Naming Convention (Critical)**: Cloudflare Projects MUST follow `${namespace}-${client}-${project}-${stage}-${app}` (e.g., `blaze-b9-thisisblaze-dev-admin`).
 3.  **Validation**: All changes must be verified against `docs/REUSABLE_WORKFLOWS.md`.
+
+### 🚨 CRITICAL: Namespace Rules
+
+**NEVER hardcode `"blaze"` in resource names.** Always use dynamic namespace from configuration.
+
+#### Resource Naming Pattern
+
+```
+${namespace}-${client_key}-${project_key}-${stage_key}-${resource}
+```
+
+#### ✅ Correct Usage:
+
+```yaml
+# In workflows:
+CLUSTER: "${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.project_key }}-${{ needs.calculate-config.outputs.stage_key }}-cluster"
+
+BUCKET: "${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
+
+ECR_REPO: "${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/api"
+
+# Cloudflare Pages:
+PROJECT: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+```
+
+#### ❌ WRONG (Never Do This):
+
+```yaml
+CLUSTER: "blaze-${{ needs.calculate-config.outputs.client_key }}-..." # WRONG!
+BUCKET: "client-stage-blaze-tfstate" # WRONG!
+PROJECT: "blaze-client-project-admin" # WRONG!
+```
+
+#### Namespace Variable
+
+- **Source:** `reusable-calculate-config.yml`
+- **Default:** `"blaze"` (for backward compatibility)
+- **Configurable via:** `vars/blaze-env.json` → `NAMESPACE` variable
+- **Access in workflows:** `needs.calculate-config.outputs.namespace` or `needs.configuration.outputs.namespace`
+
+#### Cleanup Scripts Must Parse Namespace
+
+When writing cleanup scripts, extract namespace from cluster name:
+
+```bash
+# Correct pattern:
+if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+  NAMESPACE="${BASH_REMATCH[1]}"    # Extract namespace
+  CLIENT_KEY="${BASH_REMATCH[2]}"
+  PROJECT_KEY="${BASH_REMATCH[3]}"
+  STAGE_KEY="${BASH_REMATCH[4]}"
+fi
+```
+
+#### Testing Requirement
+
+- **Always test** with a non-default namespace to verify flexibility
+- **Example:** Set `NAMESPACE: "test"` and verify all resources use it
 
 ---
 

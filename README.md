@@ -85,6 +85,102 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and upgrade notes.
 
 ---
 
+## 🏷️ Namespace Configuration
+
+All AWS resources created by these workflows are prefixed with a configurable **namespace** to support multi-tenancy and organizational isolation.
+
+### Default Namespace
+
+By default, all resources use the `"blaze"` namespace:
+
+```bash
+# Example resource names with default namespace:
+blaze-b9-thisisblaze-dev-cluster        # ECS Cluster
+blaze-b9-thisisblaze-dev-vpc            # VPC
+blaze-b9-thisisblaze-dev-storage-origin # S3 Bucket
+b9-dev-blaze-tfstate                    # Terraform State Bucket
+```
+
+### Resource Naming Pattern
+
+```
+${namespace}-${client_key}-${project_key}-${stage_key}-${resource}
+```
+
+### Custom Namespace
+
+To use a custom namespace, set it in your environment configuration:
+
+**File:** `vars/blaze-env.json` or `vars/${PROJECT_KEY}/blaze-env.json`
+
+```json
+{
+  "common": {
+    "NAMESPACE": "mycompany"
+  }
+}
+```
+
+This will result in resource names like:
+
+```bash
+mycompany-b9-thisisblaze-dev-cluster
+mycompany-b9-thisisblaze-dev-vpc
+b9-dev-mycompany-tfstate
+```
+
+> [!WARNING]
+> **Changing the namespace for an existing environment requires a full rebuild.**
+>
+> All resources will be recreated with new names. You must:
+>
+> 1. Export data from the existing environment
+> 2. Run the nuke workflow to destroy all resources
+> 3. Update the NAMESPACE in your configuration
+> 4. Re-provision infrastructure
+> 5. Restore data
+
+### Namespace in Workflows
+
+The namespace is automatically loaded by `reusable-calculate-config.yml` and available in all workflows:
+
+```yaml
+jobs:
+  configuration:
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v1
+    with:
+      environment: dev
+      terraform_stack: app
+
+  my-job:
+    needs: configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use namespace
+        run: |
+          echo "Namespace: ${{ needs.configuration.outputs.namespace }}"
+          echo "Cluster: ${{ needs.configuration.outputs.cluster_name }}"
+```
+
+**Configuration Outputs:**
+
+| Output         | Description               | Example                            |
+| -------------- | ------------------------- | ---------------------------------- |
+| `namespace`    | Resource namespace prefix | `blaze` (default)                  |
+| `client_key`   | Client identifier         | `b9`                               |
+| `project_key`  | Project identifier        | `thisisblaze`                      |
+| `stage_key`    | Environment stage         | `dev`, `stage`, `prod`             |
+| `cluster_name` | Full ECS cluster name     | `blaze-b9-thisisblaze-dev-cluster` |
+
+### Why Use Custom Namespaces?
+
+- **Multi-tenancy**: Run multiple isolated environments for different clients
+- **Organization isolation**: Separate resources by business unit or team
+- **Testing**: Create isolated test environments with different naming
+- **Cost tracking**: Easier resource tagging and cost allocation by namespace
+
+---
+
 ## Welcome to Blaze Actions! 👋
 
 This repository provides **production-ready GitHub Actions workflows** for deploying cloud infrastructure and applications. Whether you're a new user or an existing team member, we're here to help you get started quickly.

@@ -71,15 +71,18 @@ jobs:
               echo "Parsing context from Cluster: $CLUSTER"
 
               if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+                 NAMESPACE="${BASH_REMATCH[1]}"
                  CLIENT_KEY="${BASH_REMATCH[2]}"
                  PROJECT_KEY="${BASH_REMATCH[3]}"
                  STAGE_KEY="${BASH_REMATCH[4]}"
+                 echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
                  echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
                  echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
                  echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
-                 echo "Parsed: Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+                 echo "Parsed: Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
               else
                  echo "⚠️ Could not parse Cluster Name. Keys will be empty."
+                 echo "NAMESPACE=" >> $GITHUB_ENV
                  echo "CLIENT_KEY=" >> $GITHUB_ENV
                  echo "PROJECT_KEY=" >> $GITHUB_ENV
                  echo "STAGE_KEY=" >> $GITHUB_ENV
@@ -88,14 +91,15 @@ jobs:
          - name: Cleanup S3 Buckets
            if: env.CLIENT_KEY != ''
            run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
               CLIENT_KEY="${{ env.CLIENT_KEY }}"
               PROJECT_KEY="${{ env.PROJECT_KEY }}"
               STAGE_KEY="${{ env.STAGE_KEY }}"
 
               CANDIDATES=(
-                "blaze-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-                "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-                "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
+                "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+                "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+                "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
               )
 
               for BUCKET_NAME in "${CANDIDATES[@]}"; do
@@ -189,18 +193,19 @@ jobs:
          - name: Cleanup Zombie Resources (OAC/IAM)
            if: env.PROJECT_KEY != ''
            run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
               CLIENT_KEY="${{ env.CLIENT_KEY }}"
               PROJECT_KEY="${{ env.PROJECT_KEY }}"
               STAGE_KEY="${{ env.STAGE_KEY }}"
-              NAMESPACE="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+              RESOURCE_NAMESPACE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
               REGION="${{ inputs.aws_region }}"
 
-              echo "🧟 Cleanup Zombie Resources for $NAMESPACE in $REGION"
+              echo "🧟 Cleanup Zombie Resources for $RESOURCE_NAMESPACE in $REGION"
 
               # ---------------------------------------------------------
               # 1. CloudFront Origin Access Control (OAC)
               # ---------------------------------------------------------
-              OAC_NAME="${NAMESPACE}-cdn-oac"
+              OAC_NAME="${RESOURCE_NAMESPACE}-cdn-oac"
               echo "   🔍 Checking OAC: $OAC_NAME"
               OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
 
@@ -216,14 +221,14 @@ jobs:
               # ---------------------------------------------------------
               # Expanded list to include Lambda@Edge roles which often stick around
               ROLES=(
-                "${NAMESPACE}-exec-role" 
-                "${NAMESPACE}-codedeploy-role" 
-                "${NAMESPACE}-task-role"
-                "blaze-${STAGE_KEY}-lambda-edge-role"
+                "${RESOURCE_NAMESPACE}-exec-role" 
+                "${RESOURCE_NAMESPACE}-codedeploy-role" 
+                "${RESOURCE_NAMESPACE}-task-role"
+                "${NAMESPACE}-${STAGE_KEY}-lambda-edge-role"
               )
 
               # Also check for specific standalone policies that might conflict
-              POLICIES_TO_DELETE=("blaze-${STAGE_KEY}-lambda-edge-s3-write-transformed")
+              POLICIES_TO_DELETE=("${NAMESPACE}-${STAGE_KEY}-lambda-edge-s3-write-transformed")
 
               # A. DELETE POLICIES FIRST
               for POLICY_NAME in "${POLICIES_TO_DELETE[@]}"; do
@@ -314,11 +319,12 @@ jobs:
          - name: Cleanup Lambda@Edge
            if: env.CLIENT_KEY != ''
            run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
               CLIENT_KEY="${{ env.CLIENT_KEY }}"
               PROJECT_KEY="${{ env.PROJECT_KEY }}"
               STAGE_KEY="${{ env.STAGE_KEY }}"
 
-              PREFIX="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+              PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
               echo "Searching for functions starting with: $PREFIX"
 
               FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
