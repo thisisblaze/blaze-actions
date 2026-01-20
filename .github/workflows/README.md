@@ -65,6 +65,71 @@ Workflows under the hood that power the core lifecycle:
 
 ---
 
+## 🏷️ Namespace Handling
+
+All workflows receive a configurable **namespace** from `reusable-calculate-config.yml` for resource naming.
+
+### How It Works
+
+```yaml
+jobs:
+  calculate-config:
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: network
+
+  my-job:
+    needs: calculate-config
+    steps:
+      - name: Use namespace for resource naming
+        run: |
+          NAMESPACE="${{ needs.calculate-config.outputs.namespace }}"
+          RESOURCE_NAME="${NAMESPACE}-myresource"
+```
+
+### Workflows Using Namespace
+
+| Workflow                           | Usage                                     | Resource Pattern                                                              |
+| ---------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| `00_setup_environment.yml`         | S3 backend buckets, ECR repositories      | `${client}-${stage}-${namespace}-tfstate`<br/>`${namespace}-${project}-web/*` |
+| `01_provision_infrastructure.yml`  | Passed to Terraform as `TF_VAR_namespace` | All AWS resources                                                             |
+| `02-deploy-app.yml`                | Cluster names, service names              | `${namespace}-${client}-${project}-${stage}-cluster`                          |
+| `reusable-pre-destroy-cleanup.yml` | Parses from cluster name for cleanup      | Extracts namespace to clean resources                                         |
+| `99-ops-utility.yml`               | Nuke operations                           | Targets all `${namespace}-*` resources                                        |
+
+### Configuration
+
+Set in `vars/blaze-env.json` or `vars/${PROJECT_KEY}/blaze-env.json`:
+
+```json
+{
+  "common": {
+    "NAMESPACE": "blaze" // Default, or use your custom value
+  }
+}
+```
+
+### Testing with Custom Namespace
+
+```bash
+# 1. Update config
+echo '{"common": {"NAMESPACE": "test"}}' > vars/blaze-env.json
+
+# 2. Run setup
+gh workflow run "00 🛠️ Setup Environment" \
+  -f environment=dev \
+  -f task="🟢 Bootstrap All (Recommended)"
+
+# 3. Verify resources
+aws s3 ls | grep "test-.*-tfstate"
+aws ecs list-clusters | grep "test-"
+```
+
+> **⚠️ Important:** Changing namespace for an existing environment requires a complete rebuild. See [README.md](../../README.md#namespace-configuration) for migration guide.
+
+---
+
 ## 📁 Legacy Archive
 
 Legacy workflows (00, 20, 50, 60, 70, etc.) have been moved to the [archive/](archive/) directory. They are preserved for historical reference but are no longer active in the new system.

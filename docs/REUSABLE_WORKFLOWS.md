@@ -391,6 +391,67 @@ A: Version pinning protects you. Clients on `@v1.0.0` unaffected. Test fixes on 
 
 ---
 
+## 🏷️ Namespace Configuration
+
+All workflows automatically receive a **namespace** output from `reusable-calculate-config.yml` for resource naming.
+
+### Namespace Output
+
+The `reusable-calculate-config.yml` workflow provides a `namespace` output:
+
+| Output         | Description               | Example                            | Default   |
+| -------------- | ------------------------- | ---------------------------------- | --------- |
+| `namespace`    | Resource namespace prefix | `blaze`, `mycompany`               | `"blaze"` |
+| `client_key`   | Client identifier         | `b9`                               | -         |
+| `project_key`  | Project identifier        | `thisisblaze`                      | -         |
+| `stage_key`    | Environment stage         | `dev`, `stage`, `prod`             | -         |
+| `cluster_name` | Full ECS cluster name     | `blaze-b9-thisisblaze-dev-cluster` | -         |
+
+### Usage Example
+
+```yaml
+jobs:
+  config:
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v1
+    with:
+      environment: dev
+      terraform_stack: app
+
+  deploy:
+    needs: config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy with namespace
+        env:
+          NAMESPACE: ${{ needs.config.outputs.namespace }}
+          CLUSTER: ${{ needs.config.outputs.cluster_name }}
+        run: |
+          echo "Deploying to cluster: $CLUSTER"
+          # Cluster name will be: ${namespace}-${client}-${project}-${stage}-cluster
+```
+
+### Configuration
+
+Set in `vars/blaze-env.json`:
+
+```json
+{
+  "common": {
+    "NAMESPACE": "blaze" // Default, or use custom value
+  }
+}
+```
+
+**Result:**
+
+- S3 Buckets: `${client}-${stage}-${namespace}-tfstate`
+- ECR Repos: `${namespace}-${project}-web/*`
+- ECS Clusters: `${namespace}-${client}-${project}-${stage}-cluster`
+
+> **Note:** Changing namespace for an existing environment requires a rebuild. See [README.md](../README.md#namespace-configuration).
+
+---
+
 ## Resources
 
 - [GitHub Docs: Reusing Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)

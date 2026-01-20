@@ -181,6 +181,90 @@ error parsing called workflow: You have an error in your yaml syntax on line 224
     RESULT=$(python3 -c "from datetime import datetime; print(datetime.now())")
 ```
 
+### 7. Namespace Configuration Issues
+
+**Symptom:**
+
+```
+ClusterNotFoundException: Cluster 'mycompany-b9-thisisblaze-dev-cluster' not found
+BucketDoesNotExist: The bucket 'b9-dev-mycompany-tfstate' does not exist
+```
+
+**Causes:**
+
+1. **Namespace mismatch** between config and existing resources
+2. **Hardcoded** "blaze" in workflow (should use variable)
+3. **Wrong namespace** in configuration file
+
+**Diagnosis:**
+
+```bash
+# Check current namespace in config
+jq -r '.common.NAMESPACE // "blaze"' vars/blaze-env.json
+
+# List actual AWS resources
+aws ecs list-clusters --query 'clusterArns' --output text
+aws s3 ls | grep tfstate
+
+# Check workflow outputs
+gh run view <run-id> --log | grep "namespace="
+```
+
+**Fix Option 1: Match config to resources**
+
+```json
+// vars/blaze-env.json
+{
+  "common": {
+    "NAMESPACE": "blaze" // Set to match existing resources
+  }
+}
+```
+
+**Fix Option 2: Rebuild with new namespace**
+
+```bash
+# 1. Destroy existing environment
+gh workflow run "99 - Ops Utility" \
+  --repo thebyte9/blaze-template-deploy \
+  -f environment=dev \
+  -f action="nuke-environment" \
+  -f confirmation="NUKE"
+
+# 2. Update namespace
+echo '{"common": {"NAMESPACE": "mycompany"}}' > vars/blaze-env.json
+
+# 3. Re-provision
+gh workflow run "00 - Setup Environment" \
+  --repo thebyte9/blaze-template-deploy \
+  -f environment=dev
+```
+
+**Common Namespace Errors:**
+
+| Error                           | Cause                               | Solution                                        |
+| ------------------------------- | ----------------------------------- | ----------------------------------------------- |
+| `ClusterNotFoundException`      | Namespace mismatch in cluster name  | Verify namespace matches resources              |
+| `BucketDoesNotExist`            | Wrong namespace in S3 bucket name   | Check `${client}-${stage}-${namespace}-tfstate` |
+| `RepositoryNotFoundException`   | ECR repo has wrong namespace prefix | Verify `${namespace}-${project}-web/*`          |
+| Resources created but not found | Hardcoded "blaze" in workflow       | Use `${{ needs.config.outputs.namespace }}`     |
+
+**Debug Cluster Name Parsing:**
+
+```bash
+# Test regex extraction
+CLUSTER="mycompany-b9-thisisblaze-dev-cluster"
+
+if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+  echo "Namespace: ${BASH_REMATCH[1]}"    # mycompany
+  echo "Client: ${BASH_REMATCH[2]}"       # b9
+  echo "Project: ${BASH_REMATCH[3]}"      # thisisblaze
+  echo "Stage: ${BASH_REMATCH[4]}"        # dev
+else
+  echo "Parse failed - check cluster name format"
+fi
+```
+
 ## Debugging Techniques
 
 ### 1. Enable Debug Logging
@@ -428,6 +512,6 @@ If hit:
 
 ---
 
-**Last Updated:** 2026-01-13  
-**Debug Sessions:** 2 major (Sharp Layer, Terraform Locks)  
+**Last Updated:** 2026-01-20  
+**Debug Sessions:** 3 major (Sharp Layer, Terraform Locks, Namespace Issues)  
 **Success Rate:** 100% after fixes applied

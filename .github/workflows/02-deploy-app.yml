@@ -631,7 +631,7 @@ jobs:
             echo ""
             echo "## 🔗 Quick Links"
             REGION="${{ needs.configuration.outputs.aws_region }}"
-            CLUSTER="blaze-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-cluster-${{ needs.configuration.outputs.stage_key }}"
+             CLUSTER=\"${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-cluster\"
 
             echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})"
             echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)"

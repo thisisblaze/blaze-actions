@@ -63,11 +63,15 @@ The project name is calculated automatically:
 
 ```
 PROD:  {namespace}-{project}-admin
-       Example: ${NAMESPACE}-thisisblaze-admin
+       Example: blaze-thisisblaze-admin (default namespace)
+       Custom:  mycompany-thisisblaze-admin (custom namespace)
 
 OTHER: {namespace}-{project}-{stage}-admin
-       Example: ${NAMESPACE}-thisisblaze-dev-admin
+       Example: blaze-thisisblaze-dev-admin (default namespace)
+       Custom:  mycompany-thisisblaze-dev-admin (custom namespace)
 ```
+
+> **Note:** `{namespace}` is dynamically loaded from `vars/blaze-env.json` (default: `"blaze"`).
 
 #### Error Handling
 
@@ -227,13 +231,15 @@ confirmation: BULK_DESTROY
 Output:
 
 ```
-🔍 Finding projects matching: ${NAMESPACE}-thisisblaze-test*-admin
+🔍 Finding projects matching: blaze-thisisblaze-test*-admin
 📊 Found 3 projects
 🔍 DRY RUN - Would delete:
-  ${NAMESPACE}-thisisblaze-test1-admin
-  ${NAMESPACE}-thisisblaze-test2-admin
-  ${NAMESPACE}-thisisblaze-test-deploy-admin
+  blaze-thisisblaze-test1-admin
+  blaze-thisisblaze-test2-admin
+  blaze-thisisblaze-test-deploy-admin
 ```
+
+> **Note:** Pattern uses actual namespace value from configuration (e.g., `"blaze"` as default).
 
 **Example 2: Delete feature branch projects**
 
