@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🚨 Breaking Changes
+
+#### Namespace Hardcoding Removed - Dynamic Namespace Support
+
+**Date:** 2026-01-20  
+**Impact:** Resource naming now uses configurable namespace
+
+All workflows now use dynamic `${{ needs.calculate-config.outputs.namespace }}` instead of hardcoded `"blaze"`. This enables:
+
+- Multi-tenancy support
+- Organizational isolation
+- Custom resource naming prefixes
+- Testing with different namespaces
+
+**Resource Naming Pattern (Updated):**
+
+```
+${namespace}-${client_key}-${project_key}-${stage_key}-${resource}
+```
+
+**Files Changed:**
+
+- `.github/workflows/00_setup_environment.yml` - S3 backend buckets & ECR repository naming
+- `.github/workflows/02-deploy-app.yml` - ECS cluster name in deployment summary
+- `.github/workflows/reusable-pre-destroy-cleanup.yml` - Resource cleanup with namespace extraction
+
+**Default Behavior:**  
+Namespace defaults to `"blaze"` for backward compatibility. Existing deployments are unaffected unless you explicitly change the namespace configuration.
+
+**Migration Guide:**
+
+To maintain existing resources (recommended for production):
+
+```json
+// vars/blaze-env.json
+{
+  "common": {
+    "NAMESPACE": "blaze" // Explicitly set to current default
+  }
+}
+```
+
+To use a custom namespace (requires environment rebuild):
+
+1. Export data from existing environment
+2. Run nuke workflow to destroy resources
+3. Update `NAMESPACE` in `vars/blaze-env.json` or `vars/${PROJECT_KEY}/blaze-env.json`
+4. Re-provision infrastructure with `00_setup_environment.yml`
+5. Restore data
+
+> **⚠️ Warning:** Changing namespace for an existing environment requires complete rebuild. All AWS resources will be recreated with new names.
+
+**Resources Affected:**
+
+- S3 Buckets: `${client}-${stage}-${namespace}-tfstate`
+- ECR Repositories: `${namespace}-${project}-web/*`
+- ECS Clusters: `${namespace}-${client}-${project}-${stage}-cluster`
+- IAM Roles: `${namespace}-${client}-${project}-${stage}-*-role`
+- Lambda Functions: `${namespace}-${client}-${project}-${stage}-*`
+- CloudFront OAC: `${namespace}-${client}-${project}-${stage}-cdn-oac`
+
 ### Changed
 
 - **reusable-terraform.yml**: Added `-upgrade` flag to `terraform init` (commit: 9e2e469)

@@ -149,7 +149,7 @@ jobs:
           set -e
 
           # 1. Construct Bucket Name
-          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-blaze-tfstate"
+          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
           TABLE_NAME="${BUCKET_NAME}-lock"
 
           echo "🚀 Bootstrapping Infrastructure for ${{ needs.calculate-config.outputs.stage_key }}"
@@ -190,7 +190,7 @@ jobs:
         if: always()
         run: |
           STAGE_KEY=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
-          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${STAGE_KEY}-blaze-tfstate"
+          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${STAGE_KEY}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
           TABLE_NAME="${BUCKET_NAME}-lock"
 
           echo "## 🎉 Backend Initialization Complete" >> "$GITHUB_STEP_SUMMARY"
@@ -230,7 +230,7 @@ jobs:
       - name: Ensure ECR Repositories Exist
         env:
           AWS_REGION: ${{ needs.calculate-config.outputs.aws_region }}
-          REPO_PREFIX: "blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+          REPO_PREFIX: "${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
         run: |
           # Parse input images
           IMAGES="${{ inputs.images }}"
@@ -261,7 +261,7 @@ jobs:
 
           # Registry from login-ecr step
           REGISTRY="${{ steps.login-ecr.outputs.registry }}"
-          REPO_PREFIX="blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+          REPO_PREFIX="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
 
           # Parse input images
           IMAGES="${{ inputs.images }}"
@@ -353,7 +353,7 @@ jobs:
 
       - name: List Mirrored Images
         run: |
-          REPO_PREFIX="blaze-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+          REPO_PREFIX="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
 
           echo "📋 Mirrored Images in ECR:"
           echo ""
