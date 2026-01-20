@@ -58,13 +58,15 @@ Quick scan - which need updates today?
 
 ```bash
 # What changed today?
-cd /Users/marek/Workspace/thisisblaze/blaze-actions
+# Navigate to each repository and check recent changes
+
+# In blaze-actions repository:
 git log --since="1 day ago" --oneline --stat
 
-cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
+# In blaze-terraform-infra-core repository:
 git log --since="1 day ago" --oneline --stat
 
-cd /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+# In blaze-template-deploy repository:
 git log --since="1 day ago" --oneline --stat
 ```
 
