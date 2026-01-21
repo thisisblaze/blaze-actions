@@ -190,13 +190,13 @@ jobs:
         run: |
           # Export Context for Importer Script
           export INPUT_STACK="${{ inputs.stack }}"
-          export INPUT_DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
-          export INPUT_AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
-          export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
-          export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
-          export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
-          export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
-          export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
+          export INPUT_DOMAIN_ROOT="${{ steps.config.outputs.domain_root }}"
+          export INPUT_AWS_REGION="${{ steps.config.outputs.aws_region }}"
+          export INPUT_CLIENT_KEY="${{ steps.config.outputs.client_key }}"
+          export INPUT_PROJECT_KEY="${{ steps.config.outputs.project_key }}"
+          export INPUT_STAGE_KEY="${{ steps.config.outputs.stage_key }}"
+          export INPUT_CLUSTER_NAME="${{ steps.config.outputs.cluster_name }}"
+          export INPUT_NAMESPACE="${{ steps.config.outputs.namespace }}"
 
           # Run Importer (Fetch from blaze-actions)
           echo "🚀 Fetching Resource Importer Logic..."
