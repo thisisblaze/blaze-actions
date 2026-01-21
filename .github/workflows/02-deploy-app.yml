@@ -423,8 +423,8 @@ jobs:
 
   deploy-frontend:
     name: Deploy Frontend
-    needs: [configuration, build-frontend, pre-flight-check, deploy-api]
-    if: ${{ (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && (needs.deploy-api.result == 'success' || needs.deploy-api.result == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    needs: [configuration, build-frontend, pre-flight-check]
+    if: ${{ (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       service_name: "frontend"
