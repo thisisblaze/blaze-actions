@@ -196,7 +196,7 @@ runs:
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
         if [[ "$CLUSTER_TIER" == "auto" ]]; then
            if [[ "$STAGE_KEY" == "dev" ]]; then
-              CLUSTER_TIER="flex"
+              CLUSTER_TIER="M10"
            else
               CLUSTER_TIER="M10"
            fi
