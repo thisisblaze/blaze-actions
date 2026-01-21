@@ -167,6 +167,49 @@ elif [[ "$STACK" == "network" ]]; then
     echo "   ⚠️ Cloudflare credentials missing. Skipping cleanup."
   fi
 
+elif [[ "$STACK" == "tunnel" || "$STACK" == "third-party-cloudflare" ]]; then
+  echo "🔍 Running Tunnel/Cloudflare Smart Import Logic..."
+  
+  # Import Cloudflare Pages Custom Domain for admin
+  if [[ -n "$TF_VAR_cloudflare_account_id" && -n "$TF_VAR_cloudflare_api_token" ]]; then
+     NAMESPACE="${INPUT_NAMESPACE:-blaze}"
+     CLIENT_KEY="${INPUT_CLIENT_KEY}"
+     PROJECT_KEY="${INPUT_PROJECT_KEY}"
+     STAGE_KEY="${INPUT_STAGE_KEY}"
+     DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
+     
+     PROJECT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin"
+     DOMAIN="admin-${STAGE_KEY}.${DOMAIN_ROOT}"
+     ACCOUNT_ID="$TF_VAR_cloudflare_account_id"
+
+     echo "   Checking if domain $DOMAIN is already attached to project $PROJECT_NAME..."
+     
+     # Check if domain exists via Cloudflare API
+     RESPONSE=$(curl -s -X GET \
+       "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/domains/${DOMAIN}" \
+       -H "Authorization: Bearer $TF_VAR_cloudflare_api_token")
+     
+     SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+     
+     if [[ "$SUCCESS" == "true" ]]; then
+        echo "   ✅ Domain $DOMAIN is already attached"
+        
+        if ! terraform state list | grep -q "module.admin_pages_domain.cloudflare_pages_domain.this"; then
+           IMPORT_ID="${ACCOUNT_ID}/${PROJECT_NAME}/${DOMAIN}"
+           echo "   📥 Importing Cloudflare Pages Domain into Terraform state"
+           echo "      Resource: module.admin_pages_domain.cloudflare_pages_domain.this"
+           echo "      ID: $IMPORT_ID"
+           terraform import 'module.admin_pages_domain.cloudflare_pages_domain.this' "$IMPORT_ID" || echo "   ⚠️ Import failed (may already be in state)"
+        else
+           echo "   ℹ️  Domain already in Terraform state"
+        fi
+     else
+        echo "   ℹ️  Domain not yet attached. Terraform will create it."
+     fi
+  else
+     echo "   ⚠️ Cloudflare credentials missing. Skipping import."
+  fi
+
 elif [[ "$STACK" == "app" ]]; then
   echo "🔍 Running App Smart Import Logic..."
 
