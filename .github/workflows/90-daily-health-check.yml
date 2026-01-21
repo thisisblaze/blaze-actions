@@ -50,6 +50,7 @@ jobs:
   health-check-script:
     name: 🩺 System Monitor
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 10
     outputs:
       live_summary: ${{ steps.script_run.outputs.live_summary }}
@@ -62,6 +63,8 @@ jobs:
         with:
           terraform: "true"
           skip-aws-setup: "false" # Needed for Live Checks
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
 
       - name: Configure Git for Private Modules
         env:
