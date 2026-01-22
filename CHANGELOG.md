@@ -86,6 +86,13 @@ To use a custom namespace (requires environment rebuild):
 
 - Terraform module caching issues that prevented updated modules from being used
 
+### Added
+
+- **ECR Orphan Import**: New composite action `actions/ecr-orphan-import`
+  - Automatically detects ECR repositories that exist in AWS but are missing from Terraform state.
+  - Generates `terraform import` blocks to facilitate state reconciliation.
+  - Critical for adopting pre-existing ECR repositories into IaC management.
+
 ---
 
 ## v1.4.0 (2026-01-11)
