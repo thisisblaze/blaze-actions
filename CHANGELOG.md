@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.0-fargate-stable (2026-02-07)
+
+### Added
+
+- feat: enable Flex tier for DEV environment (auto mode)
+- feat: Update MongoDB tier auto-resolution (Dev=Flex, Stage/Prod=M10)
+- feat: Enhance Provisioning Summary with deep links and rich details
+- feat: enrich provisioning summary and improve cleanup logic
+- feat: updates for hybrid pages, system monitor & dynamic namespace
+- feat: enable stack-specific import hooks via pre_apply_script
+- feat: passthrough enable_image_resize to terraform
+- feat: restore provision job and add destroy input
+- feat: add app stack support to resource importer
+- feat: Execute import recovery script in reusable workflow
+- feat: Integrate VPC integrity check into reusable workflow
+- feat: add Lambda@Edge error detection to ops summary
+- feat: add version-based Sharp layer caching with auto-rebuild
+- feat: add CloudFront image resize details to network provisioning summary
+- feat: add AI agent auto-learning system
+- feat: automate Sharp Lambda Layer build in CI/CD for image resize
+- feat: add automatic Cloudflare cache purge after admin deployment
+- feat: auto-set Cloudflare Pages production branch in CI/CD
+- feat: add automated CHANGELOG generation workflow
+
+### Changed
+
+- docs: daily documentation audit 2026-01-21
+- docs: add infographic prompts for workflow visualizations
+- docs: add NotebookLM prompt template with strict guidelines
+- docs: add Slide deck and Infographic as top Studio features
+- docs: update NotebookLM guide to focus on Studio features
+- docs: add detailed NotebookLM usage guide
+- docs: add Google NotebookLM presentation prompts
+- docs: make daily audit prompt portable for all users
+- docs: add daily documentation audit prompt (00_core)
+- docs: comprehensive namespace configuration documentation
+- refactor: remove redundant is_paused input from provision workflow
+- docs: standardize metadata headers (Owner/Last Updated)
+- chore: remove debug steps
+- docs: update quick reference for 02-deploy-app and 99-ops-utility
+- docs: enforce hybrid naming in system prompt
+- docs: init repository system prompt with Mermaid and Hybrid Architecture standards
+- docs: finalize removal of hardcoded examples
+- docs: use dynamic namespace placeholders in operation guides
+- docs: update catalog with strict 01/99 separation and live metrics
+- docs: clarify 01 workflow is for creation only
+- docs: update default skip_lambda_destroy value
+- docs: explain reason for skip_lambda_destroy checkbox
+- docs: skip_lambda_destroy in readme & checklist
+- chore: full dump of lock table and fallback delete
+- chore: add debug for lock table
+- chore: increase terraform timeout to 60m
+- docs: add terraform init -upgrade to CHANGELOG
+- chore: add .agent/ to .gitignore for security
+- docs: clarify DEV uses Cloudflare only (no CloudFront/image resize)
+- docs: add comprehensive workflow guides for automation
+- docs: update CHANGELOG with admin deployment fixes
+- docs: add welcome section for external users
+
+### Fixed
+
+- fix: pass AWS credentials to health-check-script job
+- fix: use steps.config.outputs instead of needs.configuration.outputs in Pre Apply Script
+- fix: add nuke-destroy-pages to environment destruction
+- fix: add image resize bucket to pre-destroy cleanup
+- fix: add missing fi to shell script
+- fix: remove lingering AWS_SECRET_ACCESS_KEY
+- fix: remove lingering AWS_ACCESS_KEY_ID
+- fix: remove unused AWS secrets from workflows
+- fix: improve cloudflare cleanup to dynamically find ACM records
+- fix: remove invalid secrets check in workflow conditional
+- fix: add cloudflare record cleanup to nuke process
+- fix: add zombie OAC and IAM role cleanup to nuke process
+- fix: delete md5 digest for state recovery
+- fix: correct yaml syntax for provision job and script
+- fix: correct frontend target group naming (fe not frontend)
+- fix: add network stack resource imports to prevent state drift
+- fix: bash substitution error in Sharp layer output step
+- fix: add -upgrade to terraform init to force module refresh
+- fix: YAML syntax - use inline timestamp parsing
+- fix: CRITICAL - properly parse Terraform lock timestamp from Info JSON
+- fix: use sudo for all Docker file operations
+- fix: use sudo for cleanup of Docker-created files
+- fix: override Lambda Docker image entrypoint for Sharp build
+- fix: use full repo path for build-sharp-layer action
+- fix: use correct admin build output directory (public instead of dist)
+
 ## [Unreleased]
 
 ### 🚨 Breaking Changes
