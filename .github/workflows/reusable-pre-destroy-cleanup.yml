@@ -342,6 +342,93 @@ jobs:
                  echo "   ok: No functions found."
               fi
 
+         - name: Cleanup EC2 Capacity Provider
+           if: env.CLIENT_KEY != ''
+           run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
+              REGION="${{ inputs.aws_region }}"
+              CLUSTER="${{ inputs.cluster_name }}"
+              RESOURCE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+
+              echo "🖥️ EC2 Capacity Provider Cleanup for $RESOURCE_PREFIX in $REGION"
+
+              # ---------------------------------------------------------
+              # 1. Find and scale down ASG
+              # ---------------------------------------------------------
+              ASG_NAME="${RESOURCE_PREFIX}-ec2-cp-asg"
+              echo "   🔍 Checking ASG: $ASG_NAME"
+              ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+                --auto-scaling-group-names "$ASG_NAME" \
+                --region "$REGION" \
+                --query "AutoScalingGroups[0].AutoScalingGroupName" \
+                --output text 2>/dev/null || echo "None")
+
+              if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
+                 echo "      📉 Scaling ASG to 0..."
+                 aws autoscaling update-auto-scaling-group \
+                   --auto-scaling-group-name "$ASG_NAME" \
+                   --min-size 0 --max-size 0 --desired-capacity 0 \
+                   --region "$REGION" || echo "      ⚠️ Failed to scale ASG"
+
+                 # Wait for instances to drain (max 3 minutes)
+                 echo "      ⏳ Waiting for instances to drain..."
+                 timeout=180
+                 elapsed=0
+                 while [ $elapsed -lt $timeout ]; do
+                    INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+                      --auto-scaling-group-names "$ASG_NAME" \
+                      --region "$REGION" \
+                      --query "AutoScalingGroups[0].Instances | length(@)" \
+                      --output text 2>/dev/null || echo "0")
+                    if [[ "$INSTANCE_COUNT" == "0" ]]; then
+                       echo "      ✅ All instances drained"
+                       break
+                    fi
+                    echo "      ... $INSTANCE_COUNT instances remaining"
+                    sleep 15
+                    elapsed=$((elapsed+15))
+                 done
+              else
+                 echo "      ✅ ASG not found (no EC2 capacity provider)"
+              fi
+
+              # ---------------------------------------------------------
+              # 2. Deregister ECS Capacity Provider (if exists)
+              # ---------------------------------------------------------
+              CP_NAME="${RESOURCE_PREFIX}-ec2-cp"
+              echo "   🔍 Checking Capacity Provider: $CP_NAME"
+              CP_EXISTS=$(aws ecs describe-capacity-providers \
+                --capacity-providers "$CP_NAME" \
+                --region "$REGION" \
+                --query "capacityProviders[0].name" \
+                --output text 2>/dev/null || echo "None")
+
+              if [[ -n "$CP_EXISTS" && "$CP_EXISTS" != "None" && "$CP_EXISTS" != "FARGATE" ]]; then
+                 echo "      🔄 Removing capacity provider from cluster strategy..."
+                 # Get current providers minus the EC2 one
+                 CURRENT_CPS=$(aws ecs describe-clusters \
+                   --clusters "$CLUSTER" \
+                   --region "$REGION" \
+                   --query "clusters[0].capacityProviders" \
+                   --output json 2>/dev/null || echo "[]")
+
+                 FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
+
+                 if [[ "$FILTERED_CPS" != "[]" ]]; then
+                    aws ecs put-cluster-capacity-providers \
+                      --cluster "$CLUSTER" \
+                      --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
+                      --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                      --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
+                 fi
+                 echo "      ✅ Capacity provider removed from cluster"
+              else
+                 echo "      ✅ Capacity provider not found"
+              fi
+
          - name: Cleanup ECS Services
            id: cleanup
            run: |
