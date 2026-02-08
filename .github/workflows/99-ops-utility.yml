@@ -1253,13 +1253,32 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
       pre_apply_script: |
-        # ORPHAN LAMBDA@EDGE
+        # ----- ORPHAN LAMBDA@EDGE -----
         # Lambda@Edge replicas take hours to delete. We must remove it from state to proceed.
-        # This allows Terraform to ignore the existing resources (AWS will delete eventually).
         echo "🔪 ORPHANING LAMBDA@EDGE FUNCTIONS FROM STATE..."
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" || true
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" || true
         echo "✅ Lambda@Edge orphaned."
+
+        # ----- EC2 / ASG CLEANUP (GAP-5) -----
+        # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
+        # This prevents destroy from hanging on ECS managed termination protection.
+        echo "🔍 Checking for EC2 ASGs to clean up..."
+        ASG_NAME=$(terraform state list 2>/dev/null | grep 'aws_autoscaling_group' | head -1)
+        if [ -n "$ASG_NAME" ]; then
+          ASG_ID=$(terraform state show "$ASG_NAME" 2>/dev/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
+          if [ -n "$ASG_ID" ]; then
+            echo "🛑 Scaling down ASG: $ASG_ID"
+            aws autoscaling update-auto-scaling-group \
+              --auto-scaling-group-name "$ASG_ID" \
+              --min-size 0 --max-size 0 --desired-capacity 0 || true
+            echo "⏳ Waiting 30s for instance drain..."
+            sleep 30
+          fi
+          echo "✅ EC2 ASG cleanup complete."
+        else
+          echo "ℹ️  No ASG found in state — skipping EC2 cleanup."
+        fi
 
   summary:
     name: 📝 Ops Summary
