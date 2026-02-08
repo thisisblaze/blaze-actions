@@ -42,6 +42,17 @@ on:
         description: "Override Image Tag (if not building)"
         type: string
         default: "latest"
+      # --- HYBRID ECS (FEB 2026) ---
+      api_launch_type:
+        description: "API launch type: FARGATE or EC2"
+        type: choice
+        options: ["FARGATE", "EC2"]
+        default: "FARGATE"
+      api_cpu_architecture:
+        description: "API CPU arch: X86_64 or ARM64"
+        type: choice
+        options: ["X86_64", "ARM64"]
+        default: "X86_64"
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -72,6 +83,15 @@ on:
         required: false
         type: string
         default: "latest"
+      # --- HYBRID ECS (FEB 2026) ---
+      api_launch_type:
+        required: false
+        type: string
+        default: "FARGATE"
+      api_cpu_architecture:
+        required: false
+        type: string
+        default: "X86_64"
 
     secrets:
       AWS_ROLE_ARN:
@@ -405,6 +425,9 @@ jobs:
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
+      # Hybrid ECS
+      launch_type: ${{ inputs.api_launch_type }}
+      cpu_architecture: ${{ inputs.api_cpu_architecture }}
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -442,6 +465,9 @@ jobs:
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
+      # Hybrid ECS — Frontend stays FARGATE/X86_64 (native deps)
+      launch_type: "FARGATE"
+      cpu_architecture: "X86_64"
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
