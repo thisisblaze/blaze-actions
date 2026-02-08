@@ -76,6 +76,17 @@ on:
       elasticsearch_endpoint:
         required: false
         type: string
+      # --- HYBRID ECS (FEB 2026) ---
+      launch_type:
+        required: false
+        type: string
+        default: "FARGATE"
+        description: "ECS launch type: FARGATE or EC2"
+      cpu_architecture:
+        required: false
+        type: string
+        default: "X86_64"
+        description: "CPU architecture: X86_64 or ARM64"
 
     secrets:
       AWS_ROLE_ARN:
@@ -171,3 +182,6 @@ jobs:
           dfp_network_id: ${{ inputs.dfp_network_id }}
           gtm_id: ${{ inputs.gtm_id }}
           aws_region: ${{ inputs.aws_region }}
+          # Hybrid ECS
+          launch_type: ${{ inputs.launch_type }}
+          cpu_architecture: ${{ inputs.cpu_architecture }}
