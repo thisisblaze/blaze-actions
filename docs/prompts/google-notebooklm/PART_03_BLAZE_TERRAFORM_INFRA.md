@@ -33,8 +33,9 @@
 
 ### 2. Compute & Containers
 
-- **ecs-cluster** - Container orchestration cluster
-- **ecs-service** - Individual service definitions
+- **ecs-cluster** - Container orchestration cluster (Fargate + EC2 hybrid)
+- **ec2-capacity-provider** - EC2 capacity provider (ASG, Launch Template, IAM)
+- **ecs-service** - Individual service definitions (per-service launch type)
 - **ecs-task-definition** - Container task configurations
 
 ### 3. Load Balancing & CDN
@@ -77,9 +78,13 @@ VPC
 │   ├── ALB (ports 80, 443)
 │   ├── ECS (port 3000)
 │   └── Database (port 27017)
-└── Application Load Balancer
-    ├── HTTP → HTTPS redirect
-    └── HTTPS listeners
+├── Application Load Balancer
+│   ├── HTTP → HTTPS redirect
+│   └── HTTPS listeners
+└── EC2 Capacity Provider (optional)
+    ├── Auto Scaling Group (Graviton ARM64)
+    ├── Launch Template (ECS-optimized AMI)
+    └── IAM Role + Security Group
 ```
 
 **Usage:**
@@ -106,9 +111,9 @@ module "network" {
 
 **Creates:**
 
-- ECS Cluster
-- ECS Services (API, Frontend)
-- Task Definitions
+- ECS Cluster (Hybrid: Fargate + EC2 capacity providers)
+- ECS Services (API, Frontend — per-service launch type)
+- Task Definitions (Fargate or EC2, ARM64 or x86)
 - CloudFront Distribution
 - Lambda@Edge for image resizing
 - S3 buckets for storage
