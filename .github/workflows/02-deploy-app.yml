@@ -283,6 +283,7 @@ jobs:
       context: .
       image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend
       image_tag: ${{ github.sha }}
+      platforms: "linux/amd64" # Frontend has native deps that fail arm64 cross-compile via QEMU
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
