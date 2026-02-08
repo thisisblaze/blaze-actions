@@ -53,7 +53,7 @@ flowchart TB
 #### Phase 1: Bootstrap (5 minutes)
 
 ```yaml
-# Run: 00_setup_environment.yml
+# Run: 00_setup_environment.yml + 01_provision_infrastructure.yml (account-settings)
 Trigger: Manual
 Environment: DEV
 
@@ -64,6 +64,8 @@ Actions:
    - blaze-thisisblaze-web/api
    - blaze-thisisblaze-web/frontend
 4. Configure OIDC trust
+5. Enable ENI Trunking (account-settings stack)
+6. Enable Container Insights (account-settings stack)
 
 Result: AWS infrastructure ready for Terraform
 ```
@@ -86,7 +88,10 @@ Creates:
 │   ├── ALB (80, 443)
 │   ├── ECS (3000)
 │   └── RDS (5432)
-└── Application Load Balancer
+├── Application Load Balancer
+└── EC2 Capacity Provider (optional, enable_ec2=true)
+    ├── Auto Scaling Group (Graviton ARM64)
+    └── Launch Template (ECS-optimized)
 
 Outputs:
 - vpc_id: vpc-abc123
@@ -118,10 +123,11 @@ Apply: true
 
 Creates:
 ├── ECS Cluster: blaze-b9-thisisblaze-dev-cluster
+│   └── Capacity Providers: FARGATE, FARGATE_SPOT, EC2 (hybrid)
 ├── ECS Services
-│   ├── API (2 tasks)
-│   └── Frontend (2 tasks)
-├── Task Definitions
+│   ├── API (2 tasks, Fargate or EC2 per config)
+│   └── Frontend (2 tasks, Fargate or EC2 per config)
+├── Task Definitions (ARM64/x86, per-service launch type)
 ├── CloudFront Distribution
 ├── Lambda@Edge (image resize)
 ├── S3 Buckets
@@ -143,12 +149,12 @@ Environment: dev
 Services: "Blaze all"
 
 Actions:
-1. Build Docker images
+1. Build Docker images (multi-arch: AMD64 + ARM64)
    - API: Node.js Express
    - Frontend: React/Next.js
 2. Push to ECR
-3. Update ECS task definitions
-4. Deploy to ECS (blue/green)
+3. Update ECS task definitions (per-service launch type)
+4. Deploy to ECS (Fargate or EC2, per-service config)
 5. Wait for health checks
 6. Build admin SPA
 7. Deploy to Cloudflare Pages
@@ -416,9 +422,11 @@ Deployment branches: main only
 - No auto-scaling
 - Short log retention (7 days)
 
-**PROD Environment:**
+**PROD Environment (Hybrid Fargate + EC2):**
 
-- On-demand instances (reliability)
+- Fargate for bursty/low-traffic services
+- EC2 Graviton (ARM64) for high-density workloads (100+ sites)
+- EC2 Spot + On-Demand mixed ASG (60-80% savings over pure Fargate)
 - Auto-scaling (2-10 tasks)
 - High availability (multi-AZ)
 - Long log retention (90 days)
@@ -431,13 +439,15 @@ Deployment branches: main only
 - Unused ECR images
 - Expired CloudWatch logs
 - Terraform state backups
+- EC2 instances (ASG scaled to 0 on destroy)
 ```
 
 **Average Costs:**
 
-- DEV: $50-100/month
-- STAGE: $150-200/month
-- PROD: $500-1000/month
+- DEV: $50-100/month (Fargate only)
+- STAGE: $150-200/month (Fargate only)
+- PROD (Fargate): $500-1000/month
+- PROD (Hybrid EC2): $200-500/month (50-70% savings for large clients)
 
 **vs. Manual setup:** 50-70% more expensive without optimization
 
