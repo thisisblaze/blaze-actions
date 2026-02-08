@@ -181,7 +181,6 @@ Brief description
 - Maintainer reviews within 2 business days
 - Address feedback
 - Squash commits before merge
-- Squash commits before merge
 
 ---
 
