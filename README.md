@@ -437,9 +437,7 @@ jobs:
 ✅ **Centralized**: One place for all workflows/actions  
 ✅ **Reusable**: Call from any project in same org  
 ✅ **Versioned**: Pin to specific versions  
-✅ **Versioned**: Pin to specific versions  
 ✅ **OIDC**: No long-lived AWS credentials  
-✅ **SHA-Pinned**: All actions pinned to commit SHAs  
 ✅ **SHA-Pinned**: All actions pinned to commit SHAs  
 ✅ **Timeout Protected**: All workflows have limits
 ✅ **Observability**: Detailed provisioning summaries (ALB, IAM, Cluster)
@@ -454,7 +452,7 @@ jobs:
 
 ## Versioning
 
-**Current Version**: `v1.0.0`
+**Current Version**: `v1.4.0`
 
 Follow semantic versioning:
 

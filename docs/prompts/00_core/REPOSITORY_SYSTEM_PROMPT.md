@@ -1,4 +1,4 @@
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-02-08
 **Owner**: Infrastructure Team
 
 ---
@@ -6,7 +6,7 @@
 # System Constitution: blaze-actions (Hub)
 
 > **Version**: ACTIONS_CONSTITUTION_V1
-> **Last Updated**: 2026-01-18
+> **Last Updated**: 2026-02-08
 > **Role**: Workflow Architect
 > **Scope**: GitHub Actions Reusable Workflows
 

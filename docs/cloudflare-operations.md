@@ -1,4 +1,4 @@
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-02-08
 **Owner**: Infrastructure Team
 
 ---
@@ -6,7 +6,7 @@
 # Cloudflare Pages Operations Guide
 
 **Version**: 1.4.0  
-**Last Updated**: 2026-01-11
+**Last Updated**: 2026-02-08
 
 This guide documents the Cloudflare Pages lifecycle management operations available in the `99 - Ops Utility` workflow.
 

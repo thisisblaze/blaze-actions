@@ -246,5 +246,5 @@ Before generating, NotebookLM should verify:
 
 ---
 
-**Last Updated:** 2026-01-21  
+**Last Updated:** 2026-02-08  
 **Purpose:** Ensure NotebookLM creates accurate, source-based, simple presentations
