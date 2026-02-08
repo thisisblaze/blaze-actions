@@ -126,6 +126,28 @@ ECS Tasks / Static Assets
 | **Cloudflare Tunnel**  | ✅           | ❌                    | ❌                   |
 | **Direct ALB Access**  | ✅ (default) | ✅ (api-direct-stage) | ✅ (api-direct-prod) |
 | **S3 Image Storage**   | ❌           | When enabled          | When enabled         |
+| **ECS Fargate**        | ✅ (default) | ✅ (default)          | ✅ (default)         |
+| **ECS EC2 (Hybrid)**   | Available    | Available             | Available            |
+| **ENI Trunking**       | When enabled | When enabled          | When enabled         |
+
+---
+
+## ECS Compute Strategy
+
+### Hybrid Architecture (Fargate + EC2)
+
+Each service independently selects its launch type:
+
+| Service Type     | Launch Type | CPU Arch | compute_mode | Use Case                  |
+| ---------------- | ----------- | -------- | ------------ | ------------------------- |
+| Low-traffic API  | FARGATE     | X86_64   | `ecsfg`      | Development, small sites  |
+| High-density API | EC2         | ARM64    | `ecsec2-arm` | 100+ site clients         |
+| Worker/batch     | EC2         | ARM64    | `ecsec2-arm` | Background processing     |
+| Bursty workload  | FARGATE     | ARM64    | `ecsfg`      | Auto-scaling, zero-to-one |
+
+**Prerequisites:**
+- `account-settings` stack deployed (ENI Trunking enabled)
+- `ec2-capacity-provider` module provisioned via `network` stack
 
 ---
 

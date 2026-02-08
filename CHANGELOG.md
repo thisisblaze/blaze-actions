@@ -94,6 +94,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Hybrid ECS Support**: `calculate-config` now recognizes `account-settings` stack for ENI Trunking / Container Insights
+  - New stack option in `01-provision-infra.yml`: `account-settings`
+  - Maps to `.github/aws/infra/live/account-settings` directory
+  - Required safety check: `deploy_infra` must be true
+
 ### 🚨 Breaking Changes
 
 #### Namespace Hardcoding Removed - Dynamic Namespace Support

@@ -59,8 +59,10 @@
 
 1.  **No Hardcoding**: Never hardcode versions or environment names. Use inputs.
 2.  **Hybrid Awareness**:
-    - **AWS ECS**: Hosts API and Frontend services.
+    - **AWS ECS**: Hosts API and Frontend services (Fargate or EC2 per-service via `launch_type`).
+    - **EC2 Capacity Provider**: Optional high-density compute via `ec2-capacity-provider` module (Graviton ARM64).
     - **Cloudflare Pages**: Hosts Admin app (Static/SPA).
+    - **Compute Modes**: `ecsfg` (Fargate), `ecsec2-arm` (EC2 ARM64), `ecsec2-x86` (EC2 x86).
 3.  **Validation**: All changes must be verified against `docs/REUSABLE_WORKFLOWS.md`.
 
 ### 🚨 CRITICAL: Namespace Rules
