@@ -45,7 +45,7 @@
 
 - `environment` (required): DEV/STAGE/PROD
 - `project` (optional): Project key (default: thisisblaze)
-- `stack` (required): network|acm|tunnel|app|third-party-mongodb|third-party-elastic
+- `stack` (required): network|acm|tunnel|app|account-settings|third-party-mongodb|third-party-elastic
 - `branch_name` (optional): Feature branch tag
 - `apply` (boolean): Run terraform apply? (default: false)
 - `cluster_tier` (optional): MongoDB tier (auto|M2|M10|M20|M30)
@@ -78,10 +78,10 @@
 
 **What it does**:
 
-- Builds Docker images
+- Builds Docker images (multi-arch: AMD64 + ARM64)
 - Pushes to ECR
 - Updates ECS task definitions
-- Deploys to ECS Fargate
+- Deploys to ECS (Fargate or EC2, per-service configuration)
 
 **When to run**: Code deployments
 
@@ -403,8 +403,8 @@ These are called by main workflows, not directly by users.
 
 ### reusable-ecs-deploy.yml
 
-**Purpose**: ECS service deployment  
-**Inputs**: cluster_name, service_name, image_uri  
+**Purpose**: ECS service deployment (Fargate or EC2)  
+**Inputs**: cluster_name, service_name, image_uri, launch_type, cpu_architecture  
 **Outputs**: deployment_status
 
 ---

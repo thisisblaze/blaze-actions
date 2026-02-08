@@ -105,27 +105,27 @@ runs:
       run: |
         # 0. Load Config from Files
         GLOBAL_CONFIG="vars/blaze-env.json"
-        
+
         # Determine Project
         INPUT_PROJECT="${{ inputs.project }}"
         if [[ -z "$INPUT_PROJECT" ]]; then
            INPUT_PROJECT="thisisblaze" # Fallback
         fi
-        
+
         PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
 
         if ! test -f "$GLOBAL_CONFIG"; then
           echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"
           exit 1
         fi
-        
+
         # Smart Validation: Check vars/ AND projects/
         VARS_EXISTS=false
         PROJECTS_EXISTS=false
-        
+
         if test -f "$PROJECT_CONFIG"; then VARS_EXISTS=true; fi
         if test -d "projects/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi
-        
+
         if [[ "$VARS_EXISTS" == "false" || "$PROJECTS_EXISTS" == "false" ]]; then
            echo "❌ ERROR: Project '$INPUT_PROJECT' is invalid or incomplete."
            
@@ -146,7 +146,7 @@ runs:
            done
            exit 1
         fi
-        
+
         # Merge Configs: Project (Args 2) overrides Global (Arg 1)
         # We output to a temporary JSON for querying
         MERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")
@@ -231,6 +231,9 @@ runs:
           "4. Application (API/Frontend) - All Environments"|"app")
             STACK="app"
             ;;
+          "5. Account Settings (ENI Trunking, Container Insights)"|"account-settings")
+            STACK="account-settings"
+            ;;
           *)
             # Default or direct "app" match
             if [[ -z "$INPUT_STACK" ]]; then 
@@ -244,7 +247,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -275,7 +278,11 @@ runs:
             fi
         fi
 
-        if [[ "$STACK" == "third-party-cloudflare" ]]; then
+        if [[ "$STACK" == "account-settings" ]]; then
+            TF_DIR=".github/aws/infra/live/account-settings"
+            STATE_KEY="infra/${PROJECT_KEY}/account-settings.tfstate"
+
+        elif [[ "$STACK" == "third-party-cloudflare" ]]; then
             TF_DIR=".github/aws/infra/live/third-party/cloudflare"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
             
