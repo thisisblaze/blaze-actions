@@ -53,6 +53,10 @@ on:
         description: "Enable CloudFront for Image Resizing"
         type: boolean
         default: false
+      enable_ec2:
+        description: "Enable EC2 Capacity Provider (Hybrid ECS)"
+        type: boolean
+        default: false
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -93,6 +97,10 @@ on:
         type: boolean
         default: false
       enable_image_resize:
+        required: false
+        type: boolean
+        default: false
+      enable_ec2:
         required: false
         type: boolean
         default: false
@@ -250,6 +258,7 @@ jobs:
         cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
         kibana_ram=${{ inputs.kibana_size }}
         enable_image_resize=${{ inputs.enable_image_resize }}
+        enable_ec2=${{ inputs.enable_ec2 }}
       orphan_lambda: false
 
   post_provision:
