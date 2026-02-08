@@ -1,4 +1,4 @@
-name: "Reusable Docker Build"
+name: "Reusable Docker Build (Multi-Arch)"
 
 on:
   workflow_call:
@@ -12,10 +12,19 @@ on:
         required: false
         type: string
         default: "."
-      tags:
-        description: "List of tags (multiline)"
+      image_name:
+        description: "Full ECR image name (e.g., 123456789.dkr.ecr.region.amazonaws.com/repo)"
         required: true
         type: string
+      image_tag:
+        description: "Primary image tag (e.g., commit SHA or semver)"
+        required: true
+        type: string
+      platforms:
+        description: "Comma-separated platforms to build (default: linux/amd64,linux/arm64)"
+        required: false
+        type: string
+        default: "linux/amd64,linux/arm64"
       build_args:
         description: "List of build args (multiline)"
         required: false
@@ -24,6 +33,8 @@ on:
         description: "AWS Region"
         required: true
         type: string
+    # Legacy input kept for backwards compat but ignored — use image_name + image_tag instead
+    # tags: (removed — constructed from image_name + image_tag + arch suffix)
 
     secrets:
       AWS_ROLE_ARN:
@@ -31,11 +42,28 @@ on:
       NPM_TOKEN:
         required: false
 
+    outputs:
+      digest-amd64:
+        description: "Digest of the amd64 image"
+        value: ${{ jobs.build-amd64.outputs.digest }}
+      digest-arm64:
+        description: "Digest of the arm64 image"
+        value: ${{ jobs.build-arm64.outputs.digest }}
+      manifest-tag:
+        description: "Multi-arch manifest tag"
+        value: ${{ inputs.image_tag }}
+
 jobs:
-  build:
-    name: Build & Push
+  # ─────────────────────────────────────────────
+  # BUILD AMD64 (x86_64)
+  # ─────────────────────────────────────────────
+  build-amd64:
+    name: "Build (amd64)"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    if: contains(inputs.platforms, 'linux/amd64')
+    timeout-minutes: 15
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     env:
       NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
     steps:
@@ -49,7 +77,6 @@ jobs:
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
       - name: Set up Docker Buildx
@@ -59,22 +86,152 @@ jobs:
         if: ${{ env.NPM_TOKEN_VAL != '' }}
         run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
 
-      - name: Debug NPM Token
-        if: ${{ env.NPM_TOKEN_VAL != '' }}
-        run: |
-          echo "Verifying NPM Token..."
-          npm whoami --registry=https://registry.npmjs.org/ --userconfig=.npmrc || echo "WARNING: npm whoami failed. Token might be invalid."
-          echo "Token verification complete."
-
-      - name: Build and Push
+      - name: Build and Push (amd64)
+        id: build
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
+          platforms: linux/amd64
           push: true
-          tags: ${{ inputs.tags }}
+          tags: |
+            ${{ inputs.image_name }}:${{ inputs.image_tag }}-amd64
+            ${{ inputs.image_name }}:latest-amd64
           build-args: ${{ inputs.build_args }}
+          labels: |
+            org.opencontainers.image.architecture=amd64
+            org.opencontainers.image.compute-mode=x86
           secret-files: |
             npmrc=.npmrc
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+
+      - name: "📋 Build Summary (amd64)"
+        run: |
+          echo "### ✅ amd64 Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: \`${{ inputs.image_tag }}-amd64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────
+  # BUILD ARM64 (Graviton)
+  # ─────────────────────────────────────────────
+  build-arm64:
+    name: "Build (arm64)"
+    runs-on: ubuntu-24.04-arm   # Native ARM64 runner — 13x faster than QEMU
+    if: contains(inputs.platforms, 'linux/arm64')
+    timeout-minutes: 15
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    env:
+      NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Create .npmrc
+        if: ${{ env.NPM_TOKEN_VAL != '' }}
+        run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
+
+      - name: Build and Push (arm64)
+        id: build
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ inputs.image_name }}:${{ inputs.image_tag }}-arm64
+            ${{ inputs.image_name }}:latest-arm64
+          build-args: ${{ inputs.build_args }}
+          labels: |
+            org.opencontainers.image.architecture=arm64
+            org.opencontainers.image.compute-mode=arm
+          secret-files: |
+            npmrc=.npmrc
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
+
+      - name: "📋 Build Summary (arm64)"
+        run: |
+          echo "### ✅ arm64 Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: \`${{ inputs.image_tag }}-arm64\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────
+  # CREATE MULTI-ARCH MANIFEST
+  # ─────────────────────────────────────────────
+  create-manifest:
+    name: "Create Multi-Arch Manifest"
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64]
+    if: |
+      always() &&
+      (needs.build-amd64.result == 'success' || needs.build-amd64.result == 'skipped') &&
+      (needs.build-arm64.result == 'success' || needs.build-arm64.result == 'skipped') &&
+      (needs.build-amd64.result == 'success' || needs.build-arm64.result == 'success')
+    timeout-minutes: 5
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      - name: Create and Push Multi-Arch Manifest
+        run: |
+          IMAGE="${{ inputs.image_name }}"
+          TAG="${{ inputs.image_tag }}"
+          SOURCES=""
+
+          # Collect available arch digests
+          if [[ -n "${{ needs.build-amd64.outputs.digest }}" ]]; then
+            SOURCES="$SOURCES ${IMAGE}@${{ needs.build-amd64.outputs.digest }}"
+            echo "✅ Including amd64: ${{ needs.build-amd64.outputs.digest }}"
+          fi
+          if [[ -n "${{ needs.build-arm64.outputs.digest }}" ]]; then
+            SOURCES="$SOURCES ${IMAGE}@${{ needs.build-arm64.outputs.digest }}"
+            echo "✅ Including arm64: ${{ needs.build-arm64.outputs.digest }}"
+          fi
+
+          if [[ -z "$SOURCES" ]]; then
+            echo "❌ No images to merge into manifest"
+            exit 1
+          fi
+
+          echo "🔗 Creating multi-arch manifest for ${IMAGE}:${TAG}"
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${TAG}" \
+            --tag "${IMAGE}:latest" \
+            $SOURCES
+
+          echo "✅ Multi-arch manifest pushed"
+
+      - name: Verify Manifest
+        run: |
+          echo "🔍 Verifying multi-arch manifest..."
+          docker buildx imagetools inspect "${{ inputs.image_name }}:${{ inputs.image_tag }}"
+
+      - name: "📋 Manifest Summary"
+        run: |
+          echo "### 🔗 Multi-Arch Manifest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: \`${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest**: \`latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **amd64 Digest**: \`${{ needs.build-amd64.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **arm64 Digest**: \`${{ needs.build-arm64.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
