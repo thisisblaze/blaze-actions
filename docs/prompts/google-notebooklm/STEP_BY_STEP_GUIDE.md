@@ -457,7 +457,7 @@ A: No, it's currently free with a Google account
 
 ---
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-08  
 **Tool:** Google NotebookLM  
 **Files Needed:** PART_01 through PART_05 (5 files)  
 **Time to Create Presentation:** 5-10 minutes
