@@ -3,7 +3,7 @@
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.4.0-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.0--hybrid--ecs-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 ---
 
@@ -31,7 +31,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 # Recommended: Pin to specific version for stability
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.1.0-hybrid-ecs
     with:
       environment: dev
       project: myproject
