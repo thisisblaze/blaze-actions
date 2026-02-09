@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.0-hybrid-ecs (2026-02-09)
+
+### Added
+
+- **Hybrid ECS Deploy**: `02-deploy-app.yml` now supports `api_launch_type` (FARGATE/EC2) and `api_cpu_architecture` (X86_64/ARM64) inputs for per-service compute selection
+- **Reusable ECS Deploy**: `reusable-ecs-deploy.yml` accepts `launch_type` and `cpu_architecture` inputs, passes them to task definition and service update
+- **Deploy Action**: `deploy-ecs-service` composite action injects `LAUNCH_TYPE` and `CPU_ARCHITECTURE` into task definition JSON template
+- **Task Definition Template**: `api.json` uses `"requiresCompatibilities": ["__LAUNCH_TYPE__"]` and `"cpuArchitecture": "__CPU_ARCHITECTURE__"` placeholders
+
+### Changed
+
+- **Multi-arch Docker Build**: `reusable-docker-build.yml` builds amd64 + arm64 in parallel on native runners, creates multi-arch manifest
+
 ## v1.0.0-fargate-stable (2026-02-07)
 
 ### Added
