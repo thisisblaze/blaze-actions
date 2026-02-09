@@ -7,8 +7,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 24 (17 main + 7 reusable)  
-**Version**: v1.0.0  
-**Last Updated**: 2026-02-08
+**Version**: v1.1.0-hybrid-ecs  
+**Last Updated**: 2026-02-09
 
 ---
 
@@ -51,7 +51,7 @@
 - `cluster_tier` (optional): MongoDB tier (auto|M2|M10|M20|M30)
 - `kibana_size` (optional): Elastic Kibana size (1g|2g)
 - `is_paused` (boolean): Pause MongoDB cluster?
-- `is_paused` (boolean): Pause MongoDB cluster?
+- `enable_ec2` (boolean): Enable EC2 capacity providers (default: false)
 
 **What it does**:
 
@@ -75,6 +75,8 @@
 - `branch_tag` (optional): Feature branch tag
 - `skip_build` (boolean): Skip Docker build?
 - `build_all` (boolean): Force build all services?
+- `api_launch_type` (choice): API launch type — `FARGATE` (default) or `EC2`
+- `api_cpu_architecture` (choice): API CPU arch — `X86_64` (default) or `ARM64`
 
 **What it does**:
 
