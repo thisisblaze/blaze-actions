@@ -133,7 +133,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
     with:
       environment: dev
     secrets: inherit
@@ -308,7 +308,7 @@ uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
 **Production:**
 
 ```yaml
-uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.0
+uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
 ```
 
 ### 3. Secret Management
@@ -350,5 +350,5 @@ secrets:
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2026-02-08  
+**Last Updated:** 2026-02-09  
 **Estimated Presentation Time:** 2-3 minutes

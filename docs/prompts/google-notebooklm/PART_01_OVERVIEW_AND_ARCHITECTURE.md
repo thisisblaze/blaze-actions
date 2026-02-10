@@ -221,7 +221,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
     with:
       environment: prod
     secrets: inherit
@@ -550,6 +550,6 @@ clientA-acme-webapp-prod-cluster        (custom)
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2026-02-08  
+**Last Updated:** 2026-02-09  
 **For:** Google NotebookLM Presentation Generation  
 **Estimated Presentation Time:** 5-7 minutes
