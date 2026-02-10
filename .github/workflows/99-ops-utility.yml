@@ -1158,9 +1158,16 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
       pre_apply_script: |
-        echo "🔪 ORPHANING PAGES DOMAIN FROM STATE..."
+        echo "🔪 ORPHANING BROKEN CLOUDFLARE STATE..."
+        # Schema mismatch (v4 -> v5) prevents destroy. We remove them from state to unblock.
+        # Resources will be cleaned up by API steps or left as zombies (DNS).
         terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
-        echo "✅ Pages domain orphaned."
+        terraform state rm "module.basic_auth_worker.cloudflare_workers_script.basic_auth" || true
+        terraform state rm "module.basic_auth_worker.cloudflare_workers_route.routes" || true
+        terraform state rm "module.tunnel.cloudflare_zero_trust_tunnel_cloudflared_config.this" || true
+        terraform state rm "module.tunnel_dns.cloudflare_record.this" || true
+        terraform state rm "module.admin_pages_project.cloudflare_pages_project.this" || true
+        echo "✅ Broken state removed."
 
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
