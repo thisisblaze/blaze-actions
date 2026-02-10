@@ -50,7 +50,7 @@
 ```yaml
 jobs:
   setup:
-    uses: thisisblaze/blaze-actions/.github/workflows/00_setup_environment.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/00_setup_environment.yml@v1.33.2
     with:
       environment: dev
       task: "🟢 Bootstrap All"
@@ -86,7 +86,7 @@ jobs:
 ```yaml
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.33.2
     with:
       environment: DEV
       stack: app
@@ -128,7 +128,7 @@ jobs:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
     with:
       environment: dev
       target_services: "Blaze all" # or specific: "api frontend"
@@ -166,7 +166,7 @@ Automatically runs before environment destruction:
 ```yaml
 jobs:
   cleanup:
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v1.33.2
     with:
       environment: DEV
       action: cleanup-cloudflare-deployments
@@ -351,7 +351,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.0
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
     with:
       environment: prod
       target_services: "Blaze all"
@@ -617,6 +617,6 @@ Cost: $0 going forward
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2026-02-08  
+**Last Updated:** 2026-02-09  
 **For:** Google NotebookLM Presentation Generation  
 **Estimated Presentation Time:** 3-4 minutes

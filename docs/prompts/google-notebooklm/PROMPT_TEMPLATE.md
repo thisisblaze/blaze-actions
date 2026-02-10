@@ -228,7 +228,7 @@ Before generating, NotebookLM should verify:
 ---
 
 ❌ **BAD (Too technical):**
-"Utilizes ECS Fargate with ALB for ephemeral containerized microservices"
+"Utilizes ECS Fargate/EC2 Hybrid with ALB for ephemeral containerized microservices"
 
 ✅ **GOOD (Simple):**
 "Runs application code in containers on AWS, with a load balancer to distribute traffic"
@@ -246,5 +246,5 @@ Before generating, NotebookLM should verify:
 
 ---
 
-**Last Updated:** 2026-02-08  
+**Last Updated:** 2026-02-09  
 **Purpose:** Ensure NotebookLM creates accurate, source-based, simple presentations
