@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-09
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-09
 
 ---
 
@@ -456,10 +456,9 @@ Set in `vars/blaze-env.json`:
 
 - [GitHub Docs: Reusing Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
 - [Workflow Catalog](WORKFLOW_CATALOG.md) - All available workflows
-- [Workflow Catalog](WORKFLOW_CATALOG.md) - All available workflows
 
 ---
 
-**Last Updated**: 2026-02-08  
+**Last Updated**: 2026-02-09  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
