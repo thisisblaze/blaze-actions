@@ -92,6 +92,14 @@ on:
         required: false
         type: string
         default: "X86_64"
+      frontend_launch_type:
+        required: false
+        type: string
+        default: "FARGATE"
+      frontend_cpu_architecture:
+        required: false
+        type: string
+        default: "X86_64"
 
     secrets:
       AWS_ROLE_ARN:
@@ -303,7 +311,7 @@ jobs:
       context: .
       image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend
       image_tag: ${{ github.sha }}
-      platforms: "linux/amd64" # Frontend has native deps that fail arm64 cross-compile via QEMU
+      # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
@@ -465,9 +473,9 @@ jobs:
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
-      # Hybrid ECS — Frontend stays FARGATE/X86_64 (native deps)
-      launch_type: "FARGATE"
-      cpu_architecture: "X86_64"
+      # Hybrid ECS — Frontend supports Hybrid
+      launch_type: ${{ inputs.frontend_launch_type }}
+      cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
     secrets:
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
