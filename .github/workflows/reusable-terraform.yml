@@ -157,7 +157,7 @@ jobs:
             docker run --rm \
               -v $(pwd):/build \
               -w /build \
-              public.ecr.aws/lambda/nodejs:18 \
+              public.ecr.aws/lambda/nodejs:20 \
               npm install --platform=linux --arch=x64 --production
             
             echo "✅ Sharp built for Linux x64"
