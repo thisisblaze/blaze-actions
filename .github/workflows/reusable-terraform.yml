@@ -139,40 +139,6 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
-      # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
-      # Lambda runs on Linux, not macOS - must use linux-x64 binaries
-      # Only runs for STAGE/PROD where image resize is enabled
-      - name: Build Sharp for Lambda@Edge (Linux x64)
-        if: contains(fromJSON('["STAGE", "PROD"]'), inputs.environment)
-        run: |
-          LAMBDA_DIR="modules/aws/lambda/edge-functions/functions/resize-image"
-
-          if [[ -d "$LAMBDA_DIR" ]]; then
-            cd "$LAMBDA_DIR"
-            
-            echo "🧹 Removing existing node_modules (likely macOS binaries)..."
-            rm -rf node_modules package-lock.json
-            
-            echo "🔨 Building Sharp for Amazon Linux 2 (Lambda runtime)..."
-            docker run --rm \
-              -v $(pwd):/build \
-              -w /build \
-              public.ecr.aws/lambda/nodejs:20 \
-              npm install --platform=linux --arch=x64 --production
-            
-            echo "✅ Sharp built for Linux x64"
-            
-            # Verify correct architecture
-            if ls node_modules/@img/sharp-linux-x64 2>/dev/null; then
-              echo "✅ Correct binaries: sharp-linux-x64"
-            else
-              echo "❌ WARNING: Linux binaries not found!"
-              ls node_modules/@img/ || echo "No @img directory"
-            fi
-          else
-            echo "ℹ️ No Lambda function directory found - skipping Sharp build"
-          fi
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.23
         with:
@@ -284,6 +250,56 @@ jobs:
                echo "❌ Terraform Init Failed"
                exit "$INIT_EXIT_CODE"
             fi
+          fi
+
+      # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
+      # Lambda runs on Linux, not macOS - must use linux-x64 binaries
+      # Run AFTER init to catch both local modules AND remote modules (in .terraform)
+      - name: Build Sharp for Lambda@Edge (Linux x64)
+        if: contains(fromJSON('["STAGE", "PROD"]'), inputs.environment)
+        working-directory: ${{ inputs.tf_dir }}
+        run: |
+          echo "🔍 Searching for 'resize-image' Lambda directory (Local or Remote)..."
+
+          # Find directory matching known pattern, excluding node_modules to avoid recursing into dependencies
+          # Look in current dir and .terraform/modules
+          FOUND_DIRS=$(find . -type d -path "*/functions/resize-image" -not -path "*/node_modules/*")
+
+          if [[ -z "$FOUND_DIRS" ]]; then
+            echo "ℹ️ No 'resize-image' function directory found - skipping Sharp build."
+          else
+            for LAMBDA_DIR in $FOUND_DIRS; do
+              echo "🚀 Found Lambda Directory: $LAMBDA_DIR"
+              
+              # Resolve absolute path for Docker volume mount
+              ABS_LAMBDA_DIR="$(cd "$LAMBDA_DIR" && pwd)"
+              
+              if [[ ! -f "$ABS_LAMBDA_DIR/package.json" ]]; then
+                 echo "⚠️ No package.json in $ABS_LAMBDA_DIR - skipping."
+                 continue
+              fi
+
+              echo "   Dir: $ABS_LAMBDA_DIR"
+              
+              echo "🧹 Removing existing node_modules..."
+              rm -rf "$ABS_LAMBDA_DIR/node_modules" "$ABS_LAMBDA_DIR/package-lock.json"
+              
+              echo "🔨 Building Sharp for Amazon Linux 2 (Lambda runtime)..."
+              docker run --rm \
+                -v "$ABS_LAMBDA_DIR":/build \
+                -w /build \
+                public.ecr.aws/lambda/nodejs:20 \
+                npm install --platform=linux --arch=x64 --production
+              
+              echo "✅ Sharp built for Linux x64"
+              
+              # Verify correct architecture
+              if ls "$ABS_LAMBDA_DIR/node_modules/@img/sharp-linux-x64" 2>/dev/null; then
+                echo "✅ Correct binaries: sharp-linux-x64"
+              else
+                echo "❌ WARNING: Linux binaries not found in $ABS_LAMBDA_DIR!"
+              fi
+            done
           fi
 
       - name: Check & Release Stale Locks
