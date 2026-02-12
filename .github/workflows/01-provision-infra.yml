@@ -57,6 +57,27 @@ on:
         description: "Enable EC2 Capacity Provider (Hybrid ECS)"
         type: boolean
         default: false
+      # Hybrid ECS Inputs
+      api_launch_type:
+        description: "API Launch Type (FARGATE/EC2)"
+        type: choice
+        options: ["FARGATE", "EC2"]
+        default: "FARGATE"
+      api_cpu_architecture:
+        description: "API CPU Architecture (X86_64/ARM64)"
+        type: choice
+        options: ["X86_64", "ARM64"]
+        default: "X86_64"
+      frontend_launch_type:
+        description: "Frontend Launch Type (FARGATE/EC2)"
+        type: choice
+        options: ["FARGATE", "EC2"]
+        default: "FARGATE"
+      frontend_cpu_architecture:
+        description: "Frontend CPU Architecture (X86_64/ARM64)"
+        type: choice
+        options: ["X86_64", "ARM64"]
+        default: "X86_64"
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -104,6 +125,22 @@ on:
         required: false
         type: boolean
         default: false
+      api_launch_type:
+        required: false
+        type: string
+        default: "FARGATE"
+      api_cpu_architecture:
+        required: false
+        type: string
+        default: "X86_64"
+      frontend_launch_type:
+        required: false
+        type: string
+        default: "FARGATE"
+      frontend_cpu_architecture:
+        required: false
+        type: string
+        default: "X86_64"
     secrets:
       AWS_ROLE_ARN:
         required: false
@@ -261,6 +298,10 @@ jobs:
         kibana_ram=${{ inputs.kibana_size }}
         enable_image_resize=${{ inputs.enable_image_resize }}
         enable_ec2=${{ inputs.enable_ec2 }}
+        api_launch_type=${{ inputs.api_launch_type }}
+        api_cpu_architecture=${{ inputs.api_cpu_architecture }}
+        frontend_launch_type=${{ inputs.frontend_launch_type }}
+        frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
       orphan_lambda: false
 
   post_provision:
