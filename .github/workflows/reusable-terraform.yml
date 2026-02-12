@@ -242,8 +242,7 @@ jobs:
                 -backend-config="bucket=${BUCKET}" \
                 -backend-config="key=${STATE_KEY}" \
                 -backend-config="dynamodb_table=${TABLE_NAME}" \
-                -backend-config="region=${REGION}" \
-
+                -backend-config="region=${REGION}"
                
                exit "$?"
             else
