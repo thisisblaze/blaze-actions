@@ -258,11 +258,11 @@ jobs:
         if: contains(fromJSON('["STAGE", "PROD"]'), inputs.environment)
         working-directory: ${{ inputs.tf_dir }}
         run: |
+          set -x
           echo "🔍 Searching for 'resize-image' Lambda directory (Local or Remote)..."
 
-          # Find directory matching known pattern, excluding node_modules to avoid recursing into dependencies
-          # Look in current dir and .terraform/modules
-          FOUND_DIRS=$(find . -type d -path "*/functions/resize-image" -not -path "*/node_modules/*")
+          # Optimized find: prune node_modules and .git, look for functions/resize-image
+          FOUND_DIRS=$(find . -name "node_modules" -prune -o -name ".git" -prune -o -type d -path "*/functions/resize-image" -print)
 
           if [[ -z "$FOUND_DIRS" ]]; then
             echo "ℹ️ No 'resize-image' function directory found - skipping Sharp build."
