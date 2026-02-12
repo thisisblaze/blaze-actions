@@ -208,6 +208,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Debug Inputs
+        run: |
+          echo "Inputs Debug:"
+          echo "deploy_services type: $(echo '${{ inputs.deploy_services }}' | jq -R 'type')"
+          echo "deploy_services value: '${{ inputs.deploy_services }}'"
+          echo "deploy_services json: ${{ toJSON(inputs.deploy_services) }}"
+
       - name: Load AWS Region from Config
         id: load-region
         run: |
@@ -413,7 +420,7 @@ jobs:
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
-    if: ${{ (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    if: ${{ (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       service_name: "api"
