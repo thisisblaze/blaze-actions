@@ -6,6 +6,12 @@ on:
         description: "Distribution ID to strip aliases from"
         required: true
         default: "EXAMPLE_ZONE_ID"
+  workflow_call:
+    inputs:
+      dist_id:
+        description: "Distribution ID (or Domain Name) to strip aliases from"
+        required: true
+        type: string
 
 permissions:
   id-token: write
