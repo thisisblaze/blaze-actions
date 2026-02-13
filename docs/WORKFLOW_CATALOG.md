@@ -203,6 +203,7 @@
 - `check-health`: Service health check
 - `destroy-resources`: Safe destruction of infrastructure (defaulting to safe lambda cleanup)
 - `cleanup-orphaned-lambdas`: Post-destroy lambda cleanup
+- `nuke-environment`: Full environment teardown (Stop Services -> Destroy Resources -> Cleanup DNS)
 - Manual interventions
 
 **Inputs**:
