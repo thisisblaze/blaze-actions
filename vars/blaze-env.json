@@ -1,0 +1,7 @@
+{
+    "common": {
+        "AWS_REGION": "us-east-1",
+        "AWS_ACCOUNT_ID": "123456789012",
+        "PROJECT_KEY": "blaze-actions-test"
+    }
+}
