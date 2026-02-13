@@ -315,13 +315,13 @@ All Cloudflare operations can be run independently:
 **Current**: The `nuke-environment` action does NOT include Cloudflare cleanup
 
 **Future**: Will be enhanced to include:
-
 1. Stop services
 2. Cleanup deployments → **NEW**
 3. Destroy app stack
 4. Delete Pages project → **NEW**
 5. Destroy tunnel
 6. Destroy network
+7. Cleanup DNS (Explicit record deletion) → **NEW**
 
 ---
 
