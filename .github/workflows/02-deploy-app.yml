@@ -444,7 +444,6 @@ jobs:
       launch_type: ${{ inputs.api_launch_type }}
       cpu_architecture: ${{ inputs.api_cpu_architecture }}
     secrets:
-      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
