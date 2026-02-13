@@ -40,6 +40,21 @@ jobs:
       - name: Strip Aliases
         run: |
           DIST_ID="${{ inputs.dist_id }}"
+          # If input looks like a domain (contains .), try to find ID
+          if [[ "$DIST_ID" == *"."* ]]; then
+            echo "Input '$DIST_ID' looks like a domain. Searching for Distribution ID..."
+            # Remove trailing dot if present
+            SEARCH_DOMAIN=${DIST_ID%.}
+            FOUND_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?DomainName=='$SEARCH_DOMAIN'].Id" --output text)
+            
+            if [[ -z "$FOUND_ID" || "$FOUND_ID" == "None" ]]; then
+              echo "❌ ERROR: Could not find distribution for domain $SEARCH_DOMAIN"
+              exit 1
+            fi
+            echo "✅ Found Distribution ID: $FOUND_ID"
+            DIST_ID=$FOUND_ID
+          fi
+
           echo "Getting config for $DIST_ID..."
           aws cloudfront get-distribution-config --id $DIST_ID > dist-config.json
 
