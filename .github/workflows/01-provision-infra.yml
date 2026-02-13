@@ -188,7 +188,6 @@ jobs:
   configuration:
     name: Configuration
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
