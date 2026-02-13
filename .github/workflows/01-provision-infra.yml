@@ -188,7 +188,6 @@ jobs:
   configuration:
     name: Configuration
     runs-on: ubuntu-latest
-    environment: dev
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
@@ -208,19 +207,6 @@ jobs:
       cluster_name: ${{ steps.config.outputs.cluster_name }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      - name: Debug Secrets
-        run: |
-          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
-            echo "✅ AWS_ROLE_ARN is available."
-          else
-            echo "❌ AWS_ROLE_ARN is EMPTY."
-          fi
-          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
-            echo "✅ GH_PAT is available."
-          else
-            echo "⚠️ GH_PAT is EMPTY."
-          fi
 
       - name: Load AWS Region from Config
         id: load-region
