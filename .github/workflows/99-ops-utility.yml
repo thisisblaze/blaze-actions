@@ -1287,6 +1287,80 @@ jobs:
           echo "ℹ️  No ASG found in state — skipping EC2 cleanup."
         fi
 
+  nuke-cleanup-dns:
+    name: 🧹 Nuke Cleanup - DNS
+    needs: [configuration, nuke-destroy-network]
+    if: inputs.action == 'nuke-environment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cleanup Residual DNS Records
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          # Inputs
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          DOMAIN_ROOT: ${{ needs.configuration.outputs.domain_root }}
+        run: |
+          echo "🧹 Cleaning up residual DNS records for stage: $STAGE"
+          echo "   Domain Root: $DOMAIN_ROOT"
+
+          # Define targets
+          # Standard convention: {subdomain}-{stage}.{root}
+          # Exception: prod usually has no suffix, but this job runs for 'nuke-environment' which implies non-prod or explicit nuke.
+          # If stage is 'prod', we might want to be extra careful or use different logic.
+          # Assuming STAGE/DEV use suffixes.
+
+          if [ "$STAGE" == "prod" ]; then
+             echo "⚠️  PROD Nuke detected. Skipping DNS cleanup for safety (manual verification required)."
+             exit 0
+          fi
+
+          TARGETS=(
+            "api-${STAGE}.${DOMAIN_ROOT}"
+            "frontend-${STAGE}.${DOMAIN_ROOT}"
+            "cdn-${STAGE}.${DOMAIN_ROOT}"
+            "admin-${STAGE}.${DOMAIN_ROOT}"
+            # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
+            # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
+            # We won't delete root wildcard automatically.
+          )
+
+          echo "🎯 Targets:"
+          printf '%s\n' "${TARGETS[@]}"
+
+          for RECORD_NAME in "${TARGETS[@]}"; do
+            echo "---------------------------------------------------"
+            echo "🔍 Checking: $RECORD_NAME"
+
+            # List records matching name
+            RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$RECORD_NAME" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
+              -H "Content-Type: application/json")
+
+            # Extract IDs
+            IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
+
+            if [[ -z "$IDS" || "$IDS" == "null" ]]; then
+              echo "   ✅ No records found."
+            else
+              for id in $IDS; do
+                echo "   🗑️ Deleting record ID: $id"
+                DEL_RES=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$id" \
+                  -H "Authorization: Bearer $CF_API_TOKEN" \
+                  -H "Content-Type: application/json")
+                
+                SUCCESS=$(echo "$DEL_RES" | jq -r '.success')
+                if [ "$SUCCESS" == "true" ]; then
+                   echo "      ✅ Deleted."
+                else
+                   echo "      ❌ Failed to delete."
+                   echo "$DEL_RES" | jq -r '.errors'
+                fi
+              done
+            fi
+          done
+
   summary:
     name: 📝 Ops Summary
     needs:
@@ -1299,6 +1373,7 @@ jobs:
         sync-cloudflare-config,
         nuke-destroy-network,
         nuke-destroy-pages,
+        nuke-cleanup-dns,
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -1367,4 +1442,5 @@ jobs:
              echo "| **Destroy Mongo** | $(get_icon ${{ needs.nuke-destroy-data-mongo.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Elastic** | $(get_icon ${{ needs.nuke-destroy-data-elastic.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Cleanup DNS** | $(get_icon ${{ needs.nuke-cleanup-dns.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
