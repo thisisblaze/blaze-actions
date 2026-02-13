@@ -452,7 +452,7 @@ jobs:
 
 ## Versioning
 
-**Current Version**: `v1.4.0`
+**Current Version**: `v1.1.0-hybrid-ecs`
 
 Follow semantic versioning:
 
