@@ -574,9 +574,11 @@ jobs:
           path: packages/admin/dist
 
       - name: Set Cloudflare Pages Production Branch
+        env:
+          BRANCH_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
-          BRANCH="${{ github.head_ref || github.ref_name }}"
+          BRANCH="$BRANCH_REF"
 
           echo "Setting production branch to: $BRANCH for project: $PROJECT_NAME"
 
