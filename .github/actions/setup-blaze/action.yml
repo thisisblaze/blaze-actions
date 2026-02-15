@@ -1,52 +1,72 @@
-name: 'Setup Blaze Environment'
-description: 'Handles Checkout, AWS Login, and optional Tool Setup'
+name: "Setup Blaze Environment"
+description: "Handles Checkout, Cloud Login, and optional Tool Setup"
 
 inputs:
+  cloud-provider:
+    description: "Cloud provider to configure (aws/gcp/azure). Default: aws"
+    required: false
+    default: "aws"
   aws-role-arn:
-    description: 'AWS Role to Assume (can also be set via env.AWS_ROLE_ARN)'
+    description: "AWS Role to Assume (can also be set via env.AWS_ROLE_ARN)"
     required: false
   aws-region:
-    description: 'AWS Region (can also be set via env.AWS_REGION)'
+    description: "AWS Region (can also be set via env.AWS_REGION)"
     required: false
   terraform:
-    description: 'Set to true to install Terraform'
+    description: "Set to true to install Terraform"
     required: false
-    default: 'false'
+    default: "false"
   ecr:
-    description: 'Set to true to login to ECR'
+    description: "Set to true to login to ECR (AWS) / Artifact Registry (GCP) / ACR (Azure)"
     required: false
-    default: 'false'
+    default: "false"
   aws-access-key-id:
-    description: 'AWS Access Key ID'
+    description: "AWS Access Key ID"
     required: false
   aws-secret-access-key:
-    description: 'AWS Secret Access Key'
+    description: "AWS Secret Access Key"
     required: false
   skip-aws-setup:
-    description: 'Set to true to skip AWS credential configuration'
+    description: "Set to true to skip AWS credential configuration"
     required: false
-    default: 'false'
+    default: "false"
+  gcp-workload-identity-provider:
+    description: "GCP Workload Identity Provider (for GCP auth)"
+    required: false
+  gcp-service-account:
+    description: "GCP Service Account email (for GCP auth)"
+    required: false
+  gcp-project-id:
+    description: "GCP Project ID"
+    required: false
+  azure-client-id:
+    description: "Azure Client ID (for Azure OIDC auth)"
+    required: false
+  azure-tenant-id:
+    description: "Azure Tenant ID"
+    required: false
+  azure-subscription-id:
+    description: "Azure Subscription ID"
+    required: false
 
 outputs:
   registry:
-    description: "ECR Registry URI (if logged in)"
-    value: ${{ steps.login-ecr.outputs.registry }}
+    description: "Container Registry URI (ECR/Artifact Registry/ACR)"
+    value: ${{ steps.login-ecr.outputs.registry || steps.gcp-registry.outputs.registry || steps.azure-registry.outputs.registry || '' }}
 
 runs:
   using: "composite"
   steps:
-    # 🎯 OPTIMIZED: Removed redundant 'Checkout Code' step. 
+    # 🎯 OPTIMIZED: Removed redundant 'Checkout Code' step.
     # The calling workflow must perform checkout before calling this local action.
 
+    # ══════════════════════════════════════════════════════════
+    # AWS Authentication
+    # ══════════════════════════════════════════════════════════
     - name: Configure AWS Credentials
-      if: inputs.skip-aws-setup != 'true'
+      if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        # Flexible Authentication:
-        # 1. OIDC (GitHub): Provide only aws-role-arn (requires id-token: write permission)
-        # 2. IAM User: Provide aws-access-key-id + aws-secret-access-key
-        # 3. IAM User + Role Assumption: Provide all three
-        # 4. act (local): Always uses direct credentials from .secrets
         role-to-assume: ${{ inputs.aws-role-arn || env.AWS_ROLE_ARN }}
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
@@ -55,13 +75,12 @@ runs:
 
     - name: Ensure AWS CLI is installed
       shell: bash
-      if: inputs.skip-aws-setup != 'true'
+      if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       run: |
         if ! command -v aws &> /dev/null; then
           echo "Installing AWS CLI..."
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip -q awscliv2.zip
-          # Install to /usr/local/bin if possible, else local dir
           if command -v sudo &> /dev/null; then
             sudo ./aws/install --update
           else
@@ -70,7 +89,36 @@ runs:
           rm -rf aws awscliv2.zip
         fi
 
-    # --- Optional: Terraform Setup ---
+    # ══════════════════════════════════════════════════════════
+    # GCP Authentication (Workload Identity Federation)
+    # ══════════════════════════════════════════════════════════
+    - name: Authenticate to Google Cloud
+      if: inputs.cloud-provider == 'gcp'
+      id: gcp-auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ inputs.gcp-workload-identity-provider }}
+        service_account: ${{ inputs.gcp-service-account }}
+        project_id: ${{ inputs.gcp-project-id }}
+
+    - name: Set up Google Cloud SDK
+      if: inputs.cloud-provider == 'gcp'
+      uses: google-github-actions/setup-gcloud@v2
+
+    # ══════════════════════════════════════════════════════════
+    # Azure Authentication (OIDC / Managed Identity)
+    # ══════════════════════════════════════════════════════════
+    - name: Authenticate to Azure
+      if: inputs.cloud-provider == 'azure'
+      uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.azure-client-id }}
+        tenant-id: ${{ inputs.azure-tenant-id }}
+        subscription-id: ${{ inputs.azure-subscription-id }}
+
+    # ══════════════════════════════════════════════════════════
+    # Terraform Setup (Cloud-agnostic)
+    # ══════════════════════════════════════════════════════════
     - name: Cache Terraform Providers
       if: inputs.terraform == 'true'
       uses: actions/cache@v3
@@ -86,8 +134,27 @@ runs:
       if: inputs.terraform == 'true'
       uses: hashicorp/setup-terraform@v3
 
-    # --- Optional: ECR Login ---
+    # ══════════════════════════════════════════════════════════
+    # Container Registry Login (Provider-specific)
+    # ══════════════════════════════════════════════════════════
     - name: Login to Amazon ECR
-      if: inputs.ecr == 'true' && inputs.skip-aws-setup != 'true'
+      if: inputs.ecr == 'true' && (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Login to GCP Artifact Registry
+      if: inputs.ecr == 'true' && inputs.cloud-provider == 'gcp'
+      id: gcp-registry
+      shell: bash
+      run: |
+        gcloud auth configure-docker ${{ inputs.gcp-project-id && format('{0}-docker.pkg.dev', steps.gcp-auth.outputs.project_id) || 'docker.pkg.dev' }}
+        echo "registry=${{ inputs.gcp-project-id }}-docker.pkg.dev" >> $GITHUB_OUTPUT
+
+    - name: Login to Azure Container Registry
+      if: inputs.ecr == 'true' && inputs.cloud-provider == 'azure'
+      id: azure-registry
+      shell: bash
+      run: |
+        echo "⚠️  Azure ACR login not yet configured. Set up ACR name in blaze-env.json."
+        # az acr login --name <acr-name>
+        echo "registry=" >> $GITHUB_OUTPUT

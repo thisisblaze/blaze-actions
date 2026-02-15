@@ -3,6 +3,11 @@ name: "02 - Deploy App"
 on:
   workflow_dispatch:
     inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
       environment:
         description: "Environment to deploy to"
         type: choice
@@ -57,6 +62,10 @@ on:
   # Enable usage by other workflows (Stress Test)
   workflow_call:
     inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
       environment:
         required: true
         type: string
@@ -296,6 +305,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/api/Dockerfile.api
       context: .
       image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api
@@ -314,6 +324,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
       image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend
@@ -423,6 +434,7 @@ jobs:
     if: ${{ (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
       # Pass forced uppercase env to prevent duplicates
@@ -463,6 +475,7 @@ jobs:
     if: ${{ (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
@@ -504,6 +517,7 @@ jobs:
     if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
@@ -538,6 +552,7 @@ jobs:
     if: ${{ (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel' || (inputs.branch_name != '' && inputs.branch_name != null && inputs.target_services == 'admin')) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       service_name: "tunnel"
       environment: ${{ inputs.environment || 'DEV' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}

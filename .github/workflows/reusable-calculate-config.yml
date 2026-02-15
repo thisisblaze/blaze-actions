@@ -42,6 +42,12 @@ on:
         value: ${{ jobs.calculate.outputs.namespace }}
       platform:
         value: ${{ jobs.calculate.outputs.platform }}
+      cloud_provider:
+        value: ${{ jobs.calculate.outputs.cloud_provider }}
+      cloud_region:
+        value: ${{ jobs.calculate.outputs.cloud_region }}
+      infra_prefix:
+        value: ${{ jobs.calculate.outputs.infra_prefix }}
       domain_root:
         value: ${{ jobs.calculate.outputs.domain_root }}
       allowed_infra_users:
@@ -67,6 +73,9 @@ jobs:
       project_key: ${{ steps.config.outputs.project_key }}
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
+      cloud_provider: ${{ steps.config.outputs.cloud_provider }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
+      infra_prefix: ${{ steps.config.outputs.infra_prefix }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       allowed_infra_users: ${{ steps.config.outputs.allowed_infra_users }}
 
@@ -139,6 +148,25 @@ jobs:
           PLATFORM="${CLOUD_PLATFORM:-ecs}"
           NAMESPACE="${NAMESPACE:-blaze}"
 
+          # ── MULTI-CLOUD: Compute INFRA_PREFIX from CLOUD_PROVIDER ──
+          CLOUD_PROVIDER="${CLOUD_PROVIDER:-aws}"
+          case "$CLOUD_PROVIDER" in
+            gcp)
+              CLOUD_REGION="${GCP_REGION:-europe-west1}"
+              INFRA_PREFIX=".github/gcp/infra/live"
+              ;;
+            azure)
+              CLOUD_REGION="${AZURE_REGION:-westeurope}"
+              INFRA_PREFIX=".github/azure/infra/live"
+              ;;
+            *)
+              CLOUD_PROVIDER="aws"
+              CLOUD_REGION="${AWS_REGION:-eu-west-1}"
+              INFRA_PREFIX=".github/aws/infra/live"
+              ;;
+          esac
+          echo "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"
+
           # Ensure vars are available
           if [[ -z "$CLIENT_KEY" ]] || [[ -z "$PROJECT_KEY" ]]; then
              echo "❌ ERROR: CLIENT_KEY or PROJECT_KEY missing from loaded config."
@@ -158,15 +186,15 @@ jobs:
 
           case "$STACK" in
             "third-party-cloudflare")
-              TF_DIR=".github/aws/infra/live/third-party/cloudflare"
+              TF_DIR="${INFRA_PREFIX}/third-party/cloudflare"
               STATE_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
               ;;
             "third-party-mongodb")
-              TF_DIR=".github/aws/infra/live/third-party/mongodb"
+              TF_DIR="${INFRA_PREFIX}/third-party/mongodb"
               STATE_KEY="infra/${PROJECT_KEY}/third-party/mongodb-${STAGE_KEY}.tfstate"
               ;;
             "third-party-elastic")
-              TF_DIR=".github/aws/infra/live/third-party/elastic"
+              TF_DIR="${INFRA_PREFIX}/third-party/elastic"
               STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic-${STAGE_KEY}.tfstate"
               ;;
             "network")
@@ -184,21 +212,21 @@ jobs:
 
 
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
-                TF_DIR=".github/aws/infra/live/${STAGE_KEY}-network"
+                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               else
                 # Dev now uses split stack (like stage/prod)
-                TF_DIR=".github/aws/infra/live/dev-network"
+                TF_DIR="${INFRA_PREFIX}/dev-network"
                 STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
               fi
               ;;
             "app" | "application-layer")
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
-                TF_DIR=".github/aws/infra/live/${STAGE_KEY}-app"
+                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
               else
                 # Dev now uses split stack (like stage/prod)
-                TF_DIR=".github/aws/infra/live/dev-app"
+                TF_DIR="${INFRA_PREFIX}/dev-app"
                 if [[ -n "$BRANCH_TAG" ]]; then
                   # Feature branches have their own app state
                   STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}.tfstate"
@@ -210,7 +238,7 @@ jobs:
               ;;
             "feature-branch")
               # Feature branches use dev-app directory but separate state
-              TF_DIR=".github/aws/infra/live/dev-app"
+              TF_DIR="${INFRA_PREFIX}/dev-app"
               if [[ -z "$BRANCH_TAG" ]]; then
                   echo "❌ ERROR: Branch Tag is REQUIRED when targeting 'feature-branch' stack."
                   echo "   To target the Host Environment, use 'host-environment' or 'application-layer'."
@@ -223,11 +251,11 @@ jobs:
             "host-environment")
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
                  # For split stacks, 'Host' implies the Network layer (VPC/Cluster)
-                 TF_DIR=".github/aws/infra/live/${STAGE_KEY}-network"
+                 TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               else
                  # Dev now uses split stack - 'Host' means network layer
-                 TF_DIR=".github/aws/infra/live/dev-network"
+                 TF_DIR="${INFRA_PREFIX}/dev-network"
                  STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
               fi
               ;;
@@ -239,11 +267,11 @@ jobs:
             *)
               # Default: assume dev network (split stack)
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
-                TF_DIR=".github/aws/infra/live/${STAGE_KEY}-network"
+                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               else
                 # Dev now uses split stack
-                TF_DIR=".github/aws/infra/live/dev-network"
+                TF_DIR="${INFRA_PREFIX}/dev-network"
                 STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
               fi
               ;;
@@ -282,10 +310,8 @@ jobs:
           echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
           echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
           echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+          echo "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"
+          echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
+          echo "infra_prefix=$INFRA_PREFIX" >> "$GITHUB_OUTPUT"
           echo "domain_root=$DOMAIN_ROOT" >> "$GITHUB_OUTPUT"
           echo "allowed_infra_users=$ALLOWED_INFRA_USERS" >> "$GITHUB_OUTPUT"
-
-          echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
-          echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
-          echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
-          echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"

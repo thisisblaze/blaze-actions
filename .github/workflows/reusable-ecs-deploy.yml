@@ -3,6 +3,11 @@ name: "Reusable ECS Deploy"
 on:
   workflow_call:
     inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
       service_name:
         required: true
         type: string
