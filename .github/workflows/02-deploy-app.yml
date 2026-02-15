@@ -461,12 +461,14 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
       - name: Login to Amazon ECR
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
@@ -638,7 +640,7 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
 
     # Run for Feature Branches ONLY
-    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
@@ -673,7 +675,7 @@ jobs:
   deploy-tunnel:
     name: Deploy Tunnel
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel' || (inputs.branch_name != '' && inputs.branch_name != null && inputs.target_services == 'admin')) }}
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel' || (inputs.branch_name != '' && inputs.branch_name != null && inputs.target_services == 'admin')) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
