@@ -48,6 +48,8 @@ on:
         value: ${{ jobs.calculate.outputs.cloud_region }}
       infra_prefix:
         value: ${{ jobs.calculate.outputs.infra_prefix }}
+      gcp_project_id:
+        value: ${{ jobs.calculate.outputs.gcp_project_id }}
       domain_root:
         value: ${{ jobs.calculate.outputs.domain_root }}
       allowed_infra_users:
@@ -76,6 +78,7 @@ jobs:
       cloud_provider: ${{ steps.config.outputs.cloud_provider }}
       cloud_region: ${{ steps.config.outputs.cloud_region }}
       infra_prefix: ${{ steps.config.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       allowed_infra_users: ${{ steps.config.outputs.allowed_infra_users }}
 
@@ -150,6 +153,8 @@ jobs:
 
           # ── MULTI-CLOUD: Compute INFRA_PREFIX from CLOUD_PROVIDER ──
           CLOUD_PROVIDER="${CLOUD_PROVIDER:-aws}"
+          GCP_STATE_BUCKET="${GCP_STATE_BUCKET:-}"
+          GCP_PROJECT_ID="${GCP_PROJECT_ID:-}"
           case "$CLOUD_PROVIDER" in
             gcp)
               CLOUD_REGION="${GCP_REGION:-europe-west1}"
@@ -173,8 +178,17 @@ jobs:
              exit 1
           fi
 
-          BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
-          LOCK_TABLE="${BUCKET}-lock"
+          # ── MULTI-CLOUD: Route state bucket by provider ──
+          case "$CLOUD_PROVIDER" in
+            gcp)
+              BUCKET="${GCP_STATE_BUCKET}"
+              LOCK_TABLE=""  # GCS uses built-in locking
+              ;;
+            *)
+              BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
+              LOCK_TABLE="${BUCKET}-lock"
+              ;;
+          esac
 
           # Determine Terraform directory and state key based on stack type
           STACK="${{ inputs.terraform_stack }}"
@@ -299,11 +313,21 @@ jobs:
           echo "cluster_name=$CLUSTER_NAME" >> "$GITHUB_OUTPUT"
           echo "env_val=$ENV_VAL" >> "$GITHUB_OUTPUT"
 
-          # Validate AWS_REGION is set (from config file now)
-          if [[ -z "$AWS_REGION" ]]; then
-            echo "❌ ERROR: AWS_REGION is not set in env-config.json"
-            exit 1
-          fi
+          # Validate region is set for the active provider
+          case "$CLOUD_PROVIDER" in
+            gcp)
+              if [[ -z "$GCP_REGION" ]]; then
+                echo "❌ ERROR: GCP_REGION is not set in env-config.json"
+                exit 1
+              fi
+              ;;
+            *)
+              if [[ -z "$AWS_REGION" ]]; then
+                echo "❌ ERROR: AWS_REGION is not set in env-config.json"
+                exit 1
+              fi
+              ;;
+          esac
 
           echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
           echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
@@ -313,5 +337,6 @@ jobs:
           echo "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"
           echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
           echo "infra_prefix=$INFRA_PREFIX" >> "$GITHUB_OUTPUT"
+          echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
           echo "domain_root=$DOMAIN_ROOT" >> "$GITHUB_OUTPUT"
           echo "allowed_infra_users=$ALLOWED_INFRA_USERS" >> "$GITHUB_OUTPUT"
