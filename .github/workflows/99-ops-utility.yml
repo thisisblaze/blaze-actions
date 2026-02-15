@@ -341,12 +341,25 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
-      - name: Execute Ops
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Execute Ops (AWS)
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         run: |
           ACTION="${{ inputs.action }}"
           BUCKET="${{ needs.configuration.outputs.bucket }}"
@@ -354,7 +367,6 @@ jobs:
           TABLE="${{ needs.configuration.outputs.lock_table }}"
           REGION="${{ needs.configuration.outputs.aws_region }}"
 
-          # Fallback for table if not specified
           if [[ -z "$TABLE" ]]; then
             TABLE="$BUCKET"
           fi
@@ -367,10 +379,7 @@ jobs:
               --table-name "$TABLE" \
               --region "$REGION" \
               --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
-            
-            # Optional: Remove .tflock file if it exists in S3 (legacy/emergency check)
             aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
-            
           elif [[ "$ACTION" == "wipe-state" ]]; then
             echo "☢️ WIPING STATE: $LOCK_ID"
             aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION"
@@ -380,10 +389,29 @@ jobs:
               --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
           fi
 
+      - name: Execute Ops (GCP)
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          ACTION="${{ inputs.action }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+          KEY="${{ needs.configuration.outputs.state_key }}"
+
+          if [[ "$ACTION" == "unlock-state" ]]; then
+            echo "🔓 Unlocking GCS State: gs://$BUCKET/$KEY"
+            # GCS backend uses a .tflock object
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
+            echo "✅ State unlocked."
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING GCS STATE: gs://$BUCKET/$KEY"
+            gsutil rm "gs://$BUCKET/$KEY" 2>/dev/null || echo "ℹ️ State file not found"
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
+            echo "✅ State wiped."
+          fi
+
   manage-environment:
     name: Manage Env
     needs: [configuration]
-    if: inputs.action == 'manage-environment'
+    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: ./.github/workflows/reusable-ecs-service-management.yml
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
@@ -395,10 +423,65 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
+  manage-environment-gcp:
+    name: Manage Env (GCP)
+    needs: [configuration]
+    if: inputs.action == 'manage-environment' && inputs.cloud_provider == 'gcp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Manage Cloud Run Services
+        run: |
+          PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+          REGION="${{ needs.configuration.outputs.cloud_region }}"
+          ACTION="${{ inputs.manage_action }}"
+          PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "⚙️ Managing Cloud Run services: $ACTION"
+          echo "   Prefix: $PREFIX"
+
+          SERVICES=$(gcloud run services list \
+            --project="$PROJECT" --region="$REGION" \
+            --filter="metadata.name~^${PREFIX}" \
+            --format="value(metadata.name)" 2>/dev/null || true)
+
+          if [[ -z "$SERVICES" ]]; then
+            echo "ℹ️ No Cloud Run services found."
+            exit 0
+          fi
+
+          for SVC in $SERVICES; do
+            if [[ "$ACTION" == "stop" ]]; then
+              echo "   🛑 Scaling down: $SVC"
+              gcloud run services update "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --max-instances=0 --quiet || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "start" || "$ACTION" == "restart" ]]; then
+              echo "   ▶️ Starting: $SVC"
+              gcloud run services update "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --max-instances=10 --quiet || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "status" ]]; then
+              echo "   📊 Status: $SVC"
+              gcloud run services describe "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --format="table(status.conditions.type,status.conditions.status)" || true
+            fi
+          done
+
   pre-cleanup:
     name: Pre-Cleanup
     needs: [configuration]
-    if: inputs.action == 'destroy-resources'
+    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -420,6 +503,8 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -431,6 +516,7 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
@@ -453,7 +539,7 @@ jobs:
   cleanup-orphaned-lambdas:
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-lambdas'
+    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -1452,6 +1538,7 @@ jobs:
         kill-workflows,
         state-operations,
         manage-environment,
+        manage-environment-gcp,
         destroy-resources,
         sync-cloudflare-config,
         nuke-stop-services-gcp,
