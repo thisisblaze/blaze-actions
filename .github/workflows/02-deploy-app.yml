@@ -314,9 +314,13 @@ jobs:
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   build-frontend:
     name: Build Frontend
@@ -335,9 +339,13 @@ jobs:
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
         BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   build-admin:
     name: Build Admin (Shared)
