@@ -188,6 +188,7 @@ runs:
         CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
         GCP_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_REGION // "europe-west1"')
         GCP_PROJECT_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_PROJECT_ID // ""')
+        GCP_STATE_BUCKET=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_STATE_BUCKET // ""')
         AZURE_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AZURE_REGION // "westeurope"')
 
         # Compute provider-specific region and infra prefix
