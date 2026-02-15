@@ -89,6 +89,11 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
+      # GCP Authentication (Workload Identity Federation)
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
 
     outputs:
       mongodb_uri:
