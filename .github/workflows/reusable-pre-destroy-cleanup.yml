@@ -156,33 +156,40 @@ jobs:
               REGION="${{ inputs.aws_region }}"
 
               echo "🧹 CloudWatch Log Cleanup..."
-              
-              # Define patterns
-              # 1. ECS Service Logs: /ecs/<namespace>-<client>-<project>-<stage>-*
-              # 2. App Lambda Logs:  /aws/lambda/<namespace>-<client>-<project>-<stage>-*
-              
+
+              delete_log_groups() {
+                  local PREFIX=$1
+                  local REGION_ARG=$2
+                  
+                  echo "   🔍 Searching for log groups starting with '$PREFIX' in $REGION_ARG..."
+                  GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text)
+                  
+                  if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
+                      echo "      ✅ No logs found."
+                      return
+                  fi
+
+                  for GROUP in $GROUPS; do
+                      echo "      🗑️ Deleting $GROUP..."
+                      aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
+                  done
+              }
+
+              # 1. Main Region Patterns
               PREFIXES=(
-                "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
-                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+                "/ecs/${NAMESPACE}-${PROJECT_KEY}-${STAGE_KEY}"          # Cluster / Feature Branch
+                "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # App / Stateful
+                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-" # App Lambdas
+                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-"   # SES Webhooks
               )
 
-              # Edge logs are in us-east-1, handled separately if needed, but often not stage-specific in the same way 
-              # or require us-east-1 provider switch. For now focus on region-specific logs.
-
               for PREFIX in "${PREFIXES[@]}"; do
-                 echo "   🔍 Searching for log groups starting with '$PREFIX'..."
-                 GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION" --query "logGroups[].logGroupName" --output text)
-                 
-                 if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
-                    echo "      ✅ No log groups found."
-                    continue
-                 fi
-
-                 for GROUP in $GROUPS; do
-                    echo "      🗑️ Deleting $GROUP..."
-                    aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION" || echo "         ⚠️ Failed to delete"
-                 done
+                 delete_log_groups "$PREFIX" "$REGION"
               done
+
+              # 2. Edge Region (us-east-1) Patterns
+              # Edge functions often have the region prefix in the log group name when created by Lambda@Edge
+              delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1"
 
          - name: Cleanup Service Discovery
            if: env.PROJECT_KEY != ''
