@@ -112,8 +112,12 @@ on:
 
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
         description: "AWS Role ARN for deployment"
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
       GH_PAT:
         required: false
         description: "GitHub PAT for private modules"
@@ -207,6 +211,8 @@ jobs:
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
       aws_region: ${{ steps.config.outputs.aws_region }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       beta: ${{ steps.config.outputs.beta }}
       dfp_network_id: ${{ steps.config.outputs.dfp_network_id }}
@@ -224,22 +230,42 @@ jobs:
           echo "deploy_services value: '${{ inputs.deploy_services }}'"
           echo "deploy_services json: ${{ toJSON(inputs.deploy_services) }}"
 
-      - name: Load AWS Region from Config
+      - name: Load Region from Config
         id: load-region
         run: |
+          CLOUD_PROVIDER=$(jq -r '.common.CLOUD_PROVIDER // "aws"' vars/blaze-env.json)
           AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
-          if [[ -z "$AWS_REGION" ]]; then
-            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
-            exit 1
-          fi
+          GCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          GCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+          ACTIVE_PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
+
+          case "$ACTIVE_PROVIDER" in
+            gcp)
+              CLOUD_REGION="$GCP_REGION"
+              ;;
+            *)
+              CLOUD_REGION="$AWS_REGION"
+              ;;
+          esac
+
           echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
-          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+          echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
+          echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
+          echo "☁️ Provider: $ACTIVE_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Calculate Configuration
         id: config
