@@ -324,7 +324,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-app"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -345,7 +345,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/third-party/mongodb"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -365,7 +365,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/third-party/elastic"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -387,7 +387,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-tunnel" # Assuming standard path
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -409,7 +409,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-network"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -886,7 +886,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-app"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -907,7 +907,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-tunnel"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -928,7 +928,7 @@ jobs:
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: ".github/aws/infra/live/${{ inputs.environment }}-network"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}

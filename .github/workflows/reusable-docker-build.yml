@@ -3,6 +3,11 @@ name: "Reusable Docker Build (Multi-Arch)"
 on:
   workflow_call:
     inputs:
+      cloud_provider:
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
+        required: false
+        type: string
+        default: "aws"
       dockerfile:
         description: "Path to Dockerfile"
         required: true
@@ -13,7 +18,7 @@ on:
         type: string
         default: "."
       image_name:
-        description: "Full ECR image name (e.g., 123456789.dkr.ecr.region.amazonaws.com/repo)"
+        description: "Full image name (e.g., ECR URI, Artifact Registry URI, or ACR URI)"
         required: true
         type: string
       image_tag:
@@ -71,12 +76,14 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
       - name: Set up Docker Buildx
@@ -117,7 +124,7 @@ jobs:
   # ─────────────────────────────────────────────
   build-arm64:
     name: "Build (arm64)"
-    runs-on: ubuntu-24.04-arm   # Native ARM64 runner — 13x faster than QEMU
+    runs-on: ubuntu-24.04-arm # Native ARM64 runner — 13x faster than QEMU
     if: contains(inputs.platforms, 'linux/arm64')
     timeout-minutes: 15
     outputs:
@@ -129,12 +136,14 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
       - name: Set up Docker Buildx
@@ -185,12 +194,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
       - name: Create and Push Multi-Arch Manifest
@@ -234,4 +245,3 @@ jobs:
           echo "- **Latest**: \`latest\`" >> $GITHUB_STEP_SUMMARY
           echo "- **amd64 Digest**: \`${{ needs.build-amd64.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **arm64 Digest**: \`${{ needs.build-arm64.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-
