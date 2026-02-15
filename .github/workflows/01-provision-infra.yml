@@ -3,6 +3,11 @@ name: "01 - Provision Infrastructure"
 on:
   workflow_dispatch:
     inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
       environment:
         description: "Target Environment"
         type: choice
@@ -82,6 +87,10 @@ on:
   # Enable usage by other workflows (Stress Test)
   workflow_call:
     inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
       environment:
         required: true
         type: string
@@ -278,6 +287,7 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment }}

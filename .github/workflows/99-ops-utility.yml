@@ -3,6 +3,11 @@ name: "99 - Ops Utility"
 on:
   workflow_dispatch:
     inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
       action:
         description: "🛠️ Select Action"
         type: choice
@@ -86,6 +91,10 @@ on:
 
   workflow_call:
     inputs:
+      cloud_provider:
+        type: string
+        default: "aws"
+        required: false
       action:
         type: string
         required: true
@@ -249,6 +258,8 @@ jobs:
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
       domain_root: ${{ steps.config.outputs.domain_root }}
+      cloud_provider: ${{ steps.config.outputs.cloud_provider }}
+      infra_prefix: ${{ steps.config.outputs.infra_prefix }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -1070,8 +1081,9 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
-      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-app"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-app"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       # Backend Config (Must match calculate-config logic)
@@ -1141,7 +1153,8 @@ jobs:
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
-      tf_dir: ".github/aws/infra/live/third-party/cloudflare"
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/third-party/cloudflare"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
@@ -1243,7 +1256,8 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      tf_dir: ".github/aws/infra/live/${{ needs.configuration.outputs.stage_key }}-network"
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}

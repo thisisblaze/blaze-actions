@@ -3,6 +3,11 @@ name: ECS Service Management
 on:
   workflow_call:
     inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
       cluster_name:
         required: true
         type: string

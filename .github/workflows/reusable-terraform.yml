@@ -3,6 +3,11 @@ name: "Reusable Terraform"
 on:
   workflow_call:
     inputs:
+      cloud_provider:
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
+        required: false
+        type: string
+        default: "aws"
       tf_dir:
         description: "Directory containing Terraform configuration"
         required: true
@@ -146,10 +151,26 @@ jobs:
           terraform_wrapper: false
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
+
+      - name: Authenticate to Google Cloud
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || '' }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
+
+      - name: Authenticate to Azure
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID || '' }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || '' }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || '' }}
 
       - name: Debug Secret Presence
         run: |
@@ -180,11 +201,33 @@ jobs:
           LOCK_TABLE="${{ inputs.lock_table }}"
           TABLE_NAME="${LOCK_TABLE:-${BUCKET}}"
           REGION="${{ inputs.aws_region }}"
+          CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
+          CLOUD_PROVIDER="${CLOUD_PROVIDER:-aws}"
 
-          echo "🌐 Initializing Terraform Backend..."
-          echo "   Bucket: $BUCKET"
-          echo "   Key:    $STATE_KEY"
-          echo "   Table:  $TABLE_NAME"
+          echo "🌐 Initializing Terraform Backend (Provider: $CLOUD_PROVIDER)..."
+
+          # ── MULTI-CLOUD: Route backend init by cloud_provider ──
+          case "$CLOUD_PROVIDER" in
+            gcp)
+              echo "☁️  GCP Backend: GCS bucket=$BUCKET, prefix=$STATE_KEY"
+              terraform init \
+                -upgrade \
+                -backend-config="bucket=${BUCKET}" \
+                -backend-config="prefix=${STATE_KEY}"
+              exit $?
+              ;;
+            azure)
+              echo "☁️  Azure Backend: Not yet configured"
+              echo "⚠️  Azure backend requires: storage_account_name, container_name, key"
+              exit 1
+              ;;
+            *)
+              # AWS S3 Backend (existing logic)
+              echo "   Bucket: $BUCKET"
+              echo "   Key:    $STATE_KEY"
+              echo "   Table:  $TABLE_NAME"
+              ;;
+          esac
 
           terraform init \
             -upgrade \
@@ -302,6 +345,7 @@ jobs:
           fi
 
       - name: Check & Release Stale Locks
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         run: |
           # Fixed lock check logic - properly parse Info JSON blob
           BUCKET="${{ inputs.bucket }}"

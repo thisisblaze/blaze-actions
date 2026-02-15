@@ -68,6 +68,18 @@ outputs:
   platform:
     description: "Cloud Platform"
     value: ${{ steps.config.outputs.platform }}
+  cloud_provider:
+    description: "Cloud Provider (aws/gcp/azure)"
+    value: ${{ steps.config.outputs.cloud_provider }}
+  cloud_region:
+    description: "Cloud Region (provider-specific)"
+    value: ${{ steps.config.outputs.cloud_region }}
+  infra_prefix:
+    description: "Infrastructure directory prefix (.github/{provider}/infra/live)"
+    value: ${{ steps.config.outputs.infra_prefix }}
+  gcp_project_id:
+    description: "GCP Project ID"
+    value: ${{ steps.config.outputs.gcp_project_id }}
   aws_region:
     description: "AWS Region"
     value: ${{ steps.config.outputs.aws_region }}
@@ -172,6 +184,31 @@ runs:
         GTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
 
+        # ── MULTI-CLOUD: Read CLOUD_PROVIDER and provider-specific config ──
+        CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
+        GCP_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_REGION // "europe-west1"')
+        GCP_PROJECT_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_PROJECT_ID // ""')
+        AZURE_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AZURE_REGION // "westeurope"')
+
+        # Compute provider-specific region and infra prefix
+        case "$CLOUD_PROVIDER" in
+          gcp)
+            CLOUD_REGION="$GCP_REGION"
+            INFRA_PREFIX=".github/gcp/infra/live"
+            ;;
+          azure)
+            CLOUD_REGION="$AZURE_REGION"
+            INFRA_PREFIX=".github/azure/infra/live"
+            ;;
+          *)
+            CLOUD_PROVIDER="aws"
+            CLOUD_REGION="$AWS_REGION"
+            INFRA_PREFIX=".github/aws/infra/live"
+            ;;
+        esac
+
+        echo "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"
+
         # Read Beta Flag (Env specific)
         IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments.${STAGE_KEY}.BETA // \"false\"")
 
@@ -186,6 +223,10 @@ runs:
         echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
         echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
         echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
+        echo "cloud_provider=$CLOUD_PROVIDER" >> $GITHUB_OUTPUT
+        echo "cloud_region=$CLOUD_REGION" >> $GITHUB_OUTPUT
+        echo "infra_prefix=$INFRA_PREFIX" >> $GITHUB_OUTPUT
+        echo "gcp_project_id=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
         echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
         echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
         echo "beta=$IS_BETA" >> $GITHUB_OUTPUT
@@ -278,43 +319,44 @@ runs:
             fi
         fi
 
+        # ── MULTI-CLOUD: Use $INFRA_PREFIX instead of hardcoded .github/aws/infra/live ──
         if [[ "$STACK" == "account-settings" ]]; then
-            TF_DIR=".github/aws/infra/live/account-settings"
+            TF_DIR="${INFRA_PREFIX}/account-settings"
             STATE_KEY="infra/${PROJECT_KEY}/account-settings.tfstate"
 
         elif [[ "$STACK" == "third-party-cloudflare" ]]; then
-            TF_DIR=".github/aws/infra/live/third-party/cloudflare"
+            TF_DIR="${INFRA_PREFIX}/third-party/cloudflare"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
             
         elif [[ "$STACK" == "third-party-acm" ]]; then
-            TF_DIR=".github/aws/infra/live/third-party/acm"
+            TF_DIR="${INFRA_PREFIX}/third-party/acm"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/acm.tfstate"
 
         elif [[ "$STACK" == "third-party-mongodb" ]]; then
-            TF_DIR=".github/aws/infra/live/third-party/mongodb"
+            TF_DIR="${INFRA_PREFIX}/third-party/mongodb"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/mongodb.tfstate"
 
         elif [[ "$STACK" == "third-party-elastic" ]]; then
-            TF_DIR=".github/aws/infra/live/third-party/elastic"
+            TF_DIR="${INFRA_PREFIX}/third-party/elastic"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
             
         elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
             if [[ "$STACK" == "network" ]]; then
-               TF_DIR=".github/aws/infra/live/${STAGE_KEY}-network"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
             else
-               TF_DIR=".github/aws/infra/live/${STAGE_KEY}-app"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
             fi
             
         else
             # DEV (V2 Architecture)
             if [[ "$STACK" == "network" ]]; then
-               TF_DIR=".github/aws/infra/live/dev-network"
+               TF_DIR="${INFRA_PREFIX}/dev-network"
                STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
             else
                # App stack
-               TF_DIR=".github/aws/infra/live/dev-app"
+               TF_DIR="${INFRA_PREFIX}/dev-app"
                if [[ -n "${{ inputs.branch_name }}" ]]; then
                   STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
                else
