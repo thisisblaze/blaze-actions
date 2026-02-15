@@ -8,12 +8,18 @@ on:
         type: choice
         options: ["dev", "stage", "prod"]
         required: true
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp"]
+        default: "aws"
+        required: true
       task:
         description: "Setup Task"
         type: choice
         options:
           - "🟢 Bootstrap All (Recommended)"
-          - "⚙️ Init Backend (S3 & DynamoDB)"
+          - "⚙️ Init Backend"
           - "🪞 Mirror Images Only"
         default: "🟢 Bootstrap All (Recommended)"
 
@@ -58,6 +64,10 @@ on:
         required: false
         type: string
         default: "🟢 Bootstrap All (Recommended)"
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
       images:
         required: false
         type: string
@@ -86,6 +96,10 @@ on:
       AWS_ROLE_ARN:
         required: false
       GH_PAT:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
         required: false
 
 permissions:
@@ -127,7 +141,15 @@ jobs:
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
-          terraform: "false" # Already set up above
+          terraform: "false"
+          skip-aws-setup: ${{ inputs.cloud_provider == 'gcp' && 'true' || 'false' }}
+
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       # CRITICAL: Configure git AFTER setup-blaze to override any AWS credential git config
       - name: Configure Git for Private Modules
@@ -136,7 +158,8 @@ jobs:
         run: |
           git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
 
-      - name: Apply Preinit
+      - name: Apply Preinit (AWS)
+        if: inputs.cloud_provider != 'gcp'
         env:
           TF_VAR_client_key: ${{ needs.calculate-config.outputs.client_key }}
           TF_VAR_project_key: ${{ needs.calculate-config.outputs.project_key }}
@@ -147,59 +170,64 @@ jobs:
         working-directory: .github/aws/infra/preinit
         run: |
           set -e
-
-          # 1. Construct Bucket Name
           BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
           TABLE_NAME="${BUCKET_NAME}-lock"
-
-          echo "🚀 Bootstrapping Infrastructure for ${{ needs.calculate-config.outputs.stage_key }}"
-
-          # DEBUG: Verify Git Config and Auth
-          echo "🔍 Debugging Git Configuration..."
-          git config --global --list
-
-          echo "🔍 Testing Git Clone Auth..."
-          if git clone --depth 1 "https://github.com/thisisblaze/blaze-terraform-infra-core.git" test_auth_check; then
-             echo "✅ Git Clone SUCCESS - Auth is working."
-             rm -rf test_auth_check
-          else
-             echo "❌ Git Clone FAILED - Auth is broken."
-             # We don't exit here, let terraform init try and fail for consistency
-          fi
-
-          # 2. Init (Backend is local for preinit)
+          echo "🚀 Bootstrapping AWS Backend for ${{ needs.calculate-config.outputs.stage_key }}"
           terraform init
-
-          # 3. Import Logic (Check if exists via AWS CLI - tolerated for discovery)
-          echo "🔍 Checking Backend Resources: $BUCKET_NAME"
-
           if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
             echo "✅ Bucket exists. Importing..."
             terraform import module.tfstate_backend.aws_s3_bucket.default "$BUCKET_NAME" 2>/dev/null || true
           fi
-
           if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
             echo "✅ Table exists. Importing..."
             terraform import module.tfstate_backend.aws_dynamodb_table.with_server_side_encryption "$TABLE_NAME" 2>/dev/null || true
           fi
-
-          # 4. Apply
           terraform apply -auto-approve
+
+      - name: Apply Preinit (GCP)
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          set -e
+          PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+          REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
+
+          echo "🚀 Bootstrapping GCP Backend for ${{ needs.calculate-config.outputs.stage_key }}"
+          echo "   Project: $PROJECT_ID"
+          echo "   Bucket:  $BUCKET_NAME"
+
+          # Create GCS bucket for TF state (if not exists)
+          if ! gcloud storage buckets describe "gs://$BUCKET_NAME" --project="$PROJECT_ID" 2>/dev/null; then
+            echo "🆕 Creating GCS bucket: $BUCKET_NAME"
+            gcloud storage buckets create "gs://$BUCKET_NAME" \
+              --project="$PROJECT_ID" \
+              --location="$REGION" \
+              --uniform-bucket-level-access \
+              --public-access-prevention
+            # Enable versioning for state protection
+            gcloud storage buckets update "gs://$BUCKET_NAME" --versioning
+          else
+            echo "✅ GCS bucket already exists: $BUCKET_NAME"
+          fi
 
       - name: 📋 Backend Initialization Summary
         if: always()
         run: |
           STAGE_KEY=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
           BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${STAGE_KEY}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
-          TABLE_NAME="${BUCKET_NAME}-lock"
 
           echo "## 🎉 Backend Initialization Complete" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Resource | Name | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|----------|------|--------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Environment** | \`${{ inputs.environment }}\` | ✅ Ready |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **S3 Bucket** | \`$BUCKET_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Lock Table** | \`$TABLE_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ inputs.cloud_provider }}" == "gcp" ]]; then
+            echo "| **GCS Bucket** | \`$BUCKET_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            TABLE_NAME="${BUCKET_NAME}-lock"
+            echo "| **S3 Bucket** | \`$BUCKET_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| **Lock Table** | \`$TABLE_NAME\` | ✅ Configured |" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # -----------------------------------------------------------------------------------------
   # JOB 2: MIRROR IMAGES TO ECR
@@ -218,31 +246,37 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider != 'gcp'
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
 
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Login to Amazon ECR
+        if: inputs.cloud_provider != 'gcp'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
       - name: Ensure ECR Repositories Exist
+        if: inputs.cloud_provider != 'gcp'
         env:
           AWS_REGION: ${{ needs.calculate-config.outputs.aws_region }}
           REPO_PREFIX: "${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
         run: |
-          # Parse input images
           IMAGES="${{ inputs.images }}"
           if [[ "$IMAGES" == "all" ]]; then
             IMAGES="mongo,elasticsearch,kibana,tunnel"
           fi
-
           IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
-
           for IMAGE in "${IMAGE_ARRAY[@]}"; do
             REPO_NAME="${REPO_PREFIX}/${IMAGE// /}"
-            
             echo "🔍 Checking ECR: $REPO_NAME"
             if ! aws ecr describe-repositories --repository-names "$REPO_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
               echo "🆕 Creating ECR: $REPO_NAME"
@@ -255,68 +289,81 @@ jobs:
             fi
           done
 
-      - name: Mirror Images
+      - name: Ensure Artifact Registry Repos Exist (GCP)
+        if: inputs.cloud_provider == 'gcp'
         run: |
-          set -e
+          PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+          REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          REPO_NAME="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}"
 
-          # Registry from login-ecr step
-          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
-          REPO_PREFIX="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
-
-          # Parse input images
-          IMAGES="${{ inputs.images }}"
-          if [[ "$IMAGES" == "all" ]]; then
-            IMAGES="mongo,elasticsearch,kibana,tunnel"
+          echo "🔍 Ensuring Artifact Registry repo: $REPO_NAME"
+          if ! gcloud artifacts repositories describe "$REPO_NAME" \
+            --project="$PROJECT_ID" --location="$REGION" 2>/dev/null; then
+            echo "🆕 Creating Artifact Registry repo: $REPO_NAME"
+            gcloud artifacts repositories create "$REPO_NAME" \
+              --project="$PROJECT_ID" \
+              --location="$REGION" \
+              --repository-format=docker
+          else
+            echo "✅ Artifact Registry repo already exists"
           fi
 
+      - name: Mirror Images (AWS ECR)
+        if: inputs.cloud_provider != 'gcp'
+        run: |
+          set -e
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          REPO_PREFIX="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}-web/${{ needs.calculate-config.outputs.project_key }}"
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then IMAGES="mongo,elasticsearch,kibana,tunnel"; fi
           IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
-
           for IMAGE in "${IMAGE_ARRAY[@]}"; do
-            IMAGE=$(echo "$IMAGE" | xargs) # Trim whitespace
-            
-            # Construct Target URI (Registry + Repo Name)
+            IMAGE=$(echo "$IMAGE" | xargs)
             TARGET_BASE="${REGISTRY}/${REPO_PREFIX}"
-            
             case "$IMAGE" in
-              mongo)
-                echo "🪞 Mirroring MongoDB..."
-                SOURCE_IMG="mongo:${{ inputs.mongo_tag }}"
-                ECR_IMG="${TARGET_BASE}/mongo:${{ inputs.mongo_tag }}"
-                ;;
-              elasticsearch)
-                echo "🪞 Mirroring Elasticsearch..."
-                SOURCE_IMG="docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.elasticsearch_tag }}"
-                ECR_IMG="${TARGET_BASE}/elasticsearch:${{ inputs.elasticsearch_tag }}"
-                ;;
-              kibana)
-                echo "🪞 Mirroring Kibana..."
-                SOURCE_IMG="docker.elastic.co/kibana/kibana:${{ inputs.kibana_tag }}"
-                ECR_IMG="${TARGET_BASE}/kibana:${{ inputs.kibana_tag }}"
-                ;;
-              tunnel)
-                echo "🪞 Mirroring Cloudflare Tunnel..."
-                SOURCE_IMG="cloudflare/cloudflared:${{ inputs.tunnel_tag }}"
-                ECR_IMG="${TARGET_BASE}/tunnel:${{ inputs.tunnel_tag }}"
-                ;;
-              *)
-                echo "⚠️ Unknown image: $IMAGE (skipping)"
-                continue
-                ;;
+              mongo) SOURCE_IMG="mongo:${{ inputs.mongo_tag }}"; ECR_IMG="${TARGET_BASE}/mongo:${{ inputs.mongo_tag }}";;
+              elasticsearch) SOURCE_IMG="docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.elasticsearch_tag }}"; ECR_IMG="${TARGET_BASE}/elasticsearch:${{ inputs.elasticsearch_tag }}";;
+              kibana) SOURCE_IMG="docker.elastic.co/kibana/kibana:${{ inputs.kibana_tag }}"; ECR_IMG="${TARGET_BASE}/kibana:${{ inputs.kibana_tag }}";;
+              tunnel) SOURCE_IMG="cloudflare/cloudflared:${{ inputs.tunnel_tag }}"; ECR_IMG="${TARGET_BASE}/tunnel:${{ inputs.tunnel_tag }}";;
+              *) echo "⚠️ Unknown: $IMAGE"; continue;;
             esac
-            
-            echo "   Source: $SOURCE_IMG"
-            echo "   Target: $ECR_IMG"
-            
-            # Pull from public registry
+            echo "🪞 Mirroring $IMAGE: $SOURCE_IMG → $ECR_IMG"
             docker pull "$SOURCE_IMG"
-            
-            # Tag for ECR
             docker tag "$SOURCE_IMG" "$ECR_IMG"
-            
-            # Push to ECR
             docker push "$ECR_IMG"
-            
-            echo "   ✅ Successfully mirrored $IMAGE"
+            echo "   ✅ $IMAGE mirrored"
+          done
+
+      - name: Mirror Images (GCP Artifact Registry)
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          set -e
+          PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+          REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          REPO_NAME="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}"
+          REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}"
+
+          # Auth docker to Artifact Registry
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+          IMAGES="${{ inputs.images }}"
+          if [[ "$IMAGES" == "all" ]]; then IMAGES="mongo,elasticsearch,kibana,tunnel"; fi
+          IFS=',' read -ra IMAGE_ARRAY <<< "$IMAGES"
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+            IMAGE=$(echo "$IMAGE" | xargs)
+            case "$IMAGE" in
+              mongo) SOURCE_IMG="mongo:${{ inputs.mongo_tag }}"; TAG="${{ inputs.mongo_tag }}";;
+              elasticsearch) SOURCE_IMG="docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.elasticsearch_tag }}"; TAG="${{ inputs.elasticsearch_tag }}";;
+              kibana) SOURCE_IMG="docker.elastic.co/kibana/kibana:${{ inputs.kibana_tag }}"; TAG="${{ inputs.kibana_tag }}";;
+              tunnel) SOURCE_IMG="cloudflare/cloudflared:${{ inputs.tunnel_tag }}"; TAG="${{ inputs.tunnel_tag }}";;
+              *) echo "⚠️ Unknown: $IMAGE"; continue;;
+            esac
+            AR_IMG="${REGISTRY}/${IMAGE}:${TAG}"
+            echo "🪞 Mirroring $IMAGE: $SOURCE_IMG → $AR_IMG"
+            docker pull "$SOURCE_IMG"
+            docker tag "$SOURCE_IMG" "$AR_IMG"
+            docker push "$AR_IMG"
+            echo "   ✅ $IMAGE mirrored"
           done
 
       - name: 📋 Image Mirroring Summary
