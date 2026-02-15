@@ -11,6 +11,12 @@ on:
         options: ["DEV", "STAGE", "PROD"]
         default: "DEV"
         required: true
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp"]
+        default: "aws"
+        required: true
 
   workflow_call:
     inputs:
@@ -18,10 +24,18 @@ on:
         type: string
         default: "DEV"
         required: false
+      cloud_provider:
+        type: string
+        default: "aws"
+        required: false
     secrets:
       AWS_ROLE_ARN:
         required: false
       GH_PAT:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
         required: false
       CLOUDFLARE_API_TOKEN:
         required: false
@@ -152,6 +166,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -190,6 +206,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -217,10 +235,10 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: "config"
-          scan-ref: ".github/aws/infra"
+          scan-ref: "."
           trivy-config: .trivy.yaml
           severity: "CRITICAL,HIGH"
-          format: "json" # JSON for parsing
+          format: "json"
           output: "trivy-results.json"
           exit-code: "0"
 
@@ -237,8 +255,13 @@ jobs:
           fi
           echo "vuln_count=${VULN_COUNT}" >> $GITHUB_OUTPUT
 
-          # Also Display Table for Logs
-          trivy config .github/aws/infra --severity CRITICAL,HIGH --format table || true
+          # Also Display Table for Logs - scan both AWS and GCP infra dirs
+          for dir in .github/aws/infra .github/gcp/infra; do
+            if [ -d "$dir" ]; then
+              echo "🔍 Scanning: $dir"
+              trivy config "$dir" --severity CRITICAL,HIGH --format table || true
+            fi
+          done
 
   summary:
     name: 📊 Health Report
