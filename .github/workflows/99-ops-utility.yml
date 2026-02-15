@@ -166,6 +166,11 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
 
 permissions:
   id-token: write
@@ -1035,7 +1040,7 @@ jobs:
   nuke-stop-services:
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment'
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: ./.github/workflows/reusable-ecs-service-management.yml
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -1050,7 +1055,7 @@ jobs:
   nuke-pre-cleanup:
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
-    if: inputs.action == 'nuke-environment'
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -1062,14 +1067,74 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       force_delete: true
 
+  nuke-stop-services-gcp:
+    name: 🛑 Nuke 1c/5 - Stop Cloud Run Services
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'gcp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete Cloud Run Services
+        run: |
+          PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+          REGION="${{ needs.configuration.outputs.cloud_region }}"
+          PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "🗑️ Deleting Cloud Run services matching: ${PREFIX}-*"
+          echo "   Project: $PROJECT"
+          echo "   Region: $REGION"
+
+          SERVICES=$(gcloud run services list \
+            --project="$PROJECT" --region="$REGION" \
+            --filter="metadata.name~^${PREFIX}" \
+            --format="value(metadata.name)" 2>/dev/null || true)
+
+          if [[ -z "$SERVICES" ]]; then
+            echo "ℹ️  No Cloud Run services found matching prefix."
+          else
+            for SVC in $SERVICES; do
+              echo "   🗑️ Deleting: $SVC"
+              gcloud run services delete "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --quiet || echo "   ⚠️ Failed to delete $SVC"
+            done
+            echo "✅ Cloud Run cleanup complete."
+          fi
+
+          # Also clean up Artifact Registry images
+          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web"
+          echo ""
+          echo "🗑️ Checking Artifact Registry repo: $REPO"
+          if gcloud artifacts repositories describe "$REPO" \
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
+            echo "   Deleting repository..."
+            gcloud artifacts repositories delete "$REPO" \
+              --project="$PROJECT" --location="$REGION" \
+              --quiet || echo "   ⚠️ Failed to delete repo"
+            echo "✅ Artifact Registry cleanup complete."
+          else
+            echo "ℹ️  Artifact Registry repo not found — skipping."
+          fi
+
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
-    needs: [configuration, nuke-pre-cleanup]
+    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp]
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1107,7 +1172,7 @@ jobs:
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-destroy-app]
-    if: inputs.action == 'nuke-environment'
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -1185,6 +1250,8 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1245,6 +1312,8 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1385,6 +1454,7 @@ jobs:
         manage-environment,
         destroy-resources,
         sync-cloudflare-config,
+        nuke-stop-services-gcp,
         nuke-destroy-network,
         nuke-destroy-pages,
         nuke-cleanup-dns,
