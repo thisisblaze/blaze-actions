@@ -184,6 +184,13 @@ on:
       ACM_CERTIFICATE_ARN:
         required: false
         description: "ACM Certificate ARN (for CloudFront/ALB)"
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+        description: "GCP Workload Identity Provider"
+      GCP_SERVICE_ACCOUNT:
+        required: false
+        description: "GCP Service Account for WIF"
 
 permissions:
   id-token: write
