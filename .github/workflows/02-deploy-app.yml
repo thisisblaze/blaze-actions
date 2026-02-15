@@ -287,17 +287,28 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
-      - name: Check Infrastructure Existence
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Check AWS Infrastructure
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api
         run: |
-          echo "🔍 Checking Critical Infrastructure..."
+          echo "🔍 Checking Critical AWS Infrastructure..."
+          echo "Cluster: $CLUSTER_NAME"
+          echo "ECR Repo: $REPO_NAME"
           echo "-------------------------------------"
 
           # 1. Check ECS Cluster
@@ -323,6 +334,29 @@ jobs:
           echo "-------------------------------------"
           echo "✅ All Systems Go. Proceeding to Build/Deploy."
 
+      - name: Check GCP Infrastructure
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          echo "🔍 Checking Critical GCP Infrastructure..."
+          PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+          REGION="${{ needs.configuration.outputs.cloud_region }}"
+          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web"
+
+          echo "Project: $PROJECT"
+          echo "Region: $REGION"
+          echo "Artifact Registry Repo: $REPO"
+
+          # Check Artifact Registry
+          if gcloud artifacts repositories describe "$REPO" \
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
+            echo "✅ Artifact Registry repository found."
+          else
+            echo "::warning::Artifact Registry repository '$REPO' not found — will be created on first push."
+          fi
+
+          echo "-------------------------------------"
+          echo "✅ GCP Pre-Flight Complete."
+
   # --- BUILD JOBS ---
 
   build-api:
@@ -334,7 +368,7 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/api/Dockerfile.api
       context: .
-      image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/api
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -357,7 +391,7 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
-      image_name: ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/frontend
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
@@ -465,7 +499,7 @@ jobs:
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
-    if: ${{ (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
@@ -503,10 +537,40 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
+  deploy-api-gcp:
+    name: Deploy API (Cloud Run)
+    needs: [configuration, build-api, pre-flight-check]
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    with:
+      service_name: "api"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      port: 3000
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-frontend:
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-ecs-deploy.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
@@ -543,6 +607,32 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
+  deploy-frontend-gcp:
+    name: Deploy Frontend (Cloud Run)
+    needs: [configuration, build-frontend, pre-flight-check]
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    with:
+      service_name: "frontend"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      port: 3000
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-admin-ecs:
     name: Deploy Admin (ECS)
     needs: [configuration, package-admin-docker, pre-flight-check]
@@ -676,7 +766,9 @@ jobs:
       [
         configuration,
         deploy-api,
+        deploy-api-gcp,
         deploy-frontend,
+        deploy-frontend-gcp,
         deploy-admin-ecs,
         deploy-admin-pages,
         deploy-tunnel,
@@ -693,8 +785,9 @@ jobs:
             echo "## 🌍 Context"
             echo "| Metric | Value |"
             echo "| :--- | :--- |"
+            echo "| **Provider** | \`${{ inputs.cloud_provider || 'aws' }}\` |"
             echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |"
-            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |"
+            echo "| **Region** | \`${{ needs.configuration.outputs.cloud_region || needs.configuration.outputs.aws_region }}\` |"
             echo "| **Branch** | \`${{ inputs.branch_name || 'main' }}\` |"
             echo "| **Project** | \`${{ needs.configuration.outputs.project_key }}\` |"
             echo "| **Client** | \`${{ needs.configuration.outputs.client_key }}\` |"
@@ -710,18 +803,30 @@ jobs:
               if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
             }
 
-            echo "| **API** | $(get_icon "${{ needs.deploy-api.result }}") | ECS Fargate |"
-            echo "| **Frontend** | $(get_icon "${{ needs.deploy-frontend.result }}") | ECS Fargate |"
+            # AWS services
+            echo "| **API (ECS)** | $(get_icon "${{ needs.deploy-api.result }}") | ECS Fargate |"
+            echo "| **Frontend (ECS)** | $(get_icon "${{ needs.deploy-frontend.result }}") | ECS Fargate |"
             echo "| **Admin (ECS)** | $(get_icon "${{ needs.deploy-admin-ecs.result }}") | ECS Fargate |"
             echo "| **Admin (Pages)** | $(get_icon "${{ needs.deploy-admin-pages.result }}") | Cloudflare Pages |"
             echo "| **Tunnel** | $(get_icon "${{ needs.deploy-tunnel.result }}") | Cloudflare Sidecar |"
+            # GCP services
+            echo "| **API (Cloud Run)** | $(get_icon "${{ needs.deploy-api-gcp.result }}") | Cloud Run |"
+            echo "| **Frontend (Cloud Run)** | $(get_icon "${{ needs.deploy-frontend-gcp.result }}") | Cloud Run |"
 
             echo ""
             echo "## 🔗 Quick Links"
-            REGION="${{ needs.configuration.outputs.aws_region }}"
-             CLUSTER=\"${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-cluster\"
+            PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
+            REGION="${{ needs.configuration.outputs.cloud_region || needs.configuration.outputs.aws_region }}"
+            CLUSTER="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-cluster"
 
-            echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})"
-            echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)"
-            echo "- [Load Balancer](https://${REGION}.console.aws.amazon.com/ec2/home?region=${REGION}#LoadBalancers:)"
+            if [[ "$PROVIDER" == "gcp" ]]; then
+              GCP_PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+              echo "- [Cloud Run Console](https://console.cloud.google.com/run?project=${GCP_PROJECT})"
+              echo "- [Cloud Logging](https://console.cloud.google.com/logs?project=${GCP_PROJECT})"
+              echo "- [Artifact Registry](https://console.cloud.google.com/artifacts?project=${GCP_PROJECT})"
+            else
+              echo "- [AWS ECS Console](https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION})"
+              echo "- [CloudWatch Logs](https://${REGION}.console.aws.amazon.com/cloudwatch/home?region=${REGION}#logsV2:log-groups)"
+              echo "- [Load Balancer](https://${REGION}.console.aws.amazon.com/ec2/home?region=${REGION}#LoadBalancers:)"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
