@@ -1,0 +1,173 @@
+name: "Reusable Cloud Run Deploy"
+
+on:
+    workflow_call:
+        inputs:
+            service_name:
+                required: true
+                type: string
+                description: "Service to deploy (e.g., api, frontend)"
+            environment:
+                required: true
+                type: string
+            stage_key:
+                required: true
+                type: string
+            branch_name:
+                required: false
+                type: string
+            image_tag:
+                required: true
+                type: string
+            project_key:
+                required: true
+                type: string
+            client_key:
+                required: true
+                type: string
+            domain_root:
+                required: true
+                type: string
+            gcp_project_id:
+                required: true
+                type: string
+            gcp_region:
+                required: true
+                type: string
+            namespace:
+                required: false
+                type: string
+                default: "blaze"
+            # Full Artifact Registry image URI (without tag)
+            image_uri:
+                required: true
+                type: string
+                description: "Full Artifact Registry URI (e.g., europe-west1-docker.pkg.dev/project/repo/image)"
+            # Cloud Run config
+            cpu:
+                required: false
+                type: string
+                default: "1"
+            memory:
+                required: false
+                type: string
+                default: "512Mi"
+            min_instances:
+                required: false
+                type: number
+                default: 0
+            max_instances:
+                required: false
+                type: number
+                default: 10
+            port:
+                required: false
+                type: number
+                default: 3000
+            # Application config
+            s3_bucket:
+                required: false
+                type: string
+            elasticsearch_endpoint:
+                required: false
+                type: string
+            dfp_network_id:
+                required: false
+                type: string
+            gtm_id:
+                required: false
+                type: string
+
+        secrets:
+            GCP_WORKLOAD_IDENTITY_PROVIDER:
+                required: true
+            GCP_SERVICE_ACCOUNT:
+                required: true
+            # Application secrets
+            MONGO_INITDB_ROOT_PASSWORD:
+                required: false
+            BLAZE_AUTH_JWT_PRIVATE_KEY:
+                required: false
+            BLAZE_AUTH_ADMIN_EMAIL:
+                required: false
+            BLAZE_AUTH_ADMIN_PASSWORD:
+                required: false
+            BLAZE_CONNECTION_STRING:
+                required: false
+            BLAZE_ELASTICSEARCH_USERNAME:
+                required: false
+            BLAZE_ELASTICSEARCH_PASSWORD:
+                required: false
+            BLAZE_FILES_S3_ACCESS_KEY:
+                required: false
+            BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+                required: false
+            BLAZE_GRAPHQL_CACHE_SETTINGS:
+                required: false
+            BLAZE_CLIENT_HEADER:
+                required: false
+
+jobs:
+    deploy:
+        name: Deploy ${{ inputs.service_name }} (Cloud Run)
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        environment: ${{ inputs.environment }}
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+            - name: Authenticate to GCP
+              uses: google-github-actions/auth@v2
+              with:
+                  workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+                  service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v2
+
+            - name: Compute Service Name
+              id: svc
+              run: |
+                  # Cloud Run service name: {namespace}-{client}-{project}-{stage}-{service}
+                  # e.g., blaze-b9-thisisblaze-dev-api
+                  BRANCH_TAG="${{ inputs.branch_name }}"
+                  if [[ -n "$BRANCH_TAG" ]]; then
+                    SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${BRANCH_TAG}-${{ inputs.service_name }}"
+                  else
+                    SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
+                  fi
+                  echo "service_name=$SVC_NAME" >> "$GITHUB_OUTPUT"
+                  echo "☁️ Cloud Run Service: $SVC_NAME"
+
+            - name: Deploy to Cloud Run
+              id: deploy
+              uses: google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: ${{ steps.svc.outputs.service_name }}
+                  image: ${{ inputs.image_uri }}:${{ inputs.image_tag }}
+                  region: ${{ inputs.gcp_region }}
+                  project_id: ${{ inputs.gcp_project_id }}
+                  flags: |
+                      --cpu=${{ inputs.cpu }}
+                      --memory=${{ inputs.memory }}
+                      --min-instances=${{ inputs.min_instances }}
+                      --max-instances=${{ inputs.max_instances }}
+                      --port=${{ inputs.port }}
+                      --allow-unauthenticated
+                  env_vars: |
+                      NODE_ENV=production
+                      BLAZE_PROJECT_KEY=${{ inputs.project_key }}
+                      BLAZE_STAGE=${{ inputs.stage_key }}
+                      BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
+                  secrets: |
+                      BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}:latest
+                      BLAZE_CONNECTION_STRING=${{ secrets.BLAZE_CONNECTION_STRING }}:latest
+
+            - name: "📋 Deploy Summary"
+              run: |
+                  echo "### ✅ Cloud Run Deploy: ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Service**: \`${{ steps.svc.outputs.service_name }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Image**: \`${{ inputs.image_uri }}:${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Region**: \`${{ inputs.gcp_region }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "- **URL**: \`${{ steps.deploy.outputs.url }}\`" >> $GITHUB_STEP_SUMMARY
