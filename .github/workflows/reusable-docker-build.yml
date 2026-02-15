@@ -36,15 +36,28 @@ on:
         type: string
       aws_region:
         description: "AWS Region"
-        required: true
+        required: false
         type: string
-    # Legacy input kept for backwards compat but ignored — use image_name + image_tag instead
-    # tags: (removed — constructed from image_name + image_tag + arch suffix)
+        default: ""
+      gcp_project_id:
+        description: "GCP Project ID (for Artifact Registry)"
+        required: false
+        type: string
+        default: ""
+      gcp_region:
+        description: "GCP Region (for Artifact Registry)"
+        required: false
+        type: string
+        default: "europe-west1"
 
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
       NPM_TOKEN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
         required: false
 
     outputs:
@@ -85,6 +98,18 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      # ── GCP: Workload Identity Federation + Artifact Registry ──
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Login to GCP Artifact Registry
+        if: inputs.cloud_provider == 'gcp'
+        run: gcloud auth configure-docker ${{ inputs.gcp_region }}-docker.pkg.dev --quiet
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -146,6 +171,18 @@ jobs:
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
+      # ── GCP: Workload Identity Federation + Artifact Registry ──
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Login to GCP Artifact Registry
+        if: inputs.cloud_provider == 'gcp'
+        run: gcloud auth configure-docker ${{ inputs.gcp_region }}-docker.pkg.dev --quiet
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -203,6 +240,18 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      # ── GCP: Workload Identity Federation + Artifact Registry ──
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Login to GCP Artifact Registry
+        if: inputs.cloud_provider == 'gcp'
+        run: gcloud auth configure-docker ${{ inputs.gcp_region }}-docker.pkg.dev --quiet
 
       - name: Create and Push Multi-Arch Manifest
         run: |
