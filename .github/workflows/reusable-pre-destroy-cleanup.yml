@@ -146,6 +146,44 @@ jobs:
                  done
                fi
 
+         - name: Cleanup CloudWatch Logs
+           if: env.CLIENT_KEY != ''
+           run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
+              REGION="${{ inputs.aws_region }}"
+
+              echo "🧹 CloudWatch Log Cleanup..."
+              
+              # Define patterns
+              # 1. ECS Service Logs: /ecs/<namespace>-<client>-<project>-<stage>-*
+              # 2. App Lambda Logs:  /aws/lambda/<namespace>-<client>-<project>-<stage>-*
+              
+              PREFIXES=(
+                "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+              )
+
+              # Edge logs are in us-east-1, handled separately if needed, but often not stage-specific in the same way 
+              # or require us-east-1 provider switch. For now focus on region-specific logs.
+
+              for PREFIX in "${PREFIXES[@]}"; do
+                 echo "   🔍 Searching for log groups starting with '$PREFIX'..."
+                 GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION" --query "logGroups[].logGroupName" --output text)
+                 
+                 if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
+                    echo "      ✅ No log groups found."
+                    continue
+                 fi
+
+                 for GROUP in $GROUPS; do
+                    echo "      🗑️ Deleting $GROUP..."
+                    aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION" || echo "         ⚠️ Failed to delete"
+                 done
+              done
+
          - name: Cleanup Service Discovery
            if: env.PROJECT_KEY != ''
            run: |
