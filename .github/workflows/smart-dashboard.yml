@@ -21,18 +21,22 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Load AWS Region from Config
+      - name: Load Region from Config
         id: load-config
         run: |
-          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
-          if [[ -z "$AWS_REGION" ]]; then
-            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
-            exit 1
+          CLOUD_PROVIDER=$(jq -r '.common.CLOUD_PROVIDER // "aws"' vars/blaze-env.json)
+          if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+            REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+            PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+            echo "GCP_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+          else
+            REGION=$(jq -r '.common.AWS_REGION // "eu-west-1"' vars/blaze-env.json)
           fi
-          echo "AWS_REGION=$AWS_REGION" >> "$GITHUB_ENV"
-          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+          echo "CLOUD_PROVIDER=$CLOUD_PROVIDER" >> "$GITHUB_ENV"
+          echo "AWS_REGION=$REGION" >> "$GITHUB_ENV"
+          echo "✅ Cloud: $CLOUD_PROVIDER | Region: $REGION"
 
       # --- 1. SECURITY SCAN (Trivy) ---
       # Scans config before Terraform runs to fail fast on risks (but outputting to file for dashboard)
@@ -62,14 +66,22 @@ jobs:
 
       # --- 3. TERRAFORM & VISUALIZATION ---
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        if: env.CLOUD_PROVIDER == 'aws'
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3.1.2
+      - name: Authenticate to GCP
+        if: env.CLOUD_PROVIDER == 'gcp'
+        uses: google-github-actions/auth@v2
         with:
-          terraform_version: "1.5.0" # Match project version if known, or latest 1.x
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: "1.5.0"
 
       - name: Terraform Init & Plan
         id: plan
@@ -185,7 +197,11 @@ jobs:
 
             # --- Section 5: Quick Links ---
             echo "### 🔗 Reference"
-            echo "- [AWS Console](https://console.aws.amazon.com/console/home?region=$AWS_REGION)"
+            if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+              echo "- [GCP Console](https://console.cloud.google.com/home/dashboard?project=$GCP_PROJECT_ID)"
+            else
+              echo "- [AWS Console](https://console.aws.amazon.com/console/home?region=$AWS_REGION)"
+            fi
             echo "- [Job Logs]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
 
           } >> $GITHUB_STEP_SUMMARY
