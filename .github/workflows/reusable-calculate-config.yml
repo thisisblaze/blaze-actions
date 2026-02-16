@@ -184,6 +184,12 @@ jobs:
               BUCKET="${GCP_STATE_BUCKET}"
               LOCK_TABLE=""  # GCS uses built-in locking
               ;;
+            azure)
+              # Azure Backend Format for reusable-terraform: resource_group/storage_account/container
+              # Standard Pattern: rg-terraform-state / stterraformstate{client} / tfstate
+              BUCKET="rg-terraform-state/stterraformstate${CLIENT_KEY}/tfstate"
+              LOCK_TABLE="" # Azure Blob supports leasing (locking) natively
+              ;;
             *)
               BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
               LOCK_TABLE="${BUCKET}-lock"

@@ -85,7 +85,7 @@
 
 4. **Infrastructure as Code**
    - Everything in version control
-   - Terraform for AWS resources
+   - Terraform for multi-cloud resources (AWS, GCP, Azure)
    - Reproducible deployments
    - Audit trail for all changes
 
@@ -117,7 +117,9 @@
 │  ┌──────────────────────────────────────────────┐  │
 │  │    2. blaze-terraform-infra-core (MODULES)   │  │
 │  │  • Terraform infrastructure modules           │  │
-│  │  • VPC, ECS, ALB, CloudFront, etc.           │  │
+│  │  • VPC, ECS, ALB, CloudFront, etc. (AWS)    │  │
+│  │  • Cloud Run, Cloud SQL (GCP)                │  │
+│  │  • Container Apps, SQL Database (Azure)       │  │
 │  │  • Tested, production-ready                  │  │
 │  │  • Version-pinned                            │  │
 │  └──────────────────────────────────────────────┘  │
@@ -425,6 +427,8 @@ clientA-acme-webapp-prod-cluster        (custom)
 **Cloud Providers:**
 
 - **AWS** - Primary infrastructure (ECS, VPC, ALB, S3, CloudFront)
+- **GCP** - Cloud Run, Cloud SQL, Memorystore Redis
+- **Azure** - Container Apps, SQL Database
 - **Cloudflare** - Pages hosting, DNS, Tunnels
 - **MongoDB Atlas** - Managed database
 - **Elastic Cloud** - Search and analytics

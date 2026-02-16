@@ -38,10 +38,16 @@ blaze-template-deploy/
 │   └── thisisblaze/
 │       └── blaze-env.json              # Project-specific
 ├── .github/aws/infra/live/
-│   ├── dev-network/main.tf             # DEV network stack
-│   ├── dev-app/main.tf                 # DEV app stack
-│   ├── stage-network/main.tf           # STAGE network
-│   └── stage-app/main.tf               # STAGE app
+│   ├── dev-network/main.tf             # DEV AWS network stack
+│   ├── dev-app/main.tf                 # DEV AWS app stack
+│   ├── stage-network/main.tf           # STAGE AWS network
+│   └── stage-app/main.tf               # STAGE AWS app
+├── .github/gcp/infra/live/
+│   ├── dev-network/main.tf             # DEV GCP network stack
+│   └── dev-app/main.tf                 # DEV GCP app stack
+├── .github/azure/infra/live/
+│   ├── dev-network/main.tf             # DEV Azure network stack
+│   └── dev-app/main.tf                 # DEV Azure app stack
 ├── packages/                            # Application code
 ├── docs/                                # Documentation
 └── CLIENT_ONBOARDING.md                 # Setup guide

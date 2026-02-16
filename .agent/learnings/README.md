@@ -61,7 +61,9 @@ Each learning includes:
 │   └── 2026-01-13-permission-errors-sudo.md
 ├── github-actions/          # GitHub Actions learnings
 ├── cloudfront/              # CloudFront learnings
-├── aws/                     # General AWS learnings
+├── aws/                     # AWS-specific learnings
+├── gcp/                     # GCP-specific learnings
+├── azure/                   # Azure-specific learnings
 └── general/                 # Uncategorized learnings
 ```
 
