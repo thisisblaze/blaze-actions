@@ -30,6 +30,10 @@ inputs:
     description: "Target Project (e.g. thisisblaze)"
     required: false
     default: "thisisblaze" # Default to existing for migration
+  cloud_provider:
+    description: "Cloud Provider override (aws/gcp/azure). If set, overrides CLOUD_PROVIDER from config."
+    required: false
+    default: ""
 
 outputs:
   env_val:
@@ -185,17 +189,28 @@ runs:
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
 
         # ── MULTI-CLOUD: Read CLOUD_PROVIDER and provider-specific config ──
-        CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
+        CONFIG_CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
+        INPUT_CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
+        # Input overrides config when explicitly set
+        if [[ -n "$INPUT_CLOUD_PROVIDER" && "$INPUT_CLOUD_PROVIDER" != "" ]]; then
+          CLOUD_PROVIDER="$INPUT_CLOUD_PROVIDER"
+        else
+          CLOUD_PROVIDER="$CONFIG_CLOUD_PROVIDER"
+        fi
         GCP_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_REGION // "europe-west1"')
         GCP_PROJECT_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_PROJECT_ID // ""')
         GCP_STATE_BUCKET=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_STATE_BUCKET // ""')
         AZURE_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AZURE_REGION // "westeurope"')
 
-        # Compute provider-specific region and infra prefix
+        # Compute provider-specific region, infra prefix, and state bucket
         case "$CLOUD_PROVIDER" in
           gcp)
             CLOUD_REGION="$GCP_REGION"
             INFRA_PREFIX=".github/gcp/infra/live"
+            # Override bucket for GCS backend if configured
+            if [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
+              BUCKET="$GCP_STATE_BUCKET"
+            fi
             ;;
           azure)
             CLOUD_REGION="$AZURE_REGION"
@@ -273,6 +288,9 @@ runs:
           "4. Application (API/Frontend) - All Environments"|"app")
             STACK="app"
             ;;
+          "data")
+            STACK="data"
+            ;;
           "5. Account Settings (ENI Trunking, Container Insights)"|"account-settings")
             STACK="account-settings"
             ;;
@@ -289,7 +307,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -345,6 +363,9 @@ runs:
             if [[ "$STACK" == "network" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
+            elif [[ "$STACK" == "data" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"
             else
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
@@ -355,6 +376,9 @@ runs:
             if [[ "$STACK" == "network" ]]; then
                TF_DIR="${INFRA_PREFIX}/dev-network"
                STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+            elif [[ "$STACK" == "data" ]]; then
+               TF_DIR="${INFRA_PREFIX}/dev-data"
+               STATE_KEY="infra/${PROJECT_KEY}/dev/data.tfstate"
             else
                # App stack
                TF_DIR="${INFRA_PREFIX}/dev-app"

@@ -23,6 +23,7 @@ on:
         type: choice
         options:
           - "network"
+          - "data"
           - "acm"
           - "tunnel"
           - "app"
@@ -224,22 +225,46 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Load AWS Region from Config
+      - name: Load Region from Config
         id: load-region
         run: |
+          CLOUD_PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
           AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
-          if [[ -z "$AWS_REGION" || "$AWS_REGION" == "null" ]]; then
-            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
-            exit 1
-          fi
+          GCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          GCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+
+          case "$CLOUD_PROVIDER" in
+            gcp)
+              CLOUD_REGION="$GCP_REGION"
+              ;;
+            *)
+              CLOUD_REGION="$AWS_REGION"
+              ;;
+          esac
+
           echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
-          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+          echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
+          echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
+          echo "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"
+          echo "☁️ Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Calculate Configuration
         id: config
@@ -254,8 +279,10 @@ jobs:
           deploy_services: "false"
           event_name: "workflow_dispatch"
           cluster_tier: ${{ inputs.cluster_tier }}
+          cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
 
       - name: Pre Apply Script (Import Zombies)
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }} # Required for gh api
         run: |
@@ -293,6 +320,9 @@ jobs:
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
@@ -403,7 +433,8 @@ jobs:
           echo "# 🏗️ Infrastructure Provisioning: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          REGION="${{ needs.configuration.outputs.aws_region }}"
+          PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
+          REGION="${{ needs.configuration.outputs.cloud_region || needs.configuration.outputs.aws_region }}"
           BUCKET="${{ needs.configuration.outputs.bucket }}"
 
           # ------------------------------------------------------------------
@@ -412,6 +443,7 @@ jobs:
           echo "## 🌍 Context" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Provider** | \`$PROVIDER\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Region** | \`$REGION\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Type** | ${{ inputs.apply == true && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
@@ -445,30 +477,40 @@ jobs:
             fi
           }
 
-          # Provision Outputs
-          VPC_ID="${{ needs.provision.outputs.vpc_id }}"
-          EFS_ID="${{ needs.provision.outputs.efs_id }}"
-          CLUSTER="${{ needs.provision.outputs.ecs_cluster_name }}"
-          ALB="${{ needs.provision.outputs.alb_dns_name }}"
-          ROLE="${{ needs.provision.outputs.iam_role_name }}"
-          NS_NAME="${{ needs.provision.outputs.service_discovery_namespace }}"
-          NS_ID="${{ needs.provision.outputs.service_discovery_id }}"
-          MONGO="${{ needs.provision.outputs.mongodb_uri }}"
+          if [[ "$PROVIDER" == "gcp" ]]; then
+            # ── GCP Resource Details ──
+            GCP_PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+            add_row "GCP Project" "$GCP_PROJECT" "https://console.cloud.google.com/home/dashboard?project=${GCP_PROJECT}"
+            add_row "Region" "$REGION" "https://console.cloud.google.com/compute/instances?project=${GCP_PROJECT}"
+            add_row "Cloud Run" "Services" "https://console.cloud.google.com/run?project=${GCP_PROJECT}"
+            add_row "Artifact Registry" "Repos" "https://console.cloud.google.com/artifacts?project=${GCP_PROJECT}"
+            add_row "VPC Networks" "Networks" "https://console.cloud.google.com/networking/networks/list?project=${GCP_PROJECT}"
+          else
+            # ── AWS Resource Details ──
+            AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
+            VPC_ID="${{ needs.provision.outputs.vpc_id }}"
+            EFS_ID="${{ needs.provision.outputs.efs_id }}"
+            CLUSTER="${{ needs.provision.outputs.ecs_cluster_name }}"
+            ALB="${{ needs.provision.outputs.alb_dns_name }}"
+            ROLE="${{ needs.provision.outputs.iam_role_name }}"
+            NS_NAME="${{ needs.provision.outputs.service_discovery_namespace }}"
+            NS_ID="${{ needs.provision.outputs.service_discovery_id }}"
+            MONGO="${{ needs.provision.outputs.mongodb_uri }}"
 
-          # Links
-          LINK_VPC="https://${REGION}.console.aws.amazon.com/vpc/home?region=${REGION}#VpcDetails:VpcId=${VPC_ID}"
-          LINK_EFS="https://${REGION}.console.aws.amazon.com/efs/home?region=${REGION}#/file-systems/${EFS_ID}"
-          LINK_ECS="https://${REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${REGION}"
-          LINK_IAM="https://${REGION}.console.aws.amazon.com/iam/home?region=${REGION}#/roles/${ROLE}"
-          LINK_CM="https://${REGION}.console.aws.amazon.com/cloud_map/home/namespaces/${NS_ID}"
+            LINK_VPC="https://${AWS_REGION}.console.aws.amazon.com/vpc/home?region=${AWS_REGION}#VpcDetails:VpcId=${VPC_ID}"
+            LINK_EFS="https://${AWS_REGION}.console.aws.amazon.com/efs/home?region=${AWS_REGION}#/file-systems/${EFS_ID}"
+            LINK_ECS="https://${AWS_REGION}.console.aws.amazon.com/ecs/v2/clusters/${CLUSTER}/services?region=${AWS_REGION}"
+            LINK_IAM="https://${AWS_REGION}.console.aws.amazon.com/iam/home?region=${AWS_REGION}#/roles/${ROLE}"
+            LINK_CM="https://${AWS_REGION}.console.aws.amazon.com/cloud_map/home/namespaces/${NS_ID}"
 
-          add_row "VPC" "$VPC_ID" "$LINK_VPC"
-          add_row "ECS Cluster" "$CLUSTER" "$LINK_ECS"
-          add_row "ALB DNS" "$ALB" "http://$ALB"
-          add_row "Service Discovery" "$NS_NAME" "$LINK_CM"
-          add_row "EFS Filesystem" "$EFS_ID" "$LINK_EFS"
-          add_row "IAM Role" "$ROLE" "$LINK_IAM"
-          add_row "MongoDB URI" "$MONGO" ""
+            add_row "VPC" "$VPC_ID" "$LINK_VPC"
+            add_row "ECS Cluster" "$CLUSTER" "$LINK_ECS"
+            add_row "ALB DNS" "$ALB" "http://$ALB"
+            add_row "Service Discovery" "$NS_NAME" "$LINK_CM"
+            add_row "EFS Filesystem" "$EFS_ID" "$LINK_EFS"
+            add_row "IAM Role" "$ROLE" "$LINK_IAM"
+            add_row "MongoDB URI" "$MONGO" ""
+          fi
 
           # ------------------------------------------------------------------
           # 3. Status Check
@@ -485,9 +527,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # ------------------------------------------------------------------
-          # 4. Feature: Image Resize
+          # 4. Feature: Image Resize (AWS only)
           # ------------------------------------------------------------------
-          if [[ "${{ inputs.stack }}" == "network" ]]; then
+          if [[ "$PROVIDER" != "gcp" && "${{ inputs.stack }}" == "network" ]]; then
             echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
             if [[ "${{ needs.provision.outputs.image_resize_enabled }}" == "true" ]]; then
                echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
@@ -502,8 +544,13 @@ jobs:
           fi
 
           # ------------------------------------------------------------------
-          # 5. Quick Links
+          # 5. Quick Links — State Backend
           # ------------------------------------------------------------------
           echo "## 🔗 State & Locks" >> $GITHUB_STEP_SUMMARY
-          echo "- [S3 State Details](https://s3.console.aws.amazon.com/s3/buckets/${BUCKET}?region=${REGION}&prefix=${{ needs.configuration.outputs.stage_key }}/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [DynamoDB Lock Table](https://${REGION}.console.aws.amazon.com/dynamodbv2/home?region=${REGION}#table?name=${BUCKET})" >> $GITHUB_STEP_SUMMARY
+          if [[ "$PROVIDER" == "gcp" ]]; then
+            echo "- [GCS State Bucket](https://console.cloud.google.com/storage/browser/${BUCKET}?project=${{ needs.configuration.outputs.gcp_project_id }})" >> $GITHUB_STEP_SUMMARY
+          else
+            AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
+            echo "- [S3 State Details](https://s3.console.aws.amazon.com/s3/buckets/${BUCKET}?region=${AWS_REGION}&prefix=${{ needs.configuration.outputs.stage_key }}/)" >> $GITHUB_STEP_SUMMARY
+            echo "- [DynamoDB Lock Table](https://${AWS_REGION}.console.aws.amazon.com/dynamodbv2/home?region=${AWS_REGION}#table?name=${BUCKET})" >> $GITHUB_STEP_SUMMARY
+          fi
