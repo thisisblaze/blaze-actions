@@ -410,7 +410,7 @@ jobs:
               # ---------------------------------------------------------
               # 1. Find and scale down ASG
               # ---------------------------------------------------------
-              ASG_NAME="${RESOURCE_PREFIX}-ec2-cp-asg"
+              ASG_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp-asg"
               echo "   🔍 Checking ASG: $ASG_NAME"
               ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
                 --auto-scaling-group-names "$ASG_NAME" \
@@ -450,7 +450,7 @@ jobs:
               # ---------------------------------------------------------
               # 2. Deregister ECS Capacity Provider (if exists)
               # ---------------------------------------------------------
-              CP_NAME="${RESOURCE_PREFIX}-ec2-cp"
+              CP_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp"
               echo "   🔍 Checking Capacity Provider: $CP_NAME"
               CP_EXISTS=$(aws ecs describe-capacity-providers \
                 --capacity-providers "$CP_NAME" \
