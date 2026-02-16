@@ -42,6 +42,7 @@ Analyze and update documentation across these 12 critical domains:
 
 - `.github/workflows/README.md` - Workflow catalog and usage
 - `docs/REUSABLE_WORKFLOWS.md` - How to call workflows
+- `.github/workflows/reusable-pre-destroy-cleanup.yml` - Cleanup logic
 - Individual workflow headers and comments
 
 ### 3. **System Prompts (AI Governance)**
@@ -78,7 +79,7 @@ Analyze and update documentation across these 12 critical domains:
 ### 8. **Operations Documentation**
 
 - `docs/operations_manual.md` - Day-to-day operations
-- `docs/runbooks/*.md` - Incident response
+- `docs/runbooks/*.md` - Incident response (Cleanup failures, Zombie resources)
 - `docs/security_runbook.md` - Security procedures
 
 ### 9. **Testing Documentation**
@@ -444,6 +445,6 @@ Before marking audit complete:
 
 **This is a living document. Update this prompt as documentation practices evolve.**
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-16  
 **Version:** 1.0  
 **Maintainer:** Infrastructure Team
