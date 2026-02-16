@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-16
 **Owner**: Infrastructure Team
 
 ---
@@ -105,6 +105,16 @@ MONGODB_ATLAS_PROJECT_ID
 MONGODB_ATLAS_ORG_ID
 EC_API_KEY                # Elasticsearch provisioning
 ACM_CERTIFICATE_ARN       # SSL certificates
+
+# GCP
+GCP_PROJECT_ID
+GCP_WORKLOAD_IDENTITY_PROVIDER
+GCP_SERVICE_ACCOUNT
+
+# Azure
+AZURE_CLIENT_ID
+AZURE_TENANT_ID
+AZURE_SUBSCRIPTION_ID
 ```
 
 ### Build-Time
