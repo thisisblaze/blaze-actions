@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-16
 **Owner**: Infrastructure Team
 
 ---
@@ -8,7 +8,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 24 (17 main + 7 reusable)  
 **Version**: v1.1.0-hybrid-ecs  
-**Last Updated**: 2026-02-09
+**Last Updated**: 2026-02-16
 
 ---
 
@@ -45,6 +45,7 @@
 
 - `environment` (required): DEV/STAGE/PROD
 - `project` (optional): Project key (default: thisisblaze)
+- `cloud_provider` (required): aws|gcp|azure (default: aws)
 - `stack` (required): network|acm|tunnel|app|account-settings|third-party-mongodb|third-party-elastic
 - `branch_name` (optional): Feature branch tag
 - `apply` (boolean): Run terraform apply? (default: false)
@@ -71,6 +72,7 @@
 **Inputs**:
 
 - `environment` (required): dev/stage/prod
+- `cloud_provider` (required): aws|gcp|azure (default: aws)
 - `target_services` (required): Service filter (e.g., "api", "Blaze all")
 - `branch_tag` (optional): Feature branch tag
 - `skip_build` (boolean): Skip Docker build?
@@ -209,6 +211,7 @@
 **Inputs**:
 
 - `environment` (required)
+- `cloud_provider` (required): aws|gcp|azure
 - `operation` (required)
 - Additional operation-specific inputs
 
