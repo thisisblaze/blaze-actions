@@ -129,25 +129,38 @@ module.exports = async ({ github, context, core }) => {
     // Get values from environment
     const tunnelId = process.env.TUNNEL_ID || '';
     const environment = process.env.ENVIRONMENT;
-    const tfDir = process.env.TF_DIR || '.github/aws/infra/live/third-party/cloudflare';
+    // CRITICAL: TF_DIR must be provided by the caller (workflow), no hardcoded defaults allowed.
+    // This ensures Multi-Cloud compatibility (AWS/GCP/Azure have different paths).
+    const tfDir = process.env.TF_DIR;
+
+    if (!tfDir) {
+        console.error('❌ ERROR: TF_DIR environment variable is missing.');
+        process.exit(1);
+    }
 
     // Get tunnel_token directly from Terraform (not passed through outputs to avoid masking)
     let tunnelToken = '';
     try {
-        // Terraform should already be initialized from previous step, but ensure we're in the right directory
+        console.log(`🔍 Reading Terraform outputs from: ${tfDir}`);
         const originalDir = process.cwd();
-        process.chdir(path.join(originalDir, tfDir));
+
+        // Resolve absolute path
+        const absTfDir = path.resolve(originalDir, tfDir);
+
+        // Ensure directory exists
+        process.chdir(absTfDir);
 
         // Read tunnel_token from Terraform output
         tunnelToken = execSync('terraform output -raw tunnel_token', {
             encoding: 'utf-8',
-            stdio: ['ignore', 'pipe', 'ignore'],
+            stdio: ['ignore', 'pipe', 'ignore'], // Suppress stderr to keep logs clean
             env: { ...process.env, PATH: process.env.PATH }
         }).trim();
 
         process.chdir(originalDir);
     } catch (error) {
-        console.log('⚠️ Could not retrieve tunnel_token from Terraform:', error.message);
+        console.log('ℹ️  Could not retrieve tunnel_token from Terraform (Module might not output it - this is expected if not using Cloudflare Tunnel):', error.message);
+        // Do not fail - token might not exist in this stack
     }
 
     if (!environment) {
