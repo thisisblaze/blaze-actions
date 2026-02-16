@@ -1,0 +1,60 @@
+graph TB
+    subgraph "Blaze Platform"
+        subgraph "GitHub Actions"
+            CI[CI/CD Pipeline]
+            CALC[calculate-config]
+            CI --> CALC
+        end
+
+        subgraph "AWS (Primary)"
+            direction TB
+            AWS_VPC[VPC]
+            AWS_ALB[ALB]
+            AWS_FARGATE[ECS Fargate]
+            AWS_EC2[ECS EC2]
+            AWS_REDIS[ElastiCache Redis]
+            AWS_S3[S3 State]
+            
+            CALC -->|Deploy| AWS_FARGATE
+            CALC -->|Deploy| AWS_EC2
+            AWS_ALB --> AWS_FARGATE
+            AWS_ALB --> AWS_EC2
+            AWS_FARGATE --> AWS_REDIS
+            AWS_EC2 --> AWS_REDIS
+        end
+
+        subgraph "GCP (Secondary)"
+            direction TB
+            GCP_VPC[VPC]
+            GCP_NAT[Cloud NAT]
+            GCP_RUN[Cloud Run]
+            GCP_MEM[Memorystore Redis]
+            GCP_SQL[Cloud SQL]
+            
+            CALC -->|Deploy| GCP_RUN
+            GCP_RUN --> GCP_MEM
+            GCP_RUN --> GCP_SQL
+        end
+
+        subgraph "Azure (Secondary)"
+            direction TB
+            AZ_VNET[VNet]
+            AZ_ACA[Container Apps]
+            AZ_REDIS[Azure Cache for Redis]
+            AZ_PG[PostgreSQL Flex]
+            
+            CALC -->|Deploy| AZ_ACA
+            AZ_ACA --> AZ_REDIS
+            AZ_ACA --> AZ_PG
+        end
+    end
+
+    classDef aws fill:#FF9900,stroke:#232F3E,color:white;
+    classDef gcp fill:#4285F4,stroke:#333333,color:white;
+    classDef azure fill:#0078D4,stroke:#333333,color:white;
+    classDef gh fill:#24292e,stroke:#333333,color:white;
+
+    class AWS_VPC,AWS_ALB,AWS_FARGATE,AWS_EC2,AWS_REDIS,AWS_S3 aws;
+    class GCP_VPC,GCP_NAT,GCP_RUN,GCP_MEM,GCP_SQL gcp;
+    class AZ_VNET,AZ_ACA,AZ_REDIS,AZ_PG azure;
+    class CI,CALC gh;
