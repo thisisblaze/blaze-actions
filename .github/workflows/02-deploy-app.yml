@@ -279,6 +279,7 @@ jobs:
           build_images: ${{ inputs.build_images || 'true' }}
           deploy_services: ${{ inputs.deploy_services || 'true' }}
           event_name: ${{ github.event_name }}
+          cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
 
   pre-flight-check:
     name: 🛡️ Pre-Flight Checks
