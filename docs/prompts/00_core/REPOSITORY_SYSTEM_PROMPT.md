@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-16
 **Owner**: Infrastructure Team
 
 ---
@@ -59,8 +59,9 @@
 
 1.  **No Hardcoding**: Never hardcode versions or environment names. Use inputs.
 2.  **Hybrid Awareness**:
-    - **AWS ECS**: Hosts API and Frontend services (Fargate or EC2 per-service via `launch_type`).
-    - **EC2 Capacity Provider**: Optional high-density compute via `ec2-capacity-provider` module (Graviton ARM64).
+    - **AWS ECS**: Hosts API and Frontend services. Supports mixed `FARGATE` and `EC2` (via Capacity Providers).
+    - **EC2 Capacity Provider**: used for high-density compute (e.g. `c7g.xlarge`). **MUST** be explicitly detached and deleted during cleanup.
+    - **Launch Templates**: Associated with EC2 CPs. **MUST** be deleted during cleanup.
     - **Cloudflare Pages**: Hosts Admin app (Static/SPA).
     - **Compute Modes**: `ecsfg` (Fargate), `ecsec2-arm` (EC2 ARM64), `ecsec2-x86` (EC2 x86).
 3.  **Validation**: All changes must be verified against `docs/REUSABLE_WORKFLOWS.md`.
@@ -122,6 +123,26 @@ fi
 
 - **Always test** with a non-default namespace to verify flexibility
 - **Example:** Set `NAMESPACE: "test"` and verify all resources use it
+
+---
+
+## ♻️ 5. Lifecycle & Cleanup
+
+**CRITICAL**: All destroy workflows MUST use `reusable-pre-destroy-cleanup.yml` before running `terraform destroy`.
+
+### Why?
+Terraform alone cannot handle:
+1.  **Non-Empty S3 Buckets** (Access Logs, Storage).
+2.  **EC2 Capacity Providers** (Must be force-detached from Cluster Strategy).
+3.  **Launch Templates** (Orphaned by ASG deletion).
+4.  **CloudWatch Logs** (Prevent accumulation).
+5.  **Zombie Resources** (Lambda@Edge, OACs, lingering IAM roles).
+
+### Cleanup Workflow Contract
+The `reusable-pre-destroy-cleanup.yml` workflow guarantees:
+- **Idempotency**: Can be run multiple times safely.
+- **Robustness**: Uses `|| true` for best-effort cleanup of non-critical resources (logs).
+- **Completeness**: Explicitly handles the complex dependency chain of ECS Cluster -> Strategy -> Capacity Provider -> ASG -> Launch Template.
 
 ---
 
