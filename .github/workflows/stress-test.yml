@@ -199,13 +199,31 @@ jobs:
   # --------------------------------------------------------------------------------
   # 1. SETUP & CONFIG
   # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
   config:
     name: "⚙️ Config"
+    needs: setup
     uses: ./.github/workflows/reusable-calculate-config.yml
     with:
       environment: ${{ inputs.environment }}
-      terraform_stack: ${{ inputs.target_type == 'feature-branch' && 'app' || 'network' }}
-      branch_tag: ${{ inputs.target_type == 'feature-branch' && inputs.branch_tag || '' }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -310,8 +328,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   # --------------------------------------------------------------------------------
   # 3. TEARDOWN (Infrastructure)
