@@ -87,7 +87,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and upgrade notes.
 
 ## 🏷️ Namespace Configuration
 
-All AWS resources created by these workflows are prefixed with a configurable **namespace** to support multi-tenancy and organizational isolation.
+All cloud resources created by these workflows are prefixed with a configurable **namespace** to support multi-tenancy and organizational isolation.
 
 ### Default Namespace
 
@@ -206,7 +206,9 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 ### 🎯 What You Can Do
 
 - ✅ Deploy multi-environment infrastructure (DEV, STAGE, PROD)
+- ✅ Multi-cloud support (AWS, GCP, Azure) via `cloud_provider` routing
 - ✅ Automated ECS deployments with circuit breakers
+- ✅ GCP Cloud Run and Azure Container Apps provisioning
 - ✅ Cloudflare Pages and Tunnels management
 - ✅ MongoDB Atlas and Elastic Cloud provisioning
 - ✅ Feature branch deployments for testing
@@ -437,7 +439,7 @@ jobs:
 ✅ **Centralized**: One place for all workflows/actions  
 ✅ **Reusable**: Call from any project in same org  
 ✅ **Versioned**: Pin to specific versions  
-✅ **OIDC**: No long-lived AWS credentials  
+✅ **OIDC**: No long-lived cloud credentials (AWS, GCP WIF, Azure)  
 ✅ **SHA-Pinned**: All actions pinned to commit SHAs  
 ✅ **Timeout Protected**: All workflows have limits
 ✅ **Observability**: Detailed provisioning summaries (ALB, IAM, Cluster)
