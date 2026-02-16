@@ -481,6 +481,34 @@ jobs:
                  echo "      ✅ Capacity provider not found"
               fi
 
+         - name: Cleanup Launch Templates
+           if: env.CLIENT_KEY != ''
+           run: |
+              NAMESPACE="${{ env.NAMESPACE }}"
+              CLIENT_KEY="${{ env.CLIENT_KEY }}"
+              PROJECT_KEY="${{ env.PROJECT_KEY }}"
+              STAGE_KEY="${{ env.STAGE_KEY }}"
+              REGION="${{ inputs.aws_region }}"
+
+              # Construct the implementation-standard name
+              LT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
+
+              echo "🚀 Checking for Launch Template: $LT_NAME in $REGION..."
+
+              # Check if exists
+              LT_ID=$(aws ec2 describe-launch-templates \
+                  --launch-template-names "$LT_NAME" \
+                  --region "$REGION" \
+                  --query "LaunchTemplates[0].LaunchTemplateId" \
+                  --output text 2>/dev/null || echo "None")
+
+              if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
+                 echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
+                 aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" || echo "      ⚠️ Failed to delete Launch Template"
+              else
+                 echo "      ✅ Launch Template not found"
+              fi
+
          - name: Cleanup ECS Services
            id: cleanup
            run: |
