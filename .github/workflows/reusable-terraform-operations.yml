@@ -251,6 +251,7 @@ jobs:
           CLIENT_KEY: ${{ inputs.client_key }}
           STAGE_KEY: ${{ inputs.stage_key }}
           BRANCH_NAME: ${{ inputs.branch_name }}
+          NAMESPACE: ${{ inputs.namespace }}
         run: |
           echo "🔍 Generating Terraform import blocks..."
 
@@ -264,15 +265,18 @@ jobs:
           fi
 
           if [[ -f "$SCRIPT_PATH" ]]; then
+            pip3 install boto3
             python3 "$SCRIPT_PATH" \
               --region "${{ inputs.aws_region }}" \
               --project-key "${PROJECT_KEY}" \
               --client-key "${CLIENT_KEY}" \
               --stage-key "${STAGE_KEY}" \
               --branch-name "${BRANCH_NAME}" \
+              --namespace "${NAMESPACE}" \
               --resource-address "$RESOURCE_ADDRESS" \
               --allow-missing \
               --require-config
+          else
           else
              echo "⚠️ Script $SCRIPT_PATH not found. Skipping imports."
           fi
