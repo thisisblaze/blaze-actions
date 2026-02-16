@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-16
 **Owner**: Infrastructure Team
 
 ---
@@ -31,9 +31,9 @@ _(Source: [.agent/workflows/slash-init-context.md](file:///Users/marek/Workspace
 **Action**:
 
 1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
-2.  View the **Territory**: `docs/graphs/aws_resource_topology.mermaid` (ECS/cloud structure)
+2.  View the **Territory**: `docs/graphs/multi_cloud_topology.mermaid` (AWS/GCP/Azure structure)
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
-4.  **Ack**: "Context Loaded. I am ready to work on the Hybrid Cloudflare/ECS stack."
+4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud stack."
 
 ### B. During Execution (Navigation)
 
@@ -101,10 +101,22 @@ When creating temporary resources for debugging (e.g., extracting source code, d
 3.  **Destruction**: You **MUST** delete these artifacts before declaring "Task Complete".
 4.  **Verification**: Run `git status` before finishing to ensure no temporary junk is being committed.
 
-**Anti-Pattern (Do Not Do):**
-
-- Leaving `lambda_src/`, `logs/`, or `config_dump.json` in the root directory.
 - Committing `*.log`, `*.out`, or debugging scripts that contain hardcoded values.
+
+## 8. Cleanup Protocol (The Law of Zero Waste)
+
+**Status: MANDATORY**
+
+Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-cleanup.yml` workflow before destroying any environment.
+
+**Why?**
+- **EC2 Capacity Providers**: Will hang Terraform indefinitely if not forcefully detached.
+- **Launch Templates**: Will be orphaned and clutter the account.
+- **Logs**: Terraform does not delete CloudWatch Log Groups by default.
+- **S3 Buckets**: Non-empty buckets will cause destroy failures.
+
+**The Rule**:
+> "If you provision it, you must ensure it can be destroyed. If Terraform can't destroy it, you must script the cleanup."
 
 ---
 
