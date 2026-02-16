@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-09
+**Last Updated**: 2026-02-16
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-02-09
+**Last Updated**: 2026-02-16
 
 ---
 
@@ -136,6 +136,72 @@ with:
 permissions:
   id-token: write # For AWS OIDC
   contents: read # For checkout
+```
+
+---
+
+## Multi-Cloud Support
+
+The `01-provision-infra` workflow supports deploying to AWS, GCP, and Azure.
+
+### Inputs for Multi-Cloud
+
+```yaml
+jobs:
+  provision:
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    with:
+      environment: dev
+      stack: network
+      # Cloud Provider specific inputs:
+      cloud_provider: "aws" # or "gcp", "azure" (Default: "aws")
+```
+
+---
+
+## Hybrid ECS (EC2 & Fargate)
+
+The `02-deploy-app` workflow supports mixed compute strategies on AWS.
+
+### Inputs for Hybrid ECS
+
+```yaml
+jobs:
+  deploy:
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    with:
+      environment: prod
+      # Deployment Strategy:
+      launch_type: "EC2" # or "FARGATE"
+      capacity_provider_strategy: "FARGATE_SPOT" # or "EC2"
+```
+
+---
+
+## ♻️ Mandatory Cleanup Workflow
+
+Before destroying any environment, you **MUST** run `reusable-pre-destroy-cleanup.yml`.
+
+### Why?
+Terraform cannot destroy non-empty S3 buckets, attached Capacity Providers, or orphaned Launch Templates.
+
+### Usage
+
+```yaml
+jobs:
+  cleanup:
+    uses: thebyte9/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    with:
+      environment: dev
+      dry_run: false
+    secrets: inherit
+
+  destroy:
+    needs: cleanup
+    uses: thebyte9/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    with:
+      action: destroy
+    secrets: inherit
 ```
 
 ---
