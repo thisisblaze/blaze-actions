@@ -6,6 +6,7 @@
         "CLOUD_PROVIDER": "aws",
         "GCP_REGION": "europe-west1",
         "GCP_PROJECT_ID": "blaze-actions-test-gcp",
-        "AZURE_REGION": "westeurope"
+        "AZURE_REGION": "westeurope",
+        "CLIENT_KEY": "b9"
     }
 }
