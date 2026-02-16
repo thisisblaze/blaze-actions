@@ -215,6 +215,10 @@ runs:
           azure)
             CLOUD_REGION="$AZURE_REGION"
             INFRA_PREFIX=".github/azure/infra/live"
+            # Azure Backend Format: resource_group/storage_account/container
+            # Standard Pattern: rg-terraform-state / stterraformstate{client} / tfstate
+            BUCKET="rg-terraform-state/stterraformstate${CLIENT_KEY}/tfstate"
+            LOCK_TABLE="" # Azure Blob supports leasing (locking) natively
             ;;
           *)
             CLOUD_PROVIDER="aws"
@@ -262,8 +266,10 @@ runs:
 
         # Calculate Bucket & Lock using loaded vars
         # New naming: {client}-{stage}-{namespace}-tfstate
-        BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
-        LOCK_TABLE="${BUCKET}-lock"
+        if [[ -z "$BUCKET" ]]; then
+           BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
+           LOCK_TABLE="${BUCKET}-lock"
+        fi
 
         # 2. Dynamic Directory & State Key Selection
         INPUT_STACK="${{ inputs.terraform_stack }}"

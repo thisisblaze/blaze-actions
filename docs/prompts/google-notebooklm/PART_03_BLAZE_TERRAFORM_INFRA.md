@@ -10,7 +10,7 @@
 
 ### Repository Purpose
 
-**What:** Production-ready Terraform modules for AWS infrastructure
+**What:** Production-ready Terraform modules for multi-cloud infrastructure (AWS, GCP, Azure)
 
 **Why:**
 
@@ -59,6 +59,21 @@
 
 - **cloudwatch-log-group** - Centralized logging
 - **cloudwatch-alarm** - Alerting and monitoring
+
+### 7. GCP Modules
+
+- **gcp/compute/cloud-run** - Serverless container services
+- **gcp/data/cloud-sql** - Managed PostgreSQL/MySQL
+- **gcp/data/memorystore** - Managed Redis
+- **gcp/networking/vpc** - VPC and firewall rules
+- **gcp/security/iam** - Service accounts and IAM bindings
+
+### 8. Azure Modules
+
+- **azure/compute/container-app** - Managed container applications
+- **azure/data/sql-database** - Managed SQL Database
+- **azure/networking/vnet** - Virtual Network and NSGs
+- **azure/security/managed-identity** - Managed Identity and Key Vault
 
 ---
 

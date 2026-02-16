@@ -1,6 +1,6 @@
 # Environment Architecture Reference
 
-Quick reference for environment-specific features and architecture.
+Quick reference for environment-specific features and multi-cloud architecture (AWS, GCP, Azure).
 
 ## CDN Strategy by Environment
 
@@ -145,6 +145,24 @@ Each service independently selects its launch type:
 | Worker/batch     | EC2         | ARM64    | `ecsec2-arm` | Background processing     |
 | Bursty workload  | FARGATE     | ARM64    | `ecsfg`      | Auto-scaling, zero-to-one |
 
+### GCP Cloud Run
+
+Cloud Run services are serverless containers — no capacity provider management needed:
+
+| Service Type     | Platform   | CPU Arch | Use Case                    |
+| ---------------- | ---------- | -------- | --------------------------- |
+| API Service      | Cloud Run  | X86_64   | REST/GraphQL endpoints      |
+| Background Job   | Cloud Run  | X86_64   | Async processing, queues    |
+
+### Azure Container Apps
+
+Container Apps run on a shared managed environment:
+
+| Service Type     | Platform        | CPU Arch | Use Case                  |
+| ---------------- | --------------- | -------- | ------------------------- |
+| API Service      | Container Apps  | X86_64   | REST/GraphQL endpoints    |
+| Background Job   | Container Apps  | X86_64   | Event-driven processing   |
+
 **Prerequisites:**
 - `account-settings` stack deployed (ENI Trunking enabled)
 - `ec2-capacity-provider` module provisioned via `network` stack
@@ -231,6 +249,7 @@ If you want to enable CloudFront in DEV (not recommended):
 
 ---
 
-**Last Updated:** 2026-01-13  
+**Last Updated:** 2026-02-16  
 **Maintained By:** Infrastructure Team  
-**Review Frequency:** Quarterly or when architecture changes
+**Review Frequency:** Quarterly or when architecture changes  
+**Cloud Providers:** AWS (ECS Fargate/EC2 Hybrid), GCP (Cloud Run), Azure (Container Apps)

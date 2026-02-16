@@ -26,11 +26,11 @@ flowchart TB
     end
 
     subgraph "blaze-terraform-infra-core (Modules)"
-        E[Infrastructure provisioned<br/>AWS resources created]
+        E[Infrastructure provisioned<br/>Multi-cloud resources created]
     end
 
-    subgraph "AWS"
-        F[ECS Services running<br/>Application deployed]
+    subgraph "Cloud Providers"
+        F[AWS: ECS Services running<br/>GCP: Cloud Run deployed<br/>Azure: Container Apps deployed]
     end
 
     A --> B
@@ -508,10 +508,10 @@ Deployment branches: main only
    - A/B testing support
    - Progressive rollouts
 
-3. **Multi-Cloud Support**
-   - Azure modules
-   - GCP modules
-   - Hybrid cloud patterns
+3. **Multi-Cloud Support** ✅ Completed
+   - Azure modules (active)
+   - GCP modules (active)
+   - Hybrid cloud patterns (in use)
 
 4. **Developer Experience**
    - CLI tool for operations

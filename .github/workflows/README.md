@@ -93,7 +93,7 @@ jobs:
 | Workflow                           | Usage                                     | Resource Pattern                                                              |
 | ---------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
 | `00_setup_environment.yml`         | S3 backend buckets, ECR repositories      | `${client}-${stage}-${namespace}-tfstate`<br/>`${namespace}-${project}-web/*` |
-| `01_provision_infrastructure.yml`  | Passed to Terraform as `TF_VAR_namespace` | All AWS resources                                                             |
+| `01_provision_infrastructure.yml`  | Passed to Terraform as `TF_VAR_namespace` | All cloud resources (AWS, GCP, Azure)                                         |
 | `02-deploy-app.yml`                | Cluster names, service names              | `${namespace}-${client}-${project}-${stage}-cluster`                          |
 | `reusable-pre-destroy-cleanup.yml` | Parses from cluster name for cleanup      | Extracts namespace to clean resources                                         |
 | `99-ops-utility.yml`               | Nuke operations                           | Targets all `${namespace}-*` resources                                        |
