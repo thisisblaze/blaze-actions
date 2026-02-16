@@ -1354,6 +1354,18 @@ jobs:
           for PROJ in "${PROJECTS[@]}"; do
              echo "   Target: $PROJ"
              
+             # Delete Domains first
+             echo "      Fetching domains..."
+             DOMAINS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}/domains" -H "Authorization: Bearer ${CF_API_TOKEN}" | jq -r '.result[]?.name')
+             
+             for DOMAIN in $DOMAINS; do
+                if [ "$DOMAIN" != "null" ]; then
+                   echo "      Deleting Domain: $DOMAIN"
+                   curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}/domains/${DOMAIN}" -H "Authorization: Bearer ${CF_API_TOKEN}"
+                fi
+             done
+
+             echo "      Deleting Project..."
              RESPONSE=$(curl -s -X DELETE \
                "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}" \
                -H "Authorization: Bearer ${CF_API_TOKEN}" \
