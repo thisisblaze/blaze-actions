@@ -1,0 +1,14 @@
+{
+    "name": "blaze-actions-scripts",
+    "version": "1.0.0",
+    "description": "Utility scripts for Blaze Actions",
+    "main": "update-env-vars.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "libsodium-wrappers": "^0.7.15"
+    },
+    "author": "This Is Blaze",
+    "license": "Apache-2.0"
+}
