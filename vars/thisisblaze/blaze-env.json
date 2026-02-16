@@ -1,0 +1,11 @@
+{
+    "common": {
+        "AWS_REGION": "us-east-1",
+        "AWS_ACCOUNT_ID": "123456789012",
+        "PROJECT_KEY": "blaze-actions-test",
+        "CLOUD_PROVIDER": "aws",
+        "GCP_REGION": "europe-west1",
+        "GCP_PROJECT_ID": "blaze-actions-test-gcp",
+        "AZURE_REGION": "westeurope"
+    }
+}
