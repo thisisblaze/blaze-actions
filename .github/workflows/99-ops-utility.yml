@@ -813,12 +813,13 @@ jobs:
           NAMESPACE="${{ needs.configuration.outputs.namespace }}"
           PROJECT="${{ needs.configuration.outputs.project_key }}"
           STAGE="${{ needs.configuration.outputs.stage_key }}"
+          CLIENT="${{ needs.configuration.outputs.client_key }}"
 
           # Determine project name (matches creation logic in 02-deploy-app.yml)
           if [ "$STAGE" = "prod" ]; then
-            PROJECT_NAME="${NAMESPACE}-${PROJECT}-admin"
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-admin"
           else
-            PROJECT_NAME="${NAMESPACE}-${PROJECT}-${STAGE}-admin"
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
           fi
 
           echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
@@ -911,11 +912,12 @@ jobs:
           NAMESPACE="${{ needs.configuration.outputs.namespace }}"
           PROJECT="${{ needs.configuration.outputs.project_key }}"
           STAGE="${{ needs.configuration.outputs.stage_key }}"
+          CLIENT="${{ needs.configuration.outputs.client_key }}"
 
           if [ "$STAGE" = "prod" ]; then
-            PROJECT_NAME="${NAMESPACE}-${PROJECT}-admin"
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-admin"
           else
-            PROJECT_NAME="${NAMESPACE}-${PROJECT}-${STAGE}-admin"
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
           fi
 
           echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
@@ -1118,8 +1120,9 @@ jobs:
           NAMESPACE: ${{ needs.configuration.outputs.namespace }}
           PROJECT: ${{ needs.configuration.outputs.project_key }}
           STAGE: ${{ steps.config.outputs.stage_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
         run: |
-          echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-*"
+          echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-*"
 
           # List all tunnels
           RESPONSE=$(curl -s -X GET \
@@ -1129,7 +1132,7 @@ jobs:
 
           # Filter tunnels by name pattern
           TUNNEL_IDS=$(echo "$RESPONSE" | jq -r \
-            ".result[] | select(.name | startswith(\"${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-\")) | .id")
+            ".result[] | select(.name | startswith(\"${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-\")) | .id")
 
           if [ -z "$TUNNEL_IDS" ]; then
             echo "⚠️ No tunnels found matching pattern"
@@ -1336,11 +1339,12 @@ jobs:
           NAMESPACE: ${{ needs.configuration.outputs.namespace }}
           PROJECT: ${{ needs.configuration.outputs.project_key }}
           STAGE: ${{ needs.configuration.outputs.stage_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
         run: |
           if [ "${{ env.STAGE }}" = "prod" ]; then
-             PREFIX="${NAMESPACE}-${PROJECT}"
+             PREFIX="${NAMESPACE}-${CLIENT}-${PROJECT}"
           else
-             PREFIX="${NAMESPACE}-${PROJECT}-${STAGE}"
+             PREFIX="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}"
           fi
 
           PROJECTS=("${PREFIX}-admin" "${PREFIX}-frontend")
