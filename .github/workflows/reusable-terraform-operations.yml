@@ -252,12 +252,18 @@ jobs:
           STAGE_KEY: ${{ inputs.stage_key }}
           BRANCH_NAME: ${{ inputs.branch_name }}
           NAMESPACE: ${{ inputs.namespace }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           echo "🔍 Generating Terraform import blocks..."
 
-          # The script is in the root of the repo, but we might be in a subdir
-          # We need to find the script path relative to the checkout
-          SCRIPT_PATH="${GITHUB_WORKSPACE}/scripts/generate_imports.py"
+          # Checkout blaze-actions scripts to a temporary location
+          # because we are inside the caller's workspace
+          git clone --depth 1 --filter=blob:none --sparse "https://${GH_TOKEN}@github.com/thisisblaze/blaze-actions.git" .blaze-actions-scripts
+          cd .blaze-actions-scripts
+          git sparse-checkout set scripts
+          cd ..
+
+          SCRIPT_PATH="${GITHUB_WORKSPACE}/.blaze-actions-scripts/scripts/generate_imports.py"
 
           RESOURCE_ADDRESS="module.environment_network.module.cluster.aws_cloudwatch_log_group.main"
           if [[ -n "$BRANCH_NAME" ]]; then
