@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.2.0-multi-cloud-foundation (2026-02-16)
+
+### Added
+
+- **Multi-Cloud Foundation**:
+  - `01-provision-infra.yml` & `02-deploy-app.yml` now accept `cloud_provider` input (aws, gcp, azure).
+  - `reusable-terraform.yml`: Implemented split backend logic (S3/DynamoDB for AWS, GCS for GCP, Azure Blob for Azure).
+  - `calculate-config`: Updated to output provider-specific state bucket formats (e.g., Azure `rg/sa/container`).
+- **Hybrid ECS Refinements**:
+  - `01-provision-infra.yml`: Added `api_launch_type` and `frontend_launch_type` inputs to support hybrid provisioning.
+- **Mandatory Cleanup Protocol**:
+  - `reusable-pre-destroy-cleanup.yml`: Added CRITICAL logic to forcefully detach/delete EC2 Capacity Providers and clean up Launch Templates to prevent Terraform destroy hangs.
+  - `99-ops-utility.yml`: Integrated `reusable-pre-destroy-cleanup` into the `destroy-resources` job.
+
+### Changed
+
+- **Documentation Synchronization**:
+  - Updated `REPOSITORY_SYSTEM_PROMPT.md` to enforce Cleanup Protocols and Hybrid Architecture.
+  - Updated `DAILY_DOCUMENTATION_AUDIT.md` and `AI_CONTEXT_GOVERNANCE.md` to include Multi-Cloud and Cleanup checks.
+  - Updated `REUSABLE_WORKFLOWS.md`, `WORKFLOW_CATALOG.md`, and `cross-org-secrets.md` to reflect the new capabilities.
+
 ## v1.1.0-hybrid-ecs (2026-02-09)
 
 ### Added
