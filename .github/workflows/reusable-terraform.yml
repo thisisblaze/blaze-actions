@@ -222,9 +222,69 @@ jobs:
               exit $?
               ;;
             azure)
-              echo "☁️  Azure Backend: Not yet configured"
-              echo "⚠️  Azure backend requires: storage_account_name, container_name, key"
-              exit 1
+              echo "☁️  Azure Backend: Initializing..."
+              
+              # Extract Azure specific config from inputs or assume standard vars
+              # We need resource_group_name, storage_account_name, container_name, key
+              # These are passed via -backend-config in the init command
+              
+              # Logic: The 'bucket' input is mapped to 'container_name' for Azure
+              #       The 'state_key' input is mapped to 'key'
+              #       We need STORAGE_ACCOUNT and RESOURCE_GROUP passed via Env or extrapolated
+              
+              # Using the standard naming convention if explicit vars not provided:
+              # RG = rg-terraform-state
+              # SA = stterraformstate{client_key} -> This is tricky without client_key input.
+              # SOLUTION: We expect the caller to pass these as backend-config args OR we use a standard approach.
+              
+              # Better approach for this workflow:
+              # We will assume the 'bucket' input contains the Storage Account Name AND Container in format: "sa_name/container_name"
+              # OR better yet, we just update the caller to pass everything.
+              
+              # For now, let's use the provided inputs and rely on the fact that for proper Azure init, 
+              # we might need to rely on the partial configuration in the .tf file (backend "azurerm" {})
+              # and pass the rest here.
+              
+              # We will require the user to pass 'storage_account_name' and 'resource_group_name' via tf_vars or logic? 
+              # actually, 'bucket' input = container_name
+              # 'state_key' input = key
+              # 'lock_table' input = resource_group_name (Re-purposing input for Azure to avoid breaking API)
+              
+              # Re-mapping inputs for Azure:
+              # bucket -> container_name
+              # lock_table -> resource_group_name
+              # We are missing storage_account_name. We will assume it is passed via env AZURE_STORAGE_ACCOUNT or similar.
+              
+              # ACTUALLY, simpler:
+              # We'll expect the caller (01-provision-infra) to set these ENV vars or we fail.
+              # But 01-provision-infra calls this reusable workflow.
+              
+              # Let's check inputs.bucket usage.
+              # In Azure, we need: resource_group_name, storage_account_name, container_name, key.
+              
+              # We will parse `bucket` input as `resource_group_name/storage_account_name/container_name` for Azure.
+              # This is a breaking change for the input format but only for Azure provider.
+              
+              IFS='/' read -r RES_GROUP STOR_ACC CONTAINER <<< "${BUCKET}"
+              
+              if [[ -z "$RES_GROUP" || -z "$STOR_ACC" || -z "$CONTAINER" ]]; then
+                 echo "❌ Error: For Azure, 'bucket' input must be format: 'resource_group/storage_account/container'"
+                 exit 1
+              fi
+              
+              echo "   Resource Group: $RES_GROUP"
+              echo "   Storage Acc:    $STOR_ACC"
+              echo "   Container:      $CONTAINER"
+              echo "   Key:            $STATE_KEY"
+              
+              terraform init \
+                -upgrade \
+                -backend-config="resource_group_name=${RES_GROUP}" \
+                -backend-config="storage_account_name=${STOR_ACC}" \
+                -backend-config="container_name=${CONTAINER}" \
+                -backend-config="key=${STATE_KEY}"
+                
+              exit $?
               ;;
             *)
               # AWS S3 Backend (existing logic)

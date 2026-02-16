@@ -455,46 +455,29 @@ jobs:
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
-    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null || inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ needs.configuration.outputs.aws_region }}
-
-      - name: Login to Amazon ECR
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
-
-      - name: Create .npmrc
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-
-      - name: Build and Push
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
-        with:
-          context: .
-          file: packages/admin/Dockerfile.admin
-          push: true
-          tags: |
-            ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/admin:${{ github.sha }}
-            ${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web/${{ needs.configuration.outputs.project_key }}/admin:latest
-          build-args: |
-            BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
-            BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
-          secret-files: |
-            npmrc=.npmrc
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-docker-build.yml
+    with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      dockerfile: packages/admin/Dockerfile.admin
+      context: .
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}/{1}-{2}-web/{2}/admin', 'blaze.azurecr.io', needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      image_tag: ${{ github.sha }}
+      azure_registry_server: "blaze.azurecr.io"
+      build_args: |
+        BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
+        BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # --- DEPLOY JOBS ---
 
@@ -636,6 +619,75 @@ jobs:
       BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-api-azure:
+    name: Deploy API (Container App)
+    needs: [configuration, build-api, pre-flight-check]
+    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "api"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      azure_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      # Azure Registry Server (e.g. CACHE_REGISTRY)
+      azure_registry_server: "blaze.azurecr.io"
+      target_port: 3000
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # App Secrets
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-frontend-azure:
+    name: Deploy Frontend (Container App)
+    needs: [configuration, build-frontend, pre-flight-check]
+    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "frontend"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      azure_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      azure_registry_server: "blaze.azurecr.io"
+      target_port: 3000
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # App Secrets
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-admin-ecs:
     name: Deploy Admin (ECS)
     needs: [configuration, package-admin-docker, pre-flight-check]
@@ -661,6 +713,74 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-admin-gcp:
+    name: Deploy Admin (Cloud Run)
+    needs: [configuration, package-admin-docker, pre-flight-check]
+    # Run for Feature Branches ONLY
+    if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    with:
+      service_name: "admin"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      port: 80 # Admin Nginx
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-admin-azure:
+    name: Deploy Admin (Container App)
+    needs: [configuration, package-admin-docker, pre-flight-check]
+    # Run for Feature Branches ONLY
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "admin"
+      environment: ${{ inputs.environment || 'DEV' }}
+      stage_key: ${{ needs.configuration.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.configuration.outputs.project_key }}
+      client_key: ${{ needs.configuration.outputs.client_key }}
+      domain_root: ${{ needs.configuration.outputs.domain_root }}
+      azure_region: ${{ needs.configuration.outputs.cloud_region }}
+      namespace: ${{ needs.configuration.outputs.namespace }}
+      azure_registry_server: "blaze.azurecr.io"
+      target_port: 80
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # App Secrets
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
@@ -770,9 +890,13 @@ jobs:
         configuration,
         deploy-api,
         deploy-api-gcp,
+        deploy-api-azure,
         deploy-frontend,
         deploy-frontend-gcp,
+        deploy-frontend-azure,
         deploy-admin-ecs,
+        deploy-admin-gcp,
+        deploy-admin-azure,
         deploy-admin-pages,
         deploy-tunnel,
       ]

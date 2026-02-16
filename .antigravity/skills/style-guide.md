@@ -21,7 +21,7 @@ Before proceeding, you **MUST** read the governance context:
 
 ### Terraform
 -   **Formatter**: Always run `terraform fmt -recursive`.
--   **Linter**: Use `tflint` with AWS plugin rules.
+-   **Linter**: Use `tflint` with AWS/GCP/Azure plugin rules (as applicable).
 -   **Naming**: Use snake_case for resources and variables.
 
 ## 2. Commit Messages

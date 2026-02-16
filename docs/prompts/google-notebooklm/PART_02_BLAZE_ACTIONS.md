@@ -73,10 +73,15 @@ jobs:
 
 - `network` - VPC, subnets, security groups, ALB
 - `app` - ECS cluster, services, task definitions, CloudFront
+- `data` - ElastiCache Redis, RDS (optional)
 - `acm` - SSL certificates
 - `tunnel` - Cloudflare Tunnel
 - `third-party-mongodb` - MongoDB Atlas
 - `third-party-elastic` - Elastic Cloud
+- `gcp-network` - GCP VPC, Cloud SQL, Memorystore
+- `gcp-app` - GCP Cloud Run services
+- `azure-network` - Azure VNET, SQL Database
+- `azure-app` - Azure Container Apps
 
 **Time:** 5-15 minutes (depending on stack)  
 **Runs:** On-demand or automated

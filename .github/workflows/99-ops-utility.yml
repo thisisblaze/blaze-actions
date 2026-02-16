@@ -171,6 +171,13 @@ on:
         required: false
       GCP_SERVICE_ACCOUNT:
         required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
 
 permissions:
   id-token: write
@@ -478,6 +485,58 @@ jobs:
             fi
           done
 
+  manage-environment-azure:
+    name: Manage Env (Azure)
+    needs: [configuration]
+    if: inputs.action == 'manage-environment' && inputs.cloud_provider == 'azure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Manage Container Apps
+        run: |
+          RESOURCE_GROUP="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-network"
+          ACTION="${{ inputs.manage_action }}"
+          PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "⚙️ Managing Azure Container Apps: $ACTION"
+          echo "   Resource Group: $RESOURCE_GROUP"
+          echo "   Prefix: $PREFIX"
+
+          # List Apps
+          APPS=$(az containerapp list --resource-group "$RESOURCE_GROUP" --query "[?starts_with(name, '$PREFIX')].name" -o tsv)
+
+          if [[ -z "$APPS" ]]; then
+             echo "ℹ️ No Container Apps found."
+             exit 0
+          fi
+
+          for APP in $APPS; do
+            echo "   👉 App: $APP"
+            if [[ "$ACTION" == "stop" ]]; then
+               echo "   🛑 Stopping..."
+               az containerapp stop --name "$APP" --resource-group "$RESOURCE_GROUP" || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "start" ]]; then
+               echo "   ▶️ Starting..."
+               az containerapp start --name "$APP" --resource-group "$RESOURCE_GROUP" || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "restart" ]]; then
+               echo "   🔄 Restarting Revision..."
+               # Restart the latest revision
+               REVISION=$(az containerapp revision list --name "$APP" --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+               if [[ -n "$REVISION" ]]; then
+                  az containerapp revision restart --name "$APP" --resource-group "$RESOURCE_GROUP" --revision "$REVISION" || echo "   ⚠️ Failed"
+               else
+                  echo "   ⚠️ No revision found to restart"
+               fi
+            fi
+          done
+
   pre-cleanup:
     name: Pre-Cleanup
     needs: [configuration]
@@ -502,6 +561,10 @@ jobs:
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -1218,6 +1281,10 @@ jobs:
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -1335,6 +1402,10 @@ jobs:
 
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -1397,6 +1468,10 @@ jobs:
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}

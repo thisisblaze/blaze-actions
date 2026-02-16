@@ -49,6 +49,11 @@ on:
         required: false
         type: string
         default: "europe-west1"
+      azure_registry_server:
+        description: "Azure Container Registry Login Server (e.g., blaze.azurecr.io)"
+        required: false
+        type: string
+        default: ""
 
     secrets:
       AWS_ROLE_ARN:
@@ -58,6 +63,12 @@ on:
       GCP_WORKLOAD_IDENTITY_PROVIDER:
         required: false
       GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
         required: false
 
     outputs:
@@ -110,6 +121,19 @@ jobs:
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
         run: gcloud auth configure-docker ${{ inputs.gcp_region }}-docker.pkg.dev --quiet
+
+      # ── Azure: OIDC + ACR ──
+      - name: Authenticate to Azure
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure ACR
+        if: inputs.cloud_provider == 'azure'
+        run: az acr login --name ${{ inputs.azure_registry_server }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
