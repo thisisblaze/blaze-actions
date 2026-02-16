@@ -167,7 +167,8 @@ jobs:
                   local REGION_ARG=$2
                   
                   echo "   🔍 Searching for log groups starting with '$PREFIX' in $REGION_ARG..."
-                  GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text)
+                  GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None")
+
                   
                   if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
                       echo "      ✅ No logs found."
@@ -186,10 +187,11 @@ jobs:
                 "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # App / Stateful
                 "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-" # App Lambdas
                 "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-"   # SES Webhooks
+                "/aws/ecs/containerinsights/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # Container Insights
               )
 
               for PREFIX in "${PREFIXES[@]}"; do
-                 delete_log_groups "$PREFIX" "$REGION"
+                 delete_log_groups "$PREFIX" "$REGION" || true
               done
 
               # 2. Edge Region (us-east-1) Patterns
