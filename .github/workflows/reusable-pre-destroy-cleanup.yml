@@ -468,15 +468,31 @@ jobs:
                    --output json 2>/dev/null || echo "[]")
 
                  FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
-
-                 if [[ "$FILTERED_CPS" != "[]" ]]; then
+                 
+                 # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
+                 # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
+                 if [[ "$FILTERED_CPS" == "[]" ]]; then
+                    echo "      ⚠️ No other providers left. Defaulting to FARGATE/FARGATE_SPOT to detach EC2 CP."
                     aws ecs put-cluster-capacity-providers \
                       --cluster "$CLUSTER" \
-                      --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
+                      --capacity-providers FARGATE FARGATE_SPOT \
                       --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-                      --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
+                      --region "$REGION" || echo "      ⚠️ Failed to reset cluster strategy"
+                 else
+                     aws ecs put-cluster-capacity-providers \
+                       --cluster "$CLUSTER" \
+                       --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
+                       --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                       --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
                  fi
-                 echo "      ✅ Capacity provider removed from cluster"
+                 
+                 echo "      ✅ Capacity provider detached from cluster."
+                 
+                 # EXPLICITLY DELETE THE CAPACITY PROVIDER
+                 # Terraform hangs if it exists but is not in state, or if it's just disassociated but still "active"
+                 echo "      🗑️ Explicitly deleting Capacity Provider: $CP_NAME"
+                 aws ecs delete-capacity-provider --capacity-provider "$CP_NAME" --region "$REGION" || echo "      ⚠️ Failed to delete capacity provider resource"
+                 
               else
                  echo "      ✅ Capacity provider not found"
               fi
