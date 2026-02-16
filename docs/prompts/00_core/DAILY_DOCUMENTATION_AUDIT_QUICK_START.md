@@ -38,13 +38,13 @@ Focus on: [SPECIFIC AREA IF KNOWN, e.g., "namespace changes", "new workflow", "A
 Quick scan - which need updates today?
 
 - [ ] 1. Critical Docs (CHANGELOG, README, ONBOARDING)
-- [ ] 2. Workflow Docs (.github/workflows/README.md, REUSABLE_WORKFLOWS.md)
+- [ ] 2. Workflow Docs (reusable-pre-destroy-cleanup, REUSABLE_WORKFLOWS.md)
 - [ ] 3. System Prompts (00_core/\*.md)
 - [ ] 4. AI Workflows (.agent/workflows/\*.md)
 - [ ] 5. Visual Docs (docs/graphs/\*.mermaid)
 - [ ] 6. Architecture (docs/architecture/\*.md)
 - [ ] 7. Config Reference (CONFIGURATION_REFERENCE.md)
-- [ ] 8. Operations (operations_manual.md, runbooks)
+- [ ] 8. Operations (runbooks/cleanup, zombie resources)
 - [ ] 9. Testing (docs/testing/\*.md)
 - [ ] 10. Examples (docs/examples/\*.yml)
 - [ ] 11. Onboarding (CLIENT_ONBOARDING.md, guides)
@@ -184,4 +184,4 @@ Files: N"
 
 **Full Details:** See `DAILY_DOCUMENTATION_AUDIT.md` in same directory
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-02-16
