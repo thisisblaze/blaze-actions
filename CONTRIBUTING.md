@@ -78,6 +78,14 @@ jobs:
     timeout-minutes: 30 # Always set!
 ```
 
+**Cleanup Protocol** (Mandatory):
+- Any workflow creating resources **MUST** have a corresponding destruction path in `99-ops-utility.yml`.
+- Use `reusable-pre-destroy-cleanup.yml` for complex removal (e.g., EC2 Capacity Providers).
+
+**Multi-Cloud Support**:
+- Workflows should accept `cloud_provider` input (aws, gcp, azure).
+- Use `actions/calculate-config` for state backend routing.
+
 **Input Validation**:
 
 ```yaml
