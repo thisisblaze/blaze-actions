@@ -3,7 +3,7 @@
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.1.0--hybrid--ecs-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v1.2.0--multi--cloud--foundation-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 ---
 
@@ -31,11 +31,14 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 # Recommended: Pin to specific version for stability
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.1.0-hybrid-ecs
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.2.0-multi-cloud-foundation
     with:
       environment: dev
       project: myproject
       stack: app
+      # Multi-Cloud & Hybrid Inputs
+      cloud_provider: aws # aws, gcp, or azure
+      api_launch_type: FARGATE # or EC2
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -454,7 +457,7 @@ jobs:
 
 ## Versioning
 
-**Current Version**: `v1.1.0-hybrid-ecs`
+**Current Version**: `v1.2.0-multi-cloud-foundation`
 
 Follow semantic versioning:
 
@@ -476,9 +479,9 @@ Follow semantic versioning:
 
 | Workflow               | Purpose                  | Inputs                                             |
 | :--------------------- | :----------------------- | :------------------------------------------------- |
-| **01-provision-infra** | Provision infrastructure | environment, stack, orphan_lambda (default: false) |
-| **02-deploy-app**      | Deploy App (Hybrid)      | environment, target_services (e.g. "admin, api")   |
-| **stress-test**        | Full environment test    | environment, mode                                  |
-| **99-ops-utility**     | Operations utility       | action, confirmation (for destructive actions)     |
+| **01-provision-infra** | Provision infrastructure | env, stack, cloud_provider, api_launch_type |
+| **02-deploy-app**      | Deploy App (Hybrid)      | env, cloud_provider, api_launch_type        |
+| **stress-test**        | Full environment test    | environment, mode                           |
+| **99-ops-utility**     | Operations utility       | action, confirmation (cleanup integrated)   |
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.
