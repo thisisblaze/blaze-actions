@@ -137,6 +137,8 @@ jobs:
     with:
       environment: dev
       target_services: "Blaze all" # or specific: "api frontend"
+      api_launch_type: "FARGATE" # or "EC2"
+      capacity_provider_strategy: "default" # or custom JSON
 ```
 
 ---
@@ -258,9 +260,9 @@ These power the main workflows:
    - Service status checks
 
 6. **`reusable-pre-destroy-cleanup.yml`**
-   - Cleans up before Terraform destroy
-   - Prevents "cannot delete" errors
-   - Handles Lambda@Edge, S3, CloudFront
+   - **CRITICAL**: Runs before Terraform destroy
+   - Prevents TF lockups by forcibly detaching EC2 Capacity Providers
+   - Cleans up Lambda@Edge, S3, CloudFront, and Launch Templates
 
 7. **`reusable-terraform-operations.yml`**
    - Wrapper for common Terraform ops
@@ -576,12 +578,10 @@ Cost: $0 going forward
 - Cleans up zombie resources
 - Makes teardown reliable
 
-### 3. Hybrid Deployment
-
-- ECS for dynamic content
-- Cloudflare Pages for static
-- Best of both worlds
-- Cost-optimized
+### 3. Hybrid Deployment (Compute & Cloud)
+- **Compute**: Mix Fargate (Spot) & EC2 (Performance) in same cluster
+- **Cloud**: AWS (Core), GCP (Data), Azure (Compliance)
+- **Static**: Cloudflare Pages for global edge delivery
 
 ### 4. Environment Protection
 
