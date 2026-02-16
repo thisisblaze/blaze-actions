@@ -196,7 +196,7 @@ jobs:
 
               # 2. Edge Region (us-east-1) Patterns
               # Edge functions often have the region prefix in the log group name when created by Lambda@Edge
-              delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1"
+              delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1" || true
 
          - name: Cleanup Service Discovery
            if: env.PROJECT_KEY != ''
