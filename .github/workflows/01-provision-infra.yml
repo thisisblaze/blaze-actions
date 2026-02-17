@@ -458,7 +458,6 @@ jobs:
           echo "Stack: ${{ inputs.stack }}"
           echo "Stage Key: ${{ needs.configuration.outputs.stage_key }}"
           echo "Provision Result: ${{ needs.provision.result }}"
-          echo "Job Status (failure): ${{ failure() }}"
           echo "Environment: ${{ inputs.environment }}"
 
   auto-cleanup-dns:
