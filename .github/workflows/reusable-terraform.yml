@@ -65,6 +65,20 @@ on:
         required: false
         type: boolean
         default: false
+      split_apply:
+        description: "Enable Split Apply (Targeted Apply -> Sleep -> Full Apply)"
+        required: false
+        type: boolean
+        default: false
+      split_targets:
+        description: "Space-separated list of targets for the first apply step"
+        required: false
+        type: string
+      sleep_seconds:
+        description: "Seconds to sleep between split apply steps"
+        required: false
+        type: number
+        default: 60
 
     secrets:
       AWS_ROLE_ARN:
@@ -646,7 +660,33 @@ jobs:
           TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
         run: |
-          terraform apply -auto-approve -input=false tfplan
+          if [[ "${{ inputs.split_apply }}" == "true" ]]; then
+             echo "🛡️ Split Apply Enabled - Phase 1: Targeted Apply"
+             TARGETS="${{ inputs.split_targets }}"
+             
+             if [[ -z "$TARGETS" ]]; then
+                echo "❌ Error: split_targets must be provided when split_apply is true"
+                exit 1
+             fi
+             
+             # Construct -target flags
+             TARGET_FLAGS=""
+             for target in $TARGETS; do
+               TARGET_FLAGS="$TARGET_FLAGS -target=$target"
+             done
+             
+             echo "   Targets: $TARGET_FLAGS"
+             terraform apply -auto-approve -input=false $TARGET_FLAGS
+             
+             echo "zzz Sleeping for ${{ inputs.sleep_seconds }} seconds to allow API propagation..."
+             sleep ${{ inputs.sleep_seconds }}
+             
+             echo "🛡️ Split Apply - Phase 2: Full Apply"
+             terraform apply -auto-approve -input=false
+          else
+             # Standard Apply using saved plan
+             terraform apply -auto-approve -input=false tfplan
+          fi
 
       - name: Export Terraform Outputs
         id: tf_outputs
