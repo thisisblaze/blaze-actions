@@ -253,6 +253,13 @@ jobs:
           echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
           echo "☁️ Provider: $ACTIVE_PROVIDER | Region: $CLOUD_REGION"
 
+      - name: Debug Credentials
+        run: |
+          echo "Debug Credentials:"
+          echo "Secret set? ${{ secrets.AWS_ROLE_ARN != '' }}"
+          echo "Var set? ${{ vars.AWS_ROLE_ARN != '' }}"
+          echo "Input Cloud Provider: ${{ inputs.cloud_provider }}"
+
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
