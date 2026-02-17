@@ -464,7 +464,10 @@ jobs:
       # Required for constructing targets
       branch_tag: ${{ inputs.branch_name }}
       confirmation: "EXECUTE"
-    secrets: inherit
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   summary:
     name: 📝 Provisioning Summary
