@@ -447,18 +447,6 @@ jobs:
             echo "✅ Sample Dataset load triggered successfully."
           elif [[ "$RESPONSE_CODE" == "409" ]]; then
             echo "⚠️  Sample Dataset is already loaded or currently loading."
-  debug-failure-context:
-    name: 🕵️ Debug Failure Context
-    needs: [configuration, provision]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump Context
-        run: |
-          echo "Stack: ${{ inputs.stack }}"
-          echo "Stage Key: ${{ needs.configuration.outputs.stage_key }}"
-          echo "Provision Result: ${{ needs.provision.result }}"
-          echo "Environment: ${{ inputs.environment }}"
 
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)
