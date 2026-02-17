@@ -859,6 +859,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'cleanup-dns'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     timeout-minutes: 10
     steps:
       - name: Delete Records
@@ -948,6 +949,43 @@ jobs:
           check_and_delete "frontend-${STAGE}.${DOMAIN_ROOT}"
           check_and_delete "cdn-${STAGE}.${DOMAIN_ROOT}"
           check_and_delete "admin-${STAGE}.${DOMAIN_ROOT}"
+
+          # ------------------------------------------------------------------
+          # Feature: Worker Route Cleanup (Fix 409 Conflict)
+          # ------------------------------------------------------------------
+          check_workers_routes() {
+             echo "🔍 Checking Worker Routes for pattern: $1"
+             PATTERN=$1
+             
+             # List routes
+             ROUTES=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/workers/routes" \
+               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+               -H "Content-Type: application/json")
+             
+             # Find matching route IDs
+             # We look for routes that contain the pattern (e.g. domain name)
+             # This is aggressive but necessary for 'tunnel' stack cleanup
+             IDS=$(echo "$ROUTES" | jq -r --arg pat "$PATTERN" '.result[] | select(.pattern | contains($pat)) | .id')
+             
+             if [[ -z "$IDS" ]]; then
+                echo "✅ No conflicting worker routes found."
+             else
+                for id in $IDS; do
+                  echo "🗑️ Deleting worker route ID: $id"
+                  curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/workers/routes/$id" \
+                    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                    -H "Content-Type: application/json"
+                  echo "   Deleted."
+                done
+             fi
+          }
+
+          if [[ "${{ inputs.stack }}" == "tunnel" ]]; then
+             echo "🧹 Stack is 'tunnel' - checking for orphaned worker routes..."
+             # Pattern: *.{stage}.{domain}/* or similar
+             # We'll search for the stage+domain to be safe
+             check_workers_routes "${STAGE}.${DOMAIN_ROOT}"
+          fi
 
           # Wildcards if necessary (be careful)
           # check_and_delete "*.${STAGE}.${DOMAIN_ROOT}"
