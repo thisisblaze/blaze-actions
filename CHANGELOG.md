@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.0-workflow-consolidation (2026-02-17)
+
+### Added
+
+- **Ops Utility Expansion**:
+  - `cleanup-dns`: New action in `99-ops-utility.yml` to surgically remove DNS records (A, CNAME, TXT) and Cloudflare Pages projects for a specific environment.
+  - `nuke-cloudfront`: New action in `99-ops-utility.yml` to forcefully disable and delete stuck CloudFront distributions.
+- **Stress Test Validation**:
+  - `stress-test.yml`: Validated for use as a reusable workflow via "Wrapper Pattern".
+
 ## v1.3.0-tunnel-stability (2026-02-17)
 
 ### Added

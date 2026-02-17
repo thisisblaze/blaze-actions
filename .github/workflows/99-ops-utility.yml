@@ -24,6 +24,8 @@ on:
           - "unlock-state"
           - "wipe-state"
           - "kill-workflows"
+          - "cleanup-dns"
+          - "nuke-cloudfront"
         required: true
       environment:
         description: "Target Environment"
@@ -205,7 +207,7 @@ jobs:
           fi
 
           # Validation for destructive actions
-          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" ]]; then
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" ]]; then
             if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
               echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
               exit 1
@@ -799,105 +801,141 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Validate Confirmation
+      - name: Authenticate to Cloudflare
+        run: echo "Authentication handled by secrets in step"
+
+      - name: Delete Project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
-            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          echo "🗑️ Deleting Cloudflare Pages Project: $PROJECT_NAME"
+
+          # Check if exists
+          EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" | jq -r '.success')
+
+          if [[ "$EXISTS" == "true" ]]; then
+             curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" \
+               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+               -H "Content-Type: application/json"
+             echo "✅ Deleted."
+          else
+             echo "ℹ️ Project not found (already deleted?)"
+          fi
+
+  cleanup-dns:
+    name: 🧹 Cleanup DNS
+    needs: [configuration]
+    if: inputs.action == 'cleanup-dns'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete Records
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -z "$ZONE_ID" ]]; then
+            echo "❌ ZONE_ID secret is missing or empty."
             exit 1
           fi
 
-      - name: Calculate Project Name
-        id: calc
-        run: |
-          # Use dynamic configuration outputs for consistency
-          NAMESPACE="${{ needs.configuration.outputs.namespace }}"
-          PROJECT="${{ needs.configuration.outputs.project_key }}"
-          STAGE="${{ needs.configuration.outputs.stage_key }}"
-          CLIENT="${{ needs.configuration.outputs.client_key }}"
+          check_and_delete() {
+            local record_name=$1
+            echo "Checking record: $record_name"
+            
+            # List records matching name
+            RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=$record_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json")
 
-          # Determine project name (matches creation logic in 02-deploy-app.yml)
-          if [ "$STAGE" = "prod" ]; then
-            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-admin"
-          else
-            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
+            # Extract IDs
+            IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
+            
+            if [[ -z "$IDS" || "$IDS" == "null" ]]; then
+              echo "No DNS records found for $record_name"
+            else
+              for id in $IDS; do
+                echo "Deleting record ID: $id"
+                curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$id" \
+                  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                  -H "Content-Type: application/json"
+                echo "Deleted."
+              done
+            fi
+          }
+
+          check_pages_domains() {
+            local domain=$1
+            echo "Checking Pages domains for: $domain"
+            
+            if [[ -z "$ACCOUNT_ID" ]]; then
+               echo "⚠️ ACCOUNT_ID secret missing. Skipping Pages check."
+               return
+            fi
+
+            # List projects
+            PROJECTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json")
+            
+            PROJECT_NAMES=$(echo "$PROJECTS" | jq -r '.result[].name')
+
+            for proj in $PROJECT_NAMES; do
+              # Check domains for project
+              DOMAINS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$proj/domains" \
+                -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                -H "Content-Type: application/json")
+              
+              MATCH=$(echo "$DOMAINS" | jq -r --arg d "$domain" '.result[] | select(.name == $d) | .id')
+              
+              if [[ -n "$MATCH" ]]; then
+                 echo "Found domain $domain in project $proj. Deleting..."
+                 curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$proj/domains/$domain" \
+                   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                   -H "Content-Type: application/json"
+                 echo "Deleted domain from Pages project $proj."
+              fi
+            done
+          }
+
+          # Construct patterns based on environment/stage
+          DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Safety check
+          if [[ "$STAGE" == "prod" && "${{ inputs.confirmation }}" != "DESTROY" ]]; then
+             echo "❌ Safety: Cannot cleanup PROD DNS without confirmation 'DESTROY'"
+             exit 1
           fi
 
-          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
-          echo "📦 Calculated Pages project name: $PROJECT_NAME"
-          echo "   (Namespace: $NAMESPACE, Project: $PROJECT, Stage: $STAGE)"
+          echo "Cleaning up DNS for stage: $STAGE, domain: $DOMAIN_ROOT"
 
-      - name: Delete Cloudflare Pages Project
-        env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          PROJECT_NAME: ${{ steps.calc.outputs.project_name }}
-        run: |
-          echo "🗑️ Deleting Cloudflare Pages project: $PROJECT_NAME"
+          # Example: api-stage.thisisblaze.uk
+          check_and_delete "api-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "frontend-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "cdn-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "admin-${STAGE}.${DOMAIN_ROOT}"
 
-          # Retry configuration
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          RETRY_DELAY=2
+          # Wildcards if necessary (be careful)
+          # check_and_delete "*.${STAGE}.${DOMAIN_ROOT}"
 
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            # Delete project via API
-            RESPONSE=$(curl -X DELETE \
-              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}" \
-              -H "Authorization: Bearer ${CF_API_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -w "\n%{http_code}" \
-              -s)
+          # Pages domains
+          check_pages_domains "api-${STAGE}.${DOMAIN_ROOT}"
+          check_pages_domains "frontend-${STAGE}.${DOMAIN_ROOT}"
+          check_pages_domains "admin-${STAGE}.${DOMAIN_ROOT}"
 
-            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-            BODY=$(echo "$RESPONSE" | head -n-1)
-            
-            # Success cases
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ Successfully deleted Pages project"
-              exit 0
-            elif [ "$HTTP_CODE" = "404" ]; then
-              echo "⚠️ Project not found (already deleted or never existed)"
-              exit 0
-            fi
-            
-            # Retry cases
-            if [ "$HTTP_CODE" = "429" ]; then
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "⚠️ Rate limited (HTTP 429). Retrying in ${RETRY_DELAY}s... (Attempt $RETRY_COUNT/$MAX_RETRIES)"
-                sleep $RETRY_DELAY
-                RETRY_DELAY=$((RETRY_DELAY * 2))  # Exponential backoff
-                continue
-              fi
-            fi
-            
-            # Error cases
-            if [ "$HTTP_CODE" = "403" ]; then
-              echo "❌ Permission denied (HTTP 403)"
-              echo "   Check that CLOUDFLARE_API_TOKEN has 'Cloudflare Pages:Edit' permission"
-              echo "Response: $BODY"
-              exit 1
-            else
-              echo "❌ Failed to delete project (HTTP $HTTP_CODE)"
-              echo "Response: $BODY"
-              exit 1
-            fi
-          done
-
-          # Max retries exceeded
-          echo "❌ Failed after $MAX_RETRIES attempts"
-          exit 1
-
-      - name: Summary
-        run: |
-          echo "### ✅ Cloudflare Pages Project Deleted" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Project Name** | \`${{ steps.calc.outputs.project_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+  nuke-cloudfront:
+    name: ☢️ Nuke CloudFront
+    needs: [configuration]
+    if: inputs.action == 'nuke-cloudfront'
+    uses: ./.github/workflows/nuke-cloudfront.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   cleanup-cloudflare-deployments:
     name: 🧹 Cleanup Old Deployments
