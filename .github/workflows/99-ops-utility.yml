@@ -867,6 +867,10 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
         run: |
           if [[ -z "$ZONE_ID" ]]; then
             echo "❌ ZONE_ID secret is missing or empty."
@@ -932,6 +936,53 @@ jobs:
             done
           }
 
+          check_pages_project() {
+            local project_name=$1
+            echo "🔍 Checking Pages Project: $project_name"
+
+            EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$project_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json" | jq -r '.success')
+
+            if [[ "$EXISTS" == "true" ]]; then
+               echo "🗑️ Deleting Pages Project: $project_name"
+               curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$project_name" \
+                 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                 -H "Content-Type: application/json"
+               echo "   Deleted."
+            else
+               echo "✅ Project $project_name not found."
+            fi
+          }
+
+          check_worker_script() {
+            local script_name=$1
+            echo "🔍 Checking Worker Script: $script_name"
+
+            # Check if exists (by listing or getting)
+            # We can use the list endpoint with filtering or just try to delete if we are sure?
+            # Better to check.
+            # GET /accounts/{account_id}/workers/scripts/{script_name} is not documented as "check existence" easily, 
+            # usually returns script content. simpler to just iterate or try delete.
+            # But let's try to be precise.
+
+            # Simple Check:
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+               echo "🗑️ Deleting Worker Script: $script_name"
+               curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+                 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                 -H "Content-Type: application/json"
+               echo "   Deleted."
+            elif [[ "$HTTP_CODE" == "404" ]]; then
+               echo "✅ Worker Script $script_name not found."
+            else
+               echo "⚠️ Error checking worker script $script_name (HTTP $HTTP_CODE)"
+            fi
+          }
+
           # Construct patterns based on environment/stage
           DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
           STAGE="${{ needs.configuration.outputs.stage_key }}"
@@ -963,7 +1014,7 @@ jobs:
                -H "Content-Type: application/json")
              
              echo "DEBUG: Raw Routes Response:"
-             echo "$ROUTES" | jq .
+             # echo "$ROUTES" | jq . # Less verbose now
 
              # Find matching route IDs
              # We look for routes that contain the pattern (e.g. domain name)
@@ -994,6 +1045,32 @@ jobs:
                 echo "❌ Error: STAGE or DOMAIN_ROOT is empty."
              else
                 check_workers_routes "${STAGE}.${DOMAIN_ROOT}"
+             fi
+          fi
+
+          if [[ "${{ inputs.stack }}" == "app" ]]; then
+             echo "🧹 Stack is 'app' - checking for conflicting Pages & Workers..."
+             
+             # 1. Admin Pages Project
+             # Naming: {namespace}-{client}-{project}-{stage}-admin
+             PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
+             check_pages_project "$PROJECT_NAME"
+
+             # 2. Basic Auth Worker
+             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-dev-basic-auth)
+             # Wait, usually it includes namespace?
+             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-dev-basic-auth
+             # Namespace=blaze, Project=thisisblaze, Stage=dev.
+             # So pattern is: ${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth
+             # But let's also try with client-key just in case: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth
+             # Or just check both?
+             
+             WORKER_1="${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth"
+             check_worker_script "$WORKER_1"
+
+             if [[ -n "$CLIENT" && "$CLIENT" != "thisisblaze" ]]; then
+                WORKER_2="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth"
+                check_worker_script "$WORKER_2"
              fi
           fi
 

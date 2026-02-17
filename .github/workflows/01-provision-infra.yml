@@ -451,12 +451,13 @@ jobs:
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
-    if: failure() && needs.configuration.outputs.stage_key != 'prod' && inputs.stack == 'tunnel'
+    if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
     uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@dev
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      stack: ${{ inputs.stack }}
       # Required for constructing targets
       branch_tag: ${{ inputs.branch_name }}
       confirmation: "EXECUTE"
