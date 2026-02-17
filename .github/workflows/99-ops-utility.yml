@@ -1649,6 +1649,7 @@ jobs:
             "frontend-${STAGE}.${DOMAIN_ROOT}"
             "cdn-${STAGE}.${DOMAIN_ROOT}"
             "admin-${STAGE}.${DOMAIN_ROOT}"
+            "api-direct-${STAGE}.${DOMAIN_ROOT}"
             # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
             # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
             # We won't delete root wildcard automatically.
