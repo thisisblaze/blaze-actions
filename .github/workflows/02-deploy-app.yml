@@ -111,9 +111,9 @@ on:
         default: "X86_64"
 
     secrets:
-      AWS_ROLE_ARN:
-        required: false
-        description: "AWS Role ARN for deployment"
+      #       AWS_ROLE_ARN:
+      #         required: false
+      #         description: "AWS Role ARN for deployment"
       GCP_WORKLOAD_IDENTITY_PROVIDER:
         required: false
       GCP_SERVICE_ACCOUNT:
