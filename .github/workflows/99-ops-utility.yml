@@ -1000,6 +1000,7 @@ jobs:
           check_and_delete "frontend-${STAGE}.${DOMAIN_ROOT}"
           check_and_delete "cdn-${STAGE}.${DOMAIN_ROOT}"
           check_and_delete "admin-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "kibana-${STAGE}.${DOMAIN_ROOT}"
 
           # ------------------------------------------------------------------
           # Feature: Worker Route Cleanup (Fix 409 Conflict)
