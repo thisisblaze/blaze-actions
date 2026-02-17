@@ -7,6 +7,16 @@ on:
         required: true
         default: "EXAMPLE_ZONE_ID"
 
+  workflow_call:
+    inputs:
+      dist_id:
+        description: "Distribution ID to DELETE"
+        required: true
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+
 permissions:
   id-token: write
   contents: read
