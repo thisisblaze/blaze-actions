@@ -199,6 +199,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Load Access List
+        id: load-access
+        run: |
+          if [[ -f "vars/blaze-env.json" ]]; then
+            ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
+            echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ vars/blaze-env.json not found. Skipping access control."
+            echo "allowed=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Access
+        if: steps.load-access.outputs.allowed != ''
+        uses: ./.github/actions/check-access
+        with:
+          allowed_users: ${{ steps.load-access.outputs.allowed }}
+          actor: ${{ github.actor }}
+
       - name: Validate Input
         run: |
           ACTION="${{ inputs.action }}"
