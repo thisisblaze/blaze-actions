@@ -1599,13 +1599,15 @@ jobs:
         branch_name=${{ inputs.branch_tag }}
       pre_apply_script: |
         echo "🔪 ORPHANING BROKEN CLOUDFLARE STATE..."
-        # Schema mismatch (v4 -> v5) prevents destroy. We remove them from state to unblock.
-        # Resources will be cleaned up by API steps or left as zombies (DNS).
+        # Schema mismatch (v4 -> v5) or deleted resources prevent destroy.
+        # We remove them from state to unblock.
         terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
         terraform state rm "module.basic_auth_worker.cloudflare_workers_script.basic_auth" || true
         terraform state rm "module.basic_auth_worker.cloudflare_workers_route.routes" || true
         terraform state rm "module.tunnel.cloudflare_zero_trust_tunnel_cloudflared_config.this" || true
-        terraform state rm "module.tunnel_dns.cloudflare_record.this" || true
+        # Update to match modern provider resource name (cloudflare_dns_record)
+        terraform state rm "module.tunnel_dns.cloudflare_dns_record.this" || true
+        terraform state rm "module.tunnel_dns.cloudflare_record.this" || true # Keep old for safety
         terraform state rm "module.admin_pages_project.cloudflare_pages_project.this" || true
         echo "✅ Broken state removed."
 
@@ -1775,6 +1777,12 @@ jobs:
             "cdn-${STAGE}.${DOMAIN_ROOT}"
             "admin-${STAGE}.${DOMAIN_ROOT}"
             "api-direct-${STAGE}.${DOMAIN_ROOT}"
+            # Tunnel Stack Targets (fix 400 Bad Request / 409 Conflict)
+            "kibana-${STAGE}.${DOMAIN_ROOT}"
+            "gibana-${STAGE}.${DOMAIN_ROOT}"
+            "grafana-${STAGE}.${DOMAIN_ROOT}"
+            "prometheus-${STAGE}.${DOMAIN_ROOT}"
+            "alertmanager-${STAGE}.${DOMAIN_ROOT}"
             # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
             # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
             # We won't delete root wildcard automatically.
