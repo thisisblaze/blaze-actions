@@ -962,9 +962,13 @@ jobs:
                -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
                -H "Content-Type: application/json")
              
+             echo "DEBUG: Raw Routes Response:"
+             echo "$ROUTES" | jq .
+
              # Find matching route IDs
              # We look for routes that contain the pattern (e.g. domain name)
              # This is aggressive but necessary for 'tunnel' stack cleanup
+             echo "DEBUG: Filtering with jq substring match for '$PATTERN'..."
              IDS=$(echo "$ROUTES" | jq -r --arg pat "$PATTERN" '.result[] | select(.pattern | contains($pat)) | .id')
              
              if [[ -z "$IDS" ]]; then
@@ -984,7 +988,13 @@ jobs:
              echo "🧹 Stack is 'tunnel' - checking for orphaned worker routes..."
              # Pattern: *.{stage}.{domain}/* or similar
              # We'll search for the stage+domain to be safe
-             check_workers_routes "${STAGE}.${DOMAIN_ROOT}"
+             echo "DEBUG: STAGE='$STAGE', DOMAIN_ROOT='$DOMAIN_ROOT'"
+             
+             if [[ -z "$STAGE" || -z "$DOMAIN_ROOT" ]]; then
+                echo "❌ Error: STAGE or DOMAIN_ROOT is empty."
+             else
+                check_workers_routes "${STAGE}.${DOMAIN_ROOT}"
+             fi
           fi
 
           # Wildcards if necessary (be careful)
