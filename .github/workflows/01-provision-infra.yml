@@ -196,6 +196,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: infra-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
