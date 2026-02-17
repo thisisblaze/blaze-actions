@@ -1,0 +1,31 @@
+name: "Check Access"
+description: "Verifies if the current user is allowed to perform infrastructure actions."
+inputs:
+  allowed_users:
+    description: "Comma-separated list of allowed users (from blaze-env.json)"
+    required: true
+  actor:
+    description: "The GitHub actor triggering the workflow"
+    required: true
+    default: ${{ github.actor }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Verify Access
+      shell: bash
+      run: |
+        ALLOWED_USERS="${{ inputs.allowed_users }}"
+        ACTOR="${{ inputs.actor }}"
+
+        echo "🔒 Access Control Check"
+        echo "   Actor: $ACTOR"
+        echo "   Allowed: $ALLOWED_USERS"
+
+        if [[ ",$ALLOWED_USERS," == *",$ACTOR,"* ]]; then
+          echo "✅ Access GRANTED for $ACTOR."
+        else
+          echo "❌ Access DENIED for $ACTOR."
+          echo "   You are not in the ALLOWED_INFRA_USERS list."
+          exit 1
+        fi
