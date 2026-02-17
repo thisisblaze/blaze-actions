@@ -857,7 +857,7 @@ jobs:
   cleanup-dns:
     name: 🧹 Cleanup DNS
     needs: [configuration]
-    if: inputs.action == 'cleanup-dns'
+    if: always() && needs.configuration.result == 'success' && inputs.action == 'cleanup-dns'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 10
