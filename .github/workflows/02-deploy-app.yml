@@ -202,7 +202,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [quality-check]
-    environment: ${{ inputs.environment || 'DEV' }}
     if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
