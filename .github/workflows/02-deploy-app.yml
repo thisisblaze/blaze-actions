@@ -111,9 +111,9 @@ on:
         default: "X86_64"
 
     secrets:
-      #       AWS_ROLE_ARN:
-      #         required: false
-      #         description: "AWS Role ARN for deployment"
+      AWS_ROLE_ARN:
+        required: false
+        description: "AWS Role ARN for deployment"
       GCP_WORKLOAD_IDENTITY_PROVIDER:
         required: false
       GCP_SERVICE_ACCOUNT:
@@ -202,6 +202,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [quality-check]
+    environment: ${{ inputs.environment || 'DEV' }}
     if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
@@ -252,13 +253,6 @@ jobs:
           echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
           echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
           echo "☁️ Provider: $ACTIVE_PROVIDER | Region: $CLOUD_REGION"
-
-      - name: Debug Credentials
-        run: |
-          echo "Debug Credentials:"
-          echo "Secret set? ${{ secrets.AWS_ROLE_ARN != '' }}"
-          echo "Var set? ${{ vars.AWS_ROLE_ARN != '' }}"
-          echo "Input Cloud Provider: ${{ inputs.cloud_provider }}"
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
