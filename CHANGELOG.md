@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.3.0-tunnel-stability (2026-02-17)
+
+### Added
+
+- **Cloudflare Tunnel Stability**:
+  - Implemented "Split Apply" strategy to resolve API consistency issues between Tunnel creation and Configuration.
+  - `reusable-terraform.yml`: Added `split_apply`, `split_targets`, and `sleep_seconds` inputs.
+  - `reusable-terraform.yml`: Added logic to execute targeted apply -> sleep -> full apply when enabled.
+- **Cleanup Hardening**:
+  - `99-ops-utility.yml`: Enhanced Nuke Pages cleanup to delete domains before projects (Fixes "Project not found" race condition).
+  - `99-ops-utility.yml`: Improved Cloudflare Cleanup logic.
+
 ## v1.2.0-multi-cloud-foundation (2026-02-16)
 
 ### Added
