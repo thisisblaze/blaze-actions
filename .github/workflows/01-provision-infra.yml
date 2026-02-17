@@ -451,6 +451,20 @@ jobs:
             # Optional step, do not fail workflow
           fi
 
+  auto-cleanup-dns:
+    name: 🧹 Auto Cleanup DNS (Failure)
+    needs: [configuration, provision]
+    if: failure() && needs.configuration.outputs.stage_key != 'prod' && inputs.stack == 'tunnel'
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@dev
+    with:
+      action: cleanup-dns
+      environment: ${{ inputs.environment }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      # Required for constructing targets
+      branch_tag: ${{ inputs.branch_name }}
+      confirmation: "EXECUTE"
+    secrets: inherit
+
   summary:
     name: 📝 Provisioning Summary
     needs: [configuration, provision, post_provision]
