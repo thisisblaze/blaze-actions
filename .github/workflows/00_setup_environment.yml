@@ -22,6 +22,11 @@ on:
           - "⚙️ Init Backend"
           - "🪞 Mirror Images Only"
         default: "🟢 Bootstrap All (Recommended)"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
 
       # Mirroring Options (Hidden unless needed)
       images:
@@ -168,6 +173,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
 
       # CRITICAL: Configure git AFTER setup-blaze to override any AWS credential git config
       - name: Configure Git for Private Modules
