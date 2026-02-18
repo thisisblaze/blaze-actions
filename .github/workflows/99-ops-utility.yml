@@ -1305,6 +1305,7 @@ jobs:
           environment: ${{ inputs.environment }}
           terraform_stack: tunnel
           branch_tag: ${{ inputs.branch_tag }}
+          deploy_infra: true
 
       - name: List Cloudflare Tunnels
         id: list
