@@ -304,20 +304,7 @@ runs:
            # AWS CLI + JQ approach (no Terraform dependency)
             STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
             echo "📂 Reading state from $STATE_PATH"
-
-            echo "🔎 DEBUG: Downloading State File..."
-            aws s3 cp "$STATE_PATH" state.json || echo "❌ Failed to download state file"
-            
-            echo "🔎 DEBUG: Inspecting Tunnel Token Object..."
-            jq '.outputs.tunnel_token' state.json || echo "❌ Failed to extract token object"
-
-            echo "🔎 DEBUG: Checking Token Value Type..."
-            jq '.outputs.tunnel_token.value | type' state.json || echo "❌ Failed to check type"
-            
-            echo "🔎 DEBUG: Checking Token Value Length..."
-            jq '.outputs.tunnel_token.value | length' state.json || echo "❌ Failed to check length"
-
-            RAW_TOKEN=$(jq -r '.outputs.tunnel_token.value // empty' state.json)
+            RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - 2>/dev/null | jq -r '.outputs.tunnel_token.value // empty')
             
             # Fallback: Try legacy provisioning path (infra/live/{stage}-tunnel/terraform.tfstate)
             if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
@@ -325,7 +312,7 @@ runs:
                LEGACY_KEY="infra/live/${BUCKET_STAGE}-tunnel/terraform.tfstate"
                LEGACY_PATH="s3://${CF_BUCKET}/${LEGACY_KEY}"
                echo "📂 Reading state from $LEGACY_PATH"
-               RAW_TOKEN=$(aws s3 cp "$LEGACY_PATH" - | jq -r '.outputs.tunnel_token.value // empty')
+               RAW_TOKEN=$(aws s3 cp "$LEGACY_PATH" - 2>/dev/null | jq -r '.outputs.tunnel_token.value // empty')
             fi
            
            if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
@@ -333,12 +320,6 @@ runs:
               echo "   State Path: $STATE_PATH"
               echo "   Legacy Path: $LEGACY_PATH"
               echo "   This might mean the tunnel infrastructure hasn't been provisioned yet."
-              
-              echo "---------------------------------------------------"
-              echo "🔎 DEBUG: Listing Bucket Contents ($CF_BUCKET/infra/${PROJECT_KEY}/)..."
-              aws s3 ls "s3://${CF_BUCKET}/infra/${PROJECT_KEY}/" --recursive || echo "❌ Failed to list bucket"
-              echo "---------------------------------------------------"
-              
               exit 1
            fi
            
