@@ -164,9 +164,8 @@ jobs:
                       BLAZE_PROJECT_KEY=${{ inputs.project_key }}
                       BLAZE_STAGE=${{ inputs.stage_key }}
                       BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
-                  secrets: |
-                      BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}:latest
-                      BLAZE_CONNECTION_STRING=${{ secrets.BLAZE_CONNECTION_STRING }}:latest
+                      BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+                      BLAZE_CONNECTION_STRING=${{ secrets.BLAZE_CONNECTION_STRING }}
 
             - name: "📋 Deploy Summary"
               run: |
