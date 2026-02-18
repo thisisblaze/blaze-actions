@@ -195,6 +195,7 @@ jobs:
   build-arm64:
     name: "Build (arm64)"
     runs-on: ubuntu-24.04-arm # Native ARM64 runner — 13x faster than QEMU
+    environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/arm64')
     timeout-minutes: 15
     outputs:
