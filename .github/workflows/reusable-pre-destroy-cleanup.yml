@@ -84,7 +84,20 @@ jobs:
                  echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
                  echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
                  echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
-                 echo "Parsed: Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+                 echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+              elif [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+                 # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
+                 # Assuming: namespace-project-stage (where client might be same as project or omitted)
+                 NAMESPACE="${BASH_REMATCH[1]}"
+                 PROJECT_KEY="${BASH_REMATCH[2]}"
+                 STAGE_KEY="${BASH_REMATCH[3]}"
+                 CLIENT_KEY="$PROJECT_KEY" # Default client to project if missing
+                 
+                 echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+                 echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
+                 echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
+                 echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
+                 echo "Parsed (Compact): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
               else
                  echo "⚠️ Could not parse Cluster Name. Keys will be empty."
                  echo "NAMESPACE=" >> $GITHUB_ENV
