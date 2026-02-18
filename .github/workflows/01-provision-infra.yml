@@ -399,6 +399,7 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         branch_name=${{ inputs.branch_name }}
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
         stage=${{ needs.configuration.outputs.stage_key }}
         is_beta=${{ needs.configuration.outputs.beta }}
         cluster_tier=${{ needs.configuration.outputs.cluster_tier }}
