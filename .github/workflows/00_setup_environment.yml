@@ -97,6 +97,10 @@ on:
         required: false
         type: string
         default: "1.9.0"
+      wif_audience:
+        required: false
+        type: string
+        default: ""
     secrets:
       AWS_ROLE_ARN:
         required: false
@@ -450,4 +454,3 @@ jobs:
               --output table 2>/dev/null || echo "   (No images found or repository doesn't exist)"
             echo ""
           done
- 

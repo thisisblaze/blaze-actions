@@ -74,6 +74,10 @@ on:
       environment:
         required: true
         type: string
+      wif_audience:
+        required: false
+        type: string
+        default: ""
       project:
         required: false
         type: string
