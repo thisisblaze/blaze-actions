@@ -302,9 +302,19 @@ runs:
            echo "   Using shared tunnel state (Bucket: $CF_BUCKET, Key: $CF_KEY)"
            
            # AWS CLI + JQ approach (no Terraform dependency)
-           STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
-           echo "📂 Reading state from $STATE_PATH"
-           RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - | jq -r '.outputs.tunnel_token.value // empty')
+            STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
+            echo "📂 Reading state from $STATE_PATH"
+
+            echo "🔎 DEBUG: Verifying S3 Object..."
+            aws s3 ls "$STATE_PATH" || echo "❌ Failed to find state file at $STATE_PATH"
+
+            echo "🔎 DEBUG: Dumping State Structure (Keys)..."
+            aws s3 cp "$STATE_PATH" - | jq 'keys' || echo "❌ Failed to download/parse state"
+
+            echo "🔎 DEBUG: Dumping Outputs Structure..."
+            aws s3 cp "$STATE_PATH" - | jq '.outputs | keys' || echo "❌ Failed to parse outputs"
+
+            RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - | jq -r '.outputs.tunnel_token.value // empty')
             
             # Fallback: Try legacy provisioning path (infra/live/{stage}-tunnel/terraform.tfstate)
             if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
