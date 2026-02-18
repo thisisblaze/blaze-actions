@@ -837,22 +837,32 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
-          echo "🗑️ Deleting Cloudflare Pages Project: $PROJECT_NAME"
+          # Define potential project names
+          PROJECT_NAME_1="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          PROJECT_NAME_2="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
 
-          # Check if exists
-          EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" | jq -r '.success')
+          PROJECTS=("$PROJECT_NAME_1" "$PROJECT_NAME_2")
 
-          if [[ "$EXISTS" == "true" ]]; then
-             curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" \
-               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-               -H "Content-Type: application/json"
-             echo "✅ Deleted."
-          else
-             echo "ℹ️ Project not found (already deleted?)"
-          fi
+          for PROJ in "${PROJECTS[@]}"; do
+             if [[ -z "$PROJ" || "$PROJ" == *"-"* ]]; then # Basic sanity check, though not perfect
+                 echo "🔍 Checking Cloudflare Pages Project: $PROJ"
+                 
+                 # Check if exists
+                 EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJ" \
+                   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                   -H "Content-Type: application/json" | jq -r '.success')
+
+                 if [[ "$EXISTS" == "true" ]]; then
+                    echo "   🗑️ Deleting: $PROJ"
+                    curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJ" \
+                      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                      -H "Content-Type: application/json"
+                    echo "   ✅ Deleted."
+                 else
+                    echo "   ℹ️ Project $PROJ not found (already deleted?)"
+                 fi
+             fi
+          done
 
   cleanup-dns:
     name: 🧹 Cleanup DNS
