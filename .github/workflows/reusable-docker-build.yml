@@ -99,6 +99,7 @@ jobs:
   build-amd64:
     name: "Build (amd64)"
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/amd64')
     timeout-minutes: 15
     outputs:
@@ -279,6 +280,7 @@ jobs:
   create-manifest:
     name: "Create Multi-Arch Manifest"
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     needs: [build-amd64, build-arm64]
     if: |
       always() &&
