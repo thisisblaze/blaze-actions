@@ -374,6 +374,7 @@ jobs:
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      wif_audience: ${{ inputs.wif_audience }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment }}

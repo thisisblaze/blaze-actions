@@ -79,6 +79,11 @@ on:
         required: false
         type: number
         default: 60
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
 
     secrets:
       AWS_ROLE_ARN:
@@ -189,6 +194,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || '' }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
