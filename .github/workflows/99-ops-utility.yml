@@ -1300,7 +1300,7 @@ jobs:
 
       - name: Calculate Config
         id: config
-        uses: ./.github/actions/calculate-config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: tunnel
