@@ -631,7 +631,7 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
-      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-{4}-{5}-docker/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }}
       port: 3000
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
