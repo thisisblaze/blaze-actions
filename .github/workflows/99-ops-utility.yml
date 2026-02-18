@@ -1317,7 +1317,13 @@ jobs:
           STAGE: ${{ steps.config.outputs.stage_key }}
           CLIENT: ${{ needs.configuration.outputs.client_key }}
         run: |
-          echo "🔍 Searching for tunnels matching pattern: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-*"
+          # Patterns
+          P1="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-"
+          P2="${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-"
+
+          echo "🔍 Searching for tunnels matching patterns:"
+          echo "   1. $P1*"
+          echo "   2. $P2*"
 
           # List all tunnels
           RESPONSE=$(curl -s -X GET \
@@ -1326,8 +1332,8 @@ jobs:
             -H "Content-Type: application/json")
 
           # Filter tunnels by name pattern
-          TUNNEL_IDS=$(echo "$RESPONSE" | jq -r \
-            ".result[] | select(.name | startswith(\"${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-\")) | .id")
+          TUNNEL_IDS=$(echo "$RESPONSE" | jq -r --arg p1 "$P1" --arg p2 "$P2" \
+            ".result[] | select(.name | startswith(\$p1) or startswith(\$p2)) | .id")
 
           if [ -z "$TUNNEL_IDS" ]; then
             echo "⚠️ No tunnels found matching pattern"
