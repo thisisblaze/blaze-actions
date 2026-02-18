@@ -1474,7 +1474,13 @@ jobs:
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
     needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp]
-    if: inputs.action == 'nuke-environment'
+    if: |
+      always() && 
+      inputs.action == 'nuke-environment' && 
+      (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') && 
+      (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
