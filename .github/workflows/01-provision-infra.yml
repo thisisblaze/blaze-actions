@@ -1,5 +1,8 @@
 name: "01 - Provision Infrastructure"
-
+# ⚠️ WARNING: DO NOT RUN THIS WORKFLOW DIRECTLY FOR DEPLOYMENTS ⚠️
+# This repository (blaze-actions) is a library of reusable workflows.
+# Deployments must be executed from the 'blaze-template-deploy' repository (or your derived project repo),
+# which contains the necessary secrets and environment configurations.
 on:
   workflow_dispatch:
     inputs:
