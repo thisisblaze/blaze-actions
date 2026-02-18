@@ -377,9 +377,9 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/api/Dockerfile.api
       context: .
