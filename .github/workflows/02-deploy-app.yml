@@ -354,7 +354,7 @@ jobs:
           echo "🔍 Checking Critical GCP Infrastructure..."
           PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
           REGION="${{ needs.configuration.outputs.cloud_region }}"
-          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web"
+          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-docker"
 
           echo "Project: $PROJECT"
           echo "Region: $REGION"
@@ -383,7 +383,7 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/api/Dockerfile.api
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-{4}-{5}-docker/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -408,7 +408,7 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-{4}-{5}-docker/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
@@ -560,7 +560,7 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
-      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
+      image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-{4}-{5}-docker/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }}
       port: 3000
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -853,6 +853,11 @@ jobs:
         with:
           name: admin-build-assets
           path: packages/admin/dist
+
+      - name: Debug Artifact Location
+        run: |
+          echo "Listing packages/admin/dist:"
+          ls -R packages/admin/dist || echo "Directory not found"
 
       - name: Set Cloudflare Pages Production Branch
         env:
