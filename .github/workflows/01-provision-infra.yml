@@ -38,6 +38,10 @@ on:
         description: "APPLY ( vs DRY RUN )"
         type: boolean
         default: false
+      destroy:
+        description: "DESTROY (Teardown Stack)"
+        type: boolean
+        default: false
 
       terraform_version:
         description: "Terraform Version"
@@ -360,7 +364,7 @@ jobs:
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
-      destroy: false
+      destroy: ${{ inputs.destroy }}
       pre_apply_script: |
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
