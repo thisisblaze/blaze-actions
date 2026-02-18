@@ -296,15 +296,10 @@ runs:
            CF_BUCKET="${CLIENT_KEY}-${BUCKET_STAGE}-${BUCKET_NAMESPACE}-tfstate"
 
            # Determine correct state path based on whether this is a feature branch or host
-           if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
-              # Feature branch: read from features state (tunnel is created in dev-app)
-              CF_KEY="infra/${PROJECT_KEY}/features/${HOST_TAG}.tfstate"
-              echo "   Using feature branch tunnel state (Bucket: $CF_BUCKET)"
-           else
-              # DEV/Host: read from third-party cloudflare state
-              CF_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
-              echo "   Using host tunnel state (Bucket: $CF_BUCKET)"
-           fi
+           # DEV/Host/Feature: Always read from third-party cloudflare state
+           # The tunnel infrastructure is shared and not created in app/feature stacks.
+           CF_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"
+           echo "   Using shared tunnel state (Bucket: $CF_BUCKET, Key: $CF_KEY)"
            
            # AWS CLI + JQ approach (no Terraform dependency)
            STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
