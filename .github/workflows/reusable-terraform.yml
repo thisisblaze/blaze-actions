@@ -667,7 +667,7 @@ jobs:
           TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
         run: |
-          if [[ "${{ inputs.split_apply }}" == "true" ]]; then
+          if [[ "${{ inputs.split_apply }}" == "true" && "${{ inputs.destroy }}" != "true" ]]; then
              echo "🛡️ Split Apply Enabled - Phase 1: Targeted Apply"
              TARGETS="${{ inputs.split_targets }}"
              
