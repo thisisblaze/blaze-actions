@@ -142,15 +142,9 @@ runs:
         if test -f "$PROJECT_CONFIG"; then VARS_EXISTS=true; fi
         if test -d "projects/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi
 
-        if [[ "$VARS_EXISTS" == "false" || "$PROJECTS_EXISTS" == "false" ]]; then
+        if [[ "$VARS_EXISTS" == "false" ]]; then
            echo "❌ ERROR: Project '$INPUT_PROJECT' is invalid or incomplete."
-           
-           if [[ "$VARS_EXISTS" == "false" ]]; then
-             echo "   - Missing Config: $PROJECT_CONFIG"
-           fi
-           if [[ "$PROJECTS_EXISTS" == "false" ]]; then
-             echo "   - Missing Directory: projects/$INPUT_PROJECT (Required for Infrastructure Overrides)"
-           fi
+           echo "   - Missing Config: $PROJECT_CONFIG"
            
            echo ""
            echo "🌟 Available Projects (detected in vars/):"
@@ -161,6 +155,11 @@ runs:
              fi
            done
            exit 1
+        fi
+
+        if [[ "$PROJECTS_EXISTS" == "false" ]]; then
+             echo "⚠️  WARNING: Directory projects/$INPUT_PROJECT not found."
+             echo "    Infrastructure overrides in projects/$INPUT_PROJECT will not be loaded."
         fi
 
         # Merge Configs: Project (Args 2) overrides Global (Arg 1)
