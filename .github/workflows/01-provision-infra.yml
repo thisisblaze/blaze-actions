@@ -11,6 +11,11 @@ on:
         type: choice
         options: ["aws", "gcp", "azure"]
         default: "aws"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
       environment:
         description: "Target Environment"
         type: choice
@@ -292,6 +297,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
