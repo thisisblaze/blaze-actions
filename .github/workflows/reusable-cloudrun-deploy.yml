@@ -13,6 +13,9 @@ on:
             stage_key:
                 required: true
                 type: string
+            wif_audience:
+                required: false
+                type: string
             branch_name:
                 required: false
                 type: string
@@ -122,6 +125,7 @@ jobs:
               with:
                   workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
                   service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+                  audience: ${{ inputs.wif_audience }}
 
             - name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v2
