@@ -59,6 +59,11 @@ on:
         required: false
         type: string
         default: ""
+      environment:
+        description: "Environment Context (e.g. DEV, STAGE, PROD)"
+        required: false
+        type: string
+        default: ""
 
     secrets:
       AWS_ROLE_ARN:
