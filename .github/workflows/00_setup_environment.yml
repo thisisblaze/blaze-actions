@@ -450,3 +450,4 @@ jobs:
               --output table 2>/dev/null || echo "   (No images found or repository doesn't exist)"
             echo ""
           done
+ 
