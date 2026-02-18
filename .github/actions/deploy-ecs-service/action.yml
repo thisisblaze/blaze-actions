@@ -305,16 +305,19 @@ runs:
             STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
             echo "📂 Reading state from $STATE_PATH"
 
-            echo "🔎 DEBUG: Verifying S3 Object..."
-            aws s3 ls "$STATE_PATH" || echo "❌ Failed to find state file at $STATE_PATH"
+            echo "🔎 DEBUG: Downloading State File..."
+            aws s3 cp "$STATE_PATH" state.json || echo "❌ Failed to download state file"
+            
+            echo "🔎 DEBUG: Inspecting Tunnel Token Object..."
+            jq '.outputs.tunnel_token' state.json || echo "❌ Failed to extract token object"
 
-            echo "🔎 DEBUG: Dumping State Structure (Keys)..."
-            aws s3 cp "$STATE_PATH" - | jq 'keys' || echo "❌ Failed to download/parse state"
+            echo "🔎 DEBUG: Checking Token Value Type..."
+            jq '.outputs.tunnel_token.value | type' state.json || echo "❌ Failed to check type"
+            
+            echo "🔎 DEBUG: Checking Token Value Length..."
+            jq '.outputs.tunnel_token.value | length' state.json || echo "❌ Failed to check length"
 
-            echo "🔎 DEBUG: Dumping Outputs Structure..."
-            aws s3 cp "$STATE_PATH" - | jq '.outputs | keys' || echo "❌ Failed to parse outputs"
-
-            RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - | jq -r '.outputs.tunnel_token.value // empty')
+            RAW_TOKEN=$(jq -r '.outputs.tunnel_token.value // empty' state.json)
             
             # Fallback: Try legacy provisioning path (infra/live/{stage}-tunnel/terraform.tfstate)
             if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
