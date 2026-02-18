@@ -115,6 +115,16 @@ jobs:
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
+      - name: Debug GCP Secrets
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          echo "Debug Secrets:"
+          echo "WIF_PROVIDER Length: ${#WIF}"
+          echo "SERVICE_ACCOUNT Length: ${#SA}"
+        env:
+          WIF: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
@@ -201,6 +211,16 @@ jobs:
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
 
+      - name: Debug GCP Secrets
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          echo "Debug Secrets:"
+          echo "WIF_PROVIDER Length: ${#WIF}"
+          echo "SERVICE_ACCOUNT Length: ${#SA}"
+        env:
+          WIF: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
@@ -271,6 +291,16 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      - name: Debug GCP Secrets
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          echo "Debug Secrets:"
+          echo "WIF_PROVIDER Length: ${#WIF}"
+          echo "SERVICE_ACCOUNT Length: ${#SA}"
+        env:
+          WIF: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
