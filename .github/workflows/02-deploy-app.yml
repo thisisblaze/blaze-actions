@@ -8,6 +8,11 @@ on:
         type: choice
         options: ["aws", "gcp", "azure"]
         default: "aws"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
       environment:
         description: "Environment to deploy to"
         type: choice
@@ -267,6 +272,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Calculate Configuration
         id: config
@@ -541,6 +547,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       port: 3000
@@ -611,6 +618,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       port: 3000
@@ -744,6 +752,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       port: 80 # Admin Nginx
