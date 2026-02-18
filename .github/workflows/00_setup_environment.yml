@@ -21,7 +21,7 @@ on:
           - "🟢 Bootstrap All (Recommended)"
           - "⚙️ Init Backend"
           - "🪞 Mirror Images Only"
-        default: "🟢 Bootstrap All (Recommended)"
+
       wif_audience:
         description: "WIF Audience (Optional)"
         required: false
@@ -218,7 +218,14 @@ jobs:
           set -e
           PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
           REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
-          BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
+
+          # Prioritize configuration from blaze-env.json
+          GCP_STATE_BUCKET=$(jq -r '.common.GCP_STATE_BUCKET // ""' vars/blaze-env.json)
+          if [ -n "$GCP_STATE_BUCKET" ]; then
+            BUCKET_NAME="$GCP_STATE_BUCKET"
+          else
+            BUCKET_NAME="${{ needs.calculate-config.outputs.client_key }}-${{ needs.calculate-config.outputs.stage_key }}-${{ needs.calculate-config.outputs.namespace }}-tfstate"
+          fi
 
           echo "🚀 Bootstrapping GCP Backend for ${{ needs.calculate-config.outputs.stage_key }}"
           echo "   Project: $PROJECT_ID"
