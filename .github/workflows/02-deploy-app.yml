@@ -402,9 +402,9 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
@@ -473,9 +473,9 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    environment: ${{ inputs.environment || 'DEV' }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
