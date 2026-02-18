@@ -244,6 +244,7 @@ jobs:
       beta: ${{ steps.config.outputs.beta }}
       cluster_tier: ${{ steps.config.outputs.cluster_tier }}
       cluster_name: ${{ steps.config.outputs.cluster_name }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
