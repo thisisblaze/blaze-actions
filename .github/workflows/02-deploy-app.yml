@@ -312,6 +312,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Check AWS Infrastructure
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
@@ -389,6 +390,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -414,6 +416,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -482,6 +485,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
