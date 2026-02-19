@@ -413,6 +413,7 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         branch_name=${{ inputs.branch_name }}
         gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
