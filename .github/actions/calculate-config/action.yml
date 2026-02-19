@@ -215,8 +215,8 @@ runs:
             CLOUD_REGION="$AZURE_REGION"
             INFRA_PREFIX=".github/azure/infra/live"
             # Azure Backend Format: resource_group/storage_account/container
-            # Standard Pattern: rg-terraform-state / stterraformstate{client} / tfstate
-            BUCKET="rg-terraform-state/stterraformstate${CLIENT_KEY}/tfstate"
+            # Must match Terraform module naming: ${namespace}-${client_key}-tfstate-rg / ${namespace}${client_key}tfstate
+            BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"
             LOCK_TABLE="" # Azure Blob supports leasing (locking) natively
             ;;
           *)
