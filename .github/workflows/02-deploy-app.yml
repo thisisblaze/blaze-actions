@@ -565,6 +565,7 @@ jobs:
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
+      s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
       sentry_dsn: ${{ vars.BLAZE_SENTRY_DSN }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -644,6 +645,7 @@ jobs:
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
+      s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
       sentry_dsn: ${{ vars.BLAZE_SENTRY_DSN }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
