@@ -250,6 +250,7 @@ jobs:
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
       aws_region: ${{ steps.config.outputs.aws_region }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       beta: ${{ steps.config.outputs.beta }}
       cluster_tier: ${{ steps.config.outputs.cluster_tier }}
@@ -284,9 +285,14 @@ jobs:
           GCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
           GCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
 
+          AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
+
           case "$CLOUD_PROVIDER" in
             gcp)
               CLOUD_REGION="$GCP_REGION"
+              ;;
+            azure)
+              CLOUD_REGION="$AZURE_REGION"
               ;;
             *)
               CLOUD_REGION="$AWS_REGION"
