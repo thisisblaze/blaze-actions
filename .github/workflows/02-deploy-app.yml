@@ -561,7 +561,7 @@ jobs:
       wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-{4}-{5}-docker/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }}
-      port: 3000
+      port: 3001
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
