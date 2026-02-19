@@ -332,6 +332,7 @@ jobs:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
           branch_name: ${{ inputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
           # Ops Utility implies infra operations, so we must pass true to bypass safety check
           deploy_infra: true
           build_images: "false"
