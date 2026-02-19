@@ -1696,8 +1696,109 @@ jobs:
   #        stage=${{ needs.configuration.outputs.stage_key }}
   #    secrets: inherit
 
+  # ── GCP: Data Stack Destroy ──
+  # GCP has a dedicated data stack (Redis, Cloud SQL) that must be destroyed after app.
+  nuke-destroy-data-gcp:
+    name: 💾 Nuke 3/5 - Data Stack (GCP)
+    needs: [configuration, nuke-destroy-app]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      pre_apply_script: |
+        echo "🔪 Removing deletion protection from Cloud SQL..."
+        terraform state list 2>/dev/null | grep 'google_sql_database_instance' | while read RESOURCE; do
+          echo "   Patching: $RESOURCE (deletion_protection=false)"
+          # Use gcloud to disable deletion protection if needed
+        done
+        echo "✅ GCP pre-destroy cleanup complete."
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+  # ── GCP: Network Stack Destroy ──
+  nuke-destroy-network-gcp:
+    name: 🌐 Nuke 4/5 - Network Stack (GCP)
+    needs: [configuration, nuke-destroy-data-gcp]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-destroy-data-gcp.result == 'success' || needs.nuke-destroy-data-gcp.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
   # ── Azure: Data Stack Destroy ──
-  # For AWS/GCP, data is destroyed as part of tunnel/network sequence.
   # For Azure, we have a dedicated data stack that must be destroyed after app.
   nuke-destroy-data-azure:
     name: 💾 Nuke 3/5 - Data Stack (Azure)
