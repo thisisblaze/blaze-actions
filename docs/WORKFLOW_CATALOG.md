@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-19
 **Owner**: Infrastructure Team
 
 ---
@@ -7,8 +7,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 24 (17 main + 7 reusable)  
-**Version**: v1.1.0-hybrid-ecs  
-**Last Updated**: 2026-02-16
+**Version**: v1.2.0-multi-cloud-foundation  
+**Last Updated**: 2026-02-19
 
 ---
 
@@ -29,8 +29,8 @@
 **What it does**:
 
 - Creates GitHub OIDC provider
-- Sets up Terraform state backend (S3 + DynamoDB)
-- Configures ECR for Docker images
+- Sets up Terraform state backend (AWS: S3 + DynamoDB | GCP: GCS | Azure: Blob Storage)
+- Configures container registry (AWS: ECR | GCP: Artifact Registry | Azure: ACR)
 
 **When to run**: Once per project/environment
 
@@ -66,7 +66,7 @@
 
 #### 02-deploy-app.yml
 
-**Purpose**: Application deployment to ECS  
+**Purpose**: Application deployment (ECS, Cloud Run, or Container Apps)  
 **Use Case**: Deploy Docker containers
 
 **Inputs**:
@@ -83,9 +83,9 @@
 **What it does**:
 
 - Builds Docker images (multi-arch: AMD64 + ARM64)
-- Pushes to ECR
-- Updates ECS task definitions
-- Deploys to ECS (Fargate or EC2, per-service configuration)
+- Pushes to registry (ECR/AR/ACR based on `cloud_provider`)
+- Updates service definitions
+- Deploys to target platform (AWS ECS, GCP Cloud Run, or Azure Container Apps)
 
 **When to run**: Code deployments
 
@@ -464,6 +464,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-02-08  
+**Last Updated**: 2026-02-19  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
