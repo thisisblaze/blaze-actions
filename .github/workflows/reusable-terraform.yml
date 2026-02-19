@@ -226,6 +226,12 @@ jobs:
 
       - name: Terraform Init
         id: init
+        env:
+          # Azure OIDC: azurerm provider cannot use CLI auth for SPs — must use ARM_ env vars
+          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           set +e
           BUCKET="${{ inputs.bucket }}"
@@ -575,6 +581,11 @@ jobs:
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+          # Azure OIDC
+          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           DESTROY_FLAG=""
           if [[ "${{ inputs.destroy }}" == "true" ]]; then
@@ -672,6 +683,11 @@ jobs:
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+          # Azure OIDC
+          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           if [[ "${{ inputs.split_apply }}" == "true" && "${{ inputs.destroy }}" != "true" ]]; then
              echo "🛡️ Split Apply Enabled - Phase 1: Targeted Apply"
