@@ -74,6 +74,10 @@ on:
             s3_public_url:
                 required: false
                 type: string
+            s3_endpoint:
+                required: false
+                type: string
+                description: "S3-compatible endpoint (e.g. https://storage.googleapis.com for GCS)"
             elasticsearch_endpoint:
                 required: false
                 type: string
@@ -183,6 +187,7 @@ jobs:
                       BLAZE_ELASTICSEARCH_PASSWORD=${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
                       BLAZE_FILES_S3_BUCKET=${{ inputs.s3_bucket }}
                       BLAZE_FILES_S3_PUBLIC_URL=${{ inputs.s3_public_url }}
+                      BLAZE_FILES_S3_ENDPOINT=${{ inputs.s3_endpoint }}
                       BLAZE_FILES_S3_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
                       BLAZE_FILES_S3_SECRET_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
                       BLAZE_GRAPHQL_CACHE_SETTINGS=${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
