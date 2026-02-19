@@ -720,6 +720,12 @@ jobs:
       - name: Export Terraform Outputs
         id: tf_outputs
         if: ${{ inputs.apply == true }}
+        env:
+          # Azure OIDC: terraform output needs azurerm provider auth too
+          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           echo "📤 Exporting Terraform Outputs..."
           terraform output -json > tf_outputs.json
