@@ -110,6 +110,13 @@ on:
         required: false
       GCP_SERVICE_ACCOUNT:
         required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
 
 permissions:
   id-token: write
@@ -164,12 +171,13 @@ jobs:
           terraform_wrapper: false
 
       - name: Setup Blaze Infra
+        if: inputs.cloud_provider == 'aws'
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
           terraform: "false"
-          skip-aws-setup: ${{ inputs.cloud_provider == 'gcp' && 'true' || 'false' }}
+          skip-aws-setup: "false"
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
@@ -179,6 +187,14 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
+      - name: Authenticate to Azure
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       # CRITICAL: Configure git AFTER setup-blaze to override any AWS credential git config
       - name: Configure Git for Private Modules
         env:
@@ -187,7 +203,7 @@ jobs:
           git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Apply Preinit (AWS)
-        if: inputs.cloud_provider != 'gcp'
+        if: inputs.cloud_provider == 'aws'
         env:
           TF_VAR_client_key: ${{ needs.calculate-config.outputs.client_key }}
           TF_VAR_project_key: ${{ needs.calculate-config.outputs.project_key }}
@@ -211,6 +227,53 @@ jobs:
             terraform import module.tfstate_backend.aws_dynamodb_table.with_server_side_encryption "$TABLE_NAME" 2>/dev/null || true
           fi
           terraform apply -auto-approve
+
+      - name: Verify Azure Backend (Storage Account + Container)
+        if: inputs.cloud_provider == 'azure'
+        env:
+          CLIENT_KEY: ${{ needs.calculate-config.outputs.client_key }}
+          NAMESPACE: ${{ needs.calculate-config.outputs.namespace }}
+          STAGE_KEY: ${{ needs.calculate-config.outputs.stage_key }}
+        run: |
+          set -e
+          RG_NAME="rg-terraform-state"
+          SA_NAME="stterraformstate${CLIENT_KEY}"
+          CONTAINER_NAME="tfstate"
+
+          echo "🔍 Verifying Azure Terraform Backend"
+          echo "   Resource Group:  $RG_NAME"
+          echo "   Storage Account: $SA_NAME"
+          echo "   Container:       $CONTAINER_NAME"
+
+          # Check Resource Group
+          if az group show --name "$RG_NAME" &>/dev/null; then
+            echo "✅ Resource Group exists: $RG_NAME"
+          else
+            echo "❌ Resource Group NOT found: $RG_NAME"
+            echo "   Run: bash scripts/bootstrap-azure.sh <SUBSCRIPTION_ID>"
+            exit 1
+          fi
+
+          # Check Storage Account
+          if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" &>/dev/null; then
+            echo "✅ Storage Account exists: $SA_NAME"
+          else
+            echo "❌ Storage Account NOT found: $SA_NAME"
+            echo "   Run: bash scripts/bootstrap-azure.sh <SUBSCRIPTION_ID>"
+            exit 1
+          fi
+
+          # Check Blob Container
+          CONN=$(az storage account show-connection-string --name "$SA_NAME" --resource-group "$RG_NAME" --query connectionString -o tsv)
+          if az storage container show --name "$CONTAINER_NAME" --connection-string "$CONN" &>/dev/null; then
+            echo "✅ Blob Container exists: $CONTAINER_NAME"
+          else
+            echo "❌ Blob Container NOT found: $CONTAINER_NAME"
+            echo "   Run: bash scripts/bootstrap-azure.sh <SUBSCRIPTION_ID>"
+            exit 1
+          fi
+
+          echo "✅ Azure backend is ready!"
 
       - name: Apply Preinit (GCP)
         if: inputs.cloud_provider == 'gcp'
@@ -269,8 +332,8 @@ jobs:
   # -----------------------------------------------------------------------------------------
   mirror-images:
     name: Mirror Images (${{ inputs.environment }})
-    # Run if Task is "Bootstrap All" OR "Mirror Images"
-    if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')
+    # Run if Task is "Bootstrap All" OR "Mirror Images" — Skip for Azure (ACR managed by Terraform)
+    if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) && inputs.cloud_provider != 'azure'
     needs: [calculate-config] # Removed init-backend dependency
     runs-on: ubuntu-latest
     timeout-minutes: 20
