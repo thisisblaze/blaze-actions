@@ -14,7 +14,7 @@ on:
       cloud_provider:
         description: "Cloud Provider"
         type: choice
-        options: ["aws", "gcp"]
+        options: ["aws", "gcp", "azure"]
         default: "aws"
         required: true
 
@@ -52,6 +52,12 @@ on:
       MONGODB_ATLAS_ORG_ID:
         required: false
       EC_API_KEY:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
@@ -258,7 +264,7 @@ jobs:
           echo "vuln_count=${VULN_COUNT}" >> $GITHUB_OUTPUT
 
           # Also Display Table for Logs - scan both AWS and GCP infra dirs
-          for dir in .github/aws/infra .github/gcp/infra; do
+          for dir in .github/aws/infra .github/gcp/infra .github/azure/infra; do
             if [ -d "$dir" ]; then
               echo "🔍 Scanning: $dir"
               trivy config "$dir" --severity CRITICAL,HIGH --format table || true
