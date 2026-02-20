@@ -577,10 +577,8 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && needs.deployment-complete.result == 'success'
     needs: [config, deployment-complete]
     name: "⚡ Verify Deployment"
-    timeout-minutes: 10
-
-    runs-on: ubuntu-latest
     timeout-minutes: 30
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -744,10 +742,8 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [config, deployment-complete, verify]
     name: "📋 Deployment Summary"
-    timeout-minutes: 10
-
-    runs-on: ubuntu-latest
     timeout-minutes: 30
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
