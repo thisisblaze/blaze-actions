@@ -617,7 +617,6 @@ jobs:
             -var="namespace=${NAMESPACE}" \
             -var="client_key=${CLIENT_KEY}" \
             -var="project_key=${PROJECT_KEY}" \
-            -var="stage=${STAGE}" \
             -var="azure_region=${AZURE_REGION}" \
             -var="domain_root=${DOMAIN_ROOT}" \
             -var="container_app_hostname=${CAE_HOSTNAME}"
