@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 
 # Python
 __pycache__/
@@ -12,14 +11,36 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
 # IDE
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+*.code-workspace
 
 # OS
-.DS_Store
+**/.DS_Store
 Thumbs.db
 
-# Local diagnostic scripts and artifacts (security: never commit)
-.agent/
+# Logs and temp files
+*.log
+logs/
+*.tmp
+*.temp
+scratch/
+
+# dotenv
+.env
+.secrets
