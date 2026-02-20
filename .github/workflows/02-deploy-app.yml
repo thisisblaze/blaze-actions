@@ -399,7 +399,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
@@ -430,7 +430,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
@@ -497,7 +497,7 @@ jobs:
       context: .
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}/{1}-{2}-web/{2}/admin', 'blaze.azurecr.io', needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
@@ -690,7 +690,7 @@ jobs:
       azure_region: ${{ needs.configuration.outputs.cloud_region }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       # Azure Registry Server (e.g. CACHE_REGISTRY)
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -725,7 +725,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       azure_region: ${{ needs.configuration.outputs.cloud_region }}
       namespace: ${{ needs.configuration.outputs.namespace }}
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -828,7 +828,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       azure_region: ${{ needs.configuration.outputs.cloud_region }}
       namespace: ${{ needs.configuration.outputs.namespace }}
-      azure_registry_server: "blaze.azurecr.io"
+      azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 80
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
