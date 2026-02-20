@@ -929,7 +929,7 @@ jobs:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: "pages deploy packages/admin/dist --project-name=${{ inputs.cloud_provider == 'azure' && format('{0}-{1}-{2}-azure-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}-{1}-{2}-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+          command: "pages deploy packages/admin/dist --project-name=${{ inputs.cloud_provider == 'azure' && format('{0}-{1}-{2}-azure-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || inputs.cloud_provider == 'gcp' && format('{0}-{1}-{2}-gcp-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}-{1}-{2}-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
       - name: Purge Cloudflare Cache
         run: |
