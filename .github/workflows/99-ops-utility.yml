@@ -303,6 +303,7 @@ jobs:
       platform: ${{ steps.config.outputs.platform }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       cloud_provider: ${{ steps.config.outputs.cloud_provider }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
       infra_prefix: ${{ steps.config.outputs.infra_prefix }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -1541,6 +1542,7 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
@@ -1846,6 +1848,7 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
   # ── Azure: CDN / Front Door Stack Destroy ──
@@ -1942,6 +1945,7 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
   nuke-destroy-network:
