@@ -431,6 +431,5 @@ runs:
         echo "state_key=$STATE_KEY" >> $GITHUB_OUTPUT
         echo "stage_key=$STAGE_KEY" >> $GITHUB_OUTPUT
         echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
-        echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
         echo "should_deploy_app=$SHOULD_DEPLOY_APP" >> $GITHUB_OUTPUT
         echo "config_env=$CONFIG_ENV" >> $GITHUB_OUTPUT
