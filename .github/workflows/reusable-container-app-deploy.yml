@@ -140,6 +140,7 @@ jobs:
                   # Environment Variables
                   environmentVariables: |
                       NODE_ENV=production
+                      PORT=${{ inputs.target_port }}
                       BLAZE_PROJECT_KEY=${{ inputs.project_key }}
                       BLAZE_STAGE=${{ inputs.stage_key }}
                       BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
