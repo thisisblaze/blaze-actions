@@ -216,7 +216,11 @@ runs:
             INFRA_PREFIX=".github/azure/infra/live"
             # Azure Backend Format: resource_group/storage_account/container
             # Must match Terraform module naming: ${namespace}-${client_key}-tfstate-rg / ${namespace}${client_key}tfstate
-            BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"
+            if [[ "$CLOUD_PROVIDER" == "azure" ]]; then
+              BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"
+            else
+              BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
+            fi
             LOCK_TABLE="" # Azure Blob supports leasing (locking) natively
             ;;
           *)
