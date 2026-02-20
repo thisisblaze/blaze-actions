@@ -1,0 +1,135 @@
+# Cursor AI Rules for Blaze Actions (Reusable Workflows Repository)
+
+## Repository Role
+
+This is the **shared GitHub Actions repository** (`blaze-actions`). It provides reusable workflows and composite actions consumed by `blaze-template-deploy` and other Blaze repos.
+
+**Architecture**: Split-Repository Design
+- `blaze-terraform-infra-core`: Core Terraform modules (Source of Truth).
+- `blaze-actions` (This Repo): Shared/Reusable GitHub Actions Workflows.
+- `blaze-template-deploy`: Application Implementation & Infrastructure Instantiation.
+
+## GitHub Actions Workflow Standards
+
+### SHA Pinning (MANDATORY)
+
+All third-party GitHub Actions MUST use commit SHA pinning:
+
+```yaml
+# ❌ Bad — tag reference
+- uses: actions/checkout@v4
+
+# ✅ Good — SHA pinned with version comment
+- uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+```
+
+### Timeout Protection (MANDATORY)
+
+Every job MUST have `timeout-minutes` set:
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+```
+
+### Reusable Workflow Structure
+
+- Reusable workflows MUST be in `.github/workflows/` (top level, not subdirectories)
+- MUST use `workflow_call` trigger
+- MUST include `secrets: inherit` when calling from consuming repos
+- File naming: `reusable-<name>.yml` for reusable, `<number>-<name>.yml` for top-level
+
+### Input Validation
+
+```yaml
+inputs:
+  environment:
+    description: "Target environment"
+    required: true
+    type: choice
+    options: ["dev", "stage", "prod"]
+  cloud_provider:
+    description: "Cloud provider"
+    required: true
+    type: choice
+    options: ["aws", "gcp", "azure"]
+```
+
+### Number Type Inputs
+
+Handle undefined/empty cases for number inputs:
+```yaml
+${{ inputs.count != '' && inputs.count != null && inputs.count || 0 }}
+```
+
+## Multi-Cloud Support
+
+- Workflows MUST accept `cloud_provider` input (aws, gcp, azure) where applicable
+- Use `actions/calculate-config` for state backend routing
+- Provider-specific logic should be in conditional steps, not separate workflows
+
+## Cleanup Protocol (The Law of Zero Waste)
+
+**Status: MANDATORY**
+
+- Any workflow creating resources **MUST** have a corresponding destruction path in `99-ops-utility.yml`
+- Use `reusable-pre-destroy-cleanup.yml` for complex resource removal (EC2 Capacity Providers, Launch Templates, CloudWatch Logs)
+- S3 buckets must be emptied before destroy
+
+## Terraform Variable Passing
+
+When workflows pass Terraform variables:
+
+### DUAL APPROACH (Required for reusable workflows):
+1. Pass common variables directly in the `env:` block (always available)
+2. Parse additional variables from JSON input (service-specific secrets)
+
+```yaml
+- name: Terraform Apply
+  env:
+    # CRITICAL: Common variables in env: block
+    TF_VAR_project_key: ${{ vars.PROJECT_KEY }}
+    TF_VAR_client_key: ${{ vars.CLIENT_KEY }}
+    TF_VAR_namespace: ${{ vars.NAMESPACE }}
+    TF_VAR_platform: ${{ vars.CLOUD_PLATFORM }}
+    TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+  run: terraform apply -auto-approve
+```
+
+### Anti-Patterns (DO NOT DO):
+- ❌ Relying ONLY on JSON parsing for essential variables
+- ❌ Passing common variables ONLY via JSON
+- ❌ Not having a fallback for critical variables
+
+## YAML Formatting
+
+- 2-space indentation (strict)
+- Comments above complex sections
+- Descriptive step names with emoji prefix matching repo convention
+- Quote strings containing special characters
+
+## Composite Actions
+
+- Directory: `.github/actions/<action-name>/`
+- MUST include `action.yml` and `README.md`
+- Prefer composite actions for reusable step sequences
+
+## Linting Suppressions
+
+### GitHub Actions Secrets & Contexts
+- **Ignore**: `Context access might be invalid: .*`
+- **Reason**: Private repo with dynamic environments. Linter false positives.
+
+### Reusable Workflows
+- **Ignore**: `Unable to find reusable workflow`
+- **Reason**: Files exist, paths correct. Local linter issue.
+
+## Package Management & Security
+
+**CRITICAL**: Before installing ANY new package:
+1. Check official documentation and NPM/Registry page
+2. Verify package is actively maintained and NOT deprecated
+3. Avoid packages not updated in >1 year if alternatives exist
+4. Prioritize libraries recommended by official service documentation
