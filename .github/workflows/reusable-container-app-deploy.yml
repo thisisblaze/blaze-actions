@@ -117,7 +117,7 @@ jobs:
                   # Matches Terraform output
                   BASE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}"
 
-                  RESOURCE_GROUP="${BASE_NAME}-network"
+                  RESOURCE_GROUP="${BASE_NAME}-rg"
                   CONTAINER_APP="${BASE_NAME}-${{ inputs.service_name }}"
 
                   # Handle feature branches if needed (though typically we deploy to dev/stage/prod stacks)
