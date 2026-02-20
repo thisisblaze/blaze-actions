@@ -1492,14 +1492,89 @@ jobs:
             echo "ℹ️  Artifact Registry repo not found — skipping."
           fi
 
+  # ── Azure: Pre-Cleanup (Container Apps) ──
+  # Brute-force delete Container Apps and CAEs BEFORE Terraform destroy.
+  # Prevents orphaned resources from blocking Resource Group deletion (Nuke 5/5).
+  nuke-stop-services-azure:
+    name: 🛑 Nuke 1d/5 - Stop Container Apps (Azure)
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'azure'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Delete Container Apps & Environments
+        run: |
+          RG="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-rg"
+
+          echo "🗑️ Azure Pre-Cleanup: Resource Group = $RG"
+
+          # 1. Delete all Container Apps in the RG
+          echo "   Listing Container Apps..."
+          APPS=$(az containerapp list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$APPS" ]]; then
+            echo "   ℹ️  No Container Apps found."
+          else
+            for APP in $APPS; do
+              echo "   🗑️ Deleting Container App: $APP"
+              az containerapp delete --name "$APP" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $APP"
+            done
+            echo "   ✅ Container Apps cleanup complete."
+          fi
+
+          # 2. Delete Container App Environments
+          echo "   Listing Container App Environments..."
+          ENVS=$(az containerapp env list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$ENVS" ]]; then
+            echo "   ℹ️  No Container App Environments found."
+          else
+            for ENV in $ENVS; do
+              echo "   🗑️ Deleting CAE: $ENV"
+              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $ENV"
+            done
+            echo "   ✅ CAE cleanup complete."
+          fi
+
+          # 3. Delete Action Groups (Application Insights auto-creates these)
+          echo "   Listing Action Groups..."
+          AGS=$(az monitor action-group list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$AGS" ]]; then
+            echo "   ℹ️  No Action Groups found."
+          else
+            for AG in $AGS; do
+              echo "   🗑️ Deleting Action Group: $AG"
+              az monitor action-group delete --name "$AG" --resource-group "$RG" 2>/dev/null || echo "   ⚠️ Failed to delete $AG"
+            done
+            echo "   ✅ Action Groups cleanup complete."
+          fi
+
+          echo "✅ Azure pre-cleanup finished."
+
   nuke-destroy-app:
     name: 🗑️ Nuke 2/5 - App Stack
-    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp]
+    needs:
+      [
+        configuration,
+        nuke-pre-cleanup,
+        nuke-stop-services-gcp,
+        nuke-stop-services-azure,
+      ]
     if: |
       always() && 
       inputs.action == 'nuke-environment' && 
       (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') && 
       (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
+      (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/reusable-terraform.yml
