@@ -296,6 +296,9 @@ runs:
           "data")
             STACK="data"
             ;;
+          "cdn")
+            STACK="cdn"
+            ;;
           "5. Account Settings (ENI Trunking, Container Insights)"|"account-settings")
             STACK="account-settings"
             ;;
@@ -312,7 +315,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -371,6 +374,9 @@ runs:
             elif [[ "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"
+            elif [[ "$STACK" == "cdn" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-cdn"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/cdn.tfstate"
             else
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
@@ -384,6 +390,9 @@ runs:
             elif [[ "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/dev-data"
                STATE_KEY="infra/${PROJECT_KEY}/dev/data.tfstate"
+            elif [[ "$STACK" == "cdn" ]]; then
+               TF_DIR="${INFRA_PREFIX}/dev-cdn"
+               STATE_KEY="infra/${PROJECT_KEY}/dev/cdn.tfstate"
             else
                # App stack
                TF_DIR="${INFRA_PREFIX}/dev-app"
