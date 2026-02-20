@@ -547,7 +547,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54531c595073155f6c27f1c87c30c1b1cca2 # v3.1.2
+        uses: hashicorp/setup-terraform@v3 # v3 stable
         with:
           terraform_version: ${{ inputs.terraform_version || 'latest' }}
 
