@@ -129,6 +129,14 @@ jobs:
                   echo "container_app=$CONTAINER_APP" >> "$GITHUB_OUTPUT"
                   echo "📝 Target: RG=$RESOURCE_GROUP | App=$CONTAINER_APP"
 
+            - name: Get ACR Token
+              id: acr
+              run: |
+                  ACR_NAME=$(echo "${{ inputs.azure_registry_server }}" | cut -d'.' -f1)
+                  TOKEN=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
+                  echo "::add-mask::$TOKEN"
+                  echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
+
             - name: Deploy Revision
               uses: azure/container-apps-deploy-action@v1
               with:
@@ -136,6 +144,9 @@ jobs:
                   resourceGroup: ${{ steps.names.outputs.resource_group }}
                   containerAppName: ${{ steps.names.outputs.container_app }}
                   targetPort: ${{ inputs.target_port }}
+                  registryUrl: ${{ inputs.azure_registry_server }}
+                  registryUsername: 00000000-0000-0000-0000-000000000000
+                  registryPassword: ${{ steps.acr.outputs.password }}
 
                   # Environment Variables
                   environmentVariables: |
