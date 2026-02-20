@@ -602,6 +602,10 @@ jobs:
           echo "🔄 Re-applying ${STAGE}-network with container_app_hostname=${CAE_HOSTNAME}"
 
           cd "$NETWORK_STACK_DIR"
+
+          # Authenticate git for private module downloads (blaze-terraform-infra-core)
+          git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
+
           terraform init -backend-config="resource_group_name=${NAMESPACE}-${CLIENT_KEY}-tfstate-rg" \
             -backend-config="storage_account_name=${NAMESPACE}${CLIENT_KEY}tfstate" \
             -backend-config="container_name=tfstate" \
