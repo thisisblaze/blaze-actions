@@ -426,7 +426,7 @@ jobs:
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
@@ -471,7 +471,7 @@ jobs:
         working-directory: packages/admin
         env:
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
-          BLAZE_GRAPHQL_URI: ${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
 
       - name: Create Cloudflare _redirects
         run: |
@@ -500,7 +500,7 @@ jobs:
       azure_registry_server: "blaze.azurecr.io"
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
+        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
@@ -895,7 +895,11 @@ jobs:
         env:
           BRANCH_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          if [ "${{ inputs.cloud_provider }}" == "azure" ]; then
+            PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-azure-${{ needs.configuration.outputs.stage_key }}-admin"
+          else
+            PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          fi
           BRANCH="$BRANCH_REF"
 
           echo "Setting production branch to: $BRANCH for project: $PROJECT_NAME"
@@ -925,7 +929,7 @@ jobs:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: "pages deploy packages/admin/dist --project-name=${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+          command: "pages deploy packages/admin/dist --project-name=${{ inputs.cloud_provider == 'azure' && format('{0}-{1}-{2}-azure-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}-{1}-{2}-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
       - name: Purge Cloudflare Cache
         run: |
