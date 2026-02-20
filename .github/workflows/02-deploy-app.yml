@@ -176,6 +176,14 @@ on:
       BLAZE_CLIENT_HEADER:
         required: false
 
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
 #   push:
 #     branches:
 #       - dev
