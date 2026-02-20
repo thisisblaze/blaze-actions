@@ -38,6 +38,8 @@ on:
         options:
           [
             "network",
+            "data",
+            "cdn",
             "acm",
             "tunnel",
             "app",
