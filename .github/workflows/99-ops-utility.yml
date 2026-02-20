@@ -1846,15 +1846,64 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
-  # ── Azure: Network Stack Destroy ──
-  nuke-destroy-network-azure:
-    name: 🌐 Nuke 4/5 - Network Stack (Azure)
+  # ── Azure: CDN / Front Door Stack Destroy ──
+  # Front Door Premium + WAF + Blob must be destroyed BEFORE the network stack.
+  # Front Door has resource group dependencies that block network destroy otherwise.
+  nuke-destroy-cdn-azure:
+    name: 🌐 Nuke 4/5 - CDN / Front Door (Azure)
     needs: [configuration, nuke-destroy-data-azure]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-data-azure.result == 'success' || needs.nuke-destroy-data-azure.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    with:
+      cloud_provider: azure
+      # The Front Door + Blob resources live inside the network stack (cdn-modules.tf)
+      # Destroy them by targeting only the CDN module resources in the network stack
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: false # We partially destroy by disabling CDN, then full network destroy follows
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        enable_cdn=false
+        enable_waf=false
+        enable_storage_origin=false
+        enable_image_resize=false
+
+  # ── Azure: Network Stack Destroy ──
+  nuke-destroy-network-azure:
+    name: 🌐 Nuke 5/5 - Network Stack (Azure)
+    needs: [configuration, nuke-destroy-cdn-azure]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'azure' &&
+      (needs.nuke-destroy-cdn-azure.result == 'success' || needs.nuke-destroy-cdn-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/reusable-terraform.yml

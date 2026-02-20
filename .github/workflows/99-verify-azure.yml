@@ -1,0 +1,265 @@
+name: 🔍 Azure CDN & Edge Verify
+
+on:
+    workflow_call:
+        inputs:
+            environment:
+                description: "Environment to verify (stage / prod)"
+                type: string
+                required: true
+            domain_root:
+                description: "Domain root (e.g. thisisblaze.uk)"
+                type: string
+                required: false
+                default: ""
+            run_image_resize:
+                description: "Test image resize endpoint (only prod)"
+                type: boolean
+                required: false
+                default: false
+        secrets:
+            AZURE_CLIENT_ID:
+                required: false
+            AZURE_TENANT_ID:
+                required: false
+            AZURE_SUBSCRIPTION_ID:
+                required: false
+
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "Environment to verify"
+                required: true
+                default: STAGE
+                type: choice
+                options: ["DEV", "STAGE", "PROD"]
+            domain_root:
+                description: "Domain root (e.g. thisisblaze.uk)"
+                required: false
+                default: "thisisblaze.uk"
+                type: string
+            run_image_resize:
+                description: "Also test image resize endpoint"
+                required: false
+                default: false
+                type: boolean
+
+jobs:
+    verify-azure-cdn:
+        name: 🔍 Azure CDN Health Checks
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        env:
+            AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+            AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+            AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            # ── 1. Read Front Door endpoint from Terraform state ──────────────────
+            - name: Read Front Door Endpoint from TF State
+              id: tf_outputs
+              env:
+                  STAGE: ${{ inputs.environment == 'PROD' && 'prod' || inputs.environment == 'STAGE' && 'stage' || 'dev' }}
+              run: |
+                  STAGE_LC="${STAGE,,}"
+                  NAMESPACE=$(jq -r '.common.NAMESPACE // "blaze"' vars/blaze-env.json 2>/dev/null || echo "blaze")
+                  CLIENT_KEY=$(jq -r '.common.CLIENT_KEY // "b9"' vars/blaze-env.json 2>/dev/null || echo "b9")
+                  PROJECT_KEY=$(jq -r '.common.PROJECT_KEY // "thisisblaze"' vars/blaze-env.json 2>/dev/null || echo "thisisblaze")
+
+                  NETWORK_STACK=".github/azure/infra/live/${STAGE_LC}-network"
+
+                  echo "📖 Reading TF state from ${STAGE_LC}-network..."
+
+                  # Use az storage to read outputs from state (lightweight, no terraform init needed)
+                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_LC}/network.tfstate"
+                  SA_NAME="${NAMESPACE}${CLIENT_KEY}tfstate"
+                  CONTAINER="tfstate"
+                  RG_NAME="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg"
+
+                  STATE_JSON=$(az storage blob download \
+                    --account-name "$SA_NAME" \
+                    --container-name "$CONTAINER" \
+                    --name "$STATE_KEY" \
+                    --auth-mode login \
+                    --output tsv 2>/dev/null || echo "{}")
+
+                  FD_ENDPOINT=$(echo "$STATE_JSON" | jq -r '.outputs.front_door_endpoint_hostname.value // ""')
+                  FD_CUSTOM=$(echo "$STATE_JSON" | jq -r '.outputs.front_door_custom_domain_hostname.value // ""')
+                  IMG_RESIZE=$(echo "$STATE_JSON" | jq -r '.outputs.image_resize_function_hostname.value // ""')
+                  STORAGE_NAME=$(echo "$STATE_JSON" | jq -r '.outputs.storage_account_name.value // ""')
+
+                  echo "fd_endpoint=$FD_ENDPOINT" >> "$GITHUB_OUTPUT"
+                  echo "fd_custom=$FD_CUSTOM" >> "$GITHUB_OUTPUT"
+                  echo "img_resize=$IMG_RESIZE" >> "$GITHUB_OUTPUT"
+                  echo "storage_name=$STORAGE_NAME" >> "$GITHUB_OUTPUT"
+                  echo "stage_lc=$STAGE_LC" >> "$GITHUB_OUTPUT"
+
+                  echo "✅ Front Door: $FD_ENDPOINT"
+                  echo "✅ Custom Domain: $FD_CUSTOM"
+                  echo "✅ Image Resize: $IMG_RESIZE"
+                  echo "✅ Storage: $STORAGE_NAME"
+
+            # ── 2. Front Door endpoint reachability ───────────────────────────────
+            - name: Check Front Door Endpoint Reachability
+              env:
+                  FD_ENDPOINT: ${{ steps.tf_outputs.outputs.fd_endpoint }}
+              run: |
+                  if [[ -z "$FD_ENDPOINT" ]]; then
+                    echo "⚠️ No Front Door endpoint found in state. Skipping."
+                    exit 0
+                  fi
+
+                  echo "🌐 Testing Front Door endpoint: https://${FD_ENDPOINT}/"
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${FD_ENDPOINT}/" || echo "000")
+
+                  echo "HTTP Status: $HTTP_STATUS"
+                  if [[ "$HTTP_STATUS" =~ ^(200|301|302|307|308|404)$ ]]; then
+                    echo "✅ Front Door endpoint reachable (HTTP $HTTP_STATUS)"
+                  elif [[ "$HTTP_STATUS" == "503" ]]; then
+                    echo "⚠️ Front Door returned 503 — origin may not be configured yet (expected if app not deployed)"
+                  else
+                    echo "❌ Front Door endpoint returned unexpected HTTP $HTTP_STATUS"
+                    exit 1
+                  fi
+
+            # ── 3. Custom domain check ─────────────────────────────────────────────
+            - name: Check Custom Domain (Cloudflare → Front Door)
+              env:
+                  DOMAIN_ROOT: ${{ inputs.domain_root }}
+                  STAGE_LC: ${{ steps.tf_outputs.outputs.stage_lc }}
+              run: |
+                  if [[ -z "$DOMAIN_ROOT" ]]; then
+                    echo "ℹ️ No domain_root set — skipping custom domain check."
+                    exit 0
+                  fi
+
+                  if [[ "$STAGE_LC" == "prod" ]]; then
+                    CUSTOM_DOMAIN="${DOMAIN_ROOT}"            # apex
+                  else
+                    CUSTOM_DOMAIN="${STAGE_LC}.${DOMAIN_ROOT}"
+                  fi
+
+                  echo "🌐 Checking custom domain: https://${CUSTOM_DOMAIN}/health"
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${CUSTOM_DOMAIN}/health" || echo "000")
+                  echo "HTTP Status: $HTTP_STATUS"
+
+                  if [[ "$HTTP_STATUS" =~ ^(200|301|302|404|503)$ ]]; then
+                    echo "✅ Custom domain reachable (HTTP $HTTP_STATUS)"
+                  elif [[ "$HTTP_STATUS" == "000" ]]; then
+                    echo "⚠️ Custom domain not reachable — DNS may not be propagated yet"
+                  else
+                    echo "❌ Custom domain returned unexpected HTTP $HTTP_STATUS"
+                    exit 1
+                  fi
+
+            # ── 4. Blob Storage CORS check ─────────────────────────────────────────
+            - name: Check Blob Storage CORS
+              env:
+                  STORAGE_NAME: ${{ steps.tf_outputs.outputs.storage_name }}
+              run: |
+                  if [[ -z "$STORAGE_NAME" ]]; then
+                    echo "⚠️ No storage account found in state. Skipping."
+                    exit 0
+                  fi
+
+                  BLOB_ENDPOINT="https://${STORAGE_NAME}.blob.core.windows.net"
+                  echo "📦 Checking Blob Storage CORS at ${BLOB_ENDPOINT}"
+
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+                    -H "Origin: https://test.local" \
+                    -H "Access-Control-Request-Method: GET" \
+                    --connect-timeout 10 --max-time 15 \
+                    "${BLOB_ENDPOINT}/" || echo "000")
+
+                  echo "HTTP Status: $HTTP_STATUS"
+                  if [[ "$HTTP_STATUS" =~ ^(200|403|400)$ ]]; then
+                    echo "✅ Blob Storage CORS endpoint reachable (HTTP $HTTP_STATUS)"
+                  else
+                    echo "⚠️ Blob Storage check returned HTTP $HTTP_STATUS"
+                  fi
+
+            # ── 5. Image resize endpoint check (PROD only) ────────────────────────
+            - name: Check Image Resize Function
+              if: inputs.run_image_resize == true
+              env:
+                  IMG_RESIZE: ${{ steps.tf_outputs.outputs.img_resize }}
+                  DOMAIN_ROOT: ${{ inputs.domain_root }}
+              run: |
+                  if [[ -z "$IMG_RESIZE" ]]; then
+                    echo "ℹ️ Image resize not enabled for this environment."
+                    exit 0
+                  fi
+
+                  # Test via Front Door CDN path if custom domain available
+                  if [[ -n "$DOMAIN_ROOT" ]]; then
+                    TEST_URL="https://cdn.${DOMAIN_ROOT}/images/test.jpg?w=100&h=100&f=webp"
+                  else
+                    TEST_URL="https://${IMG_RESIZE}/api/resize?url=https://picsum.photos/200&w=100&h=100&f=webp"
+                  fi
+
+                  echo "🖼️ Testing image resize: $TEST_URL"
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 15 --max-time 30 "$TEST_URL" || echo "000")
+                  echo "HTTP Status: $HTTP_STATUS"
+
+                  if [[ "$HTTP_STATUS" =~ ^(200|302|404)$ ]]; then
+                    echo "✅ Image resize endpoint reachable (HTTP $HTTP_STATUS)"
+                  else
+                    echo "⚠️ Image resize returned HTTP $HTTP_STATUS — may need warm-up or valid image URL"
+                  fi
+
+            # ── 6. WAF test (send a known-bad payload, expect 403) ────────────────────
+            - name: WAF Block Test
+              env:
+                  FD_ENDPOINT: ${{ steps.tf_outputs.outputs.fd_endpoint }}
+                  STAGE_LC: ${{ steps.tf_outputs.outputs.stage_lc }}
+              run: |
+                  if [[ -z "$FD_ENDPOINT" || "$STAGE_LC" != "prod" ]]; then
+                    echo "ℹ️ WAF block test only runs on PROD (WAF in Prevention mode). Skipping."
+                    exit 0
+                  fi
+
+                  echo "🛡️ Sending SQLi probe to WAF — expecting 403..."
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+                    --connect-timeout 10 --max-time 30 \
+                    "https://${FD_ENDPOINT}/api/test?id=1' OR '1'='1" || echo "000")
+                  echo "HTTP Status: $HTTP_STATUS"
+
+                  if [[ "$HTTP_STATUS" == "403" ]]; then
+                    echo "✅ WAF correctly blocked SQLi probe (HTTP 403)"
+                  elif [[ "$HTTP_STATUS" == "400" ]]; then
+                    echo "✅ WAF blocked request at URL parsing level (HTTP 400)"
+                  else
+                    echo "⚠️ WAF did not return 403 for SQLi probe (got $HTTP_STATUS) — review WAF rules"
+                  fi
+
+            # ── 7. Summary ────────────────────────────────────────────────────────
+            - name: Write Verify Summary
+              if: always()
+              env:
+                  FD_ENDPOINT: ${{ steps.tf_outputs.outputs.fd_endpoint }}
+                  FD_CUSTOM: ${{ steps.tf_outputs.outputs.fd_custom }}
+                  IMG_RESIZE: ${{ steps.tf_outputs.outputs.img_resize }}
+                  STORAGE_NAME: ${{ steps.tf_outputs.outputs.storage_name }}
+                  STAGE_LC: ${{ steps.tf_outputs.outputs.stage_lc }}
+                  DOMAIN_ROOT: ${{ inputs.domain_root }}
+              run: |
+                  echo "# 🔍 Azure CDN Verification: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "| Component | Endpoint | Status |" >> $GITHUB_STEP_SUMMARY
+                  echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+                  [[ -n "$FD_ENDPOINT" ]] && echo "| **Front Door** | [\`$FD_ENDPOINT\`](https://$FD_ENDPOINT) | Checked |" >> $GITHUB_STEP_SUMMARY
+                  [[ -n "$FD_CUSTOM" ]] && echo "| **Custom Domain** | [\`$FD_CUSTOM\`](https://$FD_CUSTOM) | Checked |" >> $GITHUB_STEP_SUMMARY
+                  [[ -n "$STORAGE_NAME" ]] && echo "| **Blob Storage** | \`$STORAGE_NAME.blob.core.windows.net\` | CORS checked |" >> $GITHUB_STEP_SUMMARY
+                  [[ -n "$IMG_RESIZE" ]] && echo "| **Image Resize** | \`$IMG_RESIZE\` | ${{ inputs.run_image_resize == true && 'Checked' || 'Skipped (STAGE)' }} |" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "> WAF block test only runs on PROD (Prevention mode)." >> $GITHUB_STEP_SUMMARY

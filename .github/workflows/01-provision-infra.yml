@@ -513,9 +513,121 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+  # ── Azure: Re-apply network with CAE hostname after app provision ──────────
+  # After the Azure app stack is provisioned, the Container App Environment
+  # gets a static FQDN (default_domain). Front Door needs this as its app origin.
+  # This job reads it from TF state and re-applies the network stack automatically.
+  post_provision_azure_cdn:
+    name: 🌐 Azure Front Door — Wire Origin (Auto)
+    needs: [configuration, provision]
+    if: >
+      inputs.cloud_provider == 'azure' &&
+      inputs.stack == 'app' &&
+      inputs.apply == true &&
+      needs.provision.result == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54531c595073155f6c27f1c87c30c1b1cca2 # v3.1.2
+        with:
+          terraform_version: ${{ inputs.terraform_version || 'latest' }}
+
+      - name: Read CAE Hostname from App TF State
+        id: cae_hostname
+        env:
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          CLIENT_KEY: ${{ needs.configuration.outputs.client_key }}
+          PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
+        run: |
+          NETWORK_STACK_DIR=".github/azure/infra/live/${STAGE}-network"
+          APP_STACK_DIR=".github/azure/infra/live/${STAGE}-app"
+
+          echo "📖 Reading CAE hostname from ${STAGE}-app Terraform state..."
+
+          cd "$APP_STACK_DIR"
+          terraform init -backend-config="resource_group_name=${NAMESPACE}-${CLIENT_KEY}-tfstate-rg" \
+            -backend-config="storage_account_name=${NAMESPACE}${CLIENT_KEY}tfstate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=infra/${PROJECT_KEY}/${STAGE}/app.tfstate" \
+            -reconfigure -input=false -no-color > /dev/null 2>&1 || true
+
+          CAE_HOSTNAME=$(terraform output -raw container_app_environment_default_domain 2>/dev/null || echo "")
+
+          if [[ -z "$CAE_HOSTNAME" ]]; then
+            echo "⚠️ Could not read CAE hostname from state. Skipping network re-apply."
+            echo "cae_hostname=" >> "$GITHUB_OUTPUT"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ CAE hostname: $CAE_HOSTNAME"
+            echo "cae_hostname=$CAE_HOSTNAME" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Re-Apply Network Stack with CAE Hostname
+        if: steps.cae_hostname.outputs.skip != 'true' && steps.cae_hostname.outputs.cae_hostname != ''
+        env:
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          CLIENT_KEY: ${{ needs.configuration.outputs.client_key }}
+          PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
+          DOMAIN_ROOT: ${{ needs.configuration.outputs.domain_root }}
+          AZURE_REGION: ${{ needs.configuration.outputs.cloud_region }}
+          CAE_HOSTNAME: ${{ steps.cae_hostname.outputs.cae_hostname }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          NETWORK_STACK_DIR=".github/azure/infra/live/${STAGE}-network"
+
+          echo "🔄 Re-applying ${STAGE}-network with container_app_hostname=${CAE_HOSTNAME}"
+
+          cd "$NETWORK_STACK_DIR"
+          terraform init -backend-config="resource_group_name=${NAMESPACE}-${CLIENT_KEY}-tfstate-rg" \
+            -backend-config="storage_account_name=${NAMESPACE}${CLIENT_KEY}tfstate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=infra/${PROJECT_KEY}/${STAGE}/network.tfstate" \
+            -reconfigure -input=false -no-color
+
+          terraform apply -auto-approve -input=false -no-color \
+            -var="namespace=${NAMESPACE}" \
+            -var="client_key=${CLIENT_KEY}" \
+            -var="project_key=${PROJECT_KEY}" \
+            -var="stage=${STAGE}" \
+            -var="azure_region=${AZURE_REGION}" \
+            -var="domain_root=${DOMAIN_ROOT}" \
+            -var="container_app_hostname=${CAE_HOSTNAME}"
+
+          echo "✅ Front Door origin updated: ${CAE_HOSTNAME}"
+          echo "## 🌐 Front Door Origin Wired" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **CAE Origin** | \`${CAE_HOSTNAME}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stack** | \`${STAGE}-network\` re-applied |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Automatic (no manual step needed) |" >> $GITHUB_STEP_SUMMARY
+
   summary:
     name: 📝 Provisioning Summary
-    needs: [configuration, provision, post_provision]
+    needs: [configuration, provision, post_provision, post_provision_azure_cdn]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -618,18 +730,42 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # ------------------------------------------------------------------
-          # 4. Feature: Image Resize (AWS only)
+          # 4. Feature: Image Resize
           # ------------------------------------------------------------------
           if [[ "$PROVIDER" != "gcp" && "${{ inputs.stack }}" == "network" ]]; then
-            echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ needs.provision.outputs.image_resize_enabled }}" == "true" ]]; then
-               echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
-               echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-               echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
-               echo "| **Architecture** | Lambda@Edge + S3 + OAC |" >> $GITHUB_STEP_SUMMARY
-               echo "| **Logs** | [View Logs (us-east-1)](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image) |" >> $GITHUB_STEP_SUMMARY
+            if [[ "$PROVIDER" == "azure" ]]; then
+              # Azure Front Door CDN summary
+              echo "## 🌐 Azure Front Door CDN" >> $GITHUB_STEP_SUMMARY
+              FD_ENDPOINT="${{ needs.provision.outputs.front_door_endpoint_hostname }}"
+              FD_CUSTOM="${{ needs.provision.outputs.front_door_custom_domain_hostname }}"
+              IMG_RESIZE="${{ needs.provision.outputs.image_resize_function_hostname }}"
+              STORAGE="${{ needs.provision.outputs.storage_account_name }}"
+              STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+              echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
+              echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+              add_row "Front Door Endpoint" "$FD_ENDPOINT" "https://${FD_ENDPOINT}"
+              add_row "Custom Domain" "$FD_CUSTOM" "https://${FD_CUSTOM}"
+              add_row "Blob Storage" "$STORAGE" ""
+              if [[ -n "$IMG_RESIZE" ]]; then
+                add_row "Image Resize Function" "$IMG_RESIZE" "https://${IMG_RESIZE}"
+              else
+                echo "| **Image Resize** | ℹ️ Disabled in STAGE |" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+              echo "> After app stack deploy, Front Door origin auto-wired via post_provision_azure_cdn job." >> $GITHUB_STEP_SUMMARY
             else
-               echo "ℹ️ _Image Resize is disabled._" >> $GITHUB_STEP_SUMMARY
+              # AWS CloudFront summary
+              echo "## 📸 CloudFront Image Resize" >> $GITHUB_STEP_SUMMARY
+              if [[ "${{ needs.provision.outputs.image_resize_enabled }}" == "true" ]]; then
+                echo "| Component | Detail |" >> $GITHUB_STEP_SUMMARY
+                echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+                echo "| **Status** | ✅ Enabled |" >> $GITHUB_STEP_SUMMARY
+                echo "| **Architecture** | Lambda@Edge + S3 + OAC |" >> $GITHUB_STEP_SUMMARY
+                echo "| **Logs** | [View Logs (us-east-1)](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/aws/lambda/us-east-1.blaze-${{ needs.configuration.outputs.stage_key }}-lambda-edge-resize-image) |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "ℹ️ _Image Resize is disabled._" >> $GITHUB_STEP_SUMMARY
+              fi
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
