@@ -444,6 +444,7 @@ jobs:
     needs: [configuration, provision]
     if: inputs.stack == 'third-party-mongodb' && inputs.apply == true && needs.provision.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
@@ -527,6 +528,7 @@ jobs:
       inputs.apply == true &&
       needs.provision.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -635,6 +637,7 @@ jobs:
     needs: [configuration, provision, post_provision, post_provision_azure_cdn]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Generate Summary
         run: |
