@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-20
 **Owner**: Infrastructure Team
 
 ---
@@ -7,6 +7,7 @@
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
+**REPO ROLE**: Shared/Reusable GitHub Actions Workflows
 
 ## 1. The Prime Directive
 
@@ -25,74 +26,77 @@ Before writing a single line of code or answering a complex architectural questi
 
 ### A. Start of Session (Bootstrapping)
 
-**Command**: `/init-context`  
-_(Source: [.agent/workflows/slash-init-context.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/slash-init-context.md))_
-
 **Action**:
 
-1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
-2.  View the **Territory**: `docs/graphs/multi_cloud_topology.mermaid` (AWS/GCP/Azure structure)
-3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
-4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud stack."
+1.  Read the **Architecture**: `docs/REUSABLE_WORKFLOWS.md`
+2.  Read the **Catalog**: `docs/WORKFLOW_CATALOG.md`
+3.  View the **Topology**: `docs/graphs/multi_cloud_topology.mermaid`
+4.  **Ack**: "Context Loaded. I am ready to work on the Blaze Actions repository."
 
 ### B. During Execution (Navigation)
 
-If you are unsure where a resource lives or how data flows:
+If you are unsure where a workflow lives or how data flows:
 
 1.  **Don't Guess.**
-2.  **Consult the Visual Hub**: Look at `docs/graphs/`.
+2.  **Consult the Catalog**: `docs/WORKFLOW_CATALOG.md`.
 3.  **Trace the Config**: Look at `reusable-calculate-config.yml`.
 
 ### C. End of Cycle (Maintenance)
 
-**Command**: `/weekly-graph`  
-_(Source: [.agent/workflows/slash-weekly-graph.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/slash-weekly-graph.md))_
-
-**Trigger**: Weekly or after significant architectural changes.
+**Trigger**: Weekly or after significant workflow changes.
 **Action**:
 
-1.  Compare actual Code vs. Visual Graphs.
-2.  Update Graphs to reflect reality.
+1.  Compare actual workflows vs. catalog and topology.
+2.  Update docs to reflect reality.
 3.  This ensures the _next_ agent has accurate maps.
 
 ## 4. Data Retention Policy
 
-- **S3 Lifecycle Rules**:
-  - **Logs/Ephemeral**: ✅ APPROVED (e.g., maintain 30-90 days of logs then delete).
-  - **Data Storage**: ⚠️ RESTRICTED. Do not apply expiration rules to persistent data buckets (e.g., user uploads) without explicit "Data Loss Check" sign-off.
+| Provider | Storage                   | Logs/Ephemeral            | Persistent Data                             |
+| :------- | :------------------------ | :------------------------ | :------------------------------------------ |
+| AWS      | S3 Lifecycle Rules        | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — "Data Loss Check" required  |
+| GCP      | GCS Lifecycle             | ✅ 30-90 day retention OK | ⚠️ `force_destroy_storage = false` for Prod |
+| Azure    | Storage Account Lifecycle | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — lock policies required      |
 
 ## 5. Operational Workflows (Standard Procedures)
 
 Consult these approved workflows for specific operational tasks:
 
-- **Security Audit**: `/08-audit` -> `[.agent/workflows/08-audit.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/08-audit.md)`
-- **Consistency Check**: `/cross-environment-consistency` -> `[.agent/workflows/cross-environment-consistency.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/cross-environment-consistency.md)`
-- **Image Resize Deploy**: `/09-deploy-image-resize` -> `[.agent/workflows/09-deploy-image-resize.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/09-deploy-image-resize.md)`
-- **Troubleshooting**: `/04-troubleshoot` -> `[.agent/workflows/04-troubleshoot.md](file:///Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.agent/workflows/04-troubleshoot.md)`
+- **Add Workflow**: `.agent/workflows/01-add-workflow.md`
+- **Add Sharp Layer**: `.agent/workflows/02-add-sharp-layer.md`
+- **Docs Maintenance**: `.agent/workflows/09-maintain-docs.md`
+- **Debug CI/CD**: `.agent/workflows/debug-cicd-workflows.md`
+- **Troubleshoot CloudFront**: `.agent/workflows/troubleshoot-cloudfront.md`
+- **Troubleshoot TF Locks**: `.agent/workflows/troubleshoot-terraform-locks.md`
 
-## 5. Key References
+## 6. Key References
 
-- **Naming Standard**: `docs/reference/NETWORK_STACK_RESOURCES.md`
-- **Visual Hub**: `docs/graphs/`
-- **Maintenance Prompt**: `docs/prompts/02_weekly/WEEKLY_VISUALIZATION_UPDATE.md`
+- **Workflow Catalog**: `docs/WORKFLOW_CATALOG.md`
+- **Reusable Workflows**: `docs/REUSABLE_WORKFLOWS.md`
+- **Cross-Org Secrets**: `docs/cross-org-secrets.md`
+- **Cloudflare Operations**: `docs/cloudflare-operations.md`
+- **Visual Topology**: `docs/graphs/multi_cloud_topology.mermaid`
 
-## 6. Stage Safety Protocol (Cost Control)
-
-**Status: MANDATORY**
-
-To prevent runaway costs in non-production environments, all Agents MUST verify the following "Power of One" constraints when analyzing or modifying **Stage/Dev** infrastructure:
-
-1.  **EC2 Capacity**: `ec2_max_size` MUST be `1` (unless running a specific temporary stress test).
-2.  **NAT Strategy**: `nat_strategy` SHOULD be `NONE` (Use Public Subnets). If EC2/Private networking is required, `INSTANCE` (NAT Instance) is allowed. `GATEWAY` remains restricted.
-3.  **Retention**: `enable_deletion_protection` MUST be `false`.
-
-**Constraint Violation**: If you see `ec2_max_size > 1` in Stage, you MUST flag it as a "Cost Anomaly".
-
-## 7. Transient Artifact Cleanup (Zero Trace Policy)
+## 7. Stage Safety Protocol (Cost Control)
 
 **Status: MANDATORY**
 
-When creating temporary resources for debugging (e.g., extracting source code, dumping JSON configs, creating temp test scripts), you **MUST** ensure they are removed before completing the task.
+To prevent runaway costs in non-production environments, all Agents MUST verify the following constraints when analyzing or modifying **Stage/Dev** infrastructure:
+
+| Rule                | AWS                                  | GCP                                         | Azure                       |
+| :------------------ | :----------------------------------- | :------------------------------------------ | :-------------------------- |
+| Compute Scaling     | `ec2_max_size` MUST be `1`           | `min_instances` MUST be `0` (scale-to-zero) | `min_replicas` MUST be `0`  |
+| NAT Strategy        | `NONE` (Public IPs) or `INSTANCE`    | Cloud NAT (shared, low cost)                | VNet Integration (built-in) |
+| Deletion Protection | `enable_deletion_protection = false` | `force_destroy_storage = true` (Dev only)   | Resource locks removed      |
+| VPC Connector       | N/A                                  | `e2-micro`, max 3 instances                 | N/A                         |
+
+**Constraint Violation**: If you see scaling above these limits in Stage/Dev, you MUST flag it as a "Cost Anomaly".
+
+## 8. Transient Artifact Cleanup (Zero Trace Policy)
+
+**Status: MANDATORY**
+
+When creating temporary resources for debugging, you **MUST** ensure they are removed before completing the task.
 
 ### The Protocol:
 
@@ -100,10 +104,14 @@ When creating temporary resources for debugging (e.g., extracting source code, d
 2.  **Exclusion**: These MUST be ignored by `.gitignore` if they persist for more than one step.
 3.  **Destruction**: You **MUST** delete these artifacts before declaring "Task Complete".
 4.  **Verification**: Run `git status` before finishing to ensure no temporary junk is being committed.
+5.  **Output Location**: ALWAYS output temporary logs to `scratch/` (e.g., `gh run view ... > scratch/debug.log`).
 
+**Anti-Pattern (Do Not Do):**
+
+- Leaving `lambda_src/`, `logs/`, or `config_dump.json` in the root directory.
 - Committing `*.log`, `*.out`, or debugging scripts that contain hardcoded values.
 
-## 8. Cleanup Protocol (The Law of Zero Waste)
+## 9. Cleanup Protocol (The Law of Zero Waste)
 
 **Status: MANDATORY**
 
@@ -117,6 +125,14 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 
 **The Rule**:
 > "If you provision it, you must ensure it can be destroyed. If Terraform can't destroy it, you must script the cleanup."
+
+## 10. Cross-Repository Architecture
+
+| Repository | Role | Owner |
+| :--------- | :--- | :---- |
+| `blaze-terraform-infra-core` | Terraform module Source of Truth | `thisisblaze` |
+| `blaze-actions` (This Repo) | Reusable GitHub Actions workflows | `thisisblaze` |
+| `blaze-template-deploy` | Application deployment & infra instantiation | `thebyte9` |
 
 ---
 
