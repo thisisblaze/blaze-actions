@@ -1678,6 +1678,55 @@ jobs:
              fi
           done
 
+  # ── AWS: Data Stack Destroy ──
+  # AWS has a dedicated data stack (Redis/ElastiCache) that must be destroyed after app
+  # but before network (Redis depends on VPC subnets/SGs).
+  nuke-destroy-data-aws:
+    name: 💾 Nuke 3/5 - Data Stack (AWS)
+    needs: [configuration, nuke-destroy-app]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
+      (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
   nuke-destroy-tunnel:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-destroy-app]
@@ -2025,9 +2074,15 @@ jobs:
 
   nuke-destroy-network:
     name: 💥 Nuke 5/5 - Network (Host)
-    # Wait for Tunnel (and implicit App) instead of Data
-    needs: [configuration, nuke-destroy-tunnel]
-    if: inputs.action == 'nuke-environment'
+    # Wait for Tunnel + Data (AWS) to complete before destroying network
+    needs: [configuration, nuke-destroy-tunnel, nuke-destroy-data-aws]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (needs.nuke-destroy-tunnel.result == 'success' || needs.nuke-destroy-tunnel.result == 'skipped') &&
+      (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2189,6 +2244,7 @@ jobs:
         nuke-stop-services-gcp,
         nuke-destroy-network,
         nuke-destroy-pages,
+        nuke-destroy-data-aws,
         nuke-cleanup-dns,
       ]
     if: always()
@@ -2256,8 +2312,7 @@ jobs:
              echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Pages** | $(get_icon ${{ needs.nuke-destroy-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Mongo** | $(get_icon ${{ needs.nuke-destroy-data-mongo.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Elastic** | $(get_icon ${{ needs.nuke-destroy-data-elastic.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Data (AWS)** | $(get_icon ${{ needs.nuke-destroy-data-aws.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
              echo "| **Cleanup DNS** | $(get_icon ${{ needs.nuke-cleanup-dns.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
