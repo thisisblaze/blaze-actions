@@ -590,6 +590,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region }}
 
+      - name: Wait for ECS Stabilization
+        run: |
+          echo "⏳ Waiting 90s for Fargate tasks to start and register with ALB..."
+          sleep 90
+          echo "✅ Stabilization wait complete"
+
       - name: Verify ECS Services
         id: ecs
         run: |
