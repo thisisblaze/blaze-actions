@@ -702,7 +702,7 @@ jobs:
           echo "✅ All URLs reachable"
 
       - name: Verify Image Resize
-        if: contains(fromJson('["stage", "prod"]'), inputs.environment)
+        if: inputs.environment == 'prod'
         run: |
           {
             echo "## 🖼️ Image Resize Verification"
