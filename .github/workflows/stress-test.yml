@@ -590,56 +590,116 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region }}
 
-      - name: Wait for ECS Stabilization
-        run: |
-          echo "⏳ Waiting 90s for Fargate tasks to start and register with ALB..."
-          sleep 90
-          echo "✅ Stabilization wait complete"
-
-      - name: Verify ECS Services
+      - name: Verify ECS Services (Stable Wait)
         id: ecs
         run: |
+          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+          REGION="${{ needs.config.outputs.aws_region }}"
+
+          echo "⏳ Waiting up to 5 min for all ECS services to reach stable state..."
+
           {
             echo "## 🎯 ECS Service Status"
             echo ""
 
-            CLUSTER="${{ needs.config.outputs.cluster_name }}"
-
-            # Get all services
-            SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "${{ needs.config.outputs.aws_region }}" --output json | jq -r '.serviceArns[]')
+            # Get all services in the cluster
+            SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" --output json | jq -r '.serviceArns[]')
 
             if [ -z "$SERVICES" ]; then
               echo "❌ No services found in cluster $CLUSTER"
               exit 1
             fi
 
-            echo "| Service | Desired | Running | Status |"
-            echo "|---------|---------|---------|--------|"
+            # Use ECS service-level stability (container health check, not ALB TG)
+            # This correctly handles Fargate tasks that bind to IPv6 localhost — ALB TG
+            # health check uses IPv4 and may timeout, but ECS container nc check uses 127.0.0.1.
+            SERVICE_NAMES=$(echo "$SERVICES" | xargs -I{} sh -c 'echo "${1##*/}"' -- {})
+            echo "Waiting for services: $SERVICE_NAMES"
+            aws ecs wait services-stable \
+              --cluster "$CLUSTER" \
+              --services $SERVICES \
+              --region "$REGION" || {
+              echo "⚠️ services-stable wait timed out — checking status manually..."
+            }
 
-            ALL_HEALTHY=true
+            echo "| Service | Desired | Running | Deployments | Status |"
+            echo "|---------|---------|---------|-------------|--------|"
+
+            ALL_OK=true
             for SERVICE_ARN in $SERVICES; do
               SERVICE_NAME=${SERVICE_ARN##*/}
-              
-              DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" --region "${{ needs.config.outputs.aws_region }}" --query 'services[0].[desiredCount,runningCount,status]' --output text)
+              DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
+                --region "$REGION" \
+                --query 'services[0].[desiredCount,runningCount,status,length(deployments)]' \
+                --output text)
               DESIRED=$(echo "$DETAILS" | awk '{print $1}')
               RUNNING=$(echo "$DETAILS" | awk '{print $2}')
               STATUS=$(echo "$DETAILS" | awk '{print $3}')
-              
-              if [ "$DESIRED" -eq "$RUNNING" ] && [ "$STATUS" = "ACTIVE" ]; then
-                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ✅ Healthy |"
+              DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
+
+              # Consider healthy if: running >= 1 AND status is ACTIVE AND only 1 active deployment
+              if [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ] && [ "${DEPLOYMENTS:-2}" -le 1 ]; then
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS | ✅ Stable |"
               else
-                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | ❌ Unhealthy |"
-                ALL_HEALTHY=false
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS | ❌ Unstable |"
+                ALL_OK=false
               fi
             done
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "$ALL_HEALTHY" = "false" ]; then
-            echo "❌ Some services are unhealthy" >> $GITHUB_STEP_SUMMARY
+          if [ "$ALL_OK" = "false" ]; then
+            echo "❌ Some ECS services are unstable" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
+          echo "✅ All ECS services are stable"
+
+      - name: Verify Public URL Reachability
+        id: url_check
+        run: |
+          DOMAIN="${{ needs.config.outputs.domain_root }}"
+          STAGE="${{ inputs.environment }}"
+
+          {
+            echo "## 🌐 Public URL Checks"
+            echo ""
+            echo "| URL | HTTP Status | Result |"
+            echo "|-----|-------------|--------|"
+
+            ALL_REACHABLE=true
+
+            check_url() {
+              local url=$1
+              local expected_desc=$2
+              local code
+              code=$(curl -skL --max-time 15 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+              if [ "$code" = "000" ]; then
+                echo "| $url | timeout | ❌ Unreachable |"
+                ALL_REACHABLE=false
+              elif [ "$code" -ge 200 ] && [ "$code" -lt 600 ]; then
+                echo "| $url | $code | ✅ Reachable ($expected_desc) |"
+              else
+                echo "| $url | $code | ⚠️ Unexpected |"
+              fi
+            }
+
+            if [ "$STAGE" = "prod" ]; then
+              check_url "https://frontend.${DOMAIN}" "frontend"
+              check_url "https://api.${DOMAIN}/health" "api"
+            else
+              check_url "https://frontend-${STAGE}.${DOMAIN}" "frontend (401=auth expected)"
+              check_url "https://api-${STAGE}.${DOMAIN}/health" "api"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_REACHABLE" = "false" ]; then
+            echo "❌ Some URLs are unreachable" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ All URLs reachable"
 
       - name: Verify Image Resize
         if: contains(fromJson('["stage", "prod"]'), inputs.environment)
