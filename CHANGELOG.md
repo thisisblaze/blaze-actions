@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-02-21
+
+### Fixed
+
+- **Stress Test Verify**: 7 fixes to `stress-test.yml` verify logic:
+  - Accept 530 for cold start + continue-on-error + 5 retries
+  - Changed API check from `/graphql` to `/health`
+  - Accept 401 for stage frontend/admin (Cloudflare basic auth)
+  - Skip image resize check for stage (`enable_image_resize=false`)
+  - Use ECS `services-stable` wait + public URL check instead of TG health
+  - Added 90s ECS stabilization wait before verify
+- **Nuke Workflow**: Added missing AWS data stack destroy + fix network cascade skip
+- **CI Permissions**: Added `actions:write` permission to stress-test workflow
+
 ## v1.4.0-workflow-consolidation (2026-02-17)
 
 ### Added
