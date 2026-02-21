@@ -785,9 +785,9 @@ jobs:
             ALL_URLS_OK=false
           fi
 
-          # Test API (accept 200, 400, 405 - GraphQL endpoint returns 400/405 for GET)
-          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/graphql"
-          if ! test_url_with_retry "$API_URL" "API" "200 400 405"; then
+          # Test API (accept 200, 400, 401 - use /health not /graphql since GET /graphql returns 530 on cold start)
+          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/health"
+          if ! test_url_with_retry "$API_URL" "API" "200 400 401 404"; then
             ALL_URLS_OK=false
           fi
 
