@@ -456,6 +456,7 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "network"
       apply: true
+      enable_ec2: ${{ inputs.environment == 'dev' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -493,6 +494,8 @@ jobs:
       stack: "app"
       apply: true
       enable_tunnel: ${{ inputs.environment == 'dev' }}
+      enable_ec2: ${{ inputs.environment == 'dev' }}
+      api_launch_type: ${{ inputs.environment == 'dev' && 'EC2' || 'FARGATE' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
