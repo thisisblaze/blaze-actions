@@ -773,15 +773,15 @@ jobs:
             return 1
           }
 
-          # Test Frontend (accept 200)
+          # Test Frontend (accept 200 or 401 — stage is Cloudflare basic-auth protected)
           FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/about-us"
-          if ! test_url_with_retry "$FRONTEND_URL" "Frontend" "200"; then
+          if ! test_url_with_retry "$FRONTEND_URL" "Frontend" "200 401"; then
             ALL_URLS_OK=false
           fi
 
-          # Test Admin (accept 200)
+          # Test Admin (accept 200 or 401 — stage is Cloudflare basic-auth protected)
           ADMIN_URL="https://admin-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/"
-          if ! test_url_with_retry "$ADMIN_URL" "Admin" "200"; then
+          if ! test_url_with_retry "$ADMIN_URL" "Admin" "200 401"; then
             ALL_URLS_OK=false
           fi
 
