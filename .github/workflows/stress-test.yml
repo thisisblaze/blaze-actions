@@ -725,8 +725,71 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
+          CDN_DOMAIN="${{ inputs.environment == 'prod' && 'cdn' || format('cdn-{0}', inputs.environment) }}.${{ needs.config.outputs.domain_root }}"
+
+          # Step 1: Discover image-resize S3 bucket from CloudFront
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?contains(Aliases.Items, '${CDN_DOMAIN}')].Id | [0]" \
+            --output text --region us-east-1)
+
+          if [ -z "$DIST_ID" ] || [ "$DIST_ID" = "None" ]; then
+            echo "⚠️ No CloudFront distribution found for ${CDN_DOMAIN}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipping image resize tests — no CDN distribution"
+            exit 0
+          fi
+
+          BUCKET_DOMAIN=$(aws cloudfront get-distribution --id "$DIST_ID" \
+            --query "Distribution.DistributionConfig.Origins.Items[?contains(Id, 'image-resize')].DomainName | [0]" \
+            --output text --region us-east-1)
+
+          BUCKET_NAME=$(echo "$BUCKET_DOMAIN" | sed 's/\.s3\..*//')
+          echo "📦 Image resize bucket: ${BUCKET_NAME}"
+          echo "🌐 CloudFront distribution: ${DIST_ID}"
+
+          # Step 2: Generate and upload test image
+          python3 -c "
+          import struct, os
+          width, height = 800, 600
+          with open('tests/sample.ppm', 'wb') as f:
+              f.write(f'P6\n{width} {height}\n255\n'.encode())
+              for y in range(height):
+                  for x in range(width):
+                      f.write(bytes([int(x/width*255), int(y/height*255), 128]))
+          print(f'Generated test PPM: {os.path.getsize(\"tests/sample.ppm\")} bytes')
+          "
+
+          # Convert PPM to JPEG using ImageMagick (available on GitHub runners)
+          convert tests/sample.ppm tests/sample.jpg 2>/dev/null || \
+            python3 -c "
+          # Minimal JFIF JPEG fallback — copy PPM as raw if convert unavailable
+          import subprocess, os
+          # Try ffmpeg as fallback
+          subprocess.run(['ffmpeg', '-y', '-i', 'tests/sample.ppm', 'tests/sample.jpg'], 
+                        capture_output=True, check=True)
+          " 2>/dev/null || {
+            echo "⚠️ No image converter available, using PPM directly"
+            cp tests/sample.ppm tests/sample.jpg
+          }
+
+          ls -la tests/sample.jpg
+          aws s3 cp tests/sample.jpg "s3://${BUCKET_NAME}/test/sample.jpg" --content-type "image/jpeg"
+          echo "✅ Uploaded test image to s3://${BUCKET_NAME}/test/sample.jpg"
+
+          # Step 3: Invalidate CloudFront cache for /convert/test/* paths (clears cached 404s)
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" \
+            --paths "/convert/test/*" --region us-east-1 > /dev/null
+          echo "✅ CloudFront cache invalidated for /convert/test/*"
+
+          # Step 4: Wait for invalidation + S3 consistency propagation
+          echo "⏳ Waiting 15s for S3 consistency and CloudFront invalidation..."
+          sleep 15
+
+          # Step 5: Run image resize tests
           chmod +x tests/image-resize-test.sh
-          ./tests/image-resize-test.sh "${{ inputs.environment }}" "${{ inputs.environment == 'prod' && 'cdn' || format('cdn-{0}', inputs.environment) }}.${{ needs.config.outputs.domain_root }}"
+          ./tests/image-resize-test.sh "${{ inputs.environment }}" "${CDN_DOMAIN}"
+
+          # Cleanup
+          rm -f tests/sample.ppm tests/sample.jpg
 
       - name: Wait for DNS Propagation
         run: |
