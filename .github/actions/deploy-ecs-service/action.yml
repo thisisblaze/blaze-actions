@@ -433,8 +433,6 @@ runs:
         export BLAZE_CLIENT_HEADER
         export DFP_NETWORK_ID
         export GTM_ID
-        export AWS_ACCESS_KEY_ID
-        export AWS_SECRET_ACCESS_KEY
         export BLAZE_GRAPHQL_CACHE_SETTINGS
         export BLAZE_ELASTICSEARCH_ENDPOINT
         export BLAZE_ELASTICSEARCH_USERNAME
