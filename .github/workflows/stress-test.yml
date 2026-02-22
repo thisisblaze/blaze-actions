@@ -726,7 +726,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           chmod +x tests/image-resize-test.sh
-          ./tests/image-resize-test.sh "${{ inputs.environment }}" "cdn-${{ inputs.environment }}.${{ needs.config.outputs.domain_root }}"
+          ./tests/image-resize-test.sh "${{ inputs.environment }}" "${{ inputs.environment == 'prod' && 'cdn' || format('cdn-{0}', inputs.environment) }}.${{ needs.config.outputs.domain_root }}"
 
       - name: Wait for DNS Propagation
         run: |
