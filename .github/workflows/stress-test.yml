@@ -549,6 +549,11 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
+      # Hybrid ECS: Prod uses EC2/ARM64, Dev/Stage use FARGATE/X86_64
+      api_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      api_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
+      frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      frontend_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
