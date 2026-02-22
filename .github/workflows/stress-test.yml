@@ -398,7 +398,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
-    if: ${{ inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
+    if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-tunnel-exists]
@@ -465,7 +465,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-tunnel:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
+    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
     needs:
       - provision-network
       - destroy-tunnel
@@ -484,8 +484,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-app:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-tunnel.result == 'success'
-    needs: provision-tunnel
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success' && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped')
+    needs: [provision-network, provision-tunnel]
     name: "🏗️ Provision App"
 
     uses: ./.github/workflows/01-provision-infra.yml
@@ -991,7 +991,7 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   destroy-tunnel-final:
-    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    if: contains(inputs.environment, 'dev') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy Tunnel"
 
     needs: [config, destroy-app-final, verify]
