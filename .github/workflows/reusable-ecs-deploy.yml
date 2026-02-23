@@ -92,6 +92,11 @@ on:
         type: string
         default: "X86_64"
         description: "CPU architecture: X86_64 or ARM64"
+      skip_stability_wait:
+        required: false
+        type: string
+        default: "false"
+        description: "Set to 'true' to skip ECS stabilisation wait (stress tests, placeholder images)"
 
     secrets:
       AWS_ROLE_ARN:
@@ -191,3 +196,4 @@ jobs:
           launch_type: ${{ inputs.launch_type }}
           cpu_architecture: ${{ inputs.cpu_architecture }}
           deployment_timeout_minutes: "25"
+          skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}

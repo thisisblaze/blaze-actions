@@ -118,6 +118,11 @@ on:
         required: false
         type: string
         default: "X86_64"
+      skip_stability_wait:
+        required: false
+        type: string
+        default: "false"
+        description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
 
     secrets:
       AWS_ROLE_ARN:
@@ -544,6 +549,7 @@ jobs:
       # Hybrid ECS
       launch_type: ${{ inputs.api_launch_type }}
       cpu_architecture: ${{ inputs.api_cpu_architecture }}
+      skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
@@ -624,6 +630,7 @@ jobs:
       # Hybrid ECS — Frontend supports Hybrid
       launch_type: ${{ inputs.frontend_launch_type }}
       cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
+      skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
