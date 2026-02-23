@@ -27,6 +27,11 @@ on:
             required: false
             type: string
             description: "GitHub Environment"
+         wif_audience:
+            description: "WIF Audience (Optional)"
+            required: false
+            type: string
+            default: ""
       secrets:
          AWS_ROLE_ARN:
             required: false
