@@ -562,6 +562,8 @@ jobs:
       api_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
       frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
       frontend_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
+      # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
+      skip_stability_wait: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -801,7 +803,7 @@ jobs:
 
       - name: Verify URLs (with retries)
         id: urls
-        continue-on-error: true  # best-effort — non-fatal if cold start returns 530; real verification is via services-stable + Public URL check
+        continue-on-error: true # best-effort — non-fatal if cold start returns 530; real verification is via services-stable + Public URL check
         run: |
           {
             echo "## 🌐 URL Health Checks"

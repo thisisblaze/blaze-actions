@@ -119,6 +119,10 @@ inputs:
     description: "CPU architecture: X86_64 or ARM64"
     required: false
     default: "X86_64"
+  skip_stability_wait:
+    description: "Set to 'true' to skip ECS service stabilisation wait (useful for stress tests / placeholder images)"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -611,7 +615,7 @@ runs:
         task-definition: task-def.json
         service: ${{ steps.prep.outputs.service_name }}
         cluster: ${{ steps.prep.outputs.cluster_name }}
-        wait-for-service-stability: true
+        wait-for-service-stability: ${{ inputs.skip_stability_wait != 'true' }}
         codedeploy-appspec: ${{ steps.prep.outputs.appspec_path }}
         codedeploy-application: ${{ steps.prep.outputs.codedeploy_app }}
         codedeploy-deployment-group: ${{ steps.prep.outputs.codedeploy_group }}
