@@ -9,6 +9,14 @@ This is the **shared GitHub Actions repository** (`blaze-actions`). It provides 
 - `blaze-actions` (This Repo): Shared/Reusable GitHub Actions Workflows.
 - `blaze-template-deploy`: Application Implementation & Infrastructure Instantiation.
 
+## Public Repository Constraints (CRITICAL)
+
+**Status: MANDATORY**
+This repository (`blaze-actions`) is a **PUBLIC** repository open to the internet. 
+- You MUST NEVER commit company-specific domains (e.g., `thisisblaze.uk`, internal dev URLs).
+- You MUST NEVER commit exact AWS Account IDs, proprietary ARNs, or real access keys.
+- You MUST ALWAYS use generic placeholders (`example.com`, `123456789012`, `foo-bucket`) when providing examples in documentation, scripts, or templates.
+
 ## GitHub Actions Workflow Standards
 
 ### SHA Pinning (MANDATORY)
