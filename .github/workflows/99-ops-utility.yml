@@ -305,6 +305,7 @@ jobs:
       cloud_provider: ${{ steps.config.outputs.cloud_provider }}
       cloud_region: ${{ steps.config.outputs.cloud_region }}
       infra_prefix: ${{ steps.config.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
