@@ -1904,15 +1904,57 @@ jobs:
         gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
         gcp_region=${{ needs.configuration.outputs.cloud_region }}
         azure_region=${{ needs.configuration.outputs.cloud_region }}
-  # ── GCP: Network Stack Destroy ──
-  nuke-destroy-network-gcp:
-    name: 🌐 Nuke 4/5 - Network Stack (GCP)
+  # ── GCP: CDN Stack Destroy ──
+  nuke-destroy-cdn-gcp:
+    name: 🌐 Nuke 4/5 - CDN Stack (GCP)
     needs: [configuration, nuke-destroy-data-gcp]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-data-gcp.result == 'success' || needs.nuke-destroy-data-gcp.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-cdn"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/cdn.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+
+  # ── GCP: Network Stack Destroy ──
+  nuke-destroy-network-gcp:
+    name: 🌐 Nuke 5/5 - Network Stack (GCP)
+    needs: [configuration, nuke-destroy-cdn-gcp]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-destroy-cdn-gcp.result == 'success' || needs.nuke-destroy-cdn-gcp.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/reusable-terraform.yml
