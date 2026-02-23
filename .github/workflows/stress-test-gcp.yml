@@ -227,14 +227,11 @@ jobs:
     needs: setup
     uses: ./.github/workflows/reusable-calculate-config.yml
     with:
-      cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
       branch_tag: ${{ needs.setup.outputs.branch_tag }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   # --------------------------------------------------------------------------------
   # 1.5 PRODUCTION SAFETY CHECK
@@ -366,15 +363,12 @@ jobs:
       - check-app-exists
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     with:
-      cloud_provider: "gcp"
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   # --------------------------------------------------------------------------------
   # 3. TEARDOWN (Infrastructure)
@@ -386,7 +380,6 @@ jobs:
     needs: [config, cleanup-services, check-app-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -401,8 +394,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -414,7 +405,6 @@ jobs:
     needs: [config, destroy-app, check-mongodb-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -429,8 +419,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   destroy-third-party-elastic:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
@@ -438,7 +426,6 @@ jobs:
     needs: [config, destroy-app, check-elastic-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -453,8 +440,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
@@ -464,7 +449,6 @@ jobs:
     needs: [config, destroy-app, check-tunnel-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -479,8 +463,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
@@ -490,7 +472,6 @@ jobs:
     needs: [config, destroy-tunnel, check-network-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -505,8 +486,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   # --------------------------------------------------------------------------------
@@ -639,7 +618,7 @@ jobs:
       frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
       frontend_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
       # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
-      skip_stability_wait: "true"
+      # skip_stability_wait: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -703,7 +682,6 @@ jobs:
           echo "| frontend | ✅ Stable |" >> "$GITHUB_STEP_SUMMARY"
           echo "| admin | ✅ Stable |" >> "$GITHUB_STEP_SUMMARY"
           echo "✅ All Cloud Run services are stable"
-
       - name: Verify Public URL Reachability
         id: url_check
         run: |
@@ -953,7 +931,7 @@ jobs:
             echo "| **frontend** | ✅ |" >> "$GITHUB_STEP_SUMMARY"
             echo "| **admin** | ✅ |" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
-
+          }
           # URL Accessibility
           {
             echo "## 🌐 URL Validation"
@@ -1043,15 +1021,12 @@ jobs:
 
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     with:
-      cloud_provider: "gcp"
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   destroy-app-final:
     if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
@@ -1060,7 +1035,6 @@ jobs:
     needs: [config, cleanup-services-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -1075,8 +1049,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -1089,7 +1061,6 @@ jobs:
     needs: [config, destroy-app-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -1104,8 +1075,6 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   destroy-network-final:
     if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
@@ -1114,7 +1083,6 @@ jobs:
     needs: [config, destroy-tunnel-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "gcp"
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -1129,5 +1097,3 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
