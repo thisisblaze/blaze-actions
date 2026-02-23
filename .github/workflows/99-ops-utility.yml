@@ -637,6 +637,9 @@ jobs:
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   cleanup-orphaned-lambdas:
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
@@ -1624,11 +1627,13 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
-        azure_region=${{ needs.configuration.outputs.cloud_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-destroy-app]
@@ -1735,6 +1740,9 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   nuke-destroy-tunnel:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-destroy-app]
@@ -1759,6 +1767,9 @@ jobs:
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         branch_name=${{ inputs.branch_tag }}
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
       pre_apply_script: |
         echo "🔪 ORPHANING BROKEN CLOUDFLARE STATE..."
         # Schema mismatch (v4 -> v5) or deleted resources prevent destroy.
@@ -1889,6 +1900,9 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   # ── GCP: Network Stack Destroy ──
   nuke-destroy-network-gcp:
     name: 🌐 Nuke 4/5 - Network Stack (GCP)
@@ -1937,6 +1951,9 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   # ── Azure: Data Stack Destroy ──
   # For Azure, we have a dedicated data stack that must be destroyed after app.
   nuke-destroy-data-azure:
@@ -1984,9 +2001,11 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
-        azure_region=${{ needs.configuration.outputs.cloud_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   # ── Azure: CDN / Front Door Stack Destroy ──
   # Front Door Premium + WAF + Blob must be destroyed BEFORE the network stack.
   # Front Door has resource group dependencies that block network destroy otherwise.
@@ -2029,7 +2048,6 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
-        azure_region=${{ needs.configuration.outputs.cloud_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
         enable_cdn=false
@@ -2037,6 +2055,9 @@ jobs:
         enable_storage_origin=false
         enable_image_resize=false
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   # ── Azure: Network Stack Destroy ──
   nuke-destroy-network-azure:
     name: 🌐 Nuke 5/5 - Network Stack (Azure)
@@ -2083,9 +2104,11 @@ jobs:
         namespace=${{ needs.configuration.outputs.namespace }}
         platform=${{ needs.configuration.outputs.platform }}
         aws_region=${{ needs.configuration.outputs.aws_region }}
-        azure_region=${{ needs.configuration.outputs.cloud_region }}
         stage=${{ needs.configuration.outputs.stage_key }}
 
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   nuke-destroy-network:
     name: 💥 Nuke 5/5 - Network (Host)
     # Wait for Tunnel + Data (AWS) to complete before destroying network
@@ -2136,6 +2159,9 @@ jobs:
         aws_region=${{ needs.configuration.outputs.aws_region }}
         domain_root=${{ needs.configuration.outputs.domain_root }}
         stage=${{ needs.configuration.outputs.stage_key }}
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
       pre_apply_script: |
         # ----- ORPHAN LAMBDA@EDGE -----
         # Lambda@Edge replicas take hours to delete. We must remove it from state to proceed.
