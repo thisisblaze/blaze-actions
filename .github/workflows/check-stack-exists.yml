@@ -20,6 +20,10 @@ on:
         description: "AWS region (used for AWS only)"
         required: false
         type: string
+      environment:
+        description: "GitHub environment for secrets"
+        required: false
+        type: string
     outputs:
       exists:
         description: "true if state file exists and has resources"
@@ -41,6 +45,7 @@ jobs:
     name: Check State
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: ${{ inputs.environment }}
     outputs:
       exists: ${{ steps.check.outputs.exists }}
 
