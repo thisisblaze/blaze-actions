@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Knowledge Library Docs**: Added new centralized documentation framework (`docs/KNOWLEDGE_LIBRARY.md`) and topic-specific deep dives (`docs/knowledge/smart_fixes/`, etc.)
+- **Governance**: Synced `docs/AI_CONTEXT_GOVERNANCE.md` with Public Repository Sanitization rules.
 - **`skip_stability_wait` for ECS deploys**: New input on `deploy-ecs-service/action.yml`, `reusable-ecs-deploy.yml`, and `02-deploy-app.yml`. When `true`, skips the `aws-actions/amazon-ecs-deploy-task-definition` stabilisation wait. The stress test now passes `skip_stability_wait: "true"` automatically to prevent 29-minute timeouts when deploying placeholder images to freshly provisioned infrastructure.
 
 ### Fixed
 
+- **OIDC Connectivity**: Applied `aws-actions/configure-aws-credentials` and `google-github-actions/auth` to `check-stack-exists.yml` to resolve OIDC "Credentials could not be loaded" errors.
 - **Stress Test Verify**: 7 fixes to `stress-test.yml` verify logic:
   - Accept 530 for cold start + continue-on-error + 5 retries
   - Changed API check from `/graphql` to `/health`
