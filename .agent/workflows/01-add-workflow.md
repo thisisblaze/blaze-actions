@@ -153,7 +153,7 @@ runs:
 
 ```yaml
 # Create test workflow
-cat > .github/workflows/test-action.yml << 'EOF'
+cat > .github/workflows/test-action-example.yaml << 'EOF'
 name: Test Action
 
 on: workflow_dispatch
