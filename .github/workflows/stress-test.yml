@@ -264,8 +264,7 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
 
   check-tunnel-exists:
     name: "🔍 Check Tunnel State"
@@ -276,8 +275,7 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
 
   check-network-exists:
     if: inputs.target_type == 'host'
@@ -289,8 +287,7 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
 
   check-mongodb-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -302,8 +299,7 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
 
   check-elastic-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -315,8 +311,7 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
 
   # --------------------------------------------------------------------------------
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
