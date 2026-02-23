@@ -58,6 +58,11 @@ on:
       domain_root:
         required: true
         type: string
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
     secrets:
       GH_PAT:
         required: false

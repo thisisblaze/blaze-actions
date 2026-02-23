@@ -24,6 +24,11 @@ on:
         description: "GitHub environment for secrets"
         required: false
         type: string
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
     outputs:
       exists:
         description: "true if state file exists and has resources"
