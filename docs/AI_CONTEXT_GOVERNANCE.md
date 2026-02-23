@@ -17,6 +17,14 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 - ❌ **Bad Assumption**: Resource is named `blaze-api-cluster` (assumes 'blaze' namespace).
 - ✅ **Correct Logic**: Resource is named `${NAMESPACE}-api-cluster`. Always use placeholders like `{namespace}`, `{client}`, `{project}`, `{stage}` in analysis.
 
+### 1.5. Public Repository Sanitization
+
+**CRITICAL POLICY**: `blaze-actions` is a **PUBLIC** repository.
+
+- NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations).
+- NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
+- ALWAYS use sanitize placeholders (e.g., `app.example.com`, `123456789012`) when producing examples in the Knowledge Library or AI workflows.
+
 ## 2. The Golden Rule of Context
 
 Before writing a single line of code or answering a complex architectural question, you **MUST** ground yourself in the current environment's reality.
@@ -118,21 +126,23 @@ When creating temporary resources for debugging, you **MUST** ensure they are re
 Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-cleanup.yml` workflow before destroying any environment.
 
 **Why?**
+
 - **EC2 Capacity Providers**: Will hang Terraform indefinitely if not forcefully detached.
 - **Launch Templates**: Will be orphaned and clutter the account.
 - **Logs**: Terraform does not delete CloudWatch Log Groups by default.
 - **S3 Buckets**: Non-empty buckets will cause destroy failures.
 
 **The Rule**:
+
 > "If you provision it, you must ensure it can be destroyed. If Terraform can't destroy it, you must script the cleanup."
 
 ## 10. Cross-Repository Architecture
 
-| Repository | Role | Owner |
-| :--------- | :--- | :---- |
-| `blaze-terraform-infra-core` | Terraform module Source of Truth | `thisisblaze` |
-| `blaze-actions` (This Repo) | Reusable GitHub Actions workflows | `thisisblaze` |
-| `blaze-template-deploy` | Application deployment & infra instantiation | `thebyte9` |
+| Repository                   | Role                                         | Owner         |
+| :--------------------------- | :------------------------------------------- | :------------ |
+| `blaze-terraform-infra-core` | Terraform module Source of Truth             | `thisisblaze` |
+| `blaze-actions` (This Repo)  | Reusable GitHub Actions workflows            | `thisisblaze` |
+| `blaze-template-deploy`      | Application deployment & infra instantiation | `thebyte9`    |
 
 ---
 
