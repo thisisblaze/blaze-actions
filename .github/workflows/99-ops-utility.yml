@@ -2111,12 +2111,13 @@ jobs:
         gcp_region=${{ needs.configuration.outputs.cloud_region }}
         azure_region=${{ needs.configuration.outputs.cloud_region }}
   nuke-destroy-network:
-    name: 💥 Nuke 5/5 - Network (Host)
+    name: 💥 Nuke 5/5 - Network Stack (AWS)
     # Wait for Tunnel + Data (AWS) to complete before destroying network
     needs: [configuration, nuke-destroy-tunnel, nuke-destroy-data-aws]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
       (needs.nuke-destroy-tunnel.result == 'success' || needs.nuke-destroy-tunnel.result == 'skipped') &&
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
