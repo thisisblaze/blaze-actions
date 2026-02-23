@@ -6,6 +6,9 @@ Welcome to the Blaze Knowledge Library. This directory contains quick-reference 
 
 When you encounter a sticky issue that requires a non-obvious solution, please document it here so the rest of the team (and AI agents) can learn from it.
 
+> **⚠️ PUBLIC REPOSITORY WARNING ⚠️**
+> This repository is public. You MUST sanitize all entries. **NEVER** include real company URLs, AWS Account IDs, ARNs, API Keys, or PII. Use `example.com` and `123456789012`.
+
 ### Recommended Format
 
 When creating a new file in this directory, please use this structure:
