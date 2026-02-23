@@ -6,6 +6,10 @@ on:
       environment:
         required: true
         type: string
+      cloud_provider:
+        required: false
+        type: string
+        default: ""
       terraform_stack:
         required: false
         type: string
@@ -152,7 +156,15 @@ jobs:
           NAMESPACE="${NAMESPACE:-blaze}"
 
           # ── MULTI-CLOUD: Compute INFRA_PREFIX from CLOUD_PROVIDER ──
-          CLOUD_PROVIDER="${CLOUD_PROVIDER:-aws}"
+          CONFIG_CLOUD_PROVIDER="${CLOUD_PROVIDER:-aws}"
+          INPUT_CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
+
+          if [[ -n "$INPUT_CLOUD_PROVIDER" && "$INPUT_CLOUD_PROVIDER" != "" ]]; then
+            CLOUD_PROVIDER="$INPUT_CLOUD_PROVIDER"
+          else
+            CLOUD_PROVIDER="$CONFIG_CLOUD_PROVIDER"
+          fi
+
           GCP_STATE_BUCKET="${GCP_STATE_BUCKET:-}"
           GCP_PROJECT_ID="${GCP_PROJECT_ID:-}"
           case "$CLOUD_PROVIDER" in

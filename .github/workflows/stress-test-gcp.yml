@@ -230,6 +230,7 @@ jobs:
       environment: ${{ inputs.environment }}
       terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
       branch_tag: ${{ needs.setup.outputs.branch_tag }}
+      cloud_provider: "gcp"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -290,7 +291,7 @@ jobs:
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/cdn.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -462,7 +463,7 @@ jobs:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/cdn.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -527,9 +528,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-cdn:
-    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
+    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-app.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
     needs:
-      - provision-network
+      - provision-app
       - destroy-cdn
     name: "🏗️ Provision CDN"
 
@@ -550,8 +551,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-app:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success' && (needs.provision-cdn.result == 'success' || needs.provision-cdn.result == 'skipped')
-    needs: [provision-network, provision-cdn]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success'
+    needs: [provision-network]
     name: "🏗️ Provision App"
 
     uses: ./.github/workflows/01-provision-infra.yml
