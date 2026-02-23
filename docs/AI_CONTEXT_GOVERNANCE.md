@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-20
+**Last Updated**: 2026-02-23
 **Owner**: Infrastructure Team
 
 ---
@@ -19,11 +19,11 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 
 ### 1.5. Public Repository Sanitization
 
-**CRITICAL POLICY**: `blaze-actions` is a **PUBLIC** repository.
+**CRITICAL POLICY**: Several of our repositories (such as `blaze-actions`) are **PUBLIC**. For consistency across the ecosystem:
 
-- NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations).
+- NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations) in shared workflows or documentation.
 - NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
-- ALWAYS use sanitize placeholders (e.g., `app.example.com`, `123456789012`) when producing examples in the Knowledge Library or AI workflows.
+- ALWAYS use sanitized placeholders (e.g., `app.example.com`, `123456789012`) when producing examples in the Knowledge Library or AI workflows.
 
 ## 2. The Golden Rule of Context
 
