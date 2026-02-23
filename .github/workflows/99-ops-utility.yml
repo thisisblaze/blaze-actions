@@ -470,6 +470,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'manage-environment' && inputs.cloud_provider == 'gcp'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 10
     steps:
       - name: Authenticate to GCP
@@ -1442,6 +1443,7 @@ jobs:
     needs: [configuration]
     if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'gcp'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 10
     steps:
       - name: Authenticate to GCP
