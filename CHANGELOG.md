@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-02-21
+## [Unreleased] - 2026-02-23
+
+### Added
+
+- **`skip_stability_wait` for ECS deploys**: New input on `deploy-ecs-service/action.yml`, `reusable-ecs-deploy.yml`, and `02-deploy-app.yml`. When `true`, skips the `aws-actions/amazon-ecs-deploy-task-definition` stabilisation wait. The stress test now passes `skip_stability_wait: "true"` automatically to prevent 29-minute timeouts when deploying placeholder images to freshly provisioned infrastructure.
 
 ### Fixed
 
