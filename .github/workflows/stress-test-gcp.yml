@@ -56,7 +56,7 @@ name: "🧪 GCP Stress Test"
 # ────────────────────────────────────────────────────────────────────────────
 #   Purpose: Test feature branches without destroying host network
 #   Usage:   Set preserve_host=true when target_type=feature-branch
-#   Effect:  Skips network destroy/provision, only touches app/tunnel
+#   Effect:  Skips network destroy/provision, only touches app/cdn
 #   Benefit: Faster feature branch testing (~15-20 min vs ~30-35 min)
 #
 # ============================================================================
@@ -278,8 +278,8 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  check-tunnel-exists:
-    name: "🔍 Check Tunnel State"
+  check-cdn-exists:
+    name: "🔍 Check CDN State"
     needs: config
     permissions:
       id-token: write
@@ -451,16 +451,16 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
-  destroy-tunnel:
-    if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
-    name: "🧨 Destroy Tunnel"
+  destroy-cdn:
+    if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy CDN"
 
-    needs: [config, destroy-app, check-tunnel-exists]
+    needs: [config, destroy-app, check-cdn-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
@@ -479,7 +479,7 @@ jobs:
     if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Network"
 
-    needs: [config, destroy-tunnel, check-network-exists]
+    needs: [config, destroy-cdn, check-network-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -526,19 +526,19 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-  provision-tunnel:
-    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
+  provision-cdn:
+    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
     needs:
       - provision-network
-      - destroy-tunnel
-    name: "🏗️ Provision Tunnel"
+      - destroy-cdn
+    name: "🏗️ Provision CDN"
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
-      stack: "tunnel"
+      stack: "cdn"
       apply: true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -550,8 +550,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-app:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success' && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped')
-    needs: [provision-network, provision-tunnel]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success' && (needs.provision-cdn.result == 'success' || needs.provision-cdn.result == 'skipped')
+    needs: [provision-network, provision-cdn]
     name: "🏗️ Provision App"
 
     uses: ./.github/workflows/01-provision-infra.yml
@@ -905,7 +905,7 @@ jobs:
           if [ "$ALL_URLS_OK" = "false" ]; then
             echo "❌ **Verification Failed** - Not all URLs are responding correctly" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Note**: This may indicate DNS propagation delay, tunnel configuration issues, or service startup delays." >> $GITHUB_STEP_SUMMARY
+            echo "**Note**: This may indicate DNS propagation delay, cdn configuration issues, or service startup delays." >> $GITHUB_STEP_SUMMARY
             exit 1
           else
             echo "✅ **All Checks Passed** - Deployment is healthy and accessible!" >> $GITHUB_STEP_SUMMARY
@@ -1001,8 +1001,8 @@ jobs:
           if [ "${{ needs.verify.result }}" = "success" ]; then
             {
               echo "✅ **Full lifecycle tested**: Destroy → Provision → Deploy → Verify"
-              echo "✅ **All services deployed**: API, Frontend, Admin, Tunnel"
-              echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service"
+              echo "✅ **All services deployed**: API, Frontend, Admin, CDN"
+              echo "✅ **CDN fix working**: \`enable_tunnel=true\` creates ECS service"
               echo "✅ **URL verification working**: All endpoints tested automatically"
               echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks"
             } >> "$GITHUB_STEP_SUMMARY"
@@ -1075,18 +1075,18 @@ jobs:
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-  destroy-tunnel-final:
+  destroy-cdn-final:
     if: contains(inputs.environment, 'dev') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
-    name: "🧨 Final Destroy Tunnel"
+    name: "🧨 Final Destroy CDN"
 
     needs: [config, destroy-app-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/cdn.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -1102,7 +1102,7 @@ jobs:
     if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
     name: "🧨 Final Destroy Network"
 
-    needs: [config, destroy-tunnel-final, verify]
+    needs: [config, destroy-cdn-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
