@@ -882,23 +882,35 @@ jobs:
             return 1
           }
 
+          # Build prefix variables for GCP
+          if [ "${{ inputs.environment }}" = "prod" ] && [ "${{ inputs.target_type }}" != "feature-branch" ]; then
+            FRONTEND_PREFIX="gcp"
+            ADMIN_PREFIX="admin-gcp"
+            API_PREFIX="api-gcp"
+          else
+            FRONTEND_PREFIX="gcp-${URL_SUFFIX}"
+            ADMIN_PREFIX="admin-gcp-${URL_SUFFIX}"
+            API_PREFIX="api-gcp-${URL_SUFFIX}"
+          fi
+
           # Test Frontend (accept 200 or 401 or 530 — stage is Cloudflare basic-auth protected; 530 = cold start)
-          FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/about-us"
+          FRONTEND_URL="https://${FRONTEND_PREFIX}.${{ needs.config.outputs.domain_root }}/about-us"
           if ! test_url_with_retry "$FRONTEND_URL" "Frontend" "200 401 530"; then
             ALL_URLS_OK=false
           fi
 
           # Test Admin (accept 200 or 401 or 530 — stage is Cloudflare basic-auth protected; 530 = cold start)
-          ADMIN_URL="https://admin-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/"
+          ADMIN_URL="https://${ADMIN_PREFIX}.${{ needs.config.outputs.domain_root }}/"
           if ! test_url_with_retry "$ADMIN_URL" "Admin" "200 401 530"; then
             ALL_URLS_OK=false
           fi
 
           # Test API (accept 200/400/401/404/530 — 530 = Cloudflare origin unreachable on ECS cold start)
-          API_URL="https://api-${URL_SUFFIX}.${{ needs.config.outputs.domain_root }}/health"
+          API_URL="https://${API_PREFIX}.${{ needs.config.outputs.domain_root }}/health"
           if ! test_url_with_retry "$API_URL" "API" "200 400 401 404 530"; then
             ALL_URLS_OK=false
           fi
+
 
           echo "" >> $GITHUB_STEP_SUMMARY
 
