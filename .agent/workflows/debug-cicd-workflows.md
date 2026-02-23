@@ -71,7 +71,7 @@ Could not load credentials from any providers
 # Wrapper workflow must pass secrets
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }} # Don't forget this!
 ```
@@ -396,7 +396,7 @@ act -j job-name \
 # Caller (wrapper)
 jobs:
   call:
-    uses: org/repo/.github/workflows/reusable.yml@branch
+    uses: org/repo/.github/workflows/reusable-terraform.yml@branch
     with:
       input1: value1
     secrets:
