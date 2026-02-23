@@ -599,6 +599,9 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -895,6 +898,9 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
