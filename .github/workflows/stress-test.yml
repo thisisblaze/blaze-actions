@@ -258,6 +258,9 @@ jobs:
   check-app-exists:
     name: "🔍 Check App State"
     needs: config
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       environment: ${{ inputs.environment }}
@@ -269,6 +272,9 @@ jobs:
   check-tunnel-exists:
     name: "🔍 Check Tunnel State"
     needs: config
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       environment: ${{ inputs.environment }}
@@ -281,6 +287,9 @@ jobs:
     if: inputs.target_type == 'host'
     name: "🔍 Check Network State"
     needs: config
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       environment: ${{ inputs.environment }}
@@ -293,6 +302,9 @@ jobs:
     if: inputs.include_third_party && inputs.target_type == 'host'
     name: "🔍 Check MongoDB State"
     needs: config
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       environment: ${{ inputs.environment }}
@@ -305,6 +317,9 @@ jobs:
     if: inputs.include_third_party && inputs.target_type == 'host'
     name: "🔍 Check Elastic State"
     needs: config
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
       environment: ${{ inputs.environment }}
