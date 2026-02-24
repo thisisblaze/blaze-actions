@@ -214,12 +214,12 @@ jobs:
     needs: [setup, check-state]
 #     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
 #     uses: ./.github/workflows/01-provision-infra.yml
-#     with:
-#       cloud_provider: "azure"
-#       environment: ${{ inputs.environment }}
-#       stack: "app"
-#       destroy: true
-#       apply: true
-#       branch_name: ${{ inputs.branch_name }}
+# #     with:
+# #       cloud_provider: "azure"
+# #       environment: ${{ inputs.environment }}
+# #       stack: "app"
+# #       destroy: true
+# #       apply: true
+# #       branch_name: ${{ inputs.branch_name }}
     secrets: inherit
 
