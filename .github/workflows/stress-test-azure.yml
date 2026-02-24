@@ -210,9 +210,9 @@ jobs:
 
   # ── INITIAL TEARDOWN (Full-Circle or Destroy-Only) ─────────────────────
   destroy-app:
-    name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
+    name: 💥 Destroy App
     needs: [setup, check-state]
-    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
+#     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
     uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
