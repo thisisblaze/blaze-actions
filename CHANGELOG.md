@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-02-24
+
+### Added
+
+- **Azure Stress Test Reusable Workflow** (`reusable-azure-stress-test.yml`): New reusable workflow for running end-to-end Azure stress tests. Supports full provision → deploy → verify → optionally destroy lifecycle across Azure Container Apps environments.
+
+### Fixed
+
+- **GCP Resource Importer DNS Cleanup** (`resource-importer`): Added DNS record cleanup steps compatible with Cloudflare provider v4.52.0 to prevent orphaned DNS records on GCP environment teardown.
+- **GCP Stress Test Destroy Order**: Swapped CDN and App destroy order to prevent orphaned NEGs (Network Endpoint Groups) when Cloud Run services are destroyed before the CDN/load balancer is cleaned up.
+- **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
+
 ## [Unreleased] - 2026-02-23
 
 ### Added
