@@ -408,18 +408,7 @@ jobs:
   # ── REPORTING ────────────────────────────────────────────────────────
   stress-test-report:
     name: 📊 Generate Report
-    needs:
-      [
-        setup,
-        check-state,
-        provision-network,
-        provision-data,
-        provision-app,
-        deploy-frontend,
-        verify,
-        final-destroy-app,
-        final-destroy-network,
-      ]
+    needs: [setup, check-state, provision-network, provision-data, provision-app, deploy-frontend, verify, final-destroy-app, final-destroy-network]
     if: always()
     runs-on: ubuntu-latest
     steps:
