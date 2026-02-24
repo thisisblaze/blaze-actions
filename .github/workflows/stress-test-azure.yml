@@ -210,20 +210,81 @@ jobs:
 
   # ── INITIAL TEARDOWN (Full-Circle or Destroy-Only) ─────────────────────
   destroy-app:
-    name: 💥 Destroy App
-    needs: [setup, check-state]
-#     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
+    name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state]
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: "infra/thisisblaze/${{ inputs.environment }}/app"
-      bucket: "blaze-terraform-state-${{ inputs.environment }}"
-      state_key: "infra/thisisblaze/${{ inputs.environment }}/app.tfstate"
-      stage_key: ${{ inputs.environment }}
-      aws_region: "eu-west-2"
-      client_key: "core"
-      project_key: "thisisblaze"
-      namespace: "bz"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
-      domain_root: "thisisblaze.uk"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-data:
+    name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state, destroy-app]
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-network:
+    name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state, destroy-data]
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-mongodb:
+    name: 💥 Destroy MongoDB
+    needs: [setup, config, check-state]
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true'
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
     secrets: inherit
