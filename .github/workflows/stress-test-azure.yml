@@ -213,7 +213,7 @@ jobs:
     name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, check-state]
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -227,7 +227,7 @@ jobs:
     name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, check-state, destroy-app]
     if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -240,7 +240,7 @@ jobs:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, check-state, destroy-data]
     if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -253,7 +253,7 @@ jobs:
     name: 💥 Destroy MongoDB
     needs: [setup, check-state]
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -267,7 +267,7 @@ jobs:
     name: 🏗️ Prov MongoDB
     needs: [setup, destroy-mongodb]
     if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && inputs.include_third_party == true && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -279,7 +279,7 @@ jobs:
     name: 🏗️ Prov Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, destroy-network, provision-mongodb]
     if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -291,7 +291,7 @@ jobs:
     name: 🏗️ Prov Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, provision-network]
     if: always() && needs.provision-network.result == 'success' && inputs.mode != 'destroy-only' && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -303,7 +303,7 @@ jobs:
     name: 🏗️ Prov App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, provision-data]
     if: always() && (needs.provision-data.result == 'success' || needs.provision-data.result == 'skipped') && inputs.mode != 'destroy-only'
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -321,7 +321,7 @@ jobs:
     name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
     if: always() && needs.provision-app.result == 'success' && inputs.mode != 'destroy-only'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
     with:
       service_name: "api"
       image_tag: "latest"
@@ -344,7 +344,7 @@ jobs:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, deploy-api]
     if: always() && needs.deploy-api.result == 'success' && inputs.mode != 'destroy-only'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
     with:
       service_name: "web"
       image_tag: "latest"
@@ -368,7 +368,7 @@ jobs:
     name: ✅ Verify Infrastructure & App
     needs: [setup, deploy-frontend]
     if: always() && needs.deploy-frontend.result == 'success' && inputs.mode != 'destroy-only'
-    uses: thisisblaze/blaze-actions/.github/workflows/99-verify-azure.yml@dev
+    uses: ./.github/workflows/99-verify-azure.yml
     with:
       environment: ${{ inputs.environment }}
     secrets:
@@ -381,7 +381,7 @@ jobs:
     name: ♻️ Final Destroy App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, verify]
     if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -395,7 +395,7 @@ jobs:
     name: ♻️ Final Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, final-destroy-app]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-app.result == 'success' && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -408,7 +408,7 @@ jobs:
     name: ♻️ Final Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, final-destroy-data]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-data.result == 'success' && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
@@ -421,7 +421,7 @@ jobs:
     name: ♻️ Final Destroy MongoDB
     needs: [setup, final-destroy-network]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-network.result == 'success' && inputs.preserve_host != true && inputs.include_third_party == true
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: ./.github/workflows/01-provision-infra.yml
     with:
       cloud_provider: "azure"
       environment: ${{ inputs.environment }}
