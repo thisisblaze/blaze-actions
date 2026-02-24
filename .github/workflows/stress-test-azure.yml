@@ -69,9 +69,23 @@ jobs:
       target_tag: ${{ steps.determine.outputs.target_tag }}
       is_feature: ${{ steps.determine.outputs.is_feature }}
       feature_branch: ${{ steps.determine.outputs.feature_branch }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+      aws_region: ${{ steps.config.outputs.aws_region }} # Using AWS region logic as fallback for now
     steps:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        with:
+          environment: ${{ inputs.environment }}
+          project: "blaze"
+          cloud_provider: "azure"
 
       - name: Determine Stack Prefix & Tag
         id: determine
@@ -313,9 +327,15 @@ jobs:
       service_name: "api"
       image_tag: "latest"
       environment: ${{ inputs.environment }}
-      namespace: "blz" # Need to pass via env/vars technically, hardcoded for now or rely on fallback in reusable
-      project_key: "blaze"
+      stage_key: ${{ needs.setup.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      project_key: ${{ needs.setup.outputs.project_key }}
+      client_key: ${{ needs.setup.outputs.client_key }}
+      domain_root: ${{ needs.setup.outputs.domain_root }}
+      azure_region: ${{ needs.setup.outputs.aws_region }} # Using aws_region temporarily as config falls back there
+      namespace: ${{ needs.setup.outputs.namespace }}
       target_port: 8080
+      azure_registry_server: "${{ needs.setup.outputs.namespace }}${{ needs.setup.outputs.client_key }}devcr.azurecr.io" # Approximating naming structure, normally passed via infra mapping
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -330,9 +350,15 @@ jobs:
       service_name: "web"
       image_tag: "latest"
       environment: ${{ inputs.environment }}
-      namespace: "blz"
-      project_key: "blaze"
+      stage_key: ${{ needs.setup.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      project_key: ${{ needs.setup.outputs.project_key }}
+      client_key: ${{ needs.setup.outputs.client_key }}
+      domain_root: ${{ needs.setup.outputs.domain_root }}
+      azure_region: ${{ needs.setup.outputs.aws_region }}
+      namespace: ${{ needs.setup.outputs.namespace }}
       target_port: 80
+      azure_registry_server: "${{ needs.setup.outputs.namespace }}${{ needs.setup.outputs.client_key }}devcr.azurecr.io"
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
