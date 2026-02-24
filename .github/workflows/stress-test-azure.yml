@@ -69,23 +69,9 @@ jobs:
       target_tag: ${{ steps.determine.outputs.target_tag }}
       is_feature: ${{ steps.determine.outputs.is_feature }}
       feature_branch: ${{ steps.determine.outputs.feature_branch }}
-      project_key: ${{ steps.config.outputs.project_key }}
-      client_key: ${{ steps.config.outputs.client_key }}
-      stage_key: ${{ steps.config.outputs.stage_key }}
-      namespace: ${{ steps.config.outputs.namespace }}
-      domain_root: ${{ steps.config.outputs.domain_root }}
-      aws_region: ${{ steps.config.outputs.aws_region }} # Using AWS region logic as fallback for now
     steps:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      - name: Calculate Configuration
-        id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
-        with:
-          environment: ${{ inputs.environment }}
-          project: "blaze"
-          cloud_provider: "azure"
 
       - name: Determine Stack Prefix & Tag
         id: determine
@@ -115,6 +101,14 @@ jobs:
           echo "| **Branch Name** | \`${{ inputs.branch_name || '(none)' }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Target Identity** | \`$TARGET_TAG\` |" >> $GITHUB_STEP_SUMMARY
 
+  config:
+    name: ⚙️ Config
+    needs: [setup]
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_provider: "azure"
+
   # ── SAFETY ─────────────────────────────────────────────────────────────
   prod-safety-check:
     name: 🛡️ Prod Safety Gate
@@ -130,7 +124,7 @@ jobs:
   # ── PRE-FLIGHT (Azure State Inspection) ──────────────────────────────────
   check-state:
     name: 🔍 Pre-Flight Check (Azure)
-    needs: [setup, prod-safety-check]
+    needs: [setup, config, prod-safety-check]
     if: always() && needs.setup.result == 'success' && (inputs.environment != 'prod' || needs.prod-safety-check.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -151,21 +145,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Calculate Config
-        id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
-        with:
-          environment: ${{ inputs.environment }}
-          project: "thisisblaze"
-          cloud_provider: "azure"
-
       - name: Check Terraform State files in Blob Storage
         id: state_check
         env:
-          STORAGE_ACCOUNT: "${{ steps.config.outputs.namespace }}${{ steps.config.outputs.client_key }}tfstate"
+          STORAGE_ACCOUNT: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}tfstate"
           CONTAINER: "tfstate"
-          PROJECT_KEY: "${{ steps.config.outputs.project_key }}"
-          STAGE: "${{ steps.config.outputs.stage_key }}"
+          PROJECT_KEY: "${{ needs.config.outputs.project_key }}"
+          STAGE: "${{ needs.config.outputs.stage_key }}"
         run: |
           echo "🔍 Checking Azure Blob Storage for State Files..."
 
@@ -310,22 +296,22 @@ jobs:
 
   deploy-api:
     name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
-    needs: [setup, provision-app]
+    needs: [setup, config, provision-app]
     if: always() && needs.provision-app.result == 'success' && inputs.mode != 'destroy-only'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
     with:
       service_name: "api"
       image_tag: "latest"
       environment: ${{ inputs.environment }}
-      stage_key: ${{ needs.setup.outputs.stage_key }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      project_key: ${{ needs.setup.outputs.project_key }}
-      client_key: ${{ needs.setup.outputs.client_key }}
-      domain_root: ${{ needs.setup.outputs.domain_root }}
-      azure_region: ${{ needs.setup.outputs.aws_region }} # Using aws_region temporarily as config falls back there
-      namespace: ${{ needs.setup.outputs.namespace }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.aws_region }} # Using aws_region temporarily as config falls back there
+      namespace: ${{ needs.config.outputs.namespace }}
       target_port: 8080
-      azure_registry_server: "${{ needs.setup.outputs.namespace }}${{ needs.setup.outputs.client_key }}devcr.azurecr.io" # Approximating naming structure, normally passed via infra mapping
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}devcr.azurecr.io" # Approximating naming structure, normally passed via infra mapping
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -333,22 +319,22 @@ jobs:
 
   deploy-frontend:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
-    needs: [setup, deploy-api]
+    needs: [setup, config, deploy-api]
     if: always() && needs.deploy-api.result == 'success' && inputs.mode != 'destroy-only'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
     with:
       service_name: "web"
       image_tag: "latest"
       environment: ${{ inputs.environment }}
-      stage_key: ${{ needs.setup.outputs.stage_key }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      project_key: ${{ needs.setup.outputs.project_key }}
-      client_key: ${{ needs.setup.outputs.client_key }}
-      domain_root: ${{ needs.setup.outputs.domain_root }}
-      azure_region: ${{ needs.setup.outputs.aws_region }}
-      namespace: ${{ needs.setup.outputs.namespace }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.aws_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
       target_port: 80
-      azure_registry_server: "${{ needs.setup.outputs.namespace }}${{ needs.setup.outputs.client_key }}devcr.azurecr.io"
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}devcr.azurecr.io"
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
