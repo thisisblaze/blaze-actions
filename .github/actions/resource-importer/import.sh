@@ -210,11 +210,11 @@ elif [[ "$STACK" == "tunnel" || "$STACK" == "third-party-cloudflare" ]]; then
      echo "   ⚠️ Cloudflare credentials missing. Skipping import."
   fi
 
-elif [[ "$STACK" == "app" ]]; then
-  echo "🔍 Running App Smart Import Logic..."
+elif [[ "$STACK" == "app" || "$STACK" == "cdn" ]]; then
+  echo "🔍 Running App/CDN Smart Import & Cleanup Logic..."
 
-  # Cloudflare Pages Custom Domain
-  if [[ -n "$TF_VAR_cloudflare_account_id" && -n "$TF_VAR_project_key" && -n "$TF_VAR_stage" ]]; then
+  # Cloudflare Pages Custom Domain (App only)
+  if [[ "$STACK" == "app" && -n "$TF_VAR_cloudflare_account_id" && -n "$TF_VAR_project_key" && -n "$TF_VAR_stage" ]]; then
      NAMESPACE="${INPUT_NAMESPACE:-blaze}"
      PROJECT_NAME="${NAMESPACE}-${TF_VAR_project_key}-${TF_VAR_stage}-admin"
      DOMAIN="admin-${TF_VAR_stage}.${TF_VAR_domain_root}"
@@ -229,8 +229,36 @@ elif [[ "$STACK" == "app" ]]; then
            terraform import cloudflare_pages_domain.admin "$IMPORT_ID" || echo "   ⚠️ Import failed (or already imported)"
         fi
      else
-        echo "   ⚠️ Cloudflare Account ID is dummy. Skipping import."
+        echo "   ⚠️ Cloudflare Account ID is dummy. Skipping CF Pages import."
      fi
+  fi
+
+  # DNS Cleanup (App and CDN) - Prevents Cloudflare v5 "already exists" errors since allow_overwrite was removed
+  if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$INPUT_STAGE_KEY" && -n "$INPUT_DOMAIN_ROOT" ]]; then
+     echo "   🧹 Checking for existing DNS records to prevent 'already exists' errors..."
+     STAGE_KEY="${INPUT_STAGE_KEY}"
+     DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
+     
+     TARGET_RECORDS=(
+       "gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
+       "api-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
+       "frontend-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
+     )
+
+     for RECORD in "${TARGET_RECORDS[@]}"; do
+        RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records?name=$RECORD" \
+          -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+          -H "Content-Type: application/json")
+
+        RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty')
+
+        if [[ -n "$RECORD_ID" ]]; then
+           echo "   🗑️ Deleting pre-existing record: $RECORD ($RECORD_ID)"
+           curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records/$RECORD_ID" \
+             -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+             -H "Content-Type: application/json" > /dev/null
+        fi
+     done
   fi
 
 else
