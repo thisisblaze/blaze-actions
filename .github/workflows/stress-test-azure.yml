@@ -124,92 +124,92 @@ jobs:
           echo "| **Branch Name** | \`${{ inputs.branch_name || '(none)' }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Target Identity** | \`$TARGET_TAG\` |" >> $GITHUB_STEP_SUMMARY
 
-  #   # config:
-  #     name: ⚙️ Config
-  #     needs: [setup]
-  #     uses: ./.github/workflows/reusable-calculate-config.yml
-  #     with:
-  #       environment: ${{ inputs.environment }}
-  #       cloud_provider: "azure"
-  # 
-  #   # ── SAFETY ─────────────────────────────────────────────────────────────
-  #   prod-safety-check:
-  #     name: 🛡️ Prod Safety Gate
-  #     needs: [setup]
-  #     if: inputs.environment == 'prod'
-  #     runs-on: ubuntu-latest
-  #     environment: prod-azure
-  #     timeout-minutes: 30
-  #     steps:
-  #       - run: |
-  #           echo "✅ Production Execution Authorized by Environment Gate"
-  # 
-  #   # ── PRE-FLIGHT (Azure State Inspection) ──────────────────────────────────
-  #   check-state:
-  #     name: 🔍 Pre-Flight Check (Azure)
-  #     needs: [setup, config, prod-safety-check]
-  #     if: always() && needs.setup.result == 'success' && (inputs.environment != 'prod' || needs.prod-safety-check.result == 'success')
-  #     runs-on: ubuntu-latest
-  #     timeout-minutes: 10
-  #     environment: ${{ inputs.environment }}
-  #     outputs:
-  #       app_exists: ${{ steps.state_check.outputs.app_exists }}
-  #       data_exists: ${{ steps.state_check.outputs.data_exists }}
-  #       network_exists: ${{ steps.state_check.outputs.network_exists }}
-  #       mongodb_exists: ${{ steps.state_check.outputs.mongodb_exists }}
-  #     steps:
-  #       - name: Checkout Code
-  #         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-  # 
-  #       - name: Azure Login
-  #         uses: azure/login@v2
-  #         with:
-  #           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-  #           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-  #           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  # 
-  #       - name: Check Terraform State files in Blob Storage
-  #         id: state_check
-  #         env:
-  #           STORAGE_ACCOUNT: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}tfstate"
-  #           CONTAINER: "tfstate"
-  #           PROJECT_KEY: "${{ needs.config.outputs.project_key }}"
-  #           STAGE: "${{ needs.config.outputs.stage_key }}"
-  #         run: |
-  #           echo "🔍 Checking Azure Blob Storage for State Files..."
-  # 
-  #           # Function to check if a blob exists
-  #           check_blob() {
-  #             local KEY=$1
-  #             local OUT_VAR=$2
-  #             
-  #             # Using az storage blob exists (auth via OIDC already handled by azure/login)
-  #             EXISTS=$(az storage blob exists \
-  #               --account-name "$STORAGE_ACCOUNT" \
-  #               --container-name "$CONTAINER" \
-  #               --name "$KEY" \
-  #               --auth-mode login \
-  #               --query exists -o tsv 2>/dev/null || echo "false")
-  #               
-  #             echo "$OUT_VAR=$EXISTS" >> "$GITHUB_OUTPUT"
-  #             if [ "$EXISTS" == "true" ]; then
-  #               echo "✅ Found state file: $KEY"
-  #             else
-  #               echo "❌ Not found: $KEY"
-  #             fi
-  #           }
-  # 
-  #           # Base key prefix
-  #           PREFIX="infra/${PROJECT_KEY}/${STAGE}"
-  # 
-  #           echo "--- Checking Infrastructure Stacks ---"
-  #           check_blob "${PREFIX}/app.tfstate" "app_exists"
-  #           check_blob "${PREFIX}/data.tfstate" "data_exists"
-  #           check_blob "${PREFIX}/network.tfstate" "network_exists"
-  #           check_blob "${PREFIX}/third-party-mongodb.tfstate" "mongodb_exists"
-  # 
-  #   # ── INITIAL TEARDOWN (Full-Circle or Destroy-Only) ─────────────────────
-  #   destroy-app:
+  # config:
+    name: ⚙️ Config
+    needs: [setup]
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_provider: "azure"
+
+  # ── SAFETY ─────────────────────────────────────────────────────────────
+  prod-safety-check:
+    name: 🛡️ Prod Safety Gate
+    needs: [setup]
+    if: inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: prod-azure
+    timeout-minutes: 30
+    steps:
+      - run: |
+          echo "✅ Production Execution Authorized by Environment Gate"
+
+  # ── PRE-FLIGHT (Azure State Inspection) ──────────────────────────────────
+  check-state:
+    name: 🔍 Pre-Flight Check (Azure)
+    needs: [setup, config, prod-safety-check]
+    if: always() && needs.setup.result == 'success' && (inputs.environment != 'prod' || needs.prod-safety-check.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    outputs:
+      app_exists: ${{ steps.state_check.outputs.app_exists }}
+      data_exists: ${{ steps.state_check.outputs.data_exists }}
+      network_exists: ${{ steps.state_check.outputs.network_exists }}
+      mongodb_exists: ${{ steps.state_check.outputs.mongodb_exists }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Terraform State files in Blob Storage
+        id: state_check
+        env:
+          STORAGE_ACCOUNT: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}tfstate"
+          CONTAINER: "tfstate"
+          PROJECT_KEY: "${{ needs.config.outputs.project_key }}"
+          STAGE: "${{ needs.config.outputs.stage_key }}"
+        run: |
+          echo "🔍 Checking Azure Blob Storage for State Files..."
+
+          # Function to check if a blob exists
+          check_blob() {
+            local KEY=$1
+            local OUT_VAR=$2
+            
+            # Using az storage blob exists (auth via OIDC already handled by azure/login)
+            EXISTS=$(az storage blob exists \
+              --account-name "$STORAGE_ACCOUNT" \
+              --container-name "$CONTAINER" \
+              --name "$KEY" \
+              --auth-mode login \
+              --query exists -o tsv 2>/dev/null || echo "false")
+              
+            echo "$OUT_VAR=$EXISTS" >> "$GITHUB_OUTPUT"
+            if [ "$EXISTS" == "true" ]; then
+              echo "✅ Found state file: $KEY"
+            else
+              echo "❌ Not found: $KEY"
+            fi
+          }
+
+          # Base key prefix
+          PREFIX="infra/${PROJECT_KEY}/${STAGE}"
+
+          echo "--- Checking Infrastructure Stacks ---"
+          check_blob "${PREFIX}/app.tfstate" "app_exists"
+          check_blob "${PREFIX}/data.tfstate" "data_exists"
+          check_blob "${PREFIX}/network.tfstate" "network_exists"
+          check_blob "${PREFIX}/third-party-mongodb.tfstate" "mongodb_exists"
+
+  # ── INITIAL TEARDOWN (Full-Circle or Destroy-Only) ─────────────────────
+  destroy-app:
   #     name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
   #     needs: [setup, check-state]
   #     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
