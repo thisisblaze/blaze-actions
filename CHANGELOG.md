@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-02-24
 
+### Changed
+
+- **Token Frugality Overhaul**: Major refactor of `/engage`, `/allstop`, `/checkengines`, and `/slash-init-context` to implement targeted context loading and the "Prime Directive" of minimal token usage.
+- **Handoff Mechanism**: Added `/slash-handoff` and `/slash-resume` to allow for micro-session isolation and state preservation.
+
 ### Added
 
 - **Azure Stress Test Reusable Workflow** (`reusable-azure-stress-test.yml`): New reusable workflow for running end-to-end Azure stress tests. Supports full provision → deploy → verify → optionally destroy lifecycle across Azure Container Apps environments.
