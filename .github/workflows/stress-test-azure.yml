@@ -217,10 +217,7 @@ jobs:
   destroy-data:
     name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, check-state, destroy-app]
-    if: >
-      always() && inputs.mode != 'quick-test' && inputs.preserve_host != true &&
-      needs.check-state.outputs.data_exists == 'true' &&
-      (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
     with:
       cloud_provider: "azure"
@@ -233,10 +230,7 @@ jobs:
   destroy-network:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, check-state, destroy-data]
-    if: >
-      always() && inputs.mode != 'quick-test' && inputs.preserve_host != true &&
-      needs.check-state.outputs.network_exists == 'true' &&
-      (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
     with:
       cloud_provider: "azure"
@@ -263,9 +257,7 @@ jobs:
   provision-mongodb:
     name: 🏗️ Prov MongoDB
     needs: [setup, destroy-mongodb]
-    if: >
-      always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && inputs.include_third_party == true &&
-      (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped')
+    if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && inputs.include_third_party == true && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
     with:
       cloud_provider: "azure"
@@ -277,9 +269,7 @@ jobs:
   provision-network:
     name: 🏗️ Prov Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, destroy-network, provision-mongodb]
-    if: >
-      always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true &&
-      (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
+    if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
     with:
       cloud_provider: "azure"
