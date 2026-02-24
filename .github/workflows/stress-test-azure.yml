@@ -339,7 +339,7 @@ jobs:
     secrets: inherit
 
   # ── BUILD & DEPLOY ───────────────────────────────────────────────────
-  # deploy-api:
+  deploy-api:
     name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
     if: always() && needs.provision-app.result == 'success' && inputs.mode != 'destroy-only'
@@ -362,7 +362,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  # deploy-frontend:
+  deploy-frontend:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, deploy-api]
     if: always() && needs.deploy-api.result == 'success' && inputs.mode != 'destroy-only'
@@ -386,7 +386,7 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # ── VERIFY (Azure CDN & App) ─────────────────────────────────────────
-  # verify:
+  verify:
     name: ✅ Verify Infrastructure & App
     needs: [setup, deploy-frontend]
     if: always() && needs.deploy-frontend.result == 'success' && inputs.mode != 'destroy-only'
@@ -399,7 +399,7 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # ── FINAL TEARDOWN (Full-Circle Mode Only) ───────────────────────────
-  # final-destroy-app:
+  final-destroy-app:
     name: ♻️ Final Destroy App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, verify]
     if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
@@ -419,7 +419,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets: inherit
 
-  # final-destroy-data:
+  final-destroy-data:
     name: ♻️ Final Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, final-destroy-app]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-app.result == 'success' && inputs.preserve_host != true
@@ -439,7 +439,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets: inherit
 
-  # final-destroy-network:
+  final-destroy-network:
     name: ♻️ Final Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, final-destroy-data]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-data.result == 'success' && inputs.preserve_host != true
@@ -459,7 +459,7 @@ jobs:
       environment: ${{ inputs.environment }}
     secrets: inherit
 
-  # final-destroy-mongodb:
+  final-destroy-mongodb:
     name: ♻️ Final Destroy MongoDB
     needs: [setup, config, final-destroy-network]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-network.result == 'success' && inputs.preserve_host != true && inputs.include_third_party == true
@@ -480,7 +480,7 @@ jobs:
     secrets: inherit
 
   # ── REPORTING ────────────────────────────────────────────────────────
-  # stress-test-report:
+  stress-test-report:
     name: 📊 Generate Report
     needs: [setup, check-state, provision-network, provision-data, provision-app, deploy-frontend, verify, final-destroy-app, final-destroy-network]
     if: always()
