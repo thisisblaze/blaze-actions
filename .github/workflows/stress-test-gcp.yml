@@ -384,7 +384,7 @@ jobs:
     if: ${{ inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy App"
 
-    needs: [config, cleanup-services, check-app-exists]
+    needs: [config, destroy-cdn, check-app-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -456,7 +456,7 @@ jobs:
     if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy CDN"
 
-    needs: [config, destroy-app, check-cdn-exists]
+    needs: [config, check-cdn-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -480,7 +480,7 @@ jobs:
     if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Network"
 
-    needs: [config, destroy-cdn, check-network-exists]
+    needs: [config, destroy-app, check-network-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -1048,7 +1048,7 @@ jobs:
     if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     needs:
       - config
-      - deployment-summary
+      - destroy-cdn-final
       - verify
 
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
@@ -1065,7 +1065,7 @@ jobs:
     if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy App"
 
-    needs: [config, cleanup-services-final, verify]
+    needs: [config, destroy-cdn-final, cleanup-services-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -1092,7 +1092,7 @@ jobs:
     if: contains(inputs.environment, 'dev') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy CDN"
 
-    needs: [config, destroy-app-final, verify]
+    needs: [config, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -1115,7 +1115,7 @@ jobs:
     if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
     name: "🧨 Final Destroy Network"
 
-    needs: [config, destroy-cdn-final, verify]
+    needs: [config, destroy-app-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
