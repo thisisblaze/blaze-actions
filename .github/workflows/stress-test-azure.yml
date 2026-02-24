@@ -213,12 +213,17 @@ jobs:
     name: 💥 Destroy App
     needs: [setup, check-state]
 #     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
-    uses: ./.github/workflows/01-provision-infra.yml
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      cloud_provider: "azure"
-      environment: ${{ inputs.environment }}
-      stack: "app"
-      destroy: true
-      apply: true
-      branch_name: ${{ inputs.branch_name }}
+      action: "destroy"
+      tf_dir: "infra/thisisblaze/${{ inputs.environment }}/app"
+      bucket: "blaze-terraform-state-${{ inputs.environment }}"
+      state_key: "infra/thisisblaze/${{ inputs.environment }}/app.tfstate"
+      stage_key: ${{ inputs.environment }}
+      aws_region: "eu-west-2"
+      client_key: "core"
+      project_key: "thisisblaze"
+      namespace: "bz"
+      cloud_platform: "azure"
+      domain_root: "thisisblaze.uk"
     secrets: inherit
