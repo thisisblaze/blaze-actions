@@ -1,5 +1,4 @@
 name: "Stress Test (Azure) Reusable"
-description: "End-to-end full-circle lifecycle testing for Azure infrastructure and applications."
 
 on:
   workflow_call:
