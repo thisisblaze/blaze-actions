@@ -152,6 +152,9 @@ jobs:
     name: Terraform
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      id-token: write # Required for OIDC (Azure, GCP, AWS)
+      contents: read
     outputs:
       mongodb_uri: ${{ steps.tf_outputs.outputs.mongodb_uri }}
       cluster_name: ${{ steps.tf_outputs.outputs.cluster_name }}
