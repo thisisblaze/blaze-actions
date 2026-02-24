@@ -1,6 +1,29 @@
 name: "Stress Test (Azure) Reusable"
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options: ["dev", "stage", "prod"]
+        description: "Target environment (dev/stage/prod)"
+      mode:
+        required: true
+        type: choice
+        options: ["standard", "full-circle", "quick-test", "destroy-only"]
+        description: "Execution mode"
+      preserve_host:
+        required: false
+        type: boolean
+        default: false
+      include_third_party:
+        required: false
+        type: boolean
+        default: false
+      branch_name:
+        required: false
+        type: string
   workflow_call:
     inputs:
       environment:
