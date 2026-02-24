@@ -221,5 +221,5 @@ jobs:
       destroy: true
       apply: true
       branch_name: ${{ inputs.branch_name }}
-    secrets: inherit
+    # secrets: inherit
 
