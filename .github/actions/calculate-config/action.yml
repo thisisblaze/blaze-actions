@@ -99,43 +99,33 @@ outputs:
   aws_account_id:
     description: "AWS Account ID"
     value: ${{ steps.config.outputs.aws_account_id }}
-  dfp_network_id:
-    description: "DFP Network ID"
-    value: ${{ steps.config.outputs.dfp_network_id }}
-  cluster_name:
-    description: "ECS Cluster Name"
-    value: ${{ steps.config.outputs.cluster_name }}
-  cluster_tier:
-    description: "Resolved MongoDB Cluster Tier"
-    value: ${{ steps.config.outputs.cluster_tier }}
   config_env:
-    description: "Uppercase Environment Name (e.g. STAGE)"
+    description: "Config Environment (UPPERCASE)"
     value: ${{ steps.config.outputs.config_env }}
 
 runs:
   using: "composite"
   steps:
-    - name: Calculate Configuration
+    - name: "Calculate Configuration"
       id: config
       shell: bash
       run: |
+        # 0. Load Config from Files
         GLOBAL_CONFIG="vars/blaze-env.json"
 
         # Determine Project
         INPUT_PROJECT="${{ inputs.project }}"
         if [[ -z "$INPUT_PROJECT" ]]; then
-           INPUT_PROJECT="thisisblaze" # Fallback
+           INPUT_PROJECT="thisisblaze"
         fi
 
         PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
 
-        echo "DEBUG: Project config path: $PROJECT_CONFIG"
         if ! test -f "$GLOBAL_CONFIG"; then
           echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"
           exit 1
         fi
 
-        # Smart Validation: Check vars/ AND projects/
         VARS_EXISTS=false
         PROJECTS_EXISTS=false
 
@@ -158,8 +148,8 @@ runs:
         fi
 
         if [[ "$PROJECTS_EXISTS" == "false" ]]; then
-             echo "⚠️  WARNING: Directory projects/$INPUT_PROJECT not found."
-             echo "    Infrastructure overrides in projects/$INPUT_PROJECT will not be loaded."
+              echo "⚠️  WARNING: Directory projects/$INPUT_PROJECT not found."
+              echo "    Infrastructure overrides in projects/$INPUT_PROJECT will not be loaded."
         fi
 
         # Merge Configs: Project (Args 2) overrides Global (Arg 1)
