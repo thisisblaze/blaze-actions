@@ -1,0 +1,102 @@
+{
+  "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "${LAUNCH_TYPE}"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "${CPU_ARCHITECTURE}",
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "${IMAGE_URI}",
+      "portMappings": [
+        {
+          "containerPort": 3000
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "nc -z 127.0.0.1 3000 || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 120
+      },
+      "environment": [
+        {
+          "name": "BLAZE_GRAPHQL_URI",
+          "value": "${BLAZE_GRAPHQL_URI}"
+        },
+        {
+          "name": "API_URL",
+          "value": "${API_URL}"
+        },
+        {
+          "name": "BASE_HOST",
+          "value": "frontend"
+        },
+        {
+          "name": "BLAZE_ADMIN_URL",
+          "value": "${ADMIN_URL}"
+        },
+        {
+          "name": "BLAZE_CLIENT_HEADER",
+          "value": "${BLAZE_CLIENT_HEADER}"
+        },
+        {
+          "name": "BLAZE_FRONTEND_HOST",
+          "value": "${FRONTEND_HOST}"
+        },
+        {
+          "name": "BLAZE_STATUS_URL",
+          "value": "${BLAZE_STATUS_URL}"
+        },
+        {
+          "name": "BLAZE_STRIPE_PUBLIC_KEY",
+          "value": ""
+        },
+        {
+          "name": "GTM_ID",
+          "value": "${GTM_ID}"
+        },
+        {
+          "name": "DFP_NETWORK_ID",
+          "value": "${DFP_NETWORK_ID}"
+        },
+        {
+          "name": "DFP_BASE_ADUNIT",
+          "value": "${DFP_BASE_ADUNIT}"
+        },
+        {
+          "name": "BLAZE_CLIENT",
+          "value": "${CLIENT_KEY}"
+        },
+        {
+          "name": "BLAZE_PROJECT",
+          "value": "${PROJECT_KEY}"
+        },
+        {
+          "name": "BLAZE_NAMESPACE",
+          "value": "${NAMESPACE}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "frontend"
+        }
+      }
+    }
+  ]
+}

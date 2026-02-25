@@ -1,0 +1,88 @@
+{
+    "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-elasticsearch",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "${LAUNCH_TYPE}"
+    ],
+    "runtimePlatform": {
+        "cpuArchitecture": "${CPU_ARCHITECTURE}",
+        "operatingSystemFamily": "LINUX"
+    },
+    "cpu": "1024",
+    "memory": "2048",
+    "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+    "taskRoleArn": "${TASK_ROLE_ARN}",
+    "volumes": [
+        {
+            "name": "efs-es",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "${EFS_ID}",
+                "transitEncryption": "ENABLED",
+                "authorizationConfig": {
+                    "accessPointId": "${AP_ES}",
+                    "iam": "ENABLED"
+                }
+            }
+        }
+    ],
+    "containerDefinitions": [
+        {
+            "name": "elasticsearch",
+            "image": "${IMAGE_URI}",
+            "portMappings": [
+                {
+                    "containerPort": 9200
+                }
+            ],
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"\\(green\\|yellow\\)\"' || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 120
+            },
+            "mountPoints": [
+                {
+                    "sourceVolume": "efs-es",
+                    "containerPath": "/usr/share/elasticsearch/data"
+                }
+            ],
+            "entryPoint": [
+                "sh",
+                "-c"
+            ],
+            "command": [
+                "chown -R 1000:1000 /usr/share/elasticsearch/data 2>/dev/null || true && chmod -R 755 /usr/share/elasticsearch/data 2>/dev/null || true && rm -f /usr/share/elasticsearch/data/node.lock 2>/dev/null || true && exec tini -- /usr/local/bin/docker-entrypoint.sh eswrapper"
+            ],
+            "environment": [
+                {
+                    "name": "discovery.type",
+                    "value": "single-node"
+                },
+                {
+                    "name": "xpack.security.enabled",
+                    "value": "false"
+                },
+                {
+                    "name": "ES_JAVA_OPTS",
+                    "value": "-Xms512m -Xmx1024m"
+                },
+                {
+                    "name": "bootstrap.memory_lock",
+                    "value": "false"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+                    "awslogs-region": "${AWS_REGION}",
+                    "awslogs-stream-prefix": "elasticsearch"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,70 @@
+{
+  "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "${LAUNCH_TYPE}"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "${CPU_ARCHITECTURE}",
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [
+    {
+      "name": "admin",
+      "image": "${IMAGE_URI}",
+      "portMappings": [
+        {
+          "containerPort": 80
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "environment": [
+        {
+          "name": "BLAZE_GRAPHQL_URI",
+          "value": "${API_URL}/graphql"
+        },
+        {
+          "name": "DEBUG",
+          "value": "${DEBUG}"
+        },
+        {
+          "name": "BLAZE_ADMIN_PORT",
+          "value": "${BLAZE_ADMIN_PORT}"
+        },
+        {
+          "name": "BLAZE_CLIENT",
+          "value": "${CLIENT_KEY}"
+        },
+        {
+          "name": "BLAZE_PROJECT",
+          "value": "${PROJECT_KEY}"
+        },
+        {
+          "name": "BLAZE_NAMESPACE",
+          "value": "${NAMESPACE}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "admin"
+        }
+      }
+    }
+  ]
+}

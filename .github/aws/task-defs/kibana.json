@@ -1,0 +1,50 @@
+{
+  "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-kibana",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "${LAUNCH_TYPE}"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "${CPU_ARCHITECTURE}",
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [
+    {
+      "name": "kibana",
+      "image": "${IMAGE_URI}",
+      "portMappings": [
+        {
+          "containerPort": 5601
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -s http://localhost:5601/api/status | grep -q '\"state\":\"green\"' || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 120
+      },
+      "environment": [
+        {
+          "name": "ELASTICSEARCH_HOSTS",
+          "value": "http://elasticsearch.${NAMESPACE_NAME}:9200"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "kibana"
+        }
+      }
+    }
+  ]
+}
