@@ -204,6 +204,9 @@ on:
         required: false
       BLAZE_CLIENT_HEADER:
         required: false
+      DEPLOY_KEY:
+        required: false
+        description: "SSH Deploy Key for private Terraform modules"
 
 permissions:
   id-token: write
