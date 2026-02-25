@@ -958,9 +958,10 @@ jobs:
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       image_tag: ${{ github.sha }}
-      # artifact_registry_url: the AR repo name is computed by gcp_docker_repo (accounts for multi-site TF naming)
-      # Each site gets the same frontend image (per-site config is injected via env_vars in TF)
-      artifact_registry_url: "${{ needs.configuration.outputs.cloud_region }}-docker.pkg.dev/${{ needs.configuration.outputs.gcp_project_id }}/${{ needs.configuration.outputs.gcp_docker_repo }}/frontend"
+      # artifact_registry_url = the AR repo base path (host/project/repo)
+      # image_repository = the image name within the repo (reusable-gcp-multi-site-deploy uses REGISTRY/REPO:TAG)
+      artifact_registry_url: "${{ needs.configuration.outputs.cloud_region }}-docker.pkg.dev/${{ needs.configuration.outputs.gcp_project_id }}/${{ needs.configuration.outputs.gcp_docker_repo }}"
+      image_repository: "frontend"
       environment: "MULTI-SITE"
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
