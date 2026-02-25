@@ -95,6 +95,7 @@ jobs:
       target_tag: ${{ steps.branch.outputs.tag }}
       stack_prefix: ${{ steps.branch.outputs.prefix }}
       run_timestamp: ${{ steps.branch.outputs.timestamp }}
+      env_upper: ${{ steps.branch.outputs.env_upper }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -104,7 +105,11 @@ jobs:
         run: |
           TS=$(date +%s)
           echo "timestamp=$TS" >> "$GITHUB_OUTPUT"
-          
+
+          # Uppercase environment name (blaze-actions environments use DEV/STAGE/PROD)
+          ENV_UPPER=$(echo "${{ inputs.environment }}" | tr '[:lower:]' '[:upper:]')
+          echo "env_upper=$ENV_UPPER" >> "$GITHUB_OUTPUT"
+
           if [[ -n "${{ inputs.branch_name }}" ]]; then
             # Feature branch mode
             CLEAN_BRANCH=$(echo "${{ inputs.branch_name }}" | sed 's/[^a-zA-Z0-9]//g' | tr '[:upper:]' '[:lower:]' | cut -c1-10)
@@ -117,7 +122,7 @@ jobs:
             echo "prefix=host" >> "$GITHUB_OUTPUT"
             echo "IS_FEATURE=false" >> "$GITHUB_ENV"
           fi
-          
+
           TARGET_TAG=$( [[ -n "${{ inputs.branch_name }}" ]] && echo "${{ inputs.branch_name }}" || echo "host" )
           echo "TARGET_TAG=$TARGET_TAG" >> "$GITHUB_ENV"
 
@@ -147,7 +152,7 @@ jobs:
     needs: [setup]
     if: inputs.environment == 'prod'
     runs-on: ubuntu-latest
-    environment: prod-azure
+    environment: PROD
     timeout-minutes: 30
     steps:
       - run: |
@@ -160,7 +165,7 @@ jobs:
     if: always() && needs.setup.result == 'success' && (inputs.environment != 'prod' || needs.prod-safety-check.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: ${{ inputs.environment }}
+    environment: ${{ needs.setup.outputs.env_upper }}
     outputs:
       app_exists: ${{ steps.state_check.outputs.app_exists }}
       data_exists: ${{ steps.state_check.outputs.data_exists }}
