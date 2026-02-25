@@ -1,0 +1,220 @@
+name: "Reusable Azure Multi-Site Deploy"
+
+# ─────────────────────────────────────────────────────────────
+# Deploys or updates a single site in the multi-site fleet.
+#
+# For Tier 1 (single revision, multi_revision=false):
+#   Uses azure/container-apps-deploy-action to push a new revision
+#   with 100% traffic immediately.
+#
+# For Tier 2 (multi-revision, multi_revision=true):
+#   1. Creates new revision at 0% traffic
+#   2. Waits for revision to be Running & Ready
+#   3. Performs a staged traffic shift: 10% → 50% → 100%
+#      (operator can override via shift_strategy input)
+#
+# Used by: 02-deploy-app.yml (caller passes site_key per site)
+# ─────────────────────────────────────────────────────────────
+
+on:
+    workflow_call:
+        inputs:
+            site_key:
+                required: true
+                type: string
+                description: "Site key (matches key in var.sites Terraform map, e.g. 'site-001')"
+
+            container_app_name:
+                required: true
+                type: string
+                description: "Azure Container App resource name (from Terraform output: site_app_names[site_key])"
+
+            resource_group_name:
+                required: true
+                type: string
+                description: "Azure Resource Group containing the Container App"
+
+            image_tag:
+                required: true
+                type: string
+                description: "Container image tag to deploy (e.g. git SHA or semver)"
+
+            azure_registry_server:
+                required: true
+                type: string
+                description: "ACR login server (e.g. myacr.azurecr.io)"
+
+            image_repository:
+                required: false
+                type: string
+                default: "sites"
+                description: "ACR repository path prefix. Full image: <acr>/<image_repository>/<site_key>:<image_tag>"
+
+            multi_revision:
+                required: false
+                type: boolean
+                default: false
+                description: "true = Tier 2 Blue/Green (staged traffic shift). false = Tier 1 (100% immediately)."
+
+            shift_strategy:
+                required: false
+                type: string
+                default: "10-50-100"
+                description: "Traffic shift strategy for Tier 2 (comma-separated percentages, e.g. '10-50-100' or '100' for instant)"
+
+            target_port:
+                required: false
+                type: number
+                default: 3000
+
+            environment:
+                required: true
+                type: string
+                description: "GitHub Environment name (e.g. prod, stage, dev)"
+
+            azure_region:
+                required: false
+                type: string
+                default: "westeurope"
+
+        secrets:
+            AZURE_CLIENT_ID:
+                required: true
+            AZURE_TENANT_ID:
+                required: true
+            AZURE_SUBSCRIPTION_ID:
+                required: true
+
+jobs:
+    deploy-site:
+        name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        environment: ${{ inputs.environment }}
+
+        env:
+            SITE_KEY: ${{ inputs.site_key }}
+            APP_NAME: ${{ inputs.container_app_name }}
+            RG: ${{ inputs.resource_group_name }}
+            ACR: ${{ inputs.azure_registry_server }}
+            REPO: ${{ inputs.image_repository }}
+            TAG: ${{ inputs.image_tag }}
+
+        steps:
+            - name: Azure Login (OIDC)
+              uses: azure/login@v2
+              with:
+                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Get ACR Token
+              id: acr
+              run: |
+                  ACR_NAME=$(echo "$ACR" | cut -d'.' -f1)
+                  TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+                  echo "::add-mask::$TOKEN"
+                  echo "acr_password=$TOKEN" >> "$GITHUB_OUTPUT"
+
+            # ── Deploy new revision ──────────────────────────────────────────
+            # azure/container-apps-deploy-action creates a new revision.
+            # For Tier 1 (single revision): traffic shifts to 100% immediately.
+            # For Tier 2 (multi-revision): new revision starts at 0% traffic.
+
+            - name: Deploy New Revision
+              uses: azure/container-apps-deploy-action@v1
+              with:
+                  imageToDeploy: ${{ env.ACR }}/${{ env.REPO }}/${{ env.SITE_KEY }}:${{ env.TAG }}
+                  resourceGroup: ${{ env.RG }}
+                  containerAppName: ${{ env.APP_NAME }}
+                  targetPort: ${{ inputs.target_port }}
+                  registryUrl: ${{ env.ACR }}
+                  registryUsername: 00000000-0000-0000-0000-000000000000
+                  registryPassword: ${{ steps.acr.outputs.acr_password }}
+
+            # ── Tier 2: wait for new revision to become Running ──────────────
+            # Skip this block entirely for Tier 1 (single revision mode). 
+
+            - name: Get New Revision Name (Tier 2 only)
+              if: ${{ inputs.multi_revision }}
+              id: new_revision
+              run: |
+                  REVISION=$(az containerapp revision list \
+                    --name "$APP_NAME" \
+                    --resource-group "$RG" \
+                    --query "sort_by([].{name:name,createdTime:properties.createdTime}, &createdTime)[-1].name" \
+                    --output tsv)
+                  echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+                  echo "🆕 New revision: $REVISION"
+
+            - name: Wait for Revision to be Running (Tier 2 only)
+              if: ${{ inputs.multi_revision }}
+              timeout-minutes: 5
+              run: |
+                  REVISION="${{ steps.new_revision.outputs.revision }}"
+                  echo "⏳ Waiting for revision $REVISION to reach Running state..."
+                  for i in $(seq 1 30); do
+                    STATE=$(az containerapp revision show \
+                      --name "$APP_NAME" \
+                      --resource-group "$RG" \
+                      --revision "$REVISION" \
+                      --query "properties.runningState" \
+                      --output tsv 2>/dev/null || echo "unknown")
+                    echo "  [$i/30] State: $STATE"
+                    if [[ "$STATE" == "Running" ]]; then
+                      echo "✅ Revision is Running."
+                      exit 0
+                    fi
+                    sleep 10
+                  done
+                  echo "❌ Timeout waiting for revision to reach Running state."
+                  exit 1
+
+            - name: Staged Traffic Shift (Tier 2 only)
+              if: ${{ inputs.multi_revision }}
+              run: |
+                  REVISION="${{ steps.new_revision.outputs.revision }}"
+                  STRATEGY="${{ inputs.shift_strategy }}"
+
+                  IFS='-' read -ra STEPS <<< "$STRATEGY"
+
+                  for PERCENT in "${STEPS[@]}"; do
+                    echo "🔀 Shifting $PERCENT% traffic to $REVISION..."
+                    REMAINING=$((100 - PERCENT))
+
+                    if [[ "$PERCENT" -eq 100 ]]; then
+                      # Set new revision to 100%, deactivate all others
+                      az containerapp ingress traffic set \
+                        --name "$APP_NAME" \
+                        --resource-group "$RG" \
+                        --revision-weight "$REVISION=$PERCENT" \
+                        --output none
+                    else
+                      # Split traffic between new and latest-stable
+                      az containerapp ingress traffic set \
+                        --name "$APP_NAME" \
+                        --resource-group "$RG" \
+                        --revision-weight "$REVISION=$PERCENT" latest=0 \
+                        --output none
+                    fi
+
+                    echo "✅ Traffic at $PERCENT% — pausing 30s before next step..."
+                    sleep 30
+                  done
+                  echo "🏁 Traffic shift complete. 100% serving new revision $REVISION."
+
+            # ── Step Summary ─────────────────────────────────────────────────
+
+            - name: "📋 Deploy Summary"
+              if: always()
+              run: |
+                  echo "### 🌐 Multi-Site Deploy: \`${{ inputs.site_key }}\`" >> "$GITHUB_STEP_SUMMARY"
+                  echo "" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Site Key | \`${{ inputs.site_key }}\` |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Image Tag | \`${{ inputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Container App | \`${{ inputs.container_app_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Resource Group | \`${{ inputs.resource_group_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Tier | \`${{ inputs.multi_revision && 'Tier 2 (Dedicated, Blue/Green)' || 'Tier 1 (Consumption, Scale-to-Zero)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+                  echo "| Traffic Strategy | \`${{ inputs.shift_strategy }}\` |" >> "$GITHUB_STEP_SUMMARY"
