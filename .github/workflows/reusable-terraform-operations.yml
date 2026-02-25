@@ -67,7 +67,7 @@ on:
       GH_PAT:
         required: false
       AWS_ROLE_ARN:
-        required: true
+        required: false
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
