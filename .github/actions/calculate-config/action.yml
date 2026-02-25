@@ -371,6 +371,18 @@ runs:
             TF_DIR="${INFRA_PREFIX}/third-party/elastic"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
             
+        elif [[ "$STAGE_KEY" == "multi-site" ]]; then
+            if [[ "$STACK" == "network" ]]; then
+               TF_DIR="${INFRA_PREFIX}/multi-site-network"
+               STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
+            elif [[ "$STACK" == "cdn" ]]; then
+               TF_DIR="${INFRA_PREFIX}/multi-site-cdn"
+               STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
+            else
+               TF_DIR="${INFRA_PREFIX}/multi-site-app"
+               STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+            fi
+            
         elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
             if [[ "$STACK" == "network" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"

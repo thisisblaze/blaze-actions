@@ -69,7 +69,7 @@ on:
         required: true
         default: "dev"
         type: choice
-        options: ["dev", "stage", "prod"]
+        options: ["dev", "stage", "prod", "multi-site"]
 
       target_type:
         description: "What to test"
@@ -217,6 +217,9 @@ jobs:
           if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
             echo "stack=app" >> $GITHUB_OUTPUT
             echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.environment }}" == "multi-site" ]]; then
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
           else
             echo "stack=network" >> $GITHUB_OUTPUT
             echo "tag=" >> $GITHUB_OUTPUT
@@ -453,7 +456,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-cdn:
-    if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
+    if: ${{ (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy CDN"
 
     needs: [config, check-cdn-exists]
@@ -528,7 +531,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-cdn:
-    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-app.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
+    if: always() && (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-app.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
     needs:
       - provision-app
       - destroy-cdn
@@ -1089,7 +1092,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   destroy-cdn-final:
-    if: contains(inputs.environment, 'dev') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    if: (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy CDN"
 
     needs: [config, verify]

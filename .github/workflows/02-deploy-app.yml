@@ -20,6 +20,7 @@ on:
           - DEV
           - STAGE
           - PROD
+          - MULTI-SITE
         required: true
       project:
         description: "Project (App Identity) - e.g. thisisblaze"
@@ -880,6 +881,26 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
+  deploy-sites-multi-site-gcp:
+    name: "🌐 Deploy Multi-Site Fleet (GCP)"
+    needs: [configuration, pre-flight-check]
+    if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE' && (inputs.deploy_services == true || inputs.deploy_services == null) }}
+    strategy:
+      matrix:
+        site_key: ["site-001", "site-002"] # Smoke test 2 sites
+    uses: ./.github/workflows/reusable-gcp-multi-site-deploy.yml
+    with:
+      site_key: ${{ matrix.site_key }}
+      service_name: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-multi-${{ matrix.site_key }}"
+      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
+      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
+      image_tag: ${{ github.sha }}
+      artifact_registry_url: "${{ needs.configuration.outputs.cloud_region }}-docker.pkg.dev/${{ needs.configuration.outputs.gcp_project_id }}/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-sites/sites"
+      environment: "MULTI-SITE"
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
   deploy-admin-pages:
     name: Deploy Admin (Pages)
     needs: [configuration, build-admin, pre-flight-check]
@@ -972,6 +993,7 @@ jobs:
         deploy-admin-azure,
         deploy-admin-pages,
         deploy-tunnel,
+        deploy-sites-multi-site-gcp,
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -1013,6 +1035,7 @@ jobs:
             # GCP services
             echo "| **API (Cloud Run)** | $(get_icon "${{ needs.deploy-api-gcp.result }}") | Cloud Run |"
             echo "| **Frontend (Cloud Run)** | $(get_icon "${{ needs.deploy-frontend-gcp.result }}") | Cloud Run |"
+            echo "| **Multi-Site Fleet** | $(get_icon "${{ needs.deploy-sites-multi-site-gcp.result }}") | Cloud Run Fleet |"
 
             echo ""
             echo "## 🔗 Quick Links"
