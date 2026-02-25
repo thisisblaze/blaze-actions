@@ -13,7 +13,7 @@ on:
       terraform_stack:
         required: false
         type: string
-        description: "Stack type: network, app, third-party-cloudflare, third-party-mongodb, third-party-elastic, feature-branch"
+        description: "Stack type: network, app, third-party-cloudflare, third-party-mongodb, third-party-elastic, feature-branch, multi-site-network, multi-site-app, multi-site-cdn"
       branch_tag:
         required: false
         type: string
@@ -291,10 +291,25 @@ jobs:
                  STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
               fi
               ;;
-            "third-party"*)
-              # Catch-all for other third-party stacks if added
-              echo "❌ ERROR: Unknown third-party stack: $STACK"
-              exit 1
+            "multi-site-network")
+              # Shared network layer: VPC 10.3.0.0/16, ALB, EC2 ARM64 ASG, ECS cluster
+              # Not environment-scoped — single stack covers the whole multi-site setup.
+              # State lives under multi-site/ prefix, separate from per-env stacks.
+              TF_DIR="${INFRA_PREFIX}/multi-site-network"
+              STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
+              ;;
+            "multi-site-app")
+              # Multi-site ECS services, target groups, ALB listener rules (per-site for_each)
+              # Reads multi-site-network remote state for cluster/ALB details.
+              TF_DIR="${INFRA_PREFIX}/multi-site-app"
+              STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+              ;;
+            "multi-site-cdn")
+              # CloudFront + Lambda@Edge Sharp image resize (1 distribution, all sites)
+              # Reads multi-site-network + multi-site-app remote state.
+              # ACM cert created in us-east-1 via provider alias.
+              TF_DIR="${INFRA_PREFIX}/multi-site-cdn"
+              STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
               ;;
             *)
               # Default: assume dev network (split stack)
