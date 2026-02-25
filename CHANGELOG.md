@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Calculate Config Routing (`reusable-calculate-config.yml`)**: Fixed a CRITICAL routing issue where the `multi-site-network`, `multi-site-app`, and `multi-site-cdn` stacks were falling through to the default `${stage}-network` fallback, which injected the wrong TF_DIR and state keys. They now map correctly to `live/multi-site-*` and state `multi-site/*.tfstate`.
+- **Nuke CodeDeploy Ordering (`99-ops-utility.yml`)**: Added `pre_apply_script` to Nuke 2/5 App Stack that `state rm`s orphaned CodeDeploy deployment groups before destroy. Fixes `InvalidRoleException` where IAM role is destroyed before the deployment group, and AWS API refuses deletion.
 
 ### Added
 
