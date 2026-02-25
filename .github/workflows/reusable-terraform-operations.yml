@@ -225,11 +225,23 @@ jobs:
               echo "✅ Purge complete. Ready for retry."
           }
 
-          # Try terraform init
-          echo "Runnning terraform init with args: $BACKEND_ARGS"
+          echo "Runnning terraform init..."
           INIT_LOG="/tmp/init_output.log"
-          eval "terraform init $BACKEND_ARGS" 2>&1 | tee "$INIT_LOG"
-          INIT_EXIT_CODE=${PIPESTATUS[0]}
+          CLOUD_PROVIDER="${{ inputs.cloud_platform }}"
+
+          if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+            echo "☁️  GCP Backend: GCS bucket=$BUCKET, prefix=$STATE_KEY"
+            terraform init \
+              -upgrade \
+              -backend-config="bucket=${BUCKET}" \
+              -backend-config="prefix=${STATE_KEY}" 2>&1 | tee "$INIT_LOG"
+            INIT_EXIT_CODE=${PIPESTATUS[0]}
+          else
+            # AWS S3 Backend
+            echo "☁️  AWS Backend: bucket=$BUCKET, key=$STATE_KEY"
+            eval "terraform init $BACKEND_ARGS" 2>&1 | tee "$INIT_LOG"
+            INIT_EXIT_CODE=${PIPESTATUS[0]}
+          fi
 
           if [[ $INIT_EXIT_CODE -ne 0 ]]; then
             if grep -qiE "checksum|digest|expected content" "$INIT_LOG"; then

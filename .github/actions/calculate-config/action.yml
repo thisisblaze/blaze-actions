@@ -206,8 +206,11 @@ runs:
           gcp)
             CLOUD_REGION="$GCP_REGION"
             INFRA_PREFIX=".github/gcp/infra/live"
+            # Multi-site special bucket
+            if [[ "$STAGE_KEY" == "multi-site" ]]; then
+              BUCKET="${NAMESPACE}-${CLIENT_KEY}-terraform-state"
             # Override bucket for GCS backend if configured
-            if [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
+            elif [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
               BUCKET="$GCP_STATE_BUCKET"
             fi
             ;;
@@ -374,13 +377,25 @@ runs:
         elif [[ "$STAGE_KEY" == "multi-site" ]]; then
             if [[ "$STACK" == "network" ]]; then
                TF_DIR="${INFRA_PREFIX}/multi-site-network"
-               STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
+               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+                  STATE_KEY="gcp/multi-site/multi-site-network"
+               else
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
+               fi
             elif [[ "$STACK" == "cdn" ]]; then
                TF_DIR="${INFRA_PREFIX}/multi-site-cdn"
-               STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
+               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+                  STATE_KEY="gcp/multi-site/multi-site-cdn"
+               else
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
+               fi
             else
                TF_DIR="${INFRA_PREFIX}/multi-site-app"
-               STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+                  STATE_KEY="gcp/multi-site/multi-site-app"
+               else
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+               fi
             fi
             
         elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
