@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Token Frugality Overhaul**: Major refactor of `/engage`, `/allstop`, `/checkengines`, and `/slash-init-context` to implement targeted context loading and the "Prime Directive" of minimal token usage.
 - **Handoff Mechanism**: Added `/slash-handoff` and `/slash-resume` to allow for micro-session isolation and state preservation.
 
+### Fixed
+
+- **Calculate Config Routing (`reusable-calculate-config.yml`)**: Fixed a CRITICAL routing issue where the `multi-site-network`, `multi-site-app`, and `multi-site-cdn` stacks were falling through to the default `${stage}-network` fallback, which injected the wrong TF_DIR and state keys. They now map correctly to `live/multi-site-*` and state `multi-site/*.tfstate`.
+
 ### Added
 
 - **Azure Stress Test Reusable Workflow** (`reusable-azure-stress-test.yml`): New reusable workflow for running end-to-end Azure stress tests. Supports full provision → deploy → verify → optionally destroy lifecycle across Azure Container Apps environments.
