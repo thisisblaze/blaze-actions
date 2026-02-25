@@ -972,13 +972,7 @@ jobs:
     needs: [configuration, build-admin, pre-flight-check]
 
     # Run for Host Environments (Prod, Stage, Dev Host)
-    # SKIP: GCP MULTI-SITE — Cloudflare Pages project is not yet provisioned by Terraform for this env.
-    # TODO: Add a `cloudflare_pages_project` resource to the `multi-site-cdn` stack in blaze-terraform-infra-core,
-    #       then remove the `!(cloud_provider == 'gcp' && environment == 'MULTI-SITE')` guard below to re-enable.
-    #       The project-name expression in the `command:` step already computes the correct name:
-    #       {namespace}-{client_key}-{project_key}-gcp-{stage_key}-admin (e.g. blaze-b9-thisisblaze-gcp-multi-site-admin).
-    #       Tracked: https://github.com/thebyte9/blaze-template-deploy/issues/432
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE') }}
+    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
