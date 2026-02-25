@@ -353,10 +353,10 @@ jobs:
       project_key: ${{ needs.config.outputs.project_key }}
       client_key: ${{ needs.config.outputs.client_key }}
       domain_root: ${{ needs.config.outputs.domain_root }}
-      azure_region: ${{ needs.config.outputs.aws_region }} # Using aws_region temporarily as config falls back there
+      azure_region: ${{ needs.config.outputs.cloud_region }}
       namespace: ${{ needs.config.outputs.namespace }}
       target_port: 8080
-      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}devcr.azurecr.io" # Approximating naming structure, normally passed via infra mapping
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}${{ needs.config.outputs.stage_key }}acr.azurecr.io"
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -376,10 +376,10 @@ jobs:
       project_key: ${{ needs.config.outputs.project_key }}
       client_key: ${{ needs.config.outputs.client_key }}
       domain_root: ${{ needs.config.outputs.domain_root }}
-      azure_region: ${{ needs.config.outputs.aws_region }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
       namespace: ${{ needs.config.outputs.namespace }}
       target_port: 80
-      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}devcr.azurecr.io"
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}${{ needs.config.outputs.stage_key }}acr.azurecr.io"
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
