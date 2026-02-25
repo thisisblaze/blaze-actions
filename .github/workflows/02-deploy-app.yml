@@ -887,7 +887,7 @@ jobs:
     if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE' && (inputs.deploy_services == true || inputs.deploy_services == null) }}
     strategy:
       matrix:
-        site_key: ["site-001", "site-002"] # Smoke test 2 sites
+        site_key: ["acme-standard"] # Test 1 site only
     uses: ./.github/workflows/reusable-gcp-multi-site-deploy.yml
     with:
       site_key: ${{ matrix.site_key }}
