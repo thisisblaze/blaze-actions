@@ -90,6 +90,13 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
       DEPLOY_KEY:
         required: false
         description: "SSH deploy key for access to private Terraform modules (e.g. blaze-terraform-infra-core)"
@@ -369,11 +376,14 @@ jobs:
           TF_VAR_domain_root: ${{ inputs.domain_root }}
           AWS_REGION: ${{ inputs.aws_region }}
           # MongoDB / Elastic Secrets (Direct Mapping for reliability)
-          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
           TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
+          # Azure OIDC
+          ARM_USE_OIDC: ${{ inputs.cloud_platform == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           set +e
 
