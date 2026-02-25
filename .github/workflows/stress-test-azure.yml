@@ -403,7 +403,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
     with:
       environment: ${{ inputs.environment }}
-      branch_tag: ${{ needs.setup.outputs.target_tag }}
+      branch_name: ${{ needs.setup.outputs.target_tag }}
       cloud_provider: "azure"
       azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
       azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
