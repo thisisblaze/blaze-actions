@@ -120,7 +120,9 @@ runs:
       shell: bash
       run: |
         # 0. Load Config from Files
+        echo "DEBUG: Starting Calculate Configuration..."
         GLOBAL_CONFIG="vars/blaze-env.json"
+        echo "DEBUG: Global config path: $GLOBAL_CONFIG"
 
         # Determine Project
         INPUT_PROJECT="${{ inputs.project }}"
@@ -130,6 +132,7 @@ runs:
 
         PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
 
+        echo "DEBUG: Project config path: $PROJECT_CONFIG"
         if ! test -f "$GLOBAL_CONFIG"; then
           echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"
           exit 1
@@ -164,7 +167,9 @@ runs:
 
         # Merge Configs: Project (Args 2) overrides Global (Arg 1)
         # We output to a temporary JSON for querying
+        echo "DEBUG: Merging configs..."
         MERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")
+        echo "DEBUG: Config merged successfully."
 
         # Determine Env first to get stage-specific overrides
         if [[ "${{ inputs.event_name }}" == "repository_dispatch" ]]; then
@@ -176,6 +181,7 @@ runs:
         fi
         STAGE_KEY=$(echo "$ENV_VAL" | tr '[:upper:]' '[:lower:]')
         CONFIG_ENV=$(echo "$ENV_VAL" | tr '[:lower:]' '[:upper:]')
+        echo "DEBUG: ENV_VAL=$ENV_VAL | STAGE_KEY=$STAGE_KEY"
 
         # Read keys from MERGED config
         CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY')
@@ -231,6 +237,7 @@ runs:
         esac
 
         echo "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"
+        echo "DEBUG: Finished provider resolution."
 
         # Read Beta Flag (Env specific)
         IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments.${STAGE_KEY}.BETA // \"false\"")
