@@ -120,6 +120,9 @@ on:
         required: false
       AZURE_SUBSCRIPTION_ID:
         required: false
+      DEPLOY_KEY:
+        required: false
+        description: "SSH Deploy Key for private Terraform modules"
 
     outputs:
       mongodb_uri:
@@ -223,9 +226,23 @@ jobs:
 
       - name: Configure Git for Private Modules
         env:
-          TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         run: |
-          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
+          if [ -n "${GH_PAT}" ]; then
+            echo "✅ Configuring Git with GH_PAT..."
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          elif [ -n "${DEPLOY_KEY}" ]; then
+            echo "✅ Configuring Git with SSH Deploy Key..."
+            mkdir -p ~/.ssh
+            echo "${DEPLOY_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+            git config --global url."git@github.com:".insteadOf "https://github.com/"
+          else
+            echo "⚠️ No GH_PAT or DEPLOY_KEY found. Using GITHUB_TOKEN (cross-repo private modules may fail)."
+            git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Terraform Init
         id: init
