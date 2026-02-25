@@ -944,7 +944,7 @@ jobs:
 
   deploy-sites-multi-site-gcp:
     name: "🌐 Deploy Multi-Site Fleet (GCP)"
-    needs: [configuration, pre-flight-check]
+    needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE' && (inputs.deploy_services == true || inputs.deploy_services == null) }}
     strategy:
       matrix:
@@ -952,11 +952,15 @@ jobs:
     uses: ./.github/workflows/reusable-gcp-multi-site-deploy.yml
     with:
       site_key: ${{ matrix.site_key }}
-      service_name: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-multi-${{ matrix.site_key }}"
+      # Service name must match TF naming: the network module uses project_key="multi-site"
+      # TF label: {namespace}-{client_key}-multi-site-multi-{site_key}
+      service_name: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-multi-site-multi-${{ matrix.site_key }}"
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       image_tag: ${{ github.sha }}
-      artifact_registry_url: "${{ needs.configuration.outputs.cloud_region }}-docker.pkg.dev/${{ needs.configuration.outputs.gcp_project_id }}/${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-sites/sites"
+      # artifact_registry_url: the AR repo name is computed by gcp_docker_repo (accounts for multi-site TF naming)
+      # Each site gets the same frontend image (per-site config is injected via env_vars in TF)
+      artifact_registry_url: "${{ needs.configuration.outputs.cloud_region }}-docker.pkg.dev/${{ needs.configuration.outputs.gcp_project_id }}/${{ needs.configuration.outputs.gcp_docker_repo }}/frontend"
       environment: "MULTI-SITE"
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
