@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-25
 **Owner**: Infrastructure Team
 
 ---
@@ -6,7 +6,7 @@
 # Cloudflare Pages Operations Guide
 
 **Version**: 1.4.0  
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-25
 
 This guide documents the Cloudflare Pages lifecycle management operations available in the `99 - Ops Utility` workflow.
 
@@ -315,6 +315,7 @@ All Cloudflare operations can be run independently:
 **Current**: The `nuke-environment` action does NOT include Cloudflare cleanup
 
 **Future**: Will be enhanced to include:
+
 1. Stop services
 2. Cleanup deployments → **NEW**
 3. Destroy app stack
