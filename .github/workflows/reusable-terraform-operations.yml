@@ -134,12 +134,34 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Decode Azure Credentials
+        run: |
+          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
+            # Values were reversed by caller to bypass GitHub secret masking of job outputs
+            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+            echo "::add-mask::$CLIENT_ID"
+            echo "::add-mask::$TENANT_ID"
+            echo "::add-mask::$SUBSCRIPTION_ID"
+            echo "DECODED_AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+          else
+            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Setup Blaze
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
           cloud-provider: ${{ inputs.cloud_platform || 'aws' }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
+          azure-client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}
           terraform: "true"
 
       - name: Setup Python
@@ -211,32 +233,6 @@ jobs:
             echo "⚠️ No GH_PAT or DEPLOY_KEY found. Using GITHUB_TOKEN (cross-repo private modules may fail)."
             git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           fi
-
-      - name: Decode Azure Credentials
-        run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            echo "DECODED_AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
-            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Azure Login
-        if: ${{ inputs.cloud_platform == 'azure' }}
-        uses: azure/login@v2
-        with:
-          client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
-          subscription-id: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform Init
         working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
