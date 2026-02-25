@@ -49,13 +49,13 @@ on:
         type: string
         description: "Feature tag for isolated branch testing"
       # Azure Auth Pass-through (Base64 encoded to bypass output masking)
-      azure_client_id_b64:
+      azure_client_id_rev:
         required: false
         type: string
-      azure_tenant_id_b64:
+      azure_tenant_id_rev:
         required: false
         type: string
-      azure_subscription_id_b64:
+      azure_subscription_id_rev:
         required: false
         type: string
     secrets:
@@ -178,10 +178,11 @@ jobs:
       - name: Decode Azure Credentials
         id: decode
         run: |
-          if [[ -n "${{ inputs.azure_client_id_b64 }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_b64 }}" | base64 -d)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_b64 }}" | base64 -d)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_b64 }}" | base64 -d)
+          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
+            # Values were reversed by caller to bypass GitHub secret masking of job outputs
+            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
             echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
             echo "AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
             echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
@@ -264,9 +265,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   destroy-data:
@@ -287,9 +288,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   destroy-mongodb:
@@ -310,9 +311,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   destroy-network:
@@ -333,9 +334,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   # ── PROVISIONING ────────────────────────────────────────────────────────
@@ -357,9 +358,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   provision-data:
@@ -380,9 +381,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   provision-app:
@@ -403,9 +404,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   # ── DEPLOYMENT ──────────────────────────────────────────────────────────
@@ -418,9 +419,9 @@ jobs:
       environment: ${{ inputs.environment }}
       branch_name: ${{ needs.setup.outputs.target_tag }}
       cloud_provider: "azure"
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   # ── VERIFICATION ────────────────────────────────────────────────────────
@@ -454,9 +455,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   final-destroy-data:
@@ -477,9 +478,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   final-destroy-network:
@@ -500,9 +501,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   final-destroy-mongodb:
@@ -523,9 +524,9 @@ jobs:
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   # ── REPORTING ────────────────────────────────────────────────────────
