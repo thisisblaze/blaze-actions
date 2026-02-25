@@ -65,6 +65,20 @@ on:
         options: ["X86_64", "ARM64"]
         default: "X86_64"
 
+      # Base64 Secrets Bridge (Azure)
+      azure_client_id_b64:
+        description: "Base64 Azure Client ID"
+        required: false
+        type: string
+      azure_tenant_id_b64:
+        description: "Base64 Azure Tenant ID"
+        required: false
+        type: string
+      azure_subscription_id_b64:
+        description: "Base64 Azure Subscription ID"
+        required: false
+        type: string
+
   # Enable usage by other workflows (Stress Test)
   workflow_call:
     inputs:
@@ -181,6 +195,17 @@ on:
         required: false
       BLAZE_CLIENT_HEADER:
         required: false
+
+      # Base64 Secrets Bridge (Azure)
+      azure_client_id_b64:
+        required: false
+        type: string
+      azure_tenant_id_b64:
+        required: false
+        type: string
+      azure_subscription_id_b64:
+        required: false
+        type: string
 
       # Azure
       AZURE_CLIENT_ID:
@@ -468,6 +493,9 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -499,6 +527,9 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -565,13 +596,10 @@ jobs:
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}/{1}-{2}-web/{2}/admin', format('{0}{1}{2}acr.azurecr.io', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key), needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
-      build_args: |
-        BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
-      aws_region: ${{ needs.configuration.outputs.aws_region }}
-      gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
-      gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       wif_audience: ${{ inputs.wif_audience }}
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -763,6 +791,9 @@ jobs:
       # Azure Registry Server (e.g. CACHE_REGISTRY)
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -798,6 +829,9 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
