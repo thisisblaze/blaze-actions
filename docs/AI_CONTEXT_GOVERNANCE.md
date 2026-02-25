@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-02-25
 **Owner**: Infrastructure Team
 
 ---
@@ -24,12 +24,10 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 - NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations) in shared workflows or documentation.
 - NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
 - ALWAYS use sanitized placeholders (e.g., `app.example.com`, `123456789012`) when producing examples in the Knowledge Library or AI workflows.
-
 ## 2. The Golden Rule of Context
 
 Before writing a single line of code or answering a complex architectural question, you **MUST** ground yourself in the current environment's reality.
 **"Hallucination" of resource names is the #1 cause of deployment failure.**
-
 ## 3. The Protocol
 
 ### A. Start of Session (Bootstrapping)
@@ -65,7 +63,6 @@ If you are unsure where a workflow lives or how data flows:
 | AWS      | S3 Lifecycle Rules        | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — "Data Loss Check" required  |
 | GCP      | GCS Lifecycle             | ✅ 30-90 day retention OK | ⚠️ `force_destroy_storage = false` for Prod |
 | Azure    | Storage Account Lifecycle | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — lock policies required      |
-
 ## 5. Operational Workflows (Standard Procedures)
 
 Consult these approved workflows for specific operational tasks:
@@ -99,7 +96,6 @@ To prevent runaway costs in non-production environments, all Agents MUST verify 
 | VPC Connector       | N/A                                  | `e2-micro`, max 3 instances                 | N/A                         |
 
 **Constraint Violation**: If you see scaling above these limits in Stage/Dev, you MUST flag it as a "Cost Anomaly".
-
 ## 8. Transient Artifact Cleanup (Zero Trace Policy)
 
 **Status: MANDATORY**
@@ -118,7 +114,6 @@ When creating temporary resources for debugging, you **MUST** ensure they are re
 
 - Leaving `lambda_src/`, `logs/`, or `config_dump.json` in the root directory.
 - Committing `*.log`, `*.out`, or debugging scripts that contain hardcoded values.
-
 ## 9. Cleanup Protocol (The Law of Zero Waste)
 
 **Status: MANDATORY**
@@ -135,14 +130,13 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 **The Rule**:
 
 > "If you provision it, you must ensure it can be destroyed. If Terraform can't destroy it, you must script the cleanup."
-
 ## 10. Cross-Repository Architecture
 
-| Repository                   | Role                                         | Owner         |
-| :--------------------------- | :------------------------------------------- | :------------ |
-| `blaze-terraform-infra-core` | Terraform module Source of Truth             | `thisisblaze` |
-| `blaze-actions` (This Repo)  | Reusable GitHub Actions workflows            | `thisisblaze` |
-| `blaze-template-deploy`      | Application deployment & infra instantiation | `thebyte9`    |
+| Repository                          | Role                                         | Owner         |
+| :---------------------------------- | :------------------------------------------- | :------------ |
+| `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
+| `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
+| `blaze-template-deploy` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
 ---
 
