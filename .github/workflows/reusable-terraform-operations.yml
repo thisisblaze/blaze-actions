@@ -73,10 +73,6 @@ on:
       azure_subscription_id_rev:
         required: false
         type: string
-      gh_pat_rev:
-        required: false
-        type: string
-        description: "GH_PAT reversed to bypass output masking — decoded back for private module access"
     secrets:
       GH_PAT:
         required: false
@@ -223,17 +219,9 @@ jobs:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Try reverse-decoded GH_PAT first (passed via job output to bypass secret masking)
-          DECODED_PAT=""
-          if [[ -n "${{ inputs.gh_pat_rev }}" ]]; then
-            DECODED_PAT=$(echo "${{ inputs.gh_pat_rev }}" | rev)
-            echo "::add-mask::$DECODED_PAT"
-          fi
-          EFFECTIVE_PAT="${DECODED_PAT:-${GH_PAT}}"
-
-          if [ -n "${EFFECTIVE_PAT}" ]; then
+          if [ -n "${GH_PAT}" ]; then
             echo "✅ Configuring Git with GH_PAT..."
-            git config --global url."https://${EFFECTIVE_PAT}@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
           elif [ -n "${DEPLOY_KEY}" ]; then
             echo "✅ Configuring Git with SSH Deploy Key..."
             mkdir -p ~/.ssh
