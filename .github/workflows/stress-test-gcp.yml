@@ -1,6 +1,16 @@
 name: "🧪 GCP Stress Test"
 
 # ============================================================================
+# ⚠️  LIBRARY WORKFLOW — DO NOT RUN DIRECTLY FROM blaze-actions ⚠️
+# ============================================================================
+# This workflow is a REUSABLE LIBRARY workflow.
+# It has NO secrets available when run from blaze-actions directly.
+#
+# ✅ Run this from: blaze-template-deploy
+#    Local: /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+#    Command: gh workflow run stress-test-gcp.yml --ref dev -f environment=MULTI-SITE
+#
+# ============================================================================
 # STRESS TEST WORKFLOW - EXECUTION MODES
 # ============================================================================
 #
