@@ -75,6 +75,13 @@ on:
         required: false
       MONGODB_ATLAS_ORG_ID:
         required: false
+      # Azure Fallback Secrets
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
 
 permissions:
   id-token: write
@@ -304,7 +311,7 @@ jobs:
 
   destroy-network:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
-    needs: [setup, config, check-state, destroy-mongodb]
+    needs: [setup, config, check-state, destroy-mongodb, destroy-data]
     if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped' || needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
