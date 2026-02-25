@@ -1,0 +1,40 @@
+{
+  "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-tunnel",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "${LAUNCH_TYPE}"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "${CPU_ARCHITECTURE}",
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [
+    {
+      "name": "tunnel",
+      "image": "cloudflare/cloudflared:latest",
+      "essential": true,
+      "command": [
+        "tunnel",
+        "run"
+      ],
+      "environment": [
+        {
+          "name": "TUNNEL_TOKEN",
+          "value": "${TUNNEL_TOKEN}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "tunnel"
+        }
+      }
+    }
+  ]
+}

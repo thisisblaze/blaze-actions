@@ -1,0 +1,238 @@
+{
+  "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "${LAUNCH_TYPE}"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "${CPU_ARCHITECTURE}",
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "taskRoleArn": "${TASK_ROLE_ARN}",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "${IMAGE_URI}",
+      "portMappings": [
+        {
+          "containerPort": 3001
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "nc -z 127.0.0.1 3001 || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 120
+      },
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "${NODE_ENV}"
+        },
+        {
+          "name": "BLAZE_CONNECTION_STRING",
+          "value": "${MONGODB_URI}"
+        },
+        {
+          "name": "BLAZE_ELASTICSEARCH_ENDPOINT",
+          "value": "${BLAZE_ELASTICSEARCH_ENDPOINT}"
+        },
+        {
+          "name": "BLAZE_AUTH_JWT_PRIVATE_KEY",
+          "value": "${BLAZE_AUTH_JWT_PRIVATE_KEY}"
+        },
+        {
+          "name": "BLAZE_GRAPHQL_CACHE_SETTINGS",
+          "value": "${BLAZE_GRAPHQL_CACHE_SETTINGS}"
+        },
+        {
+          "name": "BLAZE_FRONTEND_URL",
+          "value": "${FRONTEND_URL}"
+        },
+        {
+          "name": "BLAZE_AUTH_JWT_EXPIRES_IN",
+          "value": "${BLAZE_AUTH_JWT_EXPIRES_IN}"
+        },
+        {
+          "name": "BLAZE_FILE_DEFAULT_STORE_KEY",
+          "value": "${BLAZE_FILE_DEFAULT_STORE_KEY}"
+        },
+        {
+          "name": "BLAZE_FILES_S3_BUCKET",
+          "value": "${BLAZE_FILES_S3_BUCKET}"
+        },
+        {
+          "name": "BLAZE_FILES_S3_PUBLIC_URL",
+          "value": "${BLAZE_FILES_S3_PUBLIC_URL}"
+        },
+        {
+          "name": "BLAZE_AUTH_ADMIN_EMAIL",
+          "value": "${BLAZE_AUTH_ADMIN_EMAIL}"
+        },
+        {
+          "name": "BLAZE_AUTH_ADMIN_PASSWORD",
+          "value": "${BLAZE_AUTH_ADMIN_PASSWORD}"
+        },
+        {
+          "name": "BLAZE_ELASTICSEARCH_USERNAME",
+          "value": "${BLAZE_ELASTICSEARCH_USERNAME}"
+        },
+        {
+          "name": "BLAZE_ELASTICSEARCH_PASSWORD",
+          "value": "${BLAZE_ELASTICSEARCH_PASSWORD}"
+        },
+        {
+          "name": "BLAZE_FILES_S3_ACCESS_KEY",
+          "value": "${BLAZE_FILES_S3_ACCESS_KEY}"
+        },
+        {
+          "name": "BLAZE_FILES_S3_SECRET_ACCESS_KEY",
+          "value": "${BLAZE_FILES_S3_SECRET_ACCESS_KEY}"
+        },
+        {
+          "name": "BASE_HOST",
+          "value": "api"
+        },
+        {
+          "name": "BLAZE_AUTH_ENABLE_API_KEYS",
+          "value": "${BLAZE_AUTH_ENABLE_API_KEYS}"
+        },
+        {
+          "name": "BLAZE_CONTENT_SITEMAP_BATCH_LIMIT",
+          "value": "${BLAZE_CONTENT_SITEMAP_BATCH_LIMIT}"
+        },
+        {
+          "name": "BLAZE_CONTENT_SITEMAP_LOG_LEVEL",
+          "value": "${BLAZE_CONTENT_SITEMAP_LOG_LEVEL}"
+        },
+        {
+          "name": "BLAZE_CONTENT_SITEMAP_SUBMIT",
+          "value": "${BLAZE_CONTENT_SITEMAP_SUBMIT}"
+        },
+        {
+          "name": "BLAZE_DEFAULT_LIMIT",
+          "value": "${BLAZE_DEFAULT_LIMIT}"
+        },
+        {
+          "name": "BLAZE_FRONTEND_SITE_NAME",
+          "value": "${BLAZE_FRONTEND_SITE_NAME}"
+        },
+        {
+          "name": "BLAZE_GRAPHQL_DEFAULT_MAX_AGE",
+          "value": "${BLAZE_GRAPHQL_DEFAULT_MAX_AGE}"
+        },
+        {
+          "name": "BLAZE_GRAPHQL_INTROSPECTION_ENABLED",
+          "value": "${BLAZE_GRAPHQL_INTROSPECTION_ENABLED}"
+        },
+        {
+          "name": "BLAZE_GRAPHQL_MAX_FILE_SIZE",
+          "value": "${BLAZE_GRAPHQL_MAX_FILE_SIZE}"
+        },
+        {
+          "name": "BLAZE_GRAPHQL_PLAYGROUND_ENABLED",
+          "value": "${BLAZE_GRAPHQL_PLAYGROUND_ENABLED}"
+        },
+        {
+          "name": "BLAZE_IMPORT_UPLOAD_IGNORE_ERROR",
+          "value": "${BLAZE_IMPORT_UPLOAD_IGNORE_ERROR}"
+        },
+        {
+          "name": "BLAZE_LOAD_SEEDS",
+          "value": "${BLAZE_LOAD_SEEDS}"
+        },
+        {
+          "name": "BLAZE_PREVIEW_DEFAULT_EXPIRY_PERIOD",
+          "value": "${BLAZE_PREVIEW_DEFAULT_EXPIRY_PERIOD}"
+        },
+        {
+          "name": "BLAZE_PREVIEW_PREVIEW_USER_EMAIL",
+          "value": "${BLAZE_PREVIEW_PREVIEW_USER_EMAIL}"
+        },
+        {
+          "name": "BLAZE_QUEUES_ADD_DEFAULT_QUEUE",
+          "value": "${BLAZE_QUEUES_ADD_DEFAULT_QUEUE}"
+        },
+        {
+          "name": "BLAZE_QUEUES_AGENDA_DEFAULT_CONCURRENCY",
+          "value": "${BLAZE_QUEUES_AGENDA_DEFAULT_CONCURRENCY}"
+        },
+        {
+          "name": "BLAZE_QUEUES_AGENDA_DEFAULT_LOCK_LIFETIME",
+          "value": "${BLAZE_QUEUES_AGENDA_DEFAULT_LOCK_LIFETIME}"
+        },
+        {
+          "name": "BLAZE_QUEUES_AGENDA_LOCK_LIMIT",
+          "value": "${BLAZE_QUEUES_AGENDA_LOCK_LIMIT}"
+        },
+        {
+          "name": "BLAZE_QUEUES_AGENDA_MAX_CONCURRENCY",
+          "value": "${BLAZE_QUEUES_AGENDA_MAX_CONCURRENCY}"
+        },
+        {
+          "name": "BLAZE_QUEUES_AGENDA_PROCESS_EVERY",
+          "value": "${BLAZE_QUEUES_AGENDA_PROCESS_EVERY}"
+        },
+        {
+          "name": "BLAZE_QUEUES_DEFAULT_QUEUE_KEY",
+          "value": "${BLAZE_QUEUES_DEFAULT_QUEUE_KEY}"
+        },
+        {
+          "name": "BLAZE_QUEUES_DEFAULT_QUEUE_TYPE_KEY",
+          "value": "${BLAZE_QUEUES_DEFAULT_QUEUE_TYPE_KEY}"
+        },
+        {
+          "name": "BLAZE_QUEUES_SCHEDULER_KEY",
+          "value": "${BLAZE_QUEUES_SCHEDULER_KEY}"
+        },
+        {
+          "name": "BLAZE_REQUEST_PROXY",
+          "value": "${BLAZE_REQUEST_PROXY}"
+        },
+        {
+          "name": "BLAZE_SEARCH_DEFAULT_PROVIDER_KEY",
+          "value": "${BLAZE_SEARCH_DEFAULT_PROVIDER_KEY}"
+        },
+        {
+          "name": "BLAZE_SEARCH_INDEX_PREFIX",
+          "value": "${BLAZE_SEARCH_INDEX_PREFIX}"
+        },
+        {
+          "name": "BLAZE_STRIPE_SECRET_KEY",
+          "value": ""
+        },
+        {
+          "name": "DEBUG",
+          "value": "${DEBUG}"
+        },
+        {
+          "name": "BLAZE_CLIENT",
+          "value": "${CLIENT_KEY}"
+        },
+        {
+          "name": "BLAZE_PROJECT",
+          "value": "${PROJECT_KEY}"
+        },
+        {
+          "name": "BLAZE_NAMESPACE",
+          "value": "${NAMESPACE}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}
