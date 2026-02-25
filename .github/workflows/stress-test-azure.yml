@@ -50,19 +50,19 @@ on:
         description: "Feature tag for isolated branch testing"
     secrets:
       AZURE_CLIENT_ID:
-        required: true
+        required: false
       AZURE_TENANT_ID:
-        required: true
+        required: false
       AZURE_SUBSCRIPTION_ID:
-        required: true
+        required: false
       GH_PAT:
         required: false
       CLOUDFLARE_API_TOKEN:
-        required: true
+        required: false
       CLOUDFLARE_ZONE_ID:
-        required: true
+        required: false
       CLOUDFLARE_ACCOUNT_ID:
-        required: true
+        required: false
       MONGODB_ATLAS_PUBLIC_KEY:
         required: false
       MONGODB_ATLAS_PRIVATE_KEY:
