@@ -66,15 +66,15 @@ on:
         default: "X86_64"
 
       # Base64 Secrets Bridge (Azure)
-      azure_client_id_b64:
+      azure_client_id_rev:
         description: "Base64 Azure Client ID"
         required: false
         type: string
-      azure_tenant_id_b64:
+      azure_tenant_id_rev:
         description: "Base64 Azure Tenant ID"
         required: false
         type: string
-      azure_subscription_id_b64:
+      azure_subscription_id_rev:
         description: "Base64 Azure Subscription ID"
         required: false
         type: string
@@ -139,13 +139,13 @@ on:
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
       # Base64 Secrets Bridge (Azure)
-      azure_client_id_b64:
+      azure_client_id_rev:
         required: false
         type: string
-      azure_tenant_id_b64:
+      azure_tenant_id_rev:
         required: false
         type: string
-      azure_subscription_id_b64:
+      azure_subscription_id_rev:
         required: false
         type: string
 
@@ -494,9 +494,9 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -528,9 +528,9 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -598,9 +598,9 @@ jobs:
       image_tag: ${{ github.sha }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -792,9 +792,9 @@ jobs:
       # Azure Registry Server (e.g. CACHE_REGISTRY)
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -830,9 +830,9 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
       azure_registry_server: "${{ needs.configuration.outputs.namespace }}${{ needs.configuration.outputs.client_key }}${{ needs.configuration.outputs.stage_key }}acr.azurecr.io"
       target_port: 3000
-      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
-      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
-      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
