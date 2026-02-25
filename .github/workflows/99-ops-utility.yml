@@ -1635,6 +1635,15 @@ jobs:
         gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
         gcp_region=${{ needs.configuration.outputs.cloud_region }}
         azure_region=${{ needs.configuration.outputs.cloud_region }}
+      pre_apply_script: |
+        echo "🔪 REMOVING ORPHANED CODEDEPLOY STATE (IAM role deleted before deployment group)..."
+        # CodeDeploy API refuses to delete deployment groups when their IAM role
+        # no longer exists. Remove them from state so destroy can proceed.
+        terraform state rm "module.app.module.api_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.api_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
+        echo "✅ Orphaned CodeDeploy state removed."
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-destroy-app]
