@@ -977,7 +977,7 @@ jobs:
     #       then remove the `!(cloud_provider == 'gcp' && environment == 'MULTI-SITE')` guard below to re-enable.
     #       The project-name expression in the `command:` step already computes the correct name:
     #       {namespace}-{client_key}-{project_key}-gcp-{stage_key}-admin (e.g. blaze-b9-thisisblaze-gcp-multi-site-admin).
-    #       Tracked: https://github.com/thebyte9/blaze-terraform-infra-core/issues (see "Admin (Pages) for GCP MULTI-SITE")
+    #       Tracked: https://github.com/thebyte9/blaze-template-deploy/issues/432
     if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
