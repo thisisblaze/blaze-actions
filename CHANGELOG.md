@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-02-24
+## [Unreleased] - 2026-02-25
 
-### Changed
+### Added
+
+- **`deploy-site.yml`**: New reusable workflow for multi-site ARM64 deployments.
+  - `build` job: Native `ubuntu-24.04-arm` runner — no QEMU, full Graviton build speed. Pushes to ECR with GHA layer caching scoped per `site_key`.
+  - `deploy` job: Discovers ECS service by `site_key` suffix dynamically (no hardcoded prefix). Patches container image via `describe-task-definition` + `register-task-definition` + JQ — no task-def JSON files committed to the repo.
+  - `rolling` strategy: `aws ecs update-service --force-new-deployment` + `ecs wait services-stable` (standard tier sites).
+  - `blue-green` strategy: CodeDeploy appspec built inline, `aws deploy create-deployment`, polls until Succeeded/Failed (premium tier sites).
+  - Full GitHub Step Summary on every run (build digest, service name, strategy, status).
+
 
 - **Token Frugality Overhaul**: Major refactor of `/engage`, `/allstop`, `/checkengines`, and `/slash-init-context` to implement targeted context loading and the "Prime Directive" of minimal token usage.
 - **Handoff Mechanism**: Added `/slash-handoff` and `/slash-resume` to allow for micro-session isolation and state preservation.
