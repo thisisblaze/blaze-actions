@@ -305,7 +305,6 @@ jobs:
             AZURE_CONTAINER=$(echo "$BUCKET" | cut -d'/' -f3)
             echo "☁️  Azure Backend: rg=$AZURE_RG, sa=$AZURE_SA, container=$AZURE_CONTAINER, key=$STATE_KEY"
             terraform init \
-              -upgrade \
               -backend-config="resource_group_name=${AZURE_RG}" \
               -backend-config="storage_account_name=${AZURE_SA}" \
               -backend-config="container_name=${AZURE_CONTAINER}" \
