@@ -226,7 +226,7 @@ runs:
         echo "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"
 
         # Read Beta Flag (Env specific)
-        IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments[\"${STAGE_KEY}\"].BETA // \"false\"")
+        IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments?[\"${STAGE_KEY}\"]?.BETA // \"false\"")
 
         # Verify
         if [[ "$CLIENT_KEY" == "null" || -z "$CLIENT_KEY" ]]; then

@@ -1,0 +1,2040 @@
+{
+  "version": 4,
+  "terraform_version": "1.14.3",
+  "serial": 15,
+  "lineage": "a750e848-c201-6f75-f198-55ddb6128ee5",
+  "outputs": {
+    "cloud_armor_policy": {
+      "value": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+      "type": "string"
+    },
+    "image_resize_function_url": {
+      "value": "https://europe-west1-blaze-b9-thisisblaze.cloudfunctions.net/blaze-dev-image-resize-resize",
+      "type": "string"
+    },
+    "lb_ip_address": {
+      "value": "34.36.74.44",
+      "type": "string"
+    },
+    "lb_url": {
+      "value": "https://gcp-dev.thisisblaze.uk",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "terraform_remote_state",
+      "name": "app",
+      "provider": "provider[\"terraform.io/builtin/terraform\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "backend": "gcs",
+            "config": {
+              "value": {
+                "bucket": "blaze-b9-tfstate",
+                "prefix": "infra/thisisblaze/dev/app.tfstate"
+              },
+              "type": [
+                "object",
+                {
+                  "bucket": "string",
+                  "prefix": "string"
+                }
+              ]
+            },
+            "defaults": null,
+            "outputs": {
+              "value": {
+                "api_service_name": "blaze-b9-thisisblaze-dev-api",
+                "app_service_account_email": "blaze-b9-thisisblaze-dev-app@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+                "frontend_service_name": "blaze-b9-thisisblaze-dev-frontend",
+                "storage_bucket_name": "blaze-b9-thisisblaze-dev-storage",
+                "storage_bucket_url": "gs://blaze-b9-thisisblaze-dev-storage",
+                "vpc_connector_id": ""
+              },
+              "type": [
+                "object",
+                {
+                  "api_service_name": "string",
+                  "app_service_account_email": "string",
+                  "frontend_service_name": "string",
+                  "storage_bucket_name": "string",
+                  "storage_bucket_url": "string",
+                  "vpc_connector_id": "string"
+                }
+              ]
+            },
+            "workspace": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "cloudflare_record",
+      "name": "lb_dns",
+      "provider": "provider[\"registry.terraform.io/cloudflare/cloudflare\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 3,
+          "attributes": {
+            "allow_overwrite": false,
+            "comment": "",
+            "content": "34.36.74.44",
+            "created_on": "2026-02-20T10:54:01.049312Z",
+            "data": [],
+            "hostname": "gcp-dev.thisisblaze.uk",
+            "id": "f9bcc51aa854a2d99b9f148cb914b6b4",
+            "metadata": {},
+            "modified_on": "2026-02-20T10:54:01.049312Z",
+            "name": "gcp-dev",
+            "priority": null,
+            "proxiable": true,
+            "proxied": false,
+            "tags": null,
+            "timeouts": null,
+            "ttl": 1,
+            "type": "A",
+            "value": null,
+            "zone_id": "5421a6085a09bb7c9ed11b19f5409ae0"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMCwidXBkYXRlIjozMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMyJ9",
+          "dependencies": [
+            "module.global_lb.google_compute_global_address.lb"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_service",
+      "name": "cloudbuild",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": false,
+            "id": "blaze-b9-thisisblaze/cloudbuild.googleapis.com",
+            "project": "blaze-b9-thisisblaze",
+            "service": "cloudbuild.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_service",
+      "name": "cloudfunctions",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": false,
+            "id": "blaze-b9-thisisblaze/cloudfunctions.googleapis.com",
+            "project": "blaze-b9-thisisblaze",
+            "service": "cloudfunctions.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_service",
+      "name": "eventarc",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": false,
+            "id": "blaze-b9-thisisblaze/eventarc.googleapis.com",
+            "project": "blaze-b9-thisisblaze",
+            "service": "eventarc.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_service",
+      "name": "run",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": false,
+            "id": "blaze-b9-thisisblaze/run.googleapis.com",
+            "project": "blaze-b9-thisisblaze",
+            "service": "run.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "module": "module.cloud_armor",
+      "mode": "managed",
+      "type": "google_compute_security_policy",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "adaptive_protection_config": [],
+            "advanced_options_config": [],
+            "description": "Cloud Armor WAF policy for blaze-dev",
+            "fingerprint": "OAPR0gRBcY4=",
+            "id": "projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+            "name": "blaze-dev-armor",
+            "project": "blaze-b9-thisisblaze",
+            "recaptcha_options_config": [],
+            "rule": [
+              {
+                "action": "allow",
+                "description": "Default allow rule",
+                "header_action": [],
+                "match": [
+                  {
+                    "config": [
+                      {
+                        "src_ip_ranges": [
+                          "*"
+                        ]
+                      }
+                    ],
+                    "expr": [],
+                    "expr_options": [],
+                    "versioned_expr": "SRC_IPS_V1"
+                  }
+                ],
+                "preview": false,
+                "priority": 2147483647,
+                "rate_limit_options": [],
+                "redirect_options": []
+              },
+              {
+                "action": "throttle",
+                "description": "Rate limiting: 200 requests per 60s",
+                "header_action": [],
+                "match": [
+                  {
+                    "config": [
+                      {
+                        "src_ip_ranges": [
+                          "*"
+                        ]
+                      }
+                    ],
+                    "expr": [],
+                    "expr_options": [],
+                    "versioned_expr": "SRC_IPS_V1"
+                  }
+                ],
+                "preview": false,
+                "priority": 2000,
+                "rate_limit_options": [
+                  {
+                    "ban_duration_sec": 0,
+                    "ban_threshold": [],
+                    "conform_action": "allow",
+                    "enforce_on_key": "",
+                    "enforce_on_key_name": "",
+                    "exceed_action": "deny(429)",
+                    "exceed_redirect_options": [],
+                    "rate_limit_threshold": [
+                      {
+                        "count": 200,
+                        "interval_sec": 60
+                      }
+                    ]
+                  }
+                ],
+                "redirect_options": []
+              }
+            ],
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+            "timeouts": null,
+            "type": "CLOUD_ARMOR"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_backend_service",
+      "name": "backends",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": "api",
+          "schema_version": 1,
+          "attributes": {
+            "affinity_cookie_ttl_sec": 0,
+            "backend": [
+              {
+                "balancing_mode": "UTILIZATION",
+                "capacity_scaler": 1,
+                "description": "",
+                "group": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-api-neg",
+                "max_connections": 0,
+                "max_connections_per_endpoint": 0,
+                "max_connections_per_instance": 0,
+                "max_rate": 0,
+                "max_rate_per_endpoint": 0,
+                "max_rate_per_instance": 0,
+                "max_utilization": 0
+              }
+            ],
+            "cdn_policy": [],
+            "circuit_breakers": [],
+            "compression_mode": "",
+            "connection_draining_timeout_sec": 300,
+            "consistent_hash": [],
+            "creation_timestamp": "2026-02-19T21:54:57.667-08:00",
+            "custom_request_headers": [],
+            "custom_response_headers": [],
+            "description": "",
+            "edge_security_policy": "",
+            "enable_cdn": false,
+            "fingerprint": "YOG-sWIqfyM=",
+            "generated_id": 2650909734344477150,
+            "health_checks": [],
+            "iap": [],
+            "id": "projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-api-backend",
+            "load_balancing_scheme": "EXTERNAL_MANAGED",
+            "locality_lb_policies": [],
+            "locality_lb_policy": "",
+            "log_config": [
+              {
+                "enable": true,
+                "sample_rate": 1
+              }
+            ],
+            "name": "blaze-dev-api-backend",
+            "outlier_detection": [],
+            "port_name": "http",
+            "project": "blaze-b9-thisisblaze",
+            "protocol": "HTTPS",
+            "security_policy": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+            "security_settings": [],
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-api-backend",
+            "service_lb_policy": "",
+            "session_affinity": "NONE",
+            "timeout_sec": 30,
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        },
+        {
+          "index_key": "frontend",
+          "schema_version": 1,
+          "attributes": {
+            "affinity_cookie_ttl_sec": 0,
+            "backend": [
+              {
+                "balancing_mode": "UTILIZATION",
+                "capacity_scaler": 1,
+                "description": "",
+                "group": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-frontend-neg",
+                "max_connections": 0,
+                "max_connections_per_endpoint": 0,
+                "max_connections_per_instance": 0,
+                "max_rate": 0,
+                "max_rate_per_endpoint": 0,
+                "max_rate_per_instance": 0,
+                "max_utilization": 0
+              }
+            ],
+            "cdn_policy": [
+              {
+                "bypass_cache_on_request_headers": [],
+                "cache_key_policy": [
+                  {
+                    "include_host": true,
+                    "include_http_headers": [],
+                    "include_named_cookies": [],
+                    "include_protocol": true,
+                    "include_query_string": true,
+                    "query_string_blacklist": [],
+                    "query_string_whitelist": []
+                  }
+                ],
+                "cache_mode": "USE_ORIGIN_HEADERS",
+                "client_ttl": 0,
+                "default_ttl": 0,
+                "max_ttl": 0,
+                "negative_caching": false,
+                "negative_caching_policy": [],
+                "serve_while_stale": 86400,
+                "signed_url_cache_max_age_sec": 0
+              }
+            ],
+            "circuit_breakers": [],
+            "compression_mode": "",
+            "connection_draining_timeout_sec": 300,
+            "consistent_hash": [],
+            "creation_timestamp": "2026-02-19T21:52:34.748-08:00",
+            "custom_request_headers": [],
+            "custom_response_headers": [],
+            "description": "",
+            "edge_security_policy": "",
+            "enable_cdn": true,
+            "fingerprint": "FYg7-eUs31E=",
+            "generated_id": 4588794193706109005,
+            "health_checks": [],
+            "iap": [],
+            "id": "projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-frontend-backend",
+            "load_balancing_scheme": "EXTERNAL_MANAGED",
+            "locality_lb_policies": [],
+            "locality_lb_policy": "",
+            "log_config": [
+              {
+                "enable": true,
+                "sample_rate": 1
+              }
+            ],
+            "name": "blaze-dev-frontend-backend",
+            "outlier_detection": [],
+            "port_name": "http",
+            "project": "blaze-b9-thisisblaze",
+            "protocol": "HTTPS",
+            "security_policy": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+            "security_settings": [],
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-frontend-backend",
+            "service_lb_policy": "",
+            "session_affinity": "NONE",
+            "timeout_sec": 30,
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        },
+        {
+          "index_key": "image-resize",
+          "schema_version": 1,
+          "attributes": {
+            "affinity_cookie_ttl_sec": 0,
+            "backend": [
+              {
+                "balancing_mode": "UTILIZATION",
+                "capacity_scaler": 1,
+                "description": "",
+                "group": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-image-resize-neg",
+                "max_connections": 0,
+                "max_connections_per_endpoint": 0,
+                "max_connections_per_instance": 0,
+                "max_rate": 0,
+                "max_rate_per_endpoint": 0,
+                "max_rate_per_instance": 0,
+                "max_utilization": 0
+              }
+            ],
+            "cdn_policy": [
+              {
+                "bypass_cache_on_request_headers": [],
+                "cache_key_policy": [
+                  {
+                    "include_host": true,
+                    "include_http_headers": [],
+                    "include_named_cookies": [],
+                    "include_protocol": true,
+                    "include_query_string": true,
+                    "query_string_blacklist": [],
+                    "query_string_whitelist": []
+                  }
+                ],
+                "cache_mode": "USE_ORIGIN_HEADERS",
+                "client_ttl": 0,
+                "default_ttl": 0,
+                "max_ttl": 0,
+                "negative_caching": false,
+                "negative_caching_policy": [],
+                "serve_while_stale": 86400,
+                "signed_url_cache_max_age_sec": 0
+              }
+            ],
+            "circuit_breakers": [],
+            "compression_mode": "",
+            "connection_draining_timeout_sec": 300,
+            "consistent_hash": [],
+            "creation_timestamp": "2026-02-19T21:52:34.621-08:00",
+            "custom_request_headers": [],
+            "custom_response_headers": [],
+            "description": "",
+            "edge_security_policy": "",
+            "enable_cdn": true,
+            "fingerprint": "dI4ShCQCpP4=",
+            "generated_id": 5787873625943722061,
+            "health_checks": [],
+            "iap": [],
+            "id": "projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-image-resize-backend",
+            "load_balancing_scheme": "EXTERNAL_MANAGED",
+            "locality_lb_policies": [],
+            "locality_lb_policy": "",
+            "log_config": [
+              {
+                "enable": true,
+                "sample_rate": 1
+              }
+            ],
+            "name": "blaze-dev-image-resize-backend",
+            "outlier_detection": [],
+            "port_name": "http",
+            "project": "blaze-b9-thisisblaze",
+            "protocol": "HTTPS",
+            "security_policy": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/securityPolicies/blaze-dev-armor",
+            "security_settings": [],
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-image-resize-backend",
+            "service_lb_policy": "",
+            "session_affinity": "NONE",
+            "timeout_sec": 30,
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_global_address",
+      "name": "lb",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "address": "34.36.74.44",
+            "address_type": "EXTERNAL",
+            "creation_timestamp": "2026-02-19T21:50:58.905-08:00",
+            "description": "",
+            "effective_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "id": "projects/blaze-b9-thisisblaze/global/addresses/blaze-dev-lb-ip",
+            "ip_version": "",
+            "label_fingerprint": "LZCj98QEIpc=",
+            "labels": {
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "name": "blaze-dev-lb-ip",
+            "network": "",
+            "prefix_length": 0,
+            "project": "blaze-b9-thisisblaze",
+            "purpose": "",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/addresses/blaze-dev-lb-ip",
+            "terraform_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_global_forwarding_rule",
+      "name": "https",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "base_forwarding_rule": "",
+            "description": "",
+            "effective_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "id": "projects/blaze-b9-thisisblaze/global/forwardingRules/blaze-dev-https-fwd",
+            "ip_address": "34.36.74.44",
+            "ip_protocol": "TCP",
+            "ip_version": "",
+            "label_fingerprint": "LZCj98QEIpc=",
+            "labels": {
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "load_balancing_scheme": "EXTERNAL_MANAGED",
+            "metadata_filters": [],
+            "name": "blaze-dev-https-fwd",
+            "network": "",
+            "no_automate_dns_zone": null,
+            "port_range": "443-443",
+            "project": "blaze-b9-thisisblaze",
+            "psc_connection_id": "",
+            "psc_connection_status": "",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/forwardingRules/blaze-dev-https-fwd",
+            "service_directory_registrations": [],
+            "source_ip_ranges": null,
+            "subnetwork": "",
+            "target": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/targetHttpsProxies/blaze-dev-https-proxy",
+            "terraform_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_backend_service.backends",
+            "module.global_lb.google_compute_global_address.lb",
+            "module.global_lb.google_compute_managed_ssl_certificate.main",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.global_lb.google_compute_target_https_proxy.main",
+            "module.global_lb.google_compute_url_map.main",
+            "module.global_lb.random_id.cert",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_global_forwarding_rule",
+      "name": "redirect",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "base_forwarding_rule": "",
+            "description": "",
+            "effective_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "id": "projects/blaze-b9-thisisblaze/global/forwardingRules/blaze-dev-http-redirect",
+            "ip_address": "34.36.74.44",
+            "ip_protocol": "TCP",
+            "ip_version": "",
+            "label_fingerprint": "LZCj98QEIpc=",
+            "labels": {
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "load_balancing_scheme": "EXTERNAL_MANAGED",
+            "metadata_filters": [],
+            "name": "blaze-dev-http-redirect",
+            "network": "",
+            "no_automate_dns_zone": null,
+            "port_range": "80-80",
+            "project": "blaze-b9-thisisblaze",
+            "psc_connection_id": "",
+            "psc_connection_status": "",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/forwardingRules/blaze-dev-http-redirect",
+            "service_directory_registrations": [],
+            "source_ip_ranges": null,
+            "subnetwork": "",
+            "target": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/targetHttpProxies/blaze-dev-redirect-proxy",
+            "terraform_labels": {
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "module.global_lb.google_compute_global_address.lb",
+            "module.global_lb.google_compute_target_http_proxy.redirect",
+            "module.global_lb.google_compute_url_map.redirect"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_managed_ssl_certificate",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "certificate_id": 7374805587310511069,
+            "creation_timestamp": "2026-02-20T02:53:38.432-08:00",
+            "description": "",
+            "expire_time": "",
+            "id": "projects/blaze-b9-thisisblaze/global/sslCertificates/blaze-dev-ssl-d0c4e6e2",
+            "managed": [
+              {
+                "domains": [
+                  "gcp-dev.thisisblaze.uk"
+                ]
+              }
+            ],
+            "name": "blaze-dev-ssl-d0c4e6e2",
+            "project": "blaze-b9-thisisblaze",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/sslCertificates/blaze-dev-ssl-d0c4e6e2",
+            "subject_alternative_names": [],
+            "timeouts": null,
+            "type": "MANAGED"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "module.global_lb.random_id.cert"
+          ],
+          "create_before_destroy": true
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_region_network_endpoint_group",
+      "name": "backends",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": "api",
+          "schema_version": 0,
+          "attributes": {
+            "app_engine": [],
+            "cloud_function": [],
+            "cloud_run": [
+              {
+                "service": "blaze-b9-thisisblaze-dev-api",
+                "tag": "",
+                "url_mask": ""
+              }
+            ],
+            "description": "",
+            "id": "projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-api-neg",
+            "name": "blaze-dev-api-neg",
+            "network": "",
+            "network_endpoint_type": "SERVERLESS",
+            "project": "blaze-b9-thisisblaze",
+            "psc_target_service": "",
+            "region": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-api-neg",
+            "subnetwork": "",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        },
+        {
+          "index_key": "frontend",
+          "schema_version": 0,
+          "attributes": {
+            "app_engine": [],
+            "cloud_function": [],
+            "cloud_run": [
+              {
+                "service": "blaze-b9-thisisblaze-dev-frontend",
+                "tag": "",
+                "url_mask": ""
+              }
+            ],
+            "description": "",
+            "id": "projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-frontend-neg",
+            "name": "blaze-dev-frontend-neg",
+            "network": "",
+            "network_endpoint_type": "SERVERLESS",
+            "project": "blaze-b9-thisisblaze",
+            "psc_target_service": "",
+            "region": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-frontend-neg",
+            "subnetwork": "",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        },
+        {
+          "index_key": "image-resize",
+          "schema_version": 0,
+          "attributes": {
+            "app_engine": [],
+            "cloud_function": [
+              {
+                "function": "blaze-dev-image-resize-resize",
+                "url_mask": ""
+              }
+            ],
+            "cloud_run": [],
+            "description": "",
+            "id": "projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-image-resize-neg",
+            "name": "blaze-dev-image-resize-neg",
+            "network": "",
+            "network_endpoint_type": "SERVERLESS",
+            "project": "blaze-b9-thisisblaze",
+            "psc_target_service": "",
+            "region": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/regions/europe-west1/networkEndpointGroups/blaze-dev-image-resize-neg",
+            "subnetwork": "",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_target_http_proxy",
+      "name": "redirect",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "creation_timestamp": "2026-02-20T02:53:49.524-08:00",
+            "description": "",
+            "http_keep_alive_timeout_sec": 0,
+            "id": "projects/blaze-b9-thisisblaze/global/targetHttpProxies/blaze-dev-redirect-proxy",
+            "name": "blaze-dev-redirect-proxy",
+            "project": "blaze-b9-thisisblaze",
+            "proxy_bind": false,
+            "proxy_id": 5188834501147853778,
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/targetHttpProxies/blaze-dev-redirect-proxy",
+            "timeouts": null,
+            "url_map": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-redirect"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "module.global_lb.google_compute_url_map.redirect"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_target_https_proxy",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "certificate_manager_certificates": null,
+            "certificate_map": "",
+            "creation_timestamp": "2026-02-20T02:54:35.509-08:00",
+            "description": "",
+            "http_keep_alive_timeout_sec": 0,
+            "id": "projects/blaze-b9-thisisblaze/global/targetHttpsProxies/blaze-dev-https-proxy",
+            "name": "blaze-dev-https-proxy",
+            "project": "blaze-b9-thisisblaze",
+            "proxy_bind": false,
+            "proxy_id": 6957320609927103364,
+            "quic_override": "NONE",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/targetHttpsProxies/blaze-dev-https-proxy",
+            "server_tls_policy": "",
+            "ssl_certificates": [
+              "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/sslCertificates/blaze-dev-ssl-d0c4e6e2"
+            ],
+            "ssl_policy": "",
+            "timeouts": null,
+            "tls_early_data": "DISABLED",
+            "url_map": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-urlmap"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_backend_service.backends",
+            "module.global_lb.google_compute_managed_ssl_certificate.main",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.global_lb.google_compute_url_map.main",
+            "module.global_lb.random_id.cert",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_url_map",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "creation_timestamp": "2026-02-19T21:56:13.599-08:00",
+            "default_route_action": [],
+            "default_service": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-frontend-backend",
+            "default_url_redirect": [],
+            "description": "",
+            "fingerprint": "JcXkXVT3JA0=",
+            "header_action": [],
+            "host_rule": [
+              {
+                "description": "",
+                "hosts": [
+                  "*"
+                ],
+                "path_matcher": "main"
+              }
+            ],
+            "id": "projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-urlmap",
+            "map_id": 7102341288778418579,
+            "name": "blaze-dev-urlmap",
+            "path_matcher": [
+              {
+                "default_route_action": [],
+                "default_service": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-frontend-backend",
+                "default_url_redirect": [],
+                "description": "",
+                "header_action": [],
+                "name": "main",
+                "path_rule": [
+                  {
+                    "paths": [
+                      "/api/*",
+                      "/graphql"
+                    ],
+                    "route_action": [],
+                    "service": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-api-backend",
+                    "url_redirect": []
+                  },
+                  {
+                    "paths": [
+                      "/convert/*"
+                    ],
+                    "route_action": [],
+                    "service": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/backendServices/blaze-dev-image-resize-backend",
+                    "url_redirect": []
+                  }
+                ],
+                "route_rules": []
+              }
+            ],
+            "project": "blaze-b9-thisisblaze",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-urlmap",
+            "test": [],
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.cloud_armor.google_compute_security_policy.main",
+            "module.global_lb.google_compute_backend_service.backends",
+            "module.global_lb.google_compute_region_network_endpoint_group.backends",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "google_compute_url_map",
+      "name": "redirect",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "creation_timestamp": "2026-02-20T02:53:38.496-08:00",
+            "default_route_action": [],
+            "default_service": "",
+            "default_url_redirect": [
+              {
+                "host_redirect": "",
+                "https_redirect": true,
+                "path_redirect": "",
+                "prefix_redirect": "",
+                "redirect_response_code": "MOVED_PERMANENTLY_DEFAULT",
+                "strip_query": false
+              }
+            ],
+            "description": "",
+            "fingerprint": "gryky-FcyC8=",
+            "header_action": [],
+            "host_rule": [],
+            "id": "projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-redirect",
+            "map_id": 2396968899614966749,
+            "name": "blaze-dev-redirect",
+            "path_matcher": [],
+            "project": "blaze-b9-thisisblaze",
+            "self_link": "https://www.googleapis.com/compute/v1/projects/blaze-b9-thisisblaze/global/urlMaps/blaze-dev-redirect",
+            "test": [],
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "module": "module.global_lb",
+      "mode": "managed",
+      "type": "random_id",
+      "name": "cert",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "b64_std": "0MTm4g==",
+            "b64_url": "0MTm4g",
+            "byte_length": 4,
+            "dec": "3502565090",
+            "hex": "d0c4e6e2",
+            "id": "0MTm4g",
+            "keepers": {
+              "domains": "gcp-dev.thisisblaze.uk"
+            },
+            "prefix": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "create_before_destroy": true
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "data",
+      "type": "archive_file",
+      "name": "function_source",
+      "provider": "provider[\"registry.terraform.io/hashicorp/archive\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "exclude_symlink_directories": null,
+            "excludes": null,
+            "id": "3e8f572f3cbf8c82823af99bb99437201d9cc4c0",
+            "output_base64sha256": "ORj/r9rG5OECCucbSEntgAumYRzxG5t6Tjm0WngPTc0=",
+            "output_base64sha512": "9XbmX8fW6C8m7Gb3TiVlK4pKUxqB8ohxllP7btqjq0Red6W2xiQFzeN01qInDGJnAw2XSyFvrGIcX/7Bo6B3zw==",
+            "output_file_mode": null,
+            "output_md5": "b41904a4ba3d142f28cb681d2af7e910",
+            "output_path": ".terraform/modules/image_resize/modules/gcp/compute/image-resize/.build/resize-image.zip",
+            "output_sha": "3e8f572f3cbf8c82823af99bb99437201d9cc4c0",
+            "output_sha256": "3918ffafdac6e4e1020ae71b4849ed800ba6611cf11b9b7a4e39b45a780f4dcd",
+            "output_sha512": "f576e65fc7d6e82f26ec66f74e25652b8a4a531a81f288719653fb6edaa3ab445e77a5b6c62405cde374d6a2270c6267030d974b216fac621c5ffec1a3a077cf",
+            "output_size": 2830,
+            "source": [],
+            "source_content": null,
+            "source_content_filename": null,
+            "source_dir": ".terraform/modules/image_resize/modules/gcp/compute/image-resize/functions/resize-image",
+            "source_file": null,
+            "type": "zip"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_cloud_run_v2_service_iam_member",
+      "name": "invoker",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "condition": [],
+            "etag": "BwZLOwZvvFc=",
+            "id": "projects/blaze-b9-thisisblaze/locations/europe-west1/services/blaze-dev-image-resize-resize/roles/run.invoker/allUsers",
+            "location": "europe-west1",
+            "member": "allUsers",
+            "name": "projects/blaze-b9-thisisblaze/locations/europe-west1/services/blaze-dev-image-resize-resize",
+            "project": "blaze-b9-thisisblaze",
+            "role": "roles/run.invoker"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_cloudfunctions2_function.resize",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_cloudfunctions2_function",
+      "name": "resize",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "build_config": [
+              {
+                "automatic_update_policy": [
+                  {}
+                ],
+                "build": "projects/711103908173/locations/europe-west1/builds/fdf73af1-9d0f-4c90-a5ff-16c9e034a2df",
+                "docker_repository": "projects/blaze-b9-thisisblaze/locations/europe-west1/repositories/gcf-artifacts",
+                "entry_point": "handleRequest",
+                "environment_variables": {},
+                "on_deploy_update_policy": [],
+                "runtime": "nodejs20",
+                "service_account": "projects/blaze-b9-thisisblaze/serviceAccounts/711103908173-compute@developer.gserviceaccount.com",
+                "source": [
+                  {
+                    "repo_source": [],
+                    "storage_source": [
+                      {
+                        "bucket": "blaze-dev-image-resize-fn-source",
+                        "generation": 1771566661456889,
+                        "object": "resize-image-b41904a4ba3d142f28cb681d2af7e910.zip"
+                      }
+                    ]
+                  }
+                ],
+                "worker_pool": ""
+              }
+            ],
+            "description": "",
+            "effective_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "environment": "GEN_2",
+            "event_trigger": [],
+            "id": "projects/blaze-b9-thisisblaze/locations/europe-west1/functions/blaze-dev-image-resize-resize",
+            "kms_key_name": "",
+            "labels": {
+              "application": "image-resize",
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "location": "europe-west1",
+            "name": "blaze-dev-image-resize-resize",
+            "project": "blaze-b9-thisisblaze",
+            "service_config": [
+              {
+                "all_traffic_on_latest_revision": true,
+                "available_cpu": "0.3333",
+                "available_memory": "512Mi",
+                "environment_variables": {
+                  "DEST_BUCKET": "blaze-b9-dev-image-resize",
+                  "LOG_EXECUTION_ID": "true",
+                  "NODE_ENV": "production",
+                  "SOURCE_BUCKET": "blaze-b9-thisisblaze-dev-storage"
+                },
+                "gcf_uri": "",
+                "ingress_settings": "ALLOW_ALL",
+                "max_instance_count": 5,
+                "max_instance_request_concurrency": 1,
+                "min_instance_count": 0,
+                "secret_environment_variables": [],
+                "secret_volumes": [],
+                "service": "projects/blaze-b9-thisisblaze/locations/europe-west1/services/blaze-dev-image-resize-resize",
+                "service_account_email": "blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+                "timeout_seconds": 60,
+                "uri": "https://blaze-dev-image-resize-resize-7ke6wwr3pq-ew.a.run.app",
+                "vpc_connector": "",
+                "vpc_connector_egress_settings": ""
+              }
+            ],
+            "state": "ACTIVE",
+            "terraform_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null,
+            "update_time": "2026-02-20T05:52:12.759908022Z",
+            "url": "https://europe-west1-blaze-b9-thisisblaze.cloudfunctions.net/blaze-dev-image-resize-resize"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozNjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInVwZGF0ZSI6MzYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.function_source",
+            "module.image_resize.google_storage_bucket.resize_cache",
+            "module.image_resize.google_storage_bucket_object.function_source"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_service_account",
+      "name": "function",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_id": "blaze-dev-image-resize-fn",
+            "create_ignore_already_exists": null,
+            "description": "",
+            "disabled": false,
+            "display_name": "Image Resize Cloud Function",
+            "email": "blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "id": "projects/blaze-b9-thisisblaze/serviceAccounts/blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "member": "serviceAccount:blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "name": "projects/blaze-b9-thisisblaze/serviceAccounts/blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "project": "blaze-b9-thisisblaze",
+            "timeouts": null,
+            "unique_id": "103270708666268955290"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_storage_bucket",
+      "name": "function_source",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "autoclass": [],
+            "cors": [],
+            "custom_placement_config": [],
+            "default_event_based_hold": false,
+            "effective_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "enable_object_retention": false,
+            "encryption": [],
+            "force_destroy": true,
+            "id": "blaze-dev-image-resize-fn-source",
+            "labels": {
+              "application": "image-resize",
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "lifecycle_rule": [],
+            "location": "EUROPE-WEST1",
+            "logging": [],
+            "name": "blaze-dev-image-resize-fn-source",
+            "project": "blaze-b9-thisisblaze",
+            "project_number": 711103908173,
+            "public_access_prevention": "inherited",
+            "requester_pays": false,
+            "retention_policy": [],
+            "rpo": null,
+            "self_link": "https://www.googleapis.com/storage/v1/b/blaze-dev-image-resize-fn-source",
+            "soft_delete_policy": [
+              {
+                "effective_time": "2026-02-20T05:47:49.064Z",
+                "retention_duration_seconds": 604800
+              }
+            ],
+            "storage_class": "STANDARD",
+            "terraform_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null,
+            "uniform_bucket_level_access": true,
+            "url": "gs://blaze-dev-image-resize-fn-source",
+            "versioning": [],
+            "website": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsInJlYWQiOjI0MDAwMDAwMDAwMCwidXBkYXRlIjoyNDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_storage_bucket",
+      "name": "resize_cache",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "autoclass": [],
+            "cors": [
+              {
+                "max_age_seconds": 3600,
+                "method": [
+                  "GET",
+                  "HEAD"
+                ],
+                "origin": [
+                  "*"
+                ],
+                "response_header": [
+                  "ETag",
+                  "Content-Type",
+                  "Cache-Control"
+                ]
+              }
+            ],
+            "custom_placement_config": [],
+            "default_event_based_hold": false,
+            "effective_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "enable_object_retention": false,
+            "encryption": [],
+            "force_destroy": true,
+            "id": "blaze-b9-dev-image-resize",
+            "labels": {
+              "application": "image-resize",
+              "client": "",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "project": "",
+              "stage": "dev"
+            },
+            "lifecycle_rule": [
+              {
+                "action": [
+                  {
+                    "storage_class": "NEARLINE",
+                    "type": "SetStorageClass"
+                  }
+                ],
+                "condition": [
+                  {
+                    "age": 30,
+                    "created_before": "",
+                    "custom_time_before": "",
+                    "days_since_custom_time": 0,
+                    "days_since_noncurrent_time": 0,
+                    "matches_prefix": [
+                      "converted/"
+                    ],
+                    "matches_storage_class": [],
+                    "matches_suffix": [],
+                    "no_age": false,
+                    "noncurrent_time_before": "",
+                    "num_newer_versions": 0,
+                    "send_age_if_zero": true,
+                    "send_days_since_custom_time_if_zero": false,
+                    "send_days_since_noncurrent_time_if_zero": false,
+                    "send_num_newer_versions_if_zero": false,
+                    "with_state": "ANY"
+                  }
+                ]
+              },
+              {
+                "action": [
+                  {
+                    "storage_class": "",
+                    "type": "Delete"
+                  }
+                ],
+                "condition": [
+                  {
+                    "age": 90,
+                    "created_before": "",
+                    "custom_time_before": "",
+                    "days_since_custom_time": 0,
+                    "days_since_noncurrent_time": 0,
+                    "matches_prefix": [
+                      "converted/"
+                    ],
+                    "matches_storage_class": [],
+                    "matches_suffix": [],
+                    "no_age": false,
+                    "noncurrent_time_before": "",
+                    "num_newer_versions": 0,
+                    "send_age_if_zero": true,
+                    "send_days_since_custom_time_if_zero": false,
+                    "send_days_since_noncurrent_time_if_zero": false,
+                    "send_num_newer_versions_if_zero": false,
+                    "with_state": "ANY"
+                  }
+                ]
+              }
+            ],
+            "location": "EUROPE-WEST1",
+            "logging": [],
+            "name": "blaze-b9-dev-image-resize",
+            "project": "blaze-b9-thisisblaze",
+            "project_number": 711103908173,
+            "public_access_prevention": "inherited",
+            "requester_pays": false,
+            "retention_policy": [],
+            "rpo": null,
+            "self_link": "https://www.googleapis.com/storage/v1/b/blaze-b9-dev-image-resize",
+            "soft_delete_policy": [
+              {
+                "effective_time": "2026-02-20T05:47:49.496Z",
+                "retention_duration_seconds": 604800
+              }
+            ],
+            "storage_class": "STANDARD",
+            "terraform_labels": {
+              "application": "image-resize",
+              "cost-center": "shared",
+              "managed-by": "terraform",
+              "name": "blaze-dev-image-resize",
+              "namespace": "blaze",
+              "owner": "infrastructure",
+              "stage": "dev"
+            },
+            "timeouts": null,
+            "uniform_bucket_level_access": true,
+            "url": "gs://blaze-b9-dev-image-resize",
+            "versioning": [
+              {
+                "enabled": true
+              }
+            ],
+            "website": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsInJlYWQiOjI0MDAwMDAwMDAwMCwidXBkYXRlIjoyNDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_storage_bucket_iam_member",
+      "name": "cache_admin",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "b/blaze-b9-dev-image-resize",
+            "condition": [],
+            "etag": "CAI=",
+            "id": "b/blaze-b9-dev-image-resize/roles/storage.objectAdmin/serviceAccount:blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "member": "serviceAccount:blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "role": "roles/storage.objectAdmin"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.image_resize.google_service_account.function",
+            "module.image_resize.google_storage_bucket.resize_cache"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_storage_bucket_iam_member",
+      "name": "source_reader",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "b/blaze-b9-thisisblaze-dev-storage",
+            "condition": [],
+            "etag": "CAM=",
+            "id": "b/blaze-b9-thisisblaze-dev-storage/roles/storage.objectViewer/serviceAccount:blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "member": "serviceAccount:blaze-dev-image-resize-fn@blaze-b9-thisisblaze.iam.gserviceaccount.com",
+            "role": "roles/storage.objectViewer"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "data.terraform_remote_state.app",
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.image_resize.google_service_account.function"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.image_resize",
+      "mode": "managed",
+      "type": "google_storage_bucket_object",
+      "name": "function_source",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "blaze-dev-image-resize-fn-source",
+            "cache_control": "",
+            "content": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/zip",
+            "crc32c": "guQi5w==",
+            "customer_encryption": [],
+            "detect_md5hash": "tBkEpLo9FC8oy2gdKvfpEA==",
+            "event_based_hold": false,
+            "generation": 1771566469609658,
+            "id": "blaze-dev-image-resize-fn-source-resize-image-b41904a4ba3d142f28cb681d2af7e910.zip",
+            "kms_key_name": "",
+            "md5hash": "tBkEpLo9FC8oy2gdKvfpEA==",
+            "media_link": "https://storage.googleapis.com/download/storage/v1/b/blaze-dev-image-resize-fn-source/o/resize-image-b41904a4ba3d142f28cb681d2af7e910.zip?generation=1771566469609658\u0026alt=media",
+            "metadata": {},
+            "name": "resize-image-b41904a4ba3d142f28cb681d2af7e910.zip",
+            "output_name": "resize-image-b41904a4ba3d142f28cb681d2af7e910.zip",
+            "retention": [],
+            "self_link": "https://www.googleapis.com/storage/v1/b/blaze-dev-image-resize-fn-source/o/resize-image-b41904a4ba3d142f28cb681d2af7e910.zip",
+            "source": ".terraform/modules/image_resize/modules/gcp/compute/image-resize/.build/resize-image.zip",
+            "storage_class": "STANDARD",
+            "temporary_hold": false,
+            "timeouts": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "content"
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoyNDAwMDAwMDAwMDAsImRlbGV0ZSI6MjQwMDAwMDAwMDAwLCJ1cGRhdGUiOjI0MDAwMDAwMDAwMH19",
+          "dependencies": [
+            "google_project_service.cloudbuild",
+            "google_project_service.cloudfunctions",
+            "google_project_service.eventarc",
+            "google_project_service.run",
+            "module.image_resize.data.archive_file.function_source",
+            "module.image_resize.google_storage_bucket.function_source"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": [
+    {
+      "object_kind": "var",
+      "config_addr": "module.global_lb.module.label.var.project",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.global_lb.module.label.var.project",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.label.var.label_value_case",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.label.var.label_value_case",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.global_lb.module.label.var.id_length_limit",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.global_lb.module.label.var.id_length_limit",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.cloud_armor.module.label.var.label_value_case",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.cloud_armor.module.label.var.label_value_case",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.global_lb.module.label.var.label_value_case",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.global_lb.module.label.var.label_value_case",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.label.var.client",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.label.var.client",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.image_resize.module.label.var.label_value_case",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.image_resize.module.label.var.label_value_case",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.cloud_armor.module.label.var.id_length_limit",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.cloud_armor.module.label.var.id_length_limit",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.image_resize.module.label.var.id_length_limit",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.image_resize.module.label.var.id_length_limit",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.label.var.stage",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.label.var.stage",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.label.var.project",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.label.var.project",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.global_lb.module.label.var.client",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.global_lb.module.label.var.client",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.cloud_armor.module.label.var.client",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.cloud_armor.module.label.var.client",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.cloud_armor.module.label.var.project",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.cloud_armor.module.label.var.project",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.image_resize.module.label.var.stage",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.image_resize.module.label.var.stage",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.image_resize.module.label.var.client",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.image_resize.module.label.var.client",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.image_resize.module.label.var.project",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.image_resize.module.label.var.project",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.label.var.id_length_limit",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.label.var.id_length_limit",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.global_lb.module.label.var.stage",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.global_lb.module.label.var.stage",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "object_kind": "var",
+      "config_addr": "module.cloud_armor.module.label.var.stage",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.cloud_armor.module.label.var.stage",
+          "status": "pass"
+        }
+      ]
+    }
+  ]
+}
+

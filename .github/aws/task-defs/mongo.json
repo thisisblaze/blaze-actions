@@ -1,0 +1,80 @@
+{
+    "family": "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-mongo",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "${LAUNCH_TYPE}"
+    ],
+    "runtimePlatform": {
+        "cpuArchitecture": "${CPU_ARCHITECTURE}",
+        "operatingSystemFamily": "LINUX"
+    },
+    "cpu": "1024",
+    "memory": "2048",
+    "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+    "taskRoleArn": "${TASK_ROLE_ARN}",
+    "volumes": [
+        {
+            "name": "efs-mongo",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "${EFS_ID}",
+                "transitEncryption": "ENABLED",
+                "authorizationConfig": {
+                    "accessPointId": "${AP_MONGO}",
+                    "iam": "ENABLED"
+                }
+            }
+        }
+    ],
+    "containerDefinitions": [
+        {
+            "name": "mongo",
+            "image": "${IMAGE_URI}",
+            "portMappings": [
+                {
+                    "containerPort": 27017
+                }
+            ],
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            },
+            "mountPoints": [
+                {
+                    "sourceVolume": "efs-mongo",
+                    "containerPath": "/data/db"
+                }
+            ],
+            "entryPoint": [
+                "sh",
+                "-c"
+            ],
+            "command": [
+                "chown -R 999:999 /data/db 2>/dev/null || true && chmod -R 755 /data/db 2>/dev/null || true && exec docker-entrypoint.sh mongod"
+            ],
+            "environment": [
+                {
+                    "name": "MONGO_INITDB_ROOT_USERNAME",
+                    "value": "root"
+                },
+                {
+                    "name": "MONGO_INITDB_ROOT_PASSWORD",
+                    "value": "${MONGO_PASS}"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}",
+                    "awslogs-region": "${AWS_REGION}",
+                    "awslogs-stream-prefix": "mongo"
+                }
+            }
+        }
+    ]
+}
