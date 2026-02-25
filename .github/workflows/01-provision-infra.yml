@@ -223,6 +223,9 @@ on:
       AZURE_SUBSCRIPTION_ID:
         required: false
         description: "Azure Subscription ID"
+      DEPLOY_KEY:
+        required: false
+        description: "SSH Deploy Key for private Terraform modules"
 
 permissions:
   id-token: write
@@ -394,6 +397,7 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       wif_audience: ${{ inputs.wif_audience }}

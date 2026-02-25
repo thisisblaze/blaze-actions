@@ -90,6 +90,9 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
+      DEPLOY_KEY:
+        required: false
+        description: "SSH deploy key for access to private Terraform modules (e.g. blaze-terraform-infra-core)"
     outputs:
       apply_status:
         value: ${{ jobs.terraform.outputs.status }}
@@ -168,9 +171,24 @@ jobs:
 
       - name: Configure Git for Private Modules
         env:
-          TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
+          if [ -n "${GH_PAT}" ]; then
+            echo "✅ Configuring Git with GH_PAT..."
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          elif [ -n "${DEPLOY_KEY}" ]; then
+            echo "✅ Configuring Git with SSH Deploy Key..."
+            mkdir -p ~/.ssh
+            echo "${DEPLOY_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+            git config --global url."git@github.com:".insteadOf "https://github.com/"
+          else
+            echo "⚠️ No GH_PAT or DEPLOY_KEY found. Using GITHUB_TOKEN (cross-repo private modules may fail)."
+            git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Terraform Init
         working-directory: ${{ inputs.working_directory || inputs.tf_dir }}
