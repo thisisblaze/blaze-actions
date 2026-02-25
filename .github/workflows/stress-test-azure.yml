@@ -76,11 +76,6 @@ permissions:
   id-token: write
   contents: read
 
-# Ensure only one test runs at a time per environment/branch
-concurrency:
-  group: stress-test-azure-${{ inputs.environment }}-${{ inputs.branch_name || 'host' }}
-  cancel-in-progress: false
-
 jobs:
   setup:
     name: ⚙️ Target Selection
