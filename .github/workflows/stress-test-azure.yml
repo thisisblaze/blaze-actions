@@ -308,6 +308,7 @@ jobs:
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
       azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
