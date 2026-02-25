@@ -72,6 +72,10 @@ on:
       GCP_SERVICE_ACCOUNT:
         required: true
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy-site:
     name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"

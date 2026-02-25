@@ -104,6 +104,10 @@ on:
             BLAZE_CLIENT_HEADER:
                 required: false
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
     deploy:
         name: Deploy ${{ inputs.service_name }} (Container App)
