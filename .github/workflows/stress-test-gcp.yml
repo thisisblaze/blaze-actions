@@ -393,7 +393,7 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
@@ -457,7 +457,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-cdn:
-    if: ${{ (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
+    if: ${{ (contains(inputs.environment, 'DEV') || inputs.environment == 'MULTI-SITE') && inputs.mode != 'quick-test' && needs.check-cdn-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy CDN"
 
     needs: [config, check-cdn-exists]
@@ -465,7 +465,7 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-cdn"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/cdn.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
@@ -489,7 +489,7 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
@@ -532,7 +532,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-cdn:
-    if: always() && (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-app.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
+    if: always() && (contains(inputs.environment, 'DEV') || inputs.environment == 'MULTI-SITE') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-app.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-cdn.result != 'failure'))
     needs:
       - provision-app
       - destroy-cdn
@@ -1075,9 +1075,9 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -1094,7 +1094,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   destroy-cdn-final:
-    if: (contains(inputs.environment, 'dev') || inputs.environment == 'multi-site') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    if: (contains(inputs.environment, 'DEV') || inputs.environment == 'MULTI-SITE') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy CDN"
 
     needs: [config, verify]
@@ -1102,9 +1102,9 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-cdn"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/cdn.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/cdn.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -1125,9 +1125,9 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
