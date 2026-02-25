@@ -1,0 +1,471 @@
+name: "Deploy Site (Multi-Site ARM64)"
+# ─────────────────────────────────────────────────────────────────────────────
+# REUSABLE WORKFLOW — called by blaze-template-deploy or any site CI pipeline
+# Handles: ARM64 ECR build → ECS image update → stabilisation wait → summary
+# Supports both rolling (standard sites) and CodeDeploy B/G (premium sites)
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+    workflow_call:
+        inputs:
+            # ── Site Identity ───────────────────────────────────────────────────────
+            site_key:
+                required: true
+                type: string
+                description: "Unique site slug (e.g. 'site-001', 'acme-main'). Must match the sites map key in Terraform."
+
+            environment:
+                required: true
+                type: string
+                description: "GitHub Environment name (DEV / STAGE / PROD). Controls which secrets are used."
+
+            # ── Image ───────────────────────────────────────────────────────────────
+            ecr_repository:
+                required: true
+                type: string
+                description: "ECR repository name (e.g. 'acme-main'). Full URI is derived from registry + this."
+
+            image_tag:
+                required: false
+                type: string
+                default: ${{ github.sha }}
+                description: "Docker image tag to build and deploy. Defaults to git SHA."
+
+            registry:
+                required: true
+                type: string
+                description: "ECR registry URI (e.g. '123456789012.dkr.ecr.eu-west-1.amazonaws.com')"
+
+            dockerfile:
+                required: false
+                type: string
+                default: "Dockerfile"
+                description: "Path to the Dockerfile relative to context"
+
+            context:
+                required: false
+                type: string
+                default: "."
+                description: "Docker build context path"
+
+            build_args:
+                required: false
+                type: string
+                default: ""
+                description: "Docker build arguments (newline-separated KEY=VALUE pairs)"
+
+            # ── ECS Config ──────────────────────────────────────────────────────────
+            cluster_name:
+                required: true
+                type: string
+                description: "ECS cluster name (from multi-site-network outputs)"
+
+            aws_region:
+                required: false
+                type: string
+                default: "eu-west-1"
+
+            # ── Deploy Strategy ─────────────────────────────────────────────────────
+            deploy_strategy:
+                required: false
+                type: string
+                default: "rolling"
+                description: |
+                    'rolling'   → force-new-deployment ECS rolling update (standard tier)
+                    'blue-green' → CodeDeploy B/G via appspec (premium tier — requires codedeploy_app_name)
+
+            codedeploy_app_name:
+                required: false
+                type: string
+                default: ""
+                description: "CodeDeploy application name (required when deploy_strategy=blue-green)"
+
+            codedeploy_group_name:
+                required: false
+                type: string
+                default: ""
+                description: "CodeDeploy deployment group name (required when deploy_strategy=blue-green)"
+
+            # ── Stabilisation Control ───────────────────────────────────────────────
+            wait_for_stable:
+                required: false
+                type: string
+                default: "true"
+                description: "Set to 'false' to skip ECS stabilisation wait (useful for CI speed)"
+
+            stability_timeout_minutes:
+                required: false
+                type: string
+                default: "10"
+                description: "How long to wait for ECS service to stabilise (in minutes)"
+
+        secrets:
+            AWS_ROLE_ARN:
+                required: true
+            NPM_TOKEN:
+                required: false
+
+        outputs:
+            image_uri:
+                value: ${{ jobs.build.outputs.image_uri }}
+                description: "Full ECR image URI including tag"
+            deploy_status:
+                value: ${{ jobs.deploy.outputs.status }}
+                description: "Deploy result: success | failed | skipped"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 1: BUILD ARM64 IMAGE
+# Uses native ubuntu-24.04-arm runner — no QEMU, full speed
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+    build:
+        name: "🔨 Build ARM64 [${{ inputs.site_key }}]"
+        runs-on: ubuntu-24.04-arm
+        environment: ${{ inputs.environment }}
+        timeout-minutes: 20
+        outputs:
+            image_uri: ${{ steps.set-uri.outputs.image_uri }}
+            image_digest: ${{ steps.build.outputs.digest }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: ${{ inputs.aws_region }}
+
+            - name: Login to Amazon ECR
+              uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+            - name: Create .npmrc (if NPM_TOKEN provided)
+              if: ${{ secrets.NPM_TOKEN != '' }}
+              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
+            - name: Build and Push (ARM64)
+              id: build
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+              with:
+                  context: ${{ inputs.context }}
+                  file: ${{ inputs.dockerfile }}
+                  platforms: linux/arm64
+                  push: true
+                  tags: |
+                      ${{ inputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}
+                      ${{ inputs.registry }}/${{ inputs.ecr_repository }}:latest
+                  build-args: ${{ inputs.build_args }}
+                  labels: |
+                      org.opencontainers.image.revision=${{ github.sha }}
+                      org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+                      site=${{ inputs.site_key }}
+                  secret-files: |
+                      npmrc=.npmrc
+                  cache-from: type=gha,scope=${{ inputs.site_key }}-arm64
+                  cache-to: type=gha,mode=max,scope=${{ inputs.site_key }}-arm64
+
+            - name: Set Image URI Output
+              id: set-uri
+              run: |
+                  IMAGE_URI="${{ inputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}"
+                  echo "image_uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
+                  echo "✅ Built: ${IMAGE_URI}"
+
+            - name: Build Summary
+              run: |
+                  echo "### 🔨 ARM64 Build Complete" >> $GITHUB_STEP_SUMMARY
+                  echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+                  echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Site** | \`${{ inputs.site_key }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Image** | \`${{ inputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Digest** | \`${{ steps.build.outputs.digest }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Platform** | \`linux/arm64\` (Graviton native) |" >> $GITHUB_STEP_SUMMARY
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # JOB 2: DEPLOY TO ECS
+    # Registers a new task definition revision with the updated image tag,
+    # then triggers rolling update or CodeDeploy B/G based on deploy_strategy.
+    # ─────────────────────────────────────────────────────────────────────────────
+    deploy:
+        name: "🚀 Deploy [${{ inputs.site_key }}] → ${{ inputs.deploy_strategy }}"
+        needs: [build]
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        timeout-minutes: 20
+        outputs:
+            status: ${{ steps.result.outputs.status }}
+
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: ${{ inputs.aws_region }}
+
+            - name: Resolve ECS Service Name
+              id: svc
+              run: |
+                  # ECS service name convention matches multi-site-app module output:
+                  # {namespace}-{client_key}-{project_key}-{stage}-{site_key}
+                  # We discover it dynamically from the cluster to avoid hardcoding the name prefix.
+                  CLUSTER="${{ inputs.cluster_name }}"
+                  SITE_KEY="${{ inputs.site_key }}"
+                  REGION="${{ inputs.aws_region }}"
+
+                  echo "🔍 Discovering service for site_key: ${SITE_KEY} in cluster: ${CLUSTER}"
+
+                  # List all services, find the one ending in the site_key
+                  SVC_ARN=$(aws ecs list-services \
+                    --cluster "${CLUSTER}" \
+                    --region "${REGION}" \
+                    --query "serviceArns[?ends_with(@, '-${SITE_KEY}')]" \
+                    --output text | awk '{print $1}')
+
+                  if [[ -z "${SVC_ARN}" ]]; then
+                    echo "❌ No ECS service found ending in '-${SITE_KEY}' in cluster ${CLUSTER}"
+                    exit 1
+                  fi
+
+                  SVC_NAME=$(basename "${SVC_ARN}")
+                  echo "✅ Found service: ${SVC_NAME}"
+                  echo "service_name=${SVC_NAME}" >> $GITHUB_OUTPUT
+                  echo "service_arn=${SVC_ARN}" >> $GITHUB_OUTPUT
+
+            - name: Get Current Task Definition
+              id: taskdef
+              run: |
+                  SVC_NAME="${{ steps.svc.outputs.service_name }}"
+                  CLUSTER="${{ inputs.cluster_name }}"
+                  REGION="${{ inputs.aws_region }}"
+
+                  # Get the current task definition ARN from the service
+                  TASK_DEF_ARN=$(aws ecs describe-services \
+                    --cluster "${CLUSTER}" \
+                    --services "${SVC_NAME}" \
+                    --region "${REGION}" \
+                    --query "services[0].taskDefinition" \
+                    --output text)
+
+                  echo "📋 Current task definition: ${TASK_DEF_ARN}"
+                  echo "task_def_arn=${TASK_DEF_ARN}" >> $GITHUB_OUTPUT
+
+                  # Get task def family name (without revision)
+                  TASK_DEF_FAMILY=$(aws ecs describe-task-definition \
+                    --task-definition "${TASK_DEF_ARN}" \
+                    --region "${REGION}" \
+                    --query "taskDefinition.family" \
+                    --output text)
+                  echo "task_def_family=${TASK_DEF_FAMILY}" >> $GITHUB_OUTPUT
+
+            - name: Register New Task Definition Revision
+              id: register
+              run: |
+                  TASK_DEF_ARN="${{ steps.taskdef.outputs.task_def_arn }}"
+                  NEW_IMAGE="${{ needs.build.outputs.image_uri }}"
+                  SITE_KEY="${{ inputs.site_key }}"
+                  REGION="${{ inputs.aws_region }}"
+
+                  echo "🔄 Updating image to: ${NEW_IMAGE}"
+
+                  # Fetch current task def JSON and patch the container image
+                  # Uses jq to swap the image for the container named by site_key
+                  # This is safe: only touches the matching container, leaves all else intact
+                  NEW_TASK_DEF_JSON=$(aws ecs describe-task-definition \
+                    --task-definition "${TASK_DEF_ARN}" \
+                    --region "${REGION}" \
+                    --query "taskDefinition" \
+                    --output json | \
+                    jq --arg IMAGE "${NEW_IMAGE}" \
+                       --arg NAME "${SITE_KEY}" \
+                       'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
+                        .containerDefinitions |= map(if .name == $NAME then .image = $IMAGE else . end)')
+
+                  # Register the new revision
+                  NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+                    --region "${REGION}" \
+                    --cli-input-json "${NEW_TASK_DEF_JSON}" \
+                    --query "taskDefinition.taskDefinitionArn" \
+                    --output text)
+
+                  echo "✅ Registered: ${NEW_TASK_DEF_ARN}"
+                  echo "new_task_def_arn=${NEW_TASK_DEF_ARN}" >> $GITHUB_OUTPUT
+
+            # ── ROLLING DEPLOY (standard tier) ──────────────────────────────────────
+            - name: Rolling Update (ECS)
+              if: inputs.deploy_strategy == 'rolling'
+              run: |
+                  SVC_NAME="${{ steps.svc.outputs.service_name }}"
+                  CLUSTER="${{ inputs.cluster_name }}"
+                  NEW_TASK_DEF="${{ steps.register.outputs.new_task_def_arn }}"
+                  REGION="${{ inputs.aws_region }}"
+
+                  echo "🔄 Triggering rolling update for: ${SVC_NAME}"
+                  aws ecs update-service \
+                    --cluster "${CLUSTER}" \
+                    --service "${SVC_NAME}" \
+                    --task-definition "${NEW_TASK_DEF}" \
+                    --force-new-deployment \
+                    --region "${REGION}" \
+                    --query "service.serviceArn" \
+                    --output text
+
+                  echo "✅ Rolling update triggered"
+
+            # ── CODEDEPLOY B/G (premium tier) ────────────────────────────────────────
+            - name: Blue/Green Deploy (CodeDeploy)
+              if: inputs.deploy_strategy == 'blue-green'
+              run: |
+                  SVC_NAME="${{ steps.svc.outputs.service_name }}"
+                  CLUSTER="${{ inputs.cluster_name }}"
+                  NEW_TASK_DEF="${{ steps.register.outputs.new_task_def_arn }}"
+                  REGION="${{ inputs.aws_region }}"
+                  APP_NAME="${{ inputs.codedeploy_app_name }}"
+                  GROUP_NAME="${{ inputs.codedeploy_group_name }}"
+
+                  if [[ -z "${APP_NAME}" || -z "${GROUP_NAME}" ]]; then
+                    echo "❌ codedeploy_app_name and codedeploy_group_name are required for blue-green strategy"
+                    exit 1
+                  fi
+
+                  echo "🔵🟢 Creating CodeDeploy B/G deployment for: ${SVC_NAME}"
+
+                  # Build appspec with new task definition revision
+                  APPSPEC=$(jq -n \
+                    --arg taskdef "${NEW_TASK_DEF}" \
+                    --arg container "${{ inputs.site_key }}" \
+                    '{
+                      version: "0.0",
+                      Resources: [{
+                        TargetService: {
+                          Type: "AWS::ECS::Service",
+                          Properties: {
+                            TaskDefinition: $taskdef,
+                            LoadBalancerInfo: {
+                              ContainerName: $container,
+                              ContainerPort: 3000
+                            }
+                          }
+                        }
+                      }]
+                    }')
+
+                  DEPLOYMENT_ID=$(aws deploy create-deployment \
+                    --application-name "${APP_NAME}" \
+                    --deployment-group-name "${GROUP_NAME}" \
+                    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": $(echo "${APPSPEC}" | jq -R -s .)}}" \
+                    --region "${REGION}" \
+                    --query "deploymentId" \
+                    --output text)
+
+                  echo "✅ CodeDeploy deployment created: ${DEPLOYMENT_ID}"
+                  echo "deployment_id=${DEPLOYMENT_ID}" >> $GITHUB_OUTPUT
+
+            # ── WAIT FOR STABILISATION ───────────────────────────────────────────────
+            - name: Wait for ECS Service Stable (Rolling)
+              if: inputs.deploy_strategy == 'rolling' && inputs.wait_for_stable == 'true'
+              run: |
+                  SVC_NAME="${{ steps.svc.outputs.service_name }}"
+                  CLUSTER="${{ inputs.cluster_name }}"
+                  REGION="${{ inputs.aws_region }}"
+                  TIMEOUT="${{ inputs.stability_timeout_minutes }}"
+
+                  echo "⏳ Waiting up to ${TIMEOUT}m for ${SVC_NAME} to stabilise..."
+                  aws ecs wait services-stable \
+                    --cluster "${CLUSTER}" \
+                    --services "${SVC_NAME}" \
+                    --region "${REGION}" \
+                    &
+
+                  WAIT_PID=$!
+                  # Poll for timeout
+                  END=$((SECONDS + TIMEOUT * 60))
+                  while kill -0 $WAIT_PID 2>/dev/null; do
+                    if [[ $SECONDS -ge $END ]]; then
+                      kill $WAIT_PID 2>/dev/null
+                      echo "⚠️ Stability wait timed out after ${TIMEOUT}m — check ECS console"
+                      exit 1
+                    fi
+                    sleep 10
+                  done
+                  echo "✅ Service is stable"
+
+            - name: Wait for CodeDeploy Deployment (Blue/Green)
+              if: inputs.deploy_strategy == 'blue-green' && inputs.wait_for_stable == 'true'
+              run: |
+                  DEPLOYMENT_ID="${{ steps.register.outputs.deployment_id }}"
+                  REGION="${{ inputs.aws_region }}"
+                  TIMEOUT="${{ inputs.stability_timeout_minutes }}"
+
+                  if [[ -z "${DEPLOYMENT_ID}" ]]; then
+                    echo "⚠️ No deployment ID — skipping wait"
+                    exit 0
+                  fi
+
+                  echo "⏳ Waiting up to ${TIMEOUT}m for CodeDeploy deployment: ${DEPLOYMENT_ID}"
+                  END=$((SECONDS + TIMEOUT * 60))
+
+                  while true; do
+                    STATUS=$(aws deploy get-deployment \
+                      --deployment-id "${DEPLOYMENT_ID}" \
+                      --region "${REGION}" \
+                      --query "deploymentInfo.status" \
+                      --output text)
+
+                    echo "  Status: ${STATUS}"
+
+                    case "${STATUS}" in
+                      Succeeded)
+                        echo "✅ Deployment succeeded"
+                        break
+                        ;;
+                      Failed|Stopped)
+                        echo "❌ Deployment ${STATUS}"
+                        aws deploy get-deployment \
+                          --deployment-id "${DEPLOYMENT_ID}" \
+                          --region "${REGION}" \
+                          --query "deploymentInfo.errorInformation" \
+                          --output json
+                        exit 1
+                        ;;
+                    esac
+
+                    if [[ $SECONDS -ge $END ]]; then
+                      echo "⚠️ Deployment wait timed out after ${TIMEOUT}m"
+                      exit 1
+                    fi
+                    sleep 15
+                  done
+
+            - name: Set Result
+              id: result
+              if: always()
+              run: |
+                  if [[ "${{ job.status }}" == "success" ]]; then
+                    echo "status=success" >> $GITHUB_OUTPUT
+                  else
+                    echo "status=failed" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Deploy Summary
+              if: always()
+              run: |
+                  STATUS="${{ steps.result.outputs.status }}"
+                  ICON="✅"
+                  [[ "${STATUS}" != "success" ]] && ICON="❌"
+
+                  echo "### ${ICON} Deploy: ${{ inputs.site_key }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+                  echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Site Key** | \`${{ inputs.site_key }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Strategy** | \`${{ inputs.deploy_strategy }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Image** | \`${{ needs.build.outputs.image_uri }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Service** | \`${{ steps.svc.outputs.service_name }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Cluster** | \`${{ inputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Status** | **${STATUS}** |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Environment** | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+                  echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
