@@ -138,6 +138,16 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
+      # Base64 Secrets Bridge (Azure)
+      azure_client_id_b64:
+        required: false
+        type: string
+      azure_tenant_id_b64:
+        required: false
+        type: string
+      azure_subscription_id_b64:
+        required: false
+        type: string
 
     secrets:
       AWS_ROLE_ARN:
@@ -196,16 +206,6 @@ on:
       BLAZE_CLIENT_HEADER:
         required: false
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_b64:
-        required: false
-        type: string
-      azure_tenant_id_b64:
-        required: false
-        type: string
-      azure_subscription_id_b64:
-        required: false
-        type: string
 
       # Azure
       AZURE_CLIENT_ID:
