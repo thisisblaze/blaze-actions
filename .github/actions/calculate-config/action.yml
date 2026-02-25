@@ -168,9 +168,9 @@ runs:
         CONFIG_ENV=$(echo "$ENV_VAL" | tr '[:lower:]' '[:upper:]')
 
         # Read keys from MERGED config
-        CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY')
-        PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY')
-        NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE')
+        CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY // "b9"')
+        PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY // "blaze-actions-test"')
+        NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE // "blaze"')
         PLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')
         AWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')
         DOMAIN_ROOT=$(echo "$MERGED_CONFIG" | jq -r '.common.DOMAIN_ROOT')
