@@ -267,6 +267,10 @@ jobs:
             gcp)
               CLOUD_REGION="$GCP_REGION"
               ;;
+            azure)
+              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
+              CLOUD_REGION="$AZURE_REGION"
+              ;;
             *)
               CLOUD_REGION="$AWS_REGION"
               ;;
@@ -291,6 +295,14 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
+
+      - name: Authenticate to Azure
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Calculate Configuration
         id: config
@@ -384,6 +396,54 @@ jobs:
 
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
+
+      - name: Authenticate to Azure (Pre-Flight)
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Azure Infrastructure
+        if: inputs.cloud_provider == 'azure'
+        env:
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          CLIENT_KEY: ${{ needs.configuration.outputs.client_key }}
+          PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
+          STAGE_KEY: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          echo "🔍 Checking Critical Azure Infrastructure..."
+
+          RG_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-rg"
+          CAE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cae"
+          ACR_NAME="${NAMESPACE}${CLIENT_KEY}${STAGE_KEY}acr"
+
+          echo "Resource Group: $RG_NAME"
+          echo "Container App Env: $CAE_NAME"
+          echo "ACR: $ACR_NAME"
+          echo "-------------------------------------"
+
+          # 1. Check Resource Group
+          if az group show --name "$RG_NAME" >/dev/null 2>&1; then
+            echo "✅ Resource Group found."
+          else
+            echo "::error::❌ Resource Group '$RG_NAME' NOT FOUND."
+            echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: network, cloud_provider: azure)."
+            exit 1
+          fi
+
+          # 2. Check ACR
+          if az acr show --name "$ACR_NAME" >/dev/null 2>&1; then
+            echo "✅ Azure Container Registry found."
+          else
+            echo "::error::❌ ACR '$ACR_NAME' NOT FOUND."
+            echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: network, cloud_provider: azure)."
+            exit 1
+          fi
+
+          echo "-------------------------------------"
+          echo "✅ Azure Pre-Flight Complete."
 
   # --- BUILD JOBS ---
 
