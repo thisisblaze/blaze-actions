@@ -268,7 +268,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-data:
     name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
@@ -291,7 +292,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-mongodb:
     name: 💥 Destroy MongoDB
@@ -314,7 +316,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
@@ -337,7 +340,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # ── PROVISIONING ────────────────────────────────────────────────────────
   provision-network:
@@ -361,7 +365,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-data:
     name: 💾 Prov Data ${{ needs.setup.outputs.target_tag }}
@@ -384,7 +389,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-app:
     name: 🏗️ Prov App ${{ needs.setup.outputs.target_tag }}
@@ -407,7 +413,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # ── DEPLOYMENT ──────────────────────────────────────────────────────────
   deploy-frontend:
@@ -422,7 +429,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # ── VERIFICATION ────────────────────────────────────────────────────────
   verify:
@@ -458,7 +466,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   final-destroy-data:
     name: ♻️ Final Destroy Data ${{ needs.setup.outputs.target_tag }}
@@ -481,7 +490,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   final-destroy-network:
     name: ♻️ Final Destroy Network ${{ needs.setup.outputs.target_tag }}
@@ -504,7 +514,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   final-destroy-mongodb:
     name: ♻️ Final Destroy MongoDB
@@ -527,7 +538,8 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   # ── REPORTING ────────────────────────────────────────────────────────
   stress-test-report:
