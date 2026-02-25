@@ -81,7 +81,6 @@ jobs:
     name: ⚙️ Target Selection
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    environment: ${{ inputs.environment }}
     outputs:
       stack_prefix: ${{ steps.determine.outputs.stack_prefix }}
       target_tag: ${{ steps.determine.outputs.target_tag }}
