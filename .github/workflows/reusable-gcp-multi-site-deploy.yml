@@ -103,8 +103,12 @@ jobs:
       - name: Deploy (Tier 1)
         if: ${{ !inputs.multi_revision }}
         run: |
+          # Image format: REGISTRY/REPO:TAG
+          # REGISTRY = full AR repo URL (host/project/repo)
+          # REPO = image name within the repo (e.g. frontend, api)
+          # TAG = git SHA
           gcloud run deploy "$SERVICE_NAME" \
-            --image "$REGISTRY/$TAG" \
+            --image "$REGISTRY/$REPO:$TAG" \
             --project "${{ inputs.gcp_project_id }}" \
             --region "${{ inputs.gcp_region }}" \
             --platform managed \
@@ -117,7 +121,7 @@ jobs:
         run: |
           # Deploy with --no-traffic and a tag
           gcloud run deploy "$SERVICE_NAME" \
-            --image "$REGISTRY/$TAG" \
+            --image "$REGISTRY/$REPO:$TAG" \
             --no-traffic \
             --tag=green \
             --project "${{ inputs.gcp_project_id }}" \
@@ -131,7 +135,7 @@ jobs:
             --project "${{ inputs.gcp_project_id }}" \
             --region "${{ inputs.gcp_region }}" \
             --limit 1 --format="value(REVISION)")
-          
+
           echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
           echo "🆕 New Green Revision: $REVISION"
 
@@ -155,9 +159,9 @@ jobs:
             echo "✅ Traffic at $PERCENT% — pausing 20s before next step..."
             sleep 20
           done
-          
+
           echo "🏁 Traffic shift complete. 100% serving new revision $REVISION."
-          
+
           # Finalize traffic and remove tags if needed
           gcloud run services update-traffic "$SERVICE_NAME" \
             --to-revisions "$REVISION=100" \
