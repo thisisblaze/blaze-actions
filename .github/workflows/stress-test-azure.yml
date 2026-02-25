@@ -6,7 +6,7 @@ on:
       environment:
         required: true
         type: choice
-        options: ["dev", "stage", "prod"]
+        options: ["DEV", "STAGE", "PROD"]
         description: "Target environment (dev/stage/prod)"
       mode:
         required: true
@@ -482,7 +482,18 @@ jobs:
   # ── REPORTING ────────────────────────────────────────────────────────
   stress-test-report:
     name: 📊 Generate Report
-    needs: [setup, check-state, provision-network, provision-data, provision-app, deploy-frontend, verify, final-destroy-app, final-destroy-network]
+    needs:
+      [
+        setup,
+        check-state,
+        provision-network,
+        provision-data,
+        provision-app,
+        deploy-frontend,
+        verify,
+        final-destroy-app,
+        final-destroy-network,
+      ]
     if: always()
     runs-on: ubuntu-latest
     steps:
