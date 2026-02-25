@@ -72,7 +72,6 @@ on:
       MONGODB_ATLAS_ORG_ID:
         required: false
 
-
 jobs:
   setup:
     name: ⚙️ Target Selection
@@ -109,3 +108,390 @@ jobs:
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Provider** | \`azure\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Mode** | \`${{ inputs.mode }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Is Feature Branch** | \`$IS_FEATURE\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch Name** | \`${{ inputs.branch_name || '(none)' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target Identity** | \`$TARGET_TAG\` |" >> $GITHUB_STEP_SUMMARY
+
+  config:
+    name: ⚙️ Config
+    needs: [setup]
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_provider: "azure"
+
+  # ── SAFETY ─────────────────────────────────────────────────────────────
+  prod-safety-check:
+    name: 🛡️ Prod Safety Gate
+    needs: [setup]
+    if: inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: prod-azure
+    timeout-minutes: 30
+    steps:
+      - run: |
+          echo "✅ Production Execution Authorized by Environment Gate"
+
+  # ── PRE-FLIGHT (Azure State Inspection) ──────────────────────────────────
+  check-state:
+    name: 🔍 Pre-Flight Check (Azure)
+    needs: [setup, config, prod-safety-check]
+    if: always() && needs.setup.result == 'success' && (inputs.environment != 'prod' || needs.prod-safety-check.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    outputs:
+      app_exists: ${{ steps.state_check.outputs.app_exists }}
+      data_exists: ${{ steps.state_check.outputs.data_exists }}
+      network_exists: ${{ steps.state_check.outputs.network_exists }}
+      mongodb_exists: ${{ steps.state_check.outputs.mongodb_exists }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Terraform State files in Blob Storage
+        id: state_check
+        env:
+          STORAGE_ACCOUNT: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}tfstate"
+          CONTAINER: "tfstate"
+          PROJECT_KEY: "${{ needs.config.outputs.project_key }}"
+          STAGE: "${{ needs.config.outputs.stage_key }}"
+        run: |
+          echo "🔍 Checking Azure Blob Storage for State Files..."
+
+          # Function to check if a blob exists
+          check_blob() {
+            local KEY=$1
+            local OUT_VAR=$2
+            
+            # Using az storage blob exists (auth via OIDC already handled by azure/login)
+            EXISTS=$(az storage blob exists \
+              --account-name "$STORAGE_ACCOUNT" \
+              --container-name "$CONTAINER" \
+              --name "$KEY" \
+              --auth-mode login \
+              --query exists -o tsv 2>/dev/null || echo "false")
+              
+            echo "$OUT_VAR=$EXISTS" >> "$GITHUB_OUTPUT"
+            if [ "$EXISTS" == "true" ]; then
+              echo "✅ Found state file: $KEY"
+            else
+              echo "❌ Not found: $KEY"
+            fi
+          }
+
+          # Base key prefix
+          PREFIX="infra/${PROJECT_KEY}/${STAGE}"
+
+          echo "--- Checking Infrastructure Stacks ---"
+          check_blob "${PREFIX}/app.tfstate" "app_exists"
+          check_blob "${PREFIX}/data.tfstate" "data_exists"
+          check_blob "${PREFIX}/network.tfstate" "network_exists"
+          check_blob "${PREFIX}/third-party-mongodb.tfstate" "mongodb_exists"
+
+  # ── INITIAL TEARDOWN (Full-Circle or Destroy-Only) ─────────────────────
+  destroy-app:
+    name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state]
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-data:
+    name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state, destroy-app]
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-network:
+    name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, check-state, destroy-data]
+    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  destroy-mongodb:
+    name: 💥 Destroy MongoDB
+    needs: [setup, config, check-state]
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true'
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  # ── PROVISION FRESH (Standard, Full-Circle, Quick-Test) ───────────────
+  provision-mongodb:
+    name: 🏗️ Prov MongoDB
+    needs: [setup, config, destroy-mongodb]
+    if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && inputs.include_third_party == true && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped')
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      cloud_provider: "azure"
+      environment: ${{ inputs.environment }}
+      stack: "third-party-mongodb"
+      apply: true
+    secrets: inherit
+
+  provision-network:
+    name: 🏗️ Prov Network ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, destroy-network, provision-mongodb]
+    if: always() && inputs.mode != 'destroy-only' && inputs.preserve_host != true && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      cloud_provider: "azure"
+      environment: ${{ inputs.environment }}
+      stack: "network"
+      apply: true
+    secrets: inherit
+
+  provision-data:
+    name: 🏗️ Prov Data ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, provision-network]
+    if: always() && needs.provision-network.result == 'success' && inputs.mode != 'destroy-only' && inputs.preserve_host != true
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      cloud_provider: "azure"
+      environment: ${{ inputs.environment }}
+      stack: "data"
+      apply: true
+    secrets: inherit
+
+  provision-app:
+    name: 🏗️ Prov App ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, provision-data]
+    if: always() && (needs.provision-data.result == 'success' || needs.provision-data.result == 'skipped') && inputs.mode != 'destroy-only'
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      cloud_provider: "azure"
+      environment: ${{ inputs.environment }}
+      stack: "app"
+      apply: true
+      branch_name: ${{ inputs.branch_name }}
+    secrets: inherit
+
+  # ── BUILD & DEPLOY ───────────────────────────────────────────────────
+  deploy-api:
+    name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, provision-app]
+    if: always() && needs.provision-app.result == 'success' && inputs.mode != 'destroy-only'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "api"
+      image_tag: "latest"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      target_port: 8080
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}${{ needs.config.outputs.stage_key }}acr.azurecr.io"
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-frontend:
+    name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, deploy-api]
+    if: always() && needs.deploy-api.result == 'success' && inputs.mode != 'destroy-only'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "web"
+      image_tag: "latest"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_name }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      target_port: 80
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.client_key }}${{ needs.config.outputs.stage_key }}acr.azurecr.io"
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # ── VERIFY (Azure CDN & App) ─────────────────────────────────────────
+  verify:
+    name: ✅ Verify Infrastructure & App
+    needs: [setup, deploy-frontend]
+    if: always() && needs.deploy-frontend.result == 'success' && inputs.mode != 'destroy-only'
+    uses: ./.github/workflows/99-verify-azure.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # ── FINAL TEARDOWN (Full-Circle Mode Only) ───────────────────────────
+  final-destroy-app:
+    name: ♻️ Final Destroy App ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, verify]
+    if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  final-destroy-data:
+    name: ♻️ Final Destroy Data ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, final-destroy-app]
+    if: always() && inputs.mode == 'full-circle' && needs.final-destroy-app.result == 'success' && inputs.preserve_host != true
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/data.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  final-destroy-network:
+    name: ♻️ Final Destroy Network ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, final-destroy-data]
+    if: always() && inputs.mode == 'full-circle' && needs.final-destroy-data.result == 'success' && inputs.preserve_host != true
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  final-destroy-mongodb:
+    name: ♻️ Final Destroy MongoDB
+    needs: [setup, config, final-destroy-network]
+    if: always() && inputs.mode == 'full-circle' && needs.final-destroy-network.result == 'success' && inputs.preserve_host != true && inputs.include_third_party == true
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/third-party-mongodb.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: "azure"
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  # ── REPORTING ────────────────────────────────────────────────────────
+  stress-test-report:
+    name: 📊 Generate Report
+    needs:
+      [
+        setup,
+        check-state,
+        provision-network,
+        provision-data,
+        provision-app,
+        deploy-frontend,
+        verify,
+        final-destroy-app,
+        final-destroy-network,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Summary
+        run: |
+          echo "# 📊 Azure Stress Test Execution Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Mode: \`${{ inputs.mode }}\` | Env: \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+
+          # Simple reporting via step summary
+          echo "Test complete. See individual job statuses for results." >> $GITHUB_STEP_SUMMARY
