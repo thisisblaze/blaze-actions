@@ -548,6 +548,11 @@ jobs:
           MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           EC_API_KEY: ${{ secrets.EC_API_KEY }}
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          # Azure OIDC credentials — needed for azurerm provider init during terraform import
+          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           echo "📜 Running Pre-Apply Script..."
           ${{ inputs.pre_apply_script }}
