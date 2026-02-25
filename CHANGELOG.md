@@ -9,13 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Azure Multi-Site Deploy (`reusable-multi-site-deploy.yml`)**: New reusable workflow for deploying individual sites within the 120+ Azure Container Apps fleet.
+  - Handles Tier 1 (standard): single revision, instant 100% traffic shift.
+  - Handles Tier 2 (premium): multi-revision, staged traffic shift (e.g. 10% → 50% → 100% with 30s delays).
+  - Integrates OIDC auth (`azure/login@v2`) and automated ACR token generation.
+
 - **`deploy-site.yml`**: New reusable workflow for multi-site ARM64 deployments.
   - `build` job: Native `ubuntu-24.04-arm` runner — no QEMU, full Graviton build speed. Pushes to ECR with GHA layer caching scoped per `site_key`.
   - `deploy` job: Discovers ECS service by `site_key` suffix dynamically (no hardcoded prefix). Patches container image via `describe-task-definition` + `register-task-definition` + JQ — no task-def JSON files committed to the repo.
   - `rolling` strategy: `aws ecs update-service --force-new-deployment` + `ecs wait services-stable` (standard tier sites).
   - `blue-green` strategy: CodeDeploy appspec built inline, `aws deploy create-deployment`, polls until Succeeded/Failed (premium tier sites).
   - Full GitHub Step Summary on every run (build digest, service name, strategy, status).
-
 
 - **Token Frugality Overhaul**: Major refactor of `/engage`, `/allstop`, `/checkengines`, and `/slash-init-context` to implement targeted context loading and the "Prime Directive" of minimal token usage.
 - **Handoff Mechanism**: Added `/slash-handoff` and `/slash-resume` to allow for micro-session isolation and state preservation.
