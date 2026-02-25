@@ -64,11 +64,11 @@ on:
 
         secrets:
             AZURE_CLIENT_ID:
-                required: true
+                required: false
             AZURE_TENANT_ID:
-                required: true
+                required: false
             AZURE_SUBSCRIPTION_ID:
-                required: true
+                required: false
             # App Secrets
             MONGO_INITDB_ROOT_PASSWORD:
                 required: false
