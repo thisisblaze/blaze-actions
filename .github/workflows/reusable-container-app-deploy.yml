@@ -62,6 +62,17 @@ on:
                 type: number
                 default: 3000
 
+            # Base64 Secrets Bridge
+            azure_client_id_b64:
+                required: false
+                type: string
+            azure_tenant_id_b64:
+                required: false
+                type: string
+            azure_subscription_id_b64:
+                required: false
+                type: string
+
         secrets:
             AZURE_CLIENT_ID:
                 required: false
@@ -103,12 +114,30 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
 
+            - name: Decode Azure Credentials
+              run: |
+                if [[ -n "${{ inputs.azure_client_id_b64 }}" ]]; then
+                  CLIENT_ID=$(echo "${{ inputs.azure_client_id_b64 }}" | base64 -d)
+                  TENANT_ID=$(echo "${{ inputs.azure_tenant_id_b64 }}" | base64 -d)
+                  SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_b64 }}" | base64 -d)
+                  echo "DECODED_AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+                  echo "DECODED_AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+                  echo "DECODED_AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+                  echo "::add-mask::$CLIENT_ID"
+                  echo "::add-mask::$TENANT_ID"
+                  echo "::add-mask::$SUBSCRIPTION_ID"
+                else
+                  echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+                  echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+                  echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+                fi
+
             - name: Authenticate to Azure
               uses: azure/login@v2
               with:
-                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
+                  tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
+                  subscription-id: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}
 
             - name: Compute Resource Names
               id: names

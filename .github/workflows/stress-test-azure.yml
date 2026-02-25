@@ -400,11 +400,14 @@ jobs:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
     if: needs.provision-app.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-deploy-frontend.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
     with:
       environment: ${{ inputs.environment }}
       branch_tag: ${{ needs.setup.outputs.target_tag }}
-      cloud_platform: "azure"
+      cloud_provider: "azure"
+      azure_client_id_b64: ${{ inputs.azure_client_id_b64 }}
+      azure_tenant_id_b64: ${{ inputs.azure_tenant_id_b64 }}
+      azure_subscription_id_b64: ${{ inputs.azure_subscription_id_b64 }}
     secrets: inherit
 
   # ── VERIFICATION ────────────────────────────────────────────────────────
