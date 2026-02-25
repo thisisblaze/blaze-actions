@@ -407,7 +407,7 @@ jobs:
           echo "🔍 Checking Critical GCP Infrastructure..."
           PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
           REGION="${{ needs.configuration.outputs.cloud_region }}"
-          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-docker"
+          REPO="${{ needs.configuration.outputs.gcp_docker_repo }}"
 
           echo "Project: $PROJECT"
           echo "Region: $REGION"
@@ -1006,8 +1006,8 @@ jobs:
     name: Deploy Admin (Pages)
     needs: [configuration, build-admin, pre-flight-check]
 
-    # Run for Host Environments (Prod, Stage, Dev Host)
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP MULTI-SITE where Admin Pages are not deployed
+    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
