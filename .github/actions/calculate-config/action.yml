@@ -196,11 +196,8 @@ runs:
           gcp)
             CLOUD_REGION="$GCP_REGION"
             INFRA_PREFIX=".github/gcp/infra/live"
-            # Multi-site special bucket
-            if [[ "$STAGE_KEY" == "multi-site" ]]; then
-              BUCKET="${NAMESPACE}-${CLIENT_KEY}-terraform-state"
             # Override bucket for GCS backend if configured
-            elif [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
+            if [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
               BUCKET="$GCP_STATE_BUCKET"
             fi
             ;;
