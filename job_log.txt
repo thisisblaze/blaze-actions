@@ -1,0 +1,574 @@
+🏗️ Provision Network / Configuration	UNKNOWN STEP	﻿2026-02-25T11:24:33.5119615Z Current runner version: '2.331.0'
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5151305Z ##[group]Runner Image Provisioner
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5152563Z Hosted Compute Agent
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5153439Z Version: 20260123.484
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5154293Z Commit: 6bd6555ca37d84114959e1c76d2c01448ff61c5d
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5155807Z Build Date: 2026-01-23T19:41:17Z
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5156878Z Worker ID: {13d56ded-b8a9-438b-a0e4-60b9032a0612}
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5158344Z Azure Region: eastus2
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5159388Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5161430Z ##[group]Operating System
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5162430Z Ubuntu
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5163213Z 24.04.3
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5163859Z LTS
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5164663Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5165707Z ##[group]Runner Image
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5166580Z Image: ubuntu-24.04
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5167445Z Version: 20260201.15.1
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5169335Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260201.15/images/ubuntu/Ubuntu2404-Readme.md
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5171948Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260201.15
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5173447Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5175266Z ##[group]GITHUB_TOKEN Permissions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5178218Z Actions: write
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5179032Z Contents: read
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5179917Z Metadata: read
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5180628Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5183449Z Secret source: Actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5184917Z Prepare workflow directory
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5636048Z Prepare all required actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:33.5691298Z Getting action download info
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:34.0111920Z Download action repository 'actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:34.1425625Z Download action repository 'thisisblaze/blaze-actions@dev' (SHA:483c7df310a4174696ba63c56f39312da5da2f9f)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:34.6168404Z Download action repository 'aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a' (SHA:7474bc4690e29a8392af63c5b98e7449536d5c3a)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:34.8631797Z Download action repository 'google-github-actions/auth@v2' (SHA:c200f3691d83b41bf9bbd8638997a462592937ed)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.0976294Z Download action repository 'google-github-actions/setup-gcloud@v2' (SHA:e427ad8a34f8676edf47cf7d7925499adf3eb74f)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.3374792Z Download action repository 'azure/login@v2' (SHA:a457da9ea143d694b1b9c7c869ebb04ebe844ef5)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8232887Z Uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@refs/heads/dev (483c7df310a4174696ba63c56f39312da5da2f9f)
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8238700Z ##[group] Inputs
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8239550Z   cloud_provider: gcp
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8240343Z   environment: multi-site
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8241173Z   wif_audience: 
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8241937Z   project: thisisblaze
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8242729Z   stack: network
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8243465Z   branch_name: 
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8244599Z   apply: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8245533Z   destroy: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8246286Z   cluster_tier: auto
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8247061Z   kibana_size: 1g
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8247815Z   terraform_version: 1.9.0
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8248650Z   enable_tunnel: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8249466Z   enable_image_resize: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8250310Z   enable_ec2: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8251086Z   api_launch_type: FARGATE
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8251944Z   api_cpu_architecture: X86_64
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8252845Z   frontend_launch_type: FARGATE
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8253753Z   frontend_cpu_architecture: X86_64
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8254670Z   target_type: host
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8255512Z   mode: standard
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8256274Z   include_third_party: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8257149Z   preserve_host: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8257970Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.8258990Z Complete job name: 🏗️ Provision Network / Configuration
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9094062Z ##[group]Run actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9096174Z with:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9096929Z   repository: thisisblaze/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9098128Z   token: ***
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9098824Z   ssh-strict: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9099542Z   ssh-user: git
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9100277Z   persist-credentials: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9101201Z   clean: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9101948Z   sparse-checkout-cone-mode: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9102834Z   fetch-depth: 1
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9103537Z   fetch-tags: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9104269Z   show-progress: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9105025Z   lfs: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9105857Z   submodules: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9106613Z   set-safe-directory: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:35.9107704Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0192139Z Syncing repository: thisisblaze/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0194667Z ##[group]Getting Git version info
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0196641Z Working directory is '/home/runner/work/blaze-actions/blaze-actions'
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0198488Z [command]/usr/bin/git version
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0273947Z git version 2.52.0
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0301178Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0316347Z Temporarily overriding HOME='/home/runner/work/_temp/c2dd6af2-1b4d-4b2a-8c7e-4992e16ce361' before making global git config changes
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0319192Z Adding repository directory to the temporary git global config as a safe directory
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0329519Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/blaze-actions/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0370223Z Deleting the contents of '/home/runner/work/blaze-actions/blaze-actions'
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0373859Z ##[group]Initializing the repository
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0378252Z [command]/usr/bin/git init /home/runner/work/blaze-actions/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0502861Z hint: Using 'master' as the name for the initial branch. This default branch name
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0505928Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0508000Z hint: to use in all of your new repositories, which will suppress this warning,
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0509674Z hint: call:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0510768Z hint:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0511636Z hint: 	git config --global init.defaultBranch <name>
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0512692Z hint:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0513981Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0515885Z hint: 'development'. The just-created branch can be renamed via this command:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0517195Z hint:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0517878Z hint: 	git branch -m <name>
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0518685Z hint:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0520141Z hint: Disable this message with "git config set advice.defaultBranchName false"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0522062Z Initialized empty Git repository in /home/runner/work/blaze-actions/blaze-actions/.git/
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0525014Z [command]/usr/bin/git remote add origin https://github.com/thisisblaze/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0556591Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0557873Z ##[group]Disabling automatic garbage collection
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0560687Z [command]/usr/bin/git config --local gc.auto 0
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0589714Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0590907Z ##[group]Setting up auth
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0596343Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0629603Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.0993217Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1025813Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1243233Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1282357Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1503975Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1538781Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1541060Z ##[group]Fetching the repository
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.1550193Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +483c7df310a4174696ba63c56f39312da5da2f9f:refs/remotes/origin/dev
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4074894Z From https://github.com/thisisblaze/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4077397Z  * [new ref]         483c7df310a4174696ba63c56f39312da5da2f9f -> origin/dev
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4106535Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4107974Z ##[group]Determining the checkout info
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4109488Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4114739Z [command]/usr/bin/git sparse-checkout disable
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4156411Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4184407Z ##[group]Checking out the ref
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4187483Z [command]/usr/bin/git checkout --progress --force -B dev refs/remotes/origin/dev
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4318960Z Switched to a new branch 'dev'
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4322062Z branch 'dev' set up to track 'origin/dev'.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4330278Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4363445Z [command]/usr/bin/git log -1 --format=%H
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4386665Z 483c7df310a4174696ba63c56f39312da5da2f9f
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4594419Z ##[group]Run if [[ -f "vars/blaze-env.json" ]]; then
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4596022Z [36;1mif [[ -f "vars/blaze-env.json" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4597495Z [36;1m  ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4599016Z [36;1m  echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4600036Z [36;1melse[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4601086Z [36;1m  echo "⚠️ vars/blaze-env.json not found. Skipping access control."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4602480Z [36;1m  echo "allowed=" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4603434Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4641313Z shell: /usr/bin/bash -e {0}
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4642175Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4918493Z ##[group]Run CLOUD_PROVIDER="gcp"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4919494Z [36;1mCLOUD_PROVIDER="gcp"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4920644Z [36;1mAWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4922284Z [36;1mGCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4924091Z [36;1mGCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4925650Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4927143Z [36;1mAZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4928867Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4929578Z [36;1mcase "$CLOUD_PROVIDER" in[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4930490Z [36;1m  gcp)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4931244Z [36;1m    CLOUD_REGION="$GCP_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4932152Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4932844Z [36;1m  azure)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4933654Z [36;1m    CLOUD_REGION="$AZURE_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4934584Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4935582Z [36;1m  *)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4936344Z [36;1m    CLOUD_REGION="$AWS_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4937245Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4937933Z [36;1mesac[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4938603Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4939462Z [36;1mecho "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4940852Z [36;1mecho "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4943162Z [36;1mecho "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4945950Z [36;1mecho "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4948616Z [36;1mecho "☁️ Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4998073Z shell: /usr/bin/bash -e {0}
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.4999549Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5198961Z ☁️ Provider: gcp | Region: europe-west1
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5461791Z ##[group]Run google-github-actions/auth@v2
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5462785Z with:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5464701Z   workload_identity_provider: ***
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5465773Z   create_credentials_file: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5466657Z   export_environment_variables: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5467586Z   universe: googleapis.com
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5468452Z   cleanup_credentials: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5469318Z   access_token_lifetime: 3600s
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5470490Z   access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5471742Z   id_token_include_email: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.5472572Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.7518620Z Created credentials file at "/home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.7528437Z ⚠️ Failed to compute a project ID from the given inputs. Neither the "project_id" output nor any environment variables will be exported. If you require these values in other steps, specify the "project_id" input directly.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8533014Z ##[group]Run google-github-actions/setup-gcloud@v2
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8534103Z with:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8534762Z   version: latest
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8535631Z   skip_install: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8536408Z   skip_tool_cache: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8537187Z env:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8538716Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8541292Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8543637Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:36.8545209Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:38.4165696Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/b3120c01-8965-4fd2-8cc8-5cbbbd261204 -f /home/runner/work/_temp/e4fd95bd-5623-417e-8f3f-240b6393f719
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8413634Z Successfully authenticated
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8990762Z ##[group]Run thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8991191Z with:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8991385Z   environment: multi-site
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8991620Z   project: thisisblaze
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8991843Z   terraform_stack: network
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8992071Z   deploy_infra: true
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8992281Z   build_images: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8992492Z   deploy_services: false
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8992723Z   event_name: workflow_dispatch
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8992956Z   cluster_tier: auto
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8993156Z   cloud_provider: gcp
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8993358Z env:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8993835Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8994636Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8995547Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8996086Z   CLOUDSDK_METRICS_ENVIRONMENT: github-actions-setup-gcloud
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8996438Z   CLOUDSDK_METRICS_ENVIRONMENT_VERSION: 2.2.1
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.8996702Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9071202Z ##[group]Run # 0. Load Config from Files
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9071976Z [36;1m# 0. Load Config from Files[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9072262Z [36;1mGLOBAL_CONFIG="vars/blaze-env.json"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9072525Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9072722Z [36;1m# Determine Project[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9072966Z [36;1mINPUT_PROJECT="thisisblaze"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9073242Z [36;1mif [[ -z "$INPUT_PROJECT" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9073710Z [36;1m   INPUT_PROJECT="thisisblaze" # Fallback[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9073985Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9074179Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9074460Z [36;1mPROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9074771Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9074974Z [36;1mif ! test -f "$GLOBAL_CONFIG"; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9075487Z [36;1m  echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9075833Z [36;1m  exit 1[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9076026Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9076198Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9076434Z [36;1m# Smart Validation: Check vars/ AND projects/[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9076742Z [36;1mVARS_EXISTS=false[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9076977Z [36;1mPROJECTS_EXISTS=false[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9077203Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9077458Z [36;1mif test -f "$PROJECT_CONFIG"; then VARS_EXISTS=true; fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9077894Z [36;1mif test -d "projects/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9078265Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9078464Z [36;1mif [[ "$VARS_EXISTS" == "false" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9078847Z [36;1m   echo "❌ ERROR: Project '$INPUT_PROJECT' is invalid or incomplete."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9079272Z [36;1m   echo "   - Missing Config: $PROJECT_CONFIG"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9079561Z [36;1m   [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9079741Z [36;1m   echo ""[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9080010Z [36;1m   echo "🌟 Available Projects (detected in vars/):"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9080410Z [36;1m   # List subdirectories in vars/ that contain blaze-env.json[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9080756Z [36;1m   for d in vars/*/; do[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9081040Z [36;1m     if [[ -f "${d}blaze-env.json" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9081337Z [36;1m        echo "   - $(basename "$d")"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9081597Z [36;1m     fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9081786Z [36;1m   done[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9081976Z [36;1m   exit 1[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9082161Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9082348Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9082560Z [36;1mif [[ "$PROJECTS_EXISTS" == "false" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9082940Z [36;1m     echo "⚠️  WARNING: Directory projects/$INPUT_PROJECT not found."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9083623Z [36;1m     echo "    Infrastructure overrides in projects/$INPUT_PROJECT will not be loaded."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9084039Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9084214Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9084476Z [36;1m# Merge Configs: Project (Args 2) overrides Global (Arg 1)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9084850Z [36;1m# We output to a temporary JSON for querying[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9085401Z [36;1mMERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9085769Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9086028Z [36;1m# Determine Env first to get stage-specific overrides[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9086428Z [36;1mif [[ "workflow_dispatch" == "repository_dispatch" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9086768Z [36;1m  ENV_VAL="multi-site"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9087019Z [36;1m  IS_DISPATCH="true"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9087237Z [36;1melse[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9087429Z [36;1m  ENV_VAL="multi-site"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9087677Z [36;1m  IS_DISPATCH="false"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9087907Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9088158Z [36;1mSTAGE_KEY=$(echo "$ENV_VAL" | tr '[:upper:]' '[:lower:]')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9088558Z [36;1mCONFIG_ENV=$(echo "$ENV_VAL" | tr '[:lower:]' '[:upper:]')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9088873Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9089066Z [36;1m# Read keys from MERGED config[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9089409Z [36;1mCLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9089869Z [36;1mPROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9090318Z [36;1mNAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9090760Z [36;1mPLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9091333Z [36;1mAWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9091764Z [36;1mDOMAIN_ROOT=$(echo "$MERGED_CONFIG" | jq -r '.common.DOMAIN_ROOT')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9092187Z [36;1mGTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9092619Z [36;1mDFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9092981Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9093275Z [36;1m# ── MULTI-CLOUD: Read CLOUD_PROVIDER and provider-specific config ──[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9093815Z [36;1mCONFIG_CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9094273Z [36;1mINPUT_CLOUD_PROVIDER="gcp"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9094571Z [36;1m# Input overrides config when explicitly set[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9094976Z [36;1mif [[ -n "$INPUT_CLOUD_PROVIDER" && "$INPUT_CLOUD_PROVIDER" != "" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9095575Z [36;1m  CLOUD_PROVIDER="$INPUT_CLOUD_PROVIDER"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9095855Z [36;1melse[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9096078Z [36;1m  CLOUD_PROVIDER="$CONFIG_CLOUD_PROVIDER"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9096352Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9096696Z [36;1mGCP_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_REGION // "europe-west1"')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9097234Z [36;1mGCP_PROJECT_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_PROJECT_ID // ""')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9098026Z [36;1mGCP_STATE_BUCKET=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_STATE_BUCKET // ""')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9098586Z [36;1mAZURE_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AZURE_REGION // "westeurope"')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9098991Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9099284Z [36;1m# Compute provider-specific region, infra prefix, and state bucket[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9099660Z [36;1mcase "$CLOUD_PROVIDER" in[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9099905Z [36;1m  gcp)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9100111Z [36;1m    CLOUD_REGION="$GCP_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9100412Z [36;1m    INFRA_PREFIX=".github/gcp/infra/live"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9100739Z [36;1m    # Override bucket for GCS backend if configured[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9101273Z [36;1m    if [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9101633Z [36;1m      BUCKET="$GCP_STATE_BUCKET"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9101878Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9102051Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9102231Z [36;1m  azure)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9102437Z [36;1m    CLOUD_REGION="$AZURE_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9102730Z [36;1m    INFRA_PREFIX=".github/azure/infra/live"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9103109Z [36;1m    # Azure Backend Format: resource_group/storage_account/container[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9103709Z [36;1m    # Must match Terraform module naming: ${namespace}-${client_key}-tfstate-rg / ${namespace}${client_key}tfstate[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9104270Z [36;1m    if [[ "$CLOUD_PROVIDER" == "azure" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9104738Z [36;1m      BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9105166Z [36;1m    else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9105556Z [36;1m      BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9105878Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9106156Z [36;1m    LOCK_TABLE="" # Azure Blob supports leasing (locking) natively[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9106495Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9106676Z [36;1m  *)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9106864Z [36;1m    CLOUD_PROVIDER="aws"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9107127Z [36;1m    CLOUD_REGION="$AWS_REGION"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9107413Z [36;1m    INFRA_PREFIX=".github/aws/infra/live"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9107685Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9107860Z [36;1mesac[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9108040Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9108396Z [36;1mecho "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9108943Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9109132Z [36;1m# Read Beta Flag (Env specific)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9109552Z [36;1mIS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments.${STAGE_KEY}.BETA // \"false\"")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9109959Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9110135Z [36;1m# Verify[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9110396Z [36;1mif [[ "$CLIENT_KEY" == "null" || -z "$CLIENT_KEY" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9110932Z [36;1m   echo "❌ ERROR: CLIENT_KEY not found in Merged Config (Global: $GLOBAL_CONFIG, Project: $PROJECT_CONFIG)"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9111411Z [36;1m   exit 1[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9111604Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9111782Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9111958Z [36;1m# Export to Outputs[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9112240Z [36;1mecho "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9112606Z [36;1mecho "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9112963Z [36;1mecho "namespace=$NAMESPACE" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9113296Z [36;1mecho "platform=$PLATFORM" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9113660Z [36;1mecho "cloud_provider=$CLOUD_PROVIDER" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9114047Z [36;1mecho "cloud_region=$CLOUD_REGION" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9114419Z [36;1mecho "infra_prefix=$INFRA_PREFIX" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9114793Z [36;1mecho "gcp_project_id=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9115156Z [36;1mecho "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9115612Z [36;1mecho "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9115945Z [36;1mecho "beta=$IS_BETA" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9116248Z [36;1mecho "gtm_id=$GTM_ID" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9116591Z [36;1mecho "dfp_network_id=$DFP_NETWORK_ID" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9116895Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9117081Z [36;1m# Resolve MongoDB Tier[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9117320Z [36;1mCLUSTER_TIER="auto"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9117573Z [36;1mif [[ "$CLUSTER_TIER" == "auto" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9117861Z [36;1m   if [[ "$STAGE_KEY" == "dev" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9118135Z [36;1m      CLUSTER_TIER="flex"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9118485Z [36;1m   else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9118686Z [36;1m      CLUSTER_TIER="M10"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9118911Z [36;1m   fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9119092Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9119335Z [36;1mecho "cluster_tier=$CLUSTER_TIER" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9119639Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9119851Z [36;1m# Calculate Bucket & Lock using loaded vars[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9120197Z [36;1m# New naming: {client}-{stage}-{namespace}-tfstate[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9120513Z [36;1mif [[ -z "$BUCKET" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9120832Z [36;1m   BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9121168Z [36;1m   LOCK_TABLE="${BUCKET}-lock"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9121416Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9121588Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9121809Z [36;1m# 2. Dynamic Directory & State Key Selection[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9122103Z [36;1mINPUT_STACK="network"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9122325Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9122562Z [36;1m# Map Descriptive Dropdown -> Internal Logic Code[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9122875Z [36;1mcase "$INPUT_STACK" in[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9123397Z [36;1m  "3. Network Infrastructure (All Environments: VPC, Subnets, NAT Gateway, ECS Cluster, ALB/EFS/DNS)"|"network")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9123902Z [36;1m    STACK="network"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9124118Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9124383Z [36;1m  "2. Third Party (DEV ONLY: Cloudflare Tunnel)"|"tunnel")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9124740Z [36;1m    STACK="third-party-cloudflare"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9124999Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9125357Z [36;1m  "1. Third Party (STAGE/PROD: ACM SSL Certificates)"|"acm")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9125704Z [36;1m    STACK="third-party-acm"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9126078Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9126285Z [36;1m  "third-party-mongodb"|"mongodb")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9126566Z [36;1m    STACK="third-party-mongodb"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9126820Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9127034Z [36;1m  "third-party-elastic"|"elastic")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9127337Z [36;1m    STACK="third-party-elastic"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9127586Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9127855Z [36;1m  "4. Application (API/Frontend) - All Environments"|"app")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9128185Z [36;1m    STACK="app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9128392Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9128577Z [36;1m  "data")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9128778Z [36;1m    STACK="data"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9128981Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9129165Z [36;1m  "cdn")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9129353Z [36;1m    STACK="cdn"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9129553Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9129866Z [36;1m  "5. Account Settings (ENI Trunking, Container Insights)"|"account-settings")[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9130280Z [36;1m    STACK="account-settings"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9130521Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9130698Z [36;1m  *)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9130904Z [36;1m    # Default or direct "app" match[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9131188Z [36;1m    if [[ -z "$INPUT_STACK" ]]; then [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9131457Z [36;1m       STACK="app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9131672Z [36;1m    else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9131857Z [36;1m       STACK="app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9132069Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9132248Z [36;1m    ;;[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9132422Z [36;1mesac[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9132592Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9132860Z [36;1mecho "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9133194Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9133395Z [36;1m# 3. SAFETY CHECK: Prevent No-Op Runs[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9134070Z [36;1mif [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9134737Z [36;1m   if [[ "true" != "true" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9135508Z [36;1m      echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9136103Z [36;1m      echo "   This would result in a no-op (doing nothing)."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9136581Z [36;1m      echo "   Please re-run and check 'Run Terraform' (deploy_infra) to apply changes."[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9136992Z [36;1m      exit 1[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9137186Z [36;1m   fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9137367Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9137541Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9137734Z [36;1m# --- BUILD & DEPLOY LOGIC ---[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9137994Z [36;1mSHOULD_BUILD="false"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9138247Z [36;1mSHOULD_DEPLOY_APP="false"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9138488Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9138677Z [36;1mif [[ "$STACK" == "app" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9138999Z [36;1m   BUILD_INPUT=$(echo "false" | tr '[:upper:]' '[:lower:]')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9154044Z [36;1m   [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9154560Z [36;1m   if [[ "$BUILD_INPUT" == "true" || "$IS_DISPATCH" == "true" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9155161Z [36;1m      SHOULD_BUILD="true"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9156080Z [36;1m      echo "   ✅ SHOULD_BUILD set to true (build_images=$BUILD_INPUT or dispatch)"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9156808Z [36;1m   else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9157436Z [36;1m      echo "   ⚠️  SHOULD_BUILD remains false (build_images=$BUILD_INPUT, not dispatch)"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9158181Z [36;1m   fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9158520Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9158843Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9159227Z [36;1m# Unified Deploy Logic for App and Tunnel[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9159917Z [36;1mif [[ "$STACK" == "app" || "$STACK" == "third-party-cloudflare" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9160900Z [36;1m    if [[ "false" == "true" || "$IS_DISPATCH" == "true" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9161510Z [36;1m       SHOULD_DEPLOY_APP="true"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9161964Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9162290Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9162598Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9163188Z [36;1m# ── MULTI-CLOUD: Use $INFRA_PREFIX instead of hardcoded .github/aws/infra/live ──[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9164017Z [36;1mif [[ "$STACK" == "account-settings" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9164627Z [36;1m    TF_DIR="${INFRA_PREFIX}/account-settings"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9165503Z [36;1m    STATE_KEY="infra/${PROJECT_KEY}/account-settings.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9166143Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9166580Z [36;1melif [[ "$STACK" == "third-party-cloudflare" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9167253Z [36;1m    TF_DIR="${INFRA_PREFIX}/third-party/cloudflare"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9167997Z [36;1m    STATE_KEY="infra/${PROJECT_KEY}/third-party/cloudflare.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9168663Z [36;1m    [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9169086Z [36;1melif [[ "$STACK" == "third-party-acm" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9169676Z [36;1m    TF_DIR="${INFRA_PREFIX}/third-party/acm"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9170347Z [36;1m    STATE_KEY="infra/${PROJECT_KEY}/third-party/acm.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9170940Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9171400Z [36;1melif [[ "$STACK" == "third-party-mongodb" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9172075Z [36;1m    TF_DIR="${INFRA_PREFIX}/third-party/mongodb"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9172766Z [36;1m    STATE_KEY="infra/${PROJECT_KEY}/third-party/mongodb.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9173161Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9173400Z [36;1melif [[ "$STACK" == "third-party-elastic" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9173754Z [36;1m    TF_DIR="${INFRA_PREFIX}/third-party/elastic"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9174144Z [36;1m    STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9174485Z [36;1m    [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9174730Z [36;1melif [[ "$STAGE_KEY" == "multi-site" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9175038Z [36;1m    if [[ "$STACK" == "network" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9175652Z [36;1m       TF_DIR="${INFRA_PREFIX}/multi-site-network"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9176217Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9176594Z [36;1m    elif [[ "$STACK" == "cdn" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9176902Z [36;1m       TF_DIR="${INFRA_PREFIX}/multi-site-cdn"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9177268Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9177594Z [36;1m    else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9177830Z [36;1m       TF_DIR="${INFRA_PREFIX}/multi-site-app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9178199Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9178518Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9178697Z [36;1m    [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9178967Z [36;1melif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9179333Z [36;1m    if [[ "$STACK" == "network" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9179646Z [36;1m       TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9180045Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9180417Z [36;1m    elif [[ "$STACK" == "data" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9180735Z [36;1m       TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9181112Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9181465Z [36;1m    elif [[ "$STACK" == "cdn" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9181774Z [36;1m       TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-cdn"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9182140Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/cdn.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9182470Z [36;1m    else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9182694Z [36;1m       TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9183174Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9183516Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9183709Z [36;1m    [0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9183894Z [36;1melse[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9184091Z [36;1m    # DEV (V2 Architecture)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9184371Z [36;1m    if [[ "$STACK" == "network" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9184683Z [36;1m       TF_DIR="${INFRA_PREFIX}/dev-network"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9185035Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9185557Z [36;1m    elif [[ "$STACK" == "data" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9185853Z [36;1m       TF_DIR="${INFRA_PREFIX}/dev-data"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9186187Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/dev/data.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9186513Z [36;1m    elif [[ "$STACK" == "cdn" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9186800Z [36;1m       TF_DIR="${INFRA_PREFIX}/dev-cdn"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9187127Z [36;1m       STATE_KEY="infra/${PROJECT_KEY}/dev/cdn.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9187423Z [36;1m    else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9187617Z [36;1m       # App stack[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9187867Z [36;1m       TF_DIR="${INFRA_PREFIX}/dev-app"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9188141Z [36;1m       if [[ -n "" ]]; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9188451Z [36;1m          STATE_KEY="infra/${PROJECT_KEY}/features/.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9188769Z [36;1m       else[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9188978Z [36;1m          # Host app state[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9189272Z [36;1m          STATE_KEY="infra/${PROJECT_KEY}/dev/app.tfstate"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9189587Z [36;1m       fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9189775Z [36;1m    fi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9189955Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9190123Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9190430Z [36;1m# Sanitize STATE_KEY to remove double slashes (e.g. if project_key is empty)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9190868Z [36;1mSTATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9191161Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9191349Z [36;1m# Calculate Cluster Name[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9191720Z [36;1mCLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9192304Z [36;1mecho "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9192611Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9192822Z [36;1mecho "env_val=$ENV_VAL" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9193124Z [36;1mecho "tf_dir=$TF_DIR" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9193424Z [36;1mecho "bucket=$BUCKET" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9193744Z [36;1mecho "lock_table=$LOCK_TABLE" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9194029Z [36;1m[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9194210Z [36;1m# Get Account ID (Optional)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9194606Z [36;1mif command -v aws >/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9195136Z [36;1m   ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9195731Z [36;1melse[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9195924Z [36;1m   ACCOUNT_ID=""[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9196131Z [36;1mfi[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9196372Z [36;1mecho "aws_account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9196729Z [36;1mecho "state_key=$STATE_KEY" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9197056Z [36;1mecho "stage_key=$STAGE_KEY" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9197391Z [36;1mecho "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9197785Z [36;1mecho "should_deploy_app=$SHOULD_DEPLOY_APP" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9198177Z [36;1mecho "config_env=$CONFIG_ENV" >> $GITHUB_OUTPUT[0m
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9232293Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9232635Z env:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9233093Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9233870Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9234786Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9235561Z   CLOUDSDK_METRICS_ENVIRONMENT: github-actions-setup-gcloud
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9235934Z   CLOUDSDK_METRICS_ENVIRONMENT_VERSION: 2.2.1
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9236202Z ##[endgroup]
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9289969Z ⚠️  WARNING: Directory projects/thisisblaze not found.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9290797Z     Infrastructure overrides in projects/thisisblaze will not be loaded.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9741623Z ☁️  Cloud Provider: gcp | Region: europe-west1 | Infra: .github/gcp/infra/live
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9767492Z jq: error: site/0 is not defined at <top-level>, line 1:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9767960Z .environments.multi-site.BETA // "false"                    
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9768312Z jq: 1 compile error
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9782820Z ##[error]Process completed with exit code 3.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:57.9958944Z Post job cleanup.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.0771392Z Removed exported credentials at "/home/runner/work/blaze-actions/blaze-actions/gha-creds-1275e49a98f69f22.json".
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.0900991Z Post job cleanup.
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1835579Z [command]/usr/bin/git version
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1871904Z git version 2.52.0
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1915219Z Temporarily overriding HOME='/home/runner/work/_temp/628c612c-9f11-4d82-99d6-f6e6cf21ad18' before making global git config changes
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1916840Z Adding repository directory to the temporary git global config as a safe directory
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1929586Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/blaze-actions/blaze-actions
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1963168Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.1995974Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2223321Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2242690Z http.https://github.com/.extraheader
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2255052Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2284892Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2502248Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2532645Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2863745Z Evaluate and set job outputs
+🏗️ Provision Network / Configuration	UNKNOWN STEP	2026-02-25T11:24:58.2875942Z Cleaning up orphan processes
