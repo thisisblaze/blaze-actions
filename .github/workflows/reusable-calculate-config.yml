@@ -198,8 +198,8 @@ jobs:
               ;;
             azure)
               # Azure Backend Format for reusable-terraform: resource_group/storage_account/container
-              # Standard Pattern: rg-terraform-state / stterraformstate{client} / tfstate
-              BUCKET="rg-terraform-state/stterraformstate${CLIENT_KEY}/tfstate"
+              # Must match Terraform module naming: ${namespace}-${client_key}-tfstate-rg / ${namespace}${client_key}tfstate
+              BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"
               LOCK_TABLE="" # Azure Blob supports leasing (locking) natively
               ;;
             *)
@@ -351,6 +351,12 @@ jobs:
             gcp)
               if [[ -z "$GCP_REGION" ]]; then
                 echo "❌ ERROR: GCP_REGION is not set in env-config.json"
+                exit 1
+              fi
+              ;;
+            azure)
+              if [[ -z "$AZURE_REGION" ]]; then
+                echo "❌ ERROR: AZURE_REGION is not set in env-config.json"
                 exit 1
               fi
               ;;
