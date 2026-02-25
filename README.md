@@ -5,6 +5,26 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Version](https://img.shields.io/badge/version-v1.2.0--multi--cloud--foundation-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
+> [!CAUTION]
+> ### 🚨 THIS REPO IS A WORKFLOW LIBRARY — NOT FOR DIRECT RUNS 🚨
+>
+> `blaze-actions` is a **reusable workflow and composite action library only**.
+> It is the **parent/source** consumed by deployment repos like `blaze-template-deploy`.
+>
+> **❌ NEVER DO from this repo:**
+> - Run workflows directly from this repo's GitHub Actions tab
+> - Add cloud secrets (`GH_PAT`, `AWS_ROLE_ARN`, `GCP_*`, etc.) to this repo
+> - Trigger stress tests, provisioning, or deploys from this repo
+> - Assume any secrets set here will be available during workflow runs
+>
+> **✅ ALWAYS use instead:**
+> - **`blaze-template-deploy`** for ALL actual workflow runs and deployments
+> - Local path: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
+> - GitHub: `github.com/thebyte9/blaze-template-deploy`
+>
+> Edit workflow _logic_ here → test and run it from `blaze-template-deploy`.
+
+
 ---
 
 ## Overview
