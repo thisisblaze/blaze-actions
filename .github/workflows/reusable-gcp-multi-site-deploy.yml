@@ -1,0 +1,181 @@
+name: "Reusable GCP Multi-Site Deploy"
+
+# ─────────────────────────────────────────────────────────────
+# Deploys or updates a single site in the GCP multi-site fleet.
+#
+# For Tier 1 (standard, scale-to-zero):
+#   Deploys new image with 100% traffic immediately.
+#
+# For Tier 2 (premium, Blue/Green):
+#   1. Deploys new revision with 0% traffic (tagged 'green').
+#   2. Performs a staged traffic shift: 10% → 50% → 100%.
+#
+# Used by: 02-deploy-app.yml (caller passes site_key per site)
+# ─────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      site_key:
+        required: true
+        type: string
+        description: "Site key (matches key in var.sites Terraform map)"
+
+      service_name:
+        required: true
+        type: string
+        description: "Cloud Run service name (from Terraform output)"
+
+      gcp_project_id:
+        required: true
+        type: string
+
+      gcp_region:
+        required: false
+        type: string
+        default: "europe-west1"
+
+      image_tag:
+        required: true
+        type: string
+        description: "Container image tag to deploy (e.g. git SHA)"
+
+      artifact_registry_url:
+        required: true
+        type: string
+        description: "URL of the Artifact Registry repo"
+
+      image_repository:
+        required: false
+        type: string
+        default: "sites"
+
+      multi_revision:
+        required: false
+        type: boolean
+        default: false
+        description: "true = Tier 2 Blue/Green (staged traffic shift). false = Tier 1 (100% immediately)."
+
+      shift_strategy:
+        required: false
+        type: string
+        default: "10-50-100"
+        description: "Traffic shift strategy for Tier 2 (comma-separated percentages, e.g. '10-50-100')"
+
+      environment:
+        required: true
+        type: string
+
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: true
+      GCP_SERVICE_ACCOUNT:
+        required: true
+
+jobs:
+  deploy-site:
+    name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+
+    env:
+      SITE_KEY: ${{ inputs.site_key }}
+      SERVICE_NAME: ${{ inputs.service_name }}
+      REGISTRY: ${{ inputs.artifact_registry_url }}
+      REPO: ${{ inputs.image_repository }}
+      TAG: ${{ inputs.image_tag }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Google Auth (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ── Tier 1: Instant Deploy (100% traffic) ──────────────────────────
+      - name: Deploy (Tier 1)
+        if: ${{ !inputs.multi_revision }}
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$REGISTRY/$TAG" \
+            --project "${{ inputs.gcp_project_id }}" \
+            --region "${{ inputs.gcp_region }}" \
+            --platform managed \
+            --quiet
+
+      # ── Tier 2: Blue/Green Staged Shift ────────────────────────────────
+      - name: Deploy New Revision (Tier 2)
+        if: ${{ inputs.multi_revision }}
+        id: deploy_green
+        run: |
+          # Deploy with --no-traffic and a tag
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$REGISTRY/$TAG" \
+            --no-traffic \
+            --tag=green \
+            --project "${{ inputs.gcp_project_id }}" \
+            --region "${{ inputs.gcp_region }}" \
+            --platform managed \
+            --quiet
+
+          # Get the full revision name
+          REVISION=$(gcloud run revisions list \
+            --service "$SERVICE_NAME" \
+            --project "${{ inputs.gcp_project_id }}" \
+            --region "${{ inputs.gcp_region }}" \
+            --limit 1 --format="value(REVISION)")
+          
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "🆕 New Green Revision: $REVISION"
+
+      - name: Staged Traffic Shift (Tier 2)
+        if: ${{ inputs.multi_revision }}
+        run: |
+          REVISION="${{ steps.deploy_green.outputs.revision }}"
+          STRATEGY="${{ inputs.shift_strategy }}"
+          IFS='-' read -ra STEPS <<< "$STRATEGY"
+
+          for PERCENT in "${STEPS[@]}"; do
+            echo "🔀 Shifting $PERCENT% traffic to $REVISION..."
+            
+            gcloud run services update-traffic "$SERVICE_NAME" \
+              --to-revisions "$REVISION=$PERCENT" \
+              --project "${{ inputs.gcp_project_id }}" \
+              --region "${{ inputs.gcp_region }}" \
+              --platform managed \
+              --quiet
+            
+            echo "✅ Traffic at $PERCENT% — pausing 20s before next step..."
+            sleep 20
+          done
+          
+          echo "🏁 Traffic shift complete. 100% serving new revision $REVISION."
+          
+          # Finalize traffic and remove tags if needed
+          gcloud run services update-traffic "$SERVICE_NAME" \
+            --to-revisions "$REVISION=100" \
+            --project "${{ inputs.gcp_project_id }}" \
+            --region "${{ inputs.gcp_region }}" \
+            --platform managed \
+            --quiet
+
+      # ── Step Summary ───────────────────────────────────────────────────
+      - name: "📋 Deploy Summary"
+        if: always()
+        run: |
+          echo "### 🌐 GCP Multi-Site Deploy: \`${{ inputs.site_key }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Site Key | \`${{ inputs.site_key }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | \`${{ inputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Cloud Run Service | \`${{ inputs.service_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tier | \`${{ inputs.multi_revision && 'Tier 2 (Dedicated, Blue/Green)' || 'Tier 1 (Consumption, Scale-to-Zero)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Traffic Strategy | \`${{ inputs.shift_strategy }}\` |" >> "$GITHUB_STEP_SUMMARY"
