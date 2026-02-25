@@ -152,6 +152,13 @@ on:
         required: false
         default: false
         type: boolean
+
+      wif_audience:
+        description: "GCP WIF audience override. Leave empty to use the default GitHub audience (no custom audience). Set to a specific value if your WIF pool uses a custom allowed audience."
+        required: false
+        default: ""
+        type: string
+
     secrets:
       AWS_ROLE_ARN:
         required: true
@@ -284,7 +291,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
@@ -303,7 +310,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
@@ -323,7 +330,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
@@ -343,7 +350,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
@@ -363,7 +370,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/check-stack-exists.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       bucket: ${{ needs.config.outputs.bucket }}
@@ -386,7 +393,7 @@ jobs:
       - check-app-exists
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
@@ -404,7 +411,7 @@ jobs:
     needs: [config, destroy-cdn, check-app-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -430,7 +437,7 @@ jobs:
     needs: [config, destroy-app, check-mongodb-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -452,7 +459,7 @@ jobs:
     needs: [config, destroy-app, check-elastic-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -476,7 +483,7 @@ jobs:
     needs: [config, check-cdn-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -500,7 +507,7 @@ jobs:
     needs: [config, destroy-app, check-network-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -529,7 +536,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       stack: "network"
@@ -554,7 +561,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       stack: "cdn"
@@ -575,7 +582,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       stack: "app"
@@ -601,7 +608,7 @@ jobs:
     name: "🏛️ Provision MongoDB"
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       stack: "third-party-mongodb"
@@ -621,7 +628,7 @@ jobs:
     name: "🏛️ Provision Elastic"
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       stack: "third-party-elastic"
@@ -644,7 +651,7 @@ jobs:
     name: "🚀 Deploy App"
     uses: ./.github/workflows/02-deploy-app.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cloud_provider: "gcp"
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
@@ -704,7 +711,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
+          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Verify Cloud Run Services
         id: cloud_run
@@ -961,7 +968,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
+          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Generate Comprehensive Deployment Summary
         run: |
@@ -1072,7 +1079,7 @@ jobs:
 
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
@@ -1087,7 +1094,7 @@ jobs:
     needs: [config, destroy-cdn-final, cleanup-services-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -1114,7 +1121,7 @@ jobs:
     needs: [config, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-cdn"
       bucket: ${{ needs.config.outputs.bucket }}
@@ -1137,7 +1144,7 @@ jobs:
     needs: [config, destroy-app-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
       bucket: ${{ needs.config.outputs.bucket }}
