@@ -102,6 +102,9 @@ outputs:
   config_env:
     description: "Config Environment (UPPERCASE)"
     value: ${{ steps.config.outputs.config_env }}
+  gcp_docker_repo:
+    description: "GCP Artifact Registry repository name for Docker images (accounts for multi-site TF naming)"
+    value: ${{ steps.config.outputs.gcp_docker_repo }}
 
 runs:
   using: "composite"
@@ -447,3 +450,15 @@ runs:
         echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
         echo "should_deploy_app=$SHOULD_DEPLOY_APP" >> $GITHUB_OUTPUT
         echo "config_env=$CONFIG_ENV" >> $GITHUB_OUTPUT
+
+        # ── GCP Docker Repository Name ──
+        # The multi-site network module hardcodes project_key="multi-site" for resource naming,
+        # so the Artifact Registry repo is named differently from the CI/CD project_key (thisisblaze).
+        # All other envs follow: {namespace}-{client_key}-{project_key}-{stage_key}-docker
+        if [[ "$STAGE_KEY" == "multi-site" && "$CLOUD_PROVIDER" == "gcp" ]]; then
+          GCP_DOCKER_REPO="${NAMESPACE}-${CLIENT_KEY}-multi-site-multi-site-docker"
+        else
+          GCP_DOCKER_REPO="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-docker"
+        fi
+        echo "gcp_docker_repo=$GCP_DOCKER_REPO" >> $GITHUB_OUTPUT
+        echo "🐳 GCP Docker Repo: $GCP_DOCKER_REPO"

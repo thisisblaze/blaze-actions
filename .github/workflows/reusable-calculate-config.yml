@@ -58,6 +58,8 @@ on:
         value: ${{ jobs.calculate.outputs.domain_root }}
       allowed_infra_users:
         value: ${{ jobs.calculate.outputs.allowed_infra_users }}
+      gcp_docker_repo:
+        value: ${{ jobs.calculate.outputs.gcp_docker_repo }}
 
 jobs:
   calculate:
@@ -85,6 +87,7 @@ jobs:
       gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
       domain_root: ${{ steps.config.outputs.domain_root }}
       allowed_infra_users: ${{ steps.config.outputs.allowed_infra_users }}
+      gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
 
     steps:
       - name: Checkout Code
@@ -379,3 +382,14 @@ jobs:
           echo "gcp_project_id=$GCP_PROJECT_ID" >> "$GITHUB_OUTPUT"
           echo "domain_root=$DOMAIN_ROOT" >> "$GITHUB_OUTPUT"
           echo "allowed_infra_users=$ALLOWED_INFRA_USERS" >> "$GITHUB_OUTPUT"
+
+          # ── GCP Docker Repository Name ──
+          # The multi-site network module hardcodes project_key="multi-site" for resource naming.
+          # All other envs follow: {namespace}-{client_key}-{project_key}-{stage_key}-docker
+          if [[ "$STAGE_KEY" == "multi-site" && "$CLOUD_PROVIDER" == "gcp" ]]; then
+            GCP_DOCKER_REPO="${NAMESPACE}-${CLIENT_KEY}-multi-site-multi-site-docker"
+          else
+            GCP_DOCKER_REPO="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-docker"
+          fi
+          echo "gcp_docker_repo=$GCP_DOCKER_REPO" >> "$GITHUB_OUTPUT"
+          echo "🐳 GCP Docker Repo: $GCP_DOCKER_REPO"
