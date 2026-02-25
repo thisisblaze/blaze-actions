@@ -103,6 +103,10 @@ on:
         description: "Multi-arch manifest tag"
         value: ${{ inputs.image_tag }}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   # ─────────────────────────────────────────────
   # BUILD AMD64 (x86_64)
