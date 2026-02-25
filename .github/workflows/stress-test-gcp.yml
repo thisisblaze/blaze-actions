@@ -365,7 +365,8 @@ jobs:
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
   # --------------------------------------------------------------------------------
   cleanup-services:
-    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') }}
+    # Skip AWS-specific cleanup for GCP
+    if: false
     needs:
       - config
       - prod-safety-check
@@ -1048,7 +1049,8 @@ jobs:
   # 7. FINAL DESTROY (full-circle mode only)
   # --------------------------------------------------------------------------------
   cleanup-services-final:
-    if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    # Skip AWS-specific cleanup for GCP
+    if: false
     needs:
       - config
       - destroy-cdn-final
