@@ -3,10 +3,29 @@
 # Location: .agent/config.yml
 # Purpose: Automatically capture critical learnings during work sessions
 ---
+# ============================================================================
+# 🚨 CRITICAL REPO IDENTITY — READ THIS FIRST 🚨
+# ============================================================================
+# This repo (blaze-actions) is a REUSABLE WORKFLOW LIBRARY ONLY.
+# It is NOT a deployment repo. It has NO deployment secrets.
+#
+# ❌ NEVER DO:
+#   - gh workflow run ... (from this repo's directory)
+#   - gh secret list (expecting GH_PAT, AWS credentials, etc.)
+#   - Trigger stress tests or provisioning from here
+#
+# ✅ ALWAYS USE for actual runs:
+#   blaze-template-deploy
+#   Local: /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+#   GitHub: github.com/thebyte9/blaze-template-deploy
+#
+# Workflow logic edits → blaze-actions ✅
+# Workflow actual runs → blaze-template-deploy ✅
+# ============================================================================
 
 auto_learning:
   enabled: true
-  
+
   # Triggers - when to auto-capture knowledge
   triggers:
     # After fixing bugs that took multiple iterations (>3 attempts)
@@ -14,44 +33,44 @@ auto_learning:
       enabled: true
       min_iterations: 3
       categories: ["bug-fix", "error-resolution"]
-    
+
     # After discovering root causes (especially critical ones)
     root_cause_analysis:
       enabled: true
-      complexity_threshold: 7  # Only if complexity >= 7
+      complexity_threshold: 7 # Only if complexity >= 7
       categories: ["architecture", "critical-bug"]
-    
+
     # When same error type appears multiple times
     pattern_recognition:
       enabled: true
       min_occurrences: 2
       categories: ["common-error", "pattern"]
-    
+
     # After successful completion of complex tasks
     task_completion:
       enabled: true
       complexity_threshold: 8
       categories: ["automation", "workflow"]
-    
+
     # When encountering completely new error types
     novel_errors:
       enabled: true
       categories: ["new-issue", "undocumented"]
-  
+
   # Storage configuration
   storage:
     directory: ".agent/learnings"
     filename_format: "{timestamp}-{category}-{slug}.md"
-    
+
     # Auto-organize by category
     subdirectories:
       - "terraform"
-      - "docker" 
+      - "docker"
       - "github-actions"
       - "cloudfront"
       - "aws"
       - "general"
-  
+
   # Content requirements
   content:
     required_sections:
@@ -60,35 +79,35 @@ auto_learning:
       - "Fix Applied"
       - "Prevention"
       - "Related Files"
-    
+
     optional_sections:
       - "Commands"
       - "Testing Procedure"
       - "Future Improvements"
       - "Related Issues"
-  
+
   # Quality control
   quality:
-    min_length: 200  # characters
+    min_length: 200 # characters
     require_code_examples: true
     require_commands: false
-  
+
   # Notification
   notification:
     notify_user: true
-    method: "summary"  # Show in final summary
-    ask_review: false  # Don't interrupt work
+    method: "summary" # Show in final summary
+    ask_review: false # Don't interrupt work
 
 # Session analysis
 session_analysis:
   enabled: true
-  
+
   # Analyze at these points
   analysis_points:
     - "after_task_completion"
     - "before_notify_user"
     - "on_major_milestone"
-  
+
   # What to analyze
   metrics:
     - "iterations_count"
@@ -97,7 +116,7 @@ session_analysis:
     - "complexity_rating"
     - "time_spent"
     - "files_modified"
-  
+
   # Auto-generate summary
   summary:
     enabled: true
@@ -106,31 +125,31 @@ session_analysis:
 
 # Knowledge graph
 knowledge_graph:
-  enabled: false  # Future feature
-  
+  enabled: false # Future feature
+
   # Link related learnings
   auto_linking:
     enabled: false
     similarity_threshold: 0.7
-  
+
   # Categorization
   auto_categorize:
     enabled: false
-    use_ml: false  # Future: ML-based categorization
+    use_ml: false # Future: ML-based categorization
 
 # Integration with existing workflows
 integration:
   # Add to README automatically
   update_readme: false
-  
+
   # Create workflow guides from learnings
   auto_workflow_creation:
     enabled: false
-    min_learnings: 3  # Create guide after 3 related learnings
-  
+    min_learnings: 3 # Create guide after 3 related learnings
+
   # Git commits
   auto_commit:
-    enabled: false  # User controls commits
+    enabled: false # User controls commits
     branch: "learnings/auto-capture"
 
 # Example trigger scenarios
@@ -138,15 +157,15 @@ examples:
   - trigger: "iterative_debugging"
     scenario: "Fixed Docker permission error after 4 attempts"
     action: "Create learning: docker/permission-errors.md"
-  
+
   - trigger: "root_cause_analysis"
     scenario: "Discovered Terraform lock bug in JSON parsing"
     action: "Create learning: terraform/state-lock-timestamp-bug.md"
-  
+
   - trigger: "pattern_recognition"
     scenario: "Sudo needed for Docker files (seen 3 times)"
     action: "Update learning: docker/always-use-sudo.md"
-  
+
   - trigger: "task_completion"
     scenario: "Successfully automated Sharp Lambda Layer"
     action: "Create learning: aws/lambda-layer-automation.md"
