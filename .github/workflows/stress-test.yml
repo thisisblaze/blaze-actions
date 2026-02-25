@@ -67,9 +67,9 @@ on:
       environment:
         description: "Target Environment"
         required: true
-        default: "dev"
+        default: "DEV"
         type: choice
-        options: ["dev", "stage", "prod"]
+        options: ["DEV", "STAGE", "PROD"]
 
       target_type:
         description: "What to test"
