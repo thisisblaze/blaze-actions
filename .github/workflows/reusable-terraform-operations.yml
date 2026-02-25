@@ -298,6 +298,19 @@ jobs:
               -backend-config="bucket=${BUCKET}" \
               -backend-config="prefix=${STATE_KEY}" 2>&1 | tee "$INIT_LOG"
             INIT_EXIT_CODE=${PIPESTATUS[0]}
+          elif [[ "$CLOUD_PROVIDER" == "azure" ]]; then
+            # Azure azurerm backend: BUCKET format = {resource_group}/{storage_account}/{container}
+            AZURE_RG=$(echo "$BUCKET" | cut -d'/' -f1)
+            AZURE_SA=$(echo "$BUCKET" | cut -d'/' -f2)
+            AZURE_CONTAINER=$(echo "$BUCKET" | cut -d'/' -f3)
+            echo "☁️  Azure Backend: rg=$AZURE_RG, sa=$AZURE_SA, container=$AZURE_CONTAINER, key=$STATE_KEY"
+            terraform init \
+              -upgrade \
+              -backend-config="resource_group_name=${AZURE_RG}" \
+              -backend-config="storage_account_name=${AZURE_SA}" \
+              -backend-config="container_name=${AZURE_CONTAINER}" \
+              -backend-config="key=${STATE_KEY}" 2>&1 | tee "$INIT_LOG"
+            INIT_EXIT_CODE=${PIPESTATUS[0]}
           else
             # AWS S3 Backend
             echo "☁️  AWS Backend: bucket=$BUCKET, key=$STATE_KEY"
