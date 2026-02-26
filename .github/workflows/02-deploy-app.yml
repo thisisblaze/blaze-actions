@@ -206,7 +206,6 @@ on:
       BLAZE_CLIENT_HEADER:
         required: false
 
-
       # Azure
       AZURE_CLIENT_ID:
         required: false
@@ -323,13 +322,32 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
+      - name: Decode Azure Credentials
+        if: inputs.cloud_provider == 'azure'
+        run: |
+          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
+            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+            echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+            echo "AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+            echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+            echo "::add-mask::$CLIENT_ID"
+            echo "::add-mask::$TENANT_ID"
+            echo "::add-mask::$SUBSCRIPTION_ID"
+          else
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Calculate Configuration
         id: config
@@ -424,13 +442,32 @@ jobs:
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
 
+      - name: Decode Azure Credentials
+        if: inputs.cloud_provider == 'azure'
+        run: |
+          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
+            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+            echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+            echo "AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+            echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+            echo "::add-mask::$CLIENT_ID"
+            echo "::add-mask::$TENANT_ID"
+            echo "::add-mask::$SUBSCRIPTION_ID"
+          else
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Check Azure Infrastructure
         if: inputs.cloud_provider == 'azure'
