@@ -108,6 +108,9 @@ outputs:
   azure_acr_name:
     description: "Computed Azure Container Registry name (no dashes, max 24 chars)"
     value: ${{ steps.config.outputs.azure_acr_name }}
+  cluster_name:
+    description: "ECS Cluster Name"
+    value: ${{ steps.config.outputs.cluster_name }}
 
 runs:
   using: "composite"
