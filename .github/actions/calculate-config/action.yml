@@ -105,6 +105,9 @@ outputs:
   gcp_docker_repo:
     description: "GCP Artifact Registry repository name for Docker images (accounts for multi-site TF naming)"
     value: ${{ steps.config.outputs.gcp_docker_repo }}
+  azure_acr_name:
+    description: "Computed Azure Container Registry name (no dashes, max 24 chars)"
+    value: ${{ steps.config.outputs.azure_acr_name }}
 
 runs:
   using: "composite"
@@ -462,3 +465,13 @@ runs:
         fi
         echo "gcp_docker_repo=$GCP_DOCKER_REPO" >> $GITHUB_OUTPUT
         echo "🐳 GCP Docker Repo: $GCP_DOCKER_REPO"
+
+        # ── Azure Container Registry Name ──
+        if [[ "$CLOUD_PROVIDER" == "azure" ]]; then
+          RAW_ACR="${NAMESPACE}${CLIENT_KEY}${PROJECT_KEY}${STAGE_KEY}"
+          AZURE_ACR_NAME=$(echo "$RAW_ACR" | tr -d '-' | cut -c 1-24)
+        else
+          AZURE_ACR_NAME=""
+        fi
+        echo "azure_acr_name=$AZURE_ACR_NAME" >> $GITHUB_OUTPUT
+        echo "🐳 Azure ACR Name: $AZURE_ACR_NAME"
