@@ -99,6 +99,12 @@ on:
         required: false
       BLAZE_CLIENT_HEADER:
         required: false
+      DEPLOY_KEY:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
       # Azure Fallback Secrets
       AZURE_CLIENT_ID:
         required: false
