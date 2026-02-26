@@ -1,48 +1,23 @@
-# 🧊 Handoff State: 2026-02-25
-
-## Next AI Agent Prompt
-
-**Goal**: The End-of-Month Audit Sweep is complete (including /checkengines, DEV vs PROD vs STAGE drift analysis, and Phase 1 Azure remediation). Begin the next sprint objectives.
-**Context**:
-
-- Azure `dev-app` and `prod-app` stacks conform to standardized remote state mapping (`local.network`, `local.data`).
-- GCP `multi-site` workflows and CDN deployment paths successfully stress tested.
-
-## Modified Files
-
-- .github/azure/infra/live/dev-app/main.tf (mapping cleaned)
-- .github/azure/infra/live/prod-app/main.tf (duplicate output removed)
-- CHANGELOG.md (Azure mapping entries)
-
-## Checkpoints
-
-- [x] All 10 checkengines passed or mitigated.
-- [x] Azure DEV mapping parity synced to PROD.
-- [x] /allstop complete across all 3 repos.
-
----
-
 # Session Handoff State
 
-**Date/Time**: 2026-02-25T20:18:26Z
+**Date/Time**: 2026-02-26T09:00:56Z
 
 ## 1. The Exact Objective
 
-The immediate goal was successfully achieved: fixing the `startup_failure` schema errors in the Azure stress-test validation pipeline caused by missing `domain_root` parameters across upstream reusable workflows (`blaze-actions`).
+Monitor the `full-circle` stress tests executing on `dev` for both `aws` (stage) and `azure` (dev) to verify our automation fixes worked, and assist the user with their new AWS-focused tasks.
 
 ## 2. Current Progress & Modified Files
 
-- `blaze-actions/.github/workflows/stress-test-azure.yml`: Completely fixed and committed to `dev`.
-- `blaze-actions/CHANGELOG.md`: Updated to reflect the stress test parameter fixes.
-- Governance Sync `/allstop`: Fully executed, verified, and pushed across all 3 repositories.
+All modifications from this session have been pushed to `origin/dev`:
+- `blaze-template-deploy/.github/scripts/import-existing-resources.sh`: Fixed logic to use `STACK_DIR` instead of `TF_VAR_` variables for precise cloud provider inference (fixing the AWS stage network pipeline that incorrectly hit the Azure Front Door DNS import block).
+- `blaze-actions/.github/workflows/stress-test-azure.yml`: Removed faulty `always()` wrappers from initialization teardown conditions unblocking the `Destroy App` phase, and injected the missing Cloudflare and MongoDB secrets into the Azure reusable terraform operation calls. 
 
 ## 3. Important Context
 
-- The `startup_failure` lock on Azure stress tests natively triggered because GitHub Actions compilers enforce `required: true` arguments across external reusable workflow dependencies.
-- Next sessions do not need to debug Azure test failures; the pipeline successfully evaluates its AST graph.
-- The user instructed "use gh cli only" for checking CI workflows rather than manually curling/scraping the UI endpoints. Avoid raw text extraction from GitHub API HTML views.
+- The Azure conditional sequence (App -> Data -> MongoDB -> Network) should natively honor success/skip status to destroy properly.
+- The User is currently working on AWS tasks on another machine. Next session should prepare to synchronize with that effort. 
 
 ## 4. The Immediate Next Steps
 
-1. Resume standard development or tackle the next roadmap objective.
-2. The Azure STAGE pipeline remains healthy and `blaze-actions` is unblocked.
+1. Check the results of the recently triggered Azure and AWS GitHub Actions stress tests.
+2. Synchronize with the user's progress on their other machine regarding the new AWS tasks.
