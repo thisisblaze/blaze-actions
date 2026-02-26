@@ -186,9 +186,7 @@ jobs:
 
       - name: Create .npmrc
         if: ${{ env.NPM_TOKEN_VAL != '' }}
-        run: |
-          echo "@blaze-cms:registry=https://npm.pkg.github.com/" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN_VAL }}" >> .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
 
       - name: Build and Push (amd64)
         id: build
@@ -294,9 +292,7 @@ jobs:
 
       - name: Create .npmrc
         if: ${{ env.NPM_TOKEN_VAL != '' }}
-        run: |
-          echo "@blaze-cms:registry=https://npm.pkg.github.com/" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN_VAL }}" >> .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
 
       - name: Build and Push (arm64)
         id: build
