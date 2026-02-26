@@ -411,7 +411,7 @@ jobs:
   provision-data:
     name: 💾 Prov Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-network]
-    if: needs.provision-network.result == 'success'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "apply"
@@ -443,7 +443,7 @@ jobs:
   provision-app:
     name: 🏗️ Prov App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-data]
-    if: needs.provision-data.result == 'success'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-data.result == 'success'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "apply"
@@ -476,7 +476,7 @@ jobs:
   deploy-frontend:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
-    if: needs.provision-app.result == 'success'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-app.result == 'success'
     uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
     with:
       environment: ${{ inputs.environment }}
@@ -499,7 +499,7 @@ jobs:
   verify:
     name: ✅ Verify Infrastructure & App
     needs: [setup, config, deploy-frontend]
-    if: needs.deploy-frontend.result == 'success'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.deploy-frontend.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Verify Endpoints
