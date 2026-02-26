@@ -194,8 +194,11 @@ jobs:
             echo "✅ Received valid JSON. Parsing additional Terraform variables..."
             echo "$TF_VARS_JSON" | jq .
             
-            # Parse JSON and export as environment variables
-            echo "$TF_VARS_JSON" | jq -r 'to_entries[] | "export \(.key)=\"\(.value)\""' > /tmp/tf_vars.sh
+            # Parse JSON and export to GITHUB_ENV robustly using heredoc syntax
+            echo "$TF_VARS_JSON" | jq -r 'to_entries[] | "\(.key)<<EOF_TF_VARS\n\(.value)\nEOF_TF_VARS"' >> "$GITHUB_ENV"
+            
+            # Also export variables for the current step shell context safely
+            echo "$TF_VARS_JSON" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"' > /tmp/tf_vars.sh
             
             # DEBUG: Show generated script
             echo "✅ Generated environment script:"
@@ -203,10 +206,6 @@ jobs:
             
             chmod +x /tmp/tf_vars.sh
             source /tmp/tf_vars.sh
-            
-            # Export variables to GITHUB_ENV robustly
-            # Convert 'export KEY="VAL"' -> 'KEY="VAL"' and append to GITHUB_ENV
-            sed 's/^export //g' /tmp/tf_vars.sh >> "$GITHUB_ENV"
             
             echo "✅ Additional variables from JSON have been exported to GITHUB_ENV"
           else
