@@ -672,8 +672,8 @@ jobs:
               SERVICE_NAME=${SERVICE_ARN##*/}
               DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
                 --region "$REGION" \
-                --query 'services[0].[desiredCount,runningCount,status,length(deployments)]' \
-                --output text)
+                --query 'services[0].[desiredCount || `0`, runningCount || `0`, status || `MISSING`, length(deployments || `[]`)]' \
+                --output text || echo "0 0 MISSING 0")
               DESIRED=$(echo "$DETAILS" | awk '{print $1}')
               RUNNING=$(echo "$DETAILS" | awk '{print $2}')
               STATUS=$(echo "$DETAILS" | awk '{print $3}')
