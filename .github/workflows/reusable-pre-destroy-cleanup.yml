@@ -422,12 +422,12 @@ jobs:
               echo "🧹 Cleanup CodeDeploy Applications for Stage: $STAGE_KEY in $REGION"
 
               # Find all apps ending with "-${STAGE_KEY}-app" or contains it
-              APPS=$(aws codedeploy list-applications --region "$REGION" --query "applications[?contains(@, '-${STAGE_KEY}-app')]" --output text)
+              APPS=$(aws deploy list-applications --region "$REGION" --query "applications[?contains(@, '-${STAGE_KEY}-app')]" --output text)
 
               if [[ -n "$APPS" && "$APPS" != "None" ]]; then
                  for APP in $APPS; do
                     echo "      🗑️ Deleting CodeDeploy App: $APP"
-                    aws codedeploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
+                    aws deploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
                  done
               else
                  echo "      ✅ No CodeDeploy Apps found"
