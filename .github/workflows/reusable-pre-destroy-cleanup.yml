@@ -556,7 +556,7 @@ jobs:
                  echo "   🎯 Stage filter enabled: $STAGE_FILTER"
               fi
 
-              SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null || echo "")
+              SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null | tr '\t' '\n' || echo "")
 
               if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
                  echo "✅ No active services found"
@@ -566,14 +566,14 @@ jobs:
               fi
 
               if [[ -n "$STAGE_FILTER" ]]; then
-                 SERVICES_FILTERED=$(echo "$SERVICES" | tr '\t' '\n' | grep -F "-${STAGE_FILTER}-" || echo "")
+                 SERVICES_FILTERED=$(echo "$SERVICES" | grep -F "-${STAGE_FILTER}-" || echo "")
                  if [[ -z "$SERVICES_FILTERED" ]]; then
                    echo "✅ No services matched stage_filter"
                    echo "status=no_services" >> "$GITHUB_OUTPUT"
                    echo "services=" >> "$GITHUB_OUTPUT"
                    exit 0
                  fi
-                 SERVICES=$(echo "$SERVICES_FILTERED" | tr '\n' '\t')
+                 SERVICES="$SERVICES_FILTERED"
               fi
 
               DELETED_SERVICES=""
