@@ -40,6 +40,9 @@ logs/
 *.tmp
 *.temp
 scratch/
+*job_log*
+*_log.txt
+*log*.txt
 
 # dotenv
 .env
