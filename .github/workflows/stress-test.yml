@@ -1055,7 +1055,7 @@ jobs:
   # 7. FINAL DESTROY (full-circle mode only)
   # --------------------------------------------------------------------------------
   cleanup-services-final:
-    if: always() && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
     needs:
       - config
       - deployment-summary
