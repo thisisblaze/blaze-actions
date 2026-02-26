@@ -634,6 +634,7 @@ jobs:
       context: .
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{2}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
+      platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
