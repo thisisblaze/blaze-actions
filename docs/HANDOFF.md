@@ -1,23 +1,25 @@
 # Session Handoff State
 
-**Date/Time**: 2026-02-26T09:00:56Z
+**Date/Time**: 2026-02-26T16:30:00Z
 
 ## 1. The Exact Objective
 
-Monitor the `full-circle` stress tests executing on `dev` for both `aws` (stage) and `azure` (dev) to verify our automation fixes worked, and assist the user with their new AWS-focused tasks.
+Shift focus entirely to AWS tasks. We are explicitly splitting AWS from Azure and pausing all Azure work for today. The sole focus is configuring and continuing the infrastructure and automation setup for AWS.
 
 ## 2. Current Progress & Modified Files
 
-All modifications from this session have been pushed to `origin/dev`:
-- `blaze-template-deploy/.github/scripts/import-existing-resources.sh`: Fixed logic to use `STACK_DIR` instead of `TF_VAR_` variables for precise cloud provider inference (fixing the AWS stage network pipeline that incorrectly hit the Azure Front Door DNS import block).
-- `blaze-actions/.github/workflows/stress-test-azure.yml`: Removed faulty `always()` wrappers from initialization teardown conditions unblocking the `Destroy App` phase, and injected the missing Cloudflare and MongoDB secrets into the Azure reusable terraform operation calls. 
+- Previously monitored `full-circle` stress tests on `dev` for both `aws` (stage) and `azure` (dev).
+- Azure showed Docker build errors, but those are suspended for now. 
+- AWS stress test failed early on an AWS credentials/OIDC trust issue within GitHub Actions.
 
 ## 3. Important Context
 
-- The Azure conditional sequence (App -> Data -> MongoDB -> Network) should natively honor success/skip status to destroy properly.
-- The User is currently working on AWS tasks on another machine. Next session should prepare to synchronize with that effort. 
+- **AWS ONLY Mode**: Do not engage in Azure tasks today. Focus 100% on the single AWS hosting environment.
+- **AWS CLI Conventions**: When interacting with AWS infrastructure from the terminal, you **MUST** use the AWS CLI with the profile `YOUR_AWS_PROFILE` (e.g., using `--profile YOUR_AWS_PROFILE` or exporting `AWS_PROFILE=YOUR_AWS_PROFILE`).
+- **GitHub CLI Conventions**: Use the `gh` CLI strictly for querying runs, triggers, and logs.
 
 ## 4. The Immediate Next Steps
 
-1. Check the results of the recently triggered Azure and AWS GitHub Actions stress tests.
-2. Synchronize with the user's progress on their other machine regarding the new AWS tasks.
+1. Continue with the AWS hosting setup on the current machine.
+2. Resolve the AWS credentials/OIDC failure blocking the AWS workflows. Use `AWS_PROFILE=YOUR_AWS_PROFILE` to inspect AWS IAM OIDC roles if necessary.
+3. Proceed with the planned AWS-specific deployments and tasks.
