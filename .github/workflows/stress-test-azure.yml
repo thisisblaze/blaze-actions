@@ -264,6 +264,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -295,6 +296,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -326,6 +328,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -357,6 +360,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -389,6 +393,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -420,6 +425,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -451,6 +457,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -518,6 +525,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -549,6 +557,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -580,6 +589,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
@@ -611,6 +621,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       cloud_platform: "azure"
       domain_root: ${{ needs.config.outputs.domain_root }}
+      terraform_vars: '{"TF_VAR_azure_region": "${{ needs.config.outputs.cloud_region }}"}'
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
