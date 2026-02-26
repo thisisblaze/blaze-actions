@@ -274,7 +274,7 @@ jobs:
   destroy-data:
     name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state, destroy-app]
-    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "destroy"
@@ -298,7 +298,7 @@ jobs:
   destroy-mongodb:
     name: 💥 Destroy MongoDB
     needs: [setup, config, check-state, destroy-data]
-    if: always() && inputs.mode != 'quick-test' && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
+    if: inputs.mode != 'quick-test' && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "destroy"
@@ -322,7 +322,7 @@ jobs:
   destroy-network:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state, destroy-mongodb, destroy-data]
-    if: always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped' || needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
+    if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped' || needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "destroy"
