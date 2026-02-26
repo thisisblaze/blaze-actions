@@ -224,40 +224,41 @@ jobs:
               REGION="${{ inputs.aws_region }}"
 
               # Pattern used in core modules: ${project_key}-${stage}.local
-              NAMESPACE_NAME="${PROJECT_KEY}-${STAGE_KEY}.local"
+              echo "🔎 Searching for Service Discovery Namespaces related to stage: $STAGE_KEY in $REGION..."
 
-              echo "🔎 Searching for Service Discovery Namespace: $NAMESPACE_NAME in $REGION..."
+              NAMESPACE_IDS=$(aws servicediscovery list-namespaces --region "$REGION" \
+                  --query "Namespaces[?contains(Name, '${STAGE_KEY}.local') || Id=='ns-cx52mhhntqenlnjw'].Id" --output text)
 
-              NAMESPACE_ID=$(aws servicediscovery list-namespaces --region "$REGION" \
-                  --query "Namespaces[?Name=='$NAMESPACE_NAME'].Id" --output text)
-
-              if [[ -z "$NAMESPACE_ID" || "$NAMESPACE_ID" == "None" ]]; then
-                  echo "✅ Namespace '$NAMESPACE_NAME' not found."
+              if [[ -z "$NAMESPACE_IDS" || "$NAMESPACE_IDS" == "None" ]]; then
+                  echo "✅ No relevant Namespaces found."
               else
-                  echo "🎯 Found Namespace ID: $NAMESPACE_ID"
-                  echo "📋 Listing services..."
-                  SERVICE_IDS=$(aws servicediscovery list-services --filters "Name=NAMESPACE_ID,Values=$NAMESPACE_ID" --region "$REGION" --query "Services[].Id" --output text)
-                  
-                  if [[ -n "$SERVICE_IDS" && "$SERVICE_IDS" != "None" ]]; then
-                      for SERVICE_ID in $SERVICE_IDS; do
-                          echo "   Processing Service: $SERVICE_ID"
-                          # Deregister Instances
-                          INSTANCE_IDS=$(aws servicediscovery list-instances --service-id "$SERVICE_ID" --region "$REGION" --query "Instances[].Id" --output text)
-                          if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
-                              for INSTANCE_ID in $INSTANCE_IDS; do
-                                  echo "      🔪 Deregistering instance: $INSTANCE_ID"
-                                  aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
-                              done
-                          fi
+                  for NAMESPACE_ID in $NAMESPACE_IDS; do
+                      if [[ -n "$NAMESPACE_ID" && "$NAMESPACE_ID" != "None" ]]; then
+                          echo "🎯 Processing Namespace ID: $NAMESPACE_ID"
+                          echo "📋 Listing services..."
+                          SERVICE_IDS=$(aws servicediscovery list-services --filters "Name=NAMESPACE_ID,Values=$NAMESPACE_ID" --region "$REGION" --query "Services[].Id" --output text)
                           
-                          # Delete Service
-                          echo "   🗑️ Deleting Service: $SERVICE_ID"
-                          aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
-                      done
-                  else
-                      echo "   ℹ️  No services found."
-                  fi
-                  # We leave the namespace deletion to Terraform usually, but ensuring it's empty is the key.
+                          if [[ -n "$SERVICE_IDS" && "$SERVICE_IDS" != "None" ]]; then
+                              for SERVICE_ID in $SERVICE_IDS; do
+                                  echo "   Processing Service: $SERVICE_ID"
+                                  # Deregister Instances
+                                  INSTANCE_IDS=$(aws servicediscovery list-instances --service-id "$SERVICE_ID" --region "$REGION" --query "Instances[].Id" --output text)
+                                  if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
+                                      for INSTANCE_ID in $INSTANCE_IDS; do
+                                          echo "      🔪 Deregistering instance: $INSTANCE_ID"
+                                          aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
+                                      done
+                                  fi
+                                  
+                                  # Delete Service
+                                  echo "   🗑️ Deleting Service: $SERVICE_ID"
+                                  aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
+                              done
+                          else
+                              echo "   ℹ️  No services found in namespace $NAMESPACE_ID."
+                          fi
+                      fi
+                  done
               fi
 
          - name: Cleanup Zombie Resources (OAC/IAM)
