@@ -656,13 +656,39 @@ jobs:
             # This correctly handles Fargate tasks that bind to IPv6 localhost — ALB TG
             # health check uses IPv4 and may timeout, but ECS container nc check uses 127.0.0.1.
             SERVICE_NAMES=$(echo "$SERVICES" | xargs -I{} sh -c 'echo "${1##*/}"' -- {})
-            echo "Waiting for services: $SERVICE_NAMES"
-            aws ecs wait services-stable \
-              --cluster "$CLUSTER" \
-              --services $SERVICES \
-              --region "$REGION" || {
-              echo "⚠️ services-stable wait timed out — checking status manually..."
-            }
+            echo "Waiting for services: $SERVICE_NAMES" >&2
+            
+            TIMEOUT=300
+            ELAPSED=0
+            STABLE=false
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+              STABLE=true
+              for SERVICE_ARN in $SERVICES; do
+                DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
+                  --region "$REGION" \
+                  --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end)] | join(" ") else "0 0 MISSING 0" end' || echo "0 0 MISSING 0")
+                RUNNING=$(echo "$DETAILS" | awk '{print $2}')
+                STATUS=$(echo "$DETAILS" | awk '{print $3}')
+                DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
+                if [ "${RUNNING:-0}" -lt 1 ] || [ "$STATUS" != "ACTIVE" ] || [ "${DEPLOYMENTS:-2}" -gt 1 ]; then
+                  STABLE=false
+                  break
+                fi
+              done
+              
+              if [ "$STABLE" = "true" ]; then
+                echo "✅ All services reached stable state." >&2
+                break
+              fi
+              
+              echo "⏳ Still waiting for services to stabilize ($ELAPSED / $TIMEOUT seconds)..." >&2
+              sleep 15
+              ELAPSED=$((ELAPSED + 15))
+            done
+            
+            if [ "$STABLE" = "false" ]; then
+              echo "⚠️ Wait timed out — checking final status..." >&2
+            fi
 
             echo "| Service | Desired | Running | Deployments | Status |"
             echo "|---------|---------|---------|-------------|--------|"
