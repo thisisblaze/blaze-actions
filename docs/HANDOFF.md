@@ -1,41 +1,23 @@
 # Session Handoff State
 
-**Date/Time**: 2026-02-27T16:00:00Z
+**Date/Time**: 2026-02-27T19:17:14Z
 
 ## 1. The Exact Objective
 
-Finish re-architecting the AWS Dev Environment. We have successfully re-designated the old `dev` to `dev-mini` (Cloudflare Tunnels only) and created a new `dev` environments mimicking `stage` and `prod` complete with ALB, CloudFront, WAF, and Image Resize. The next overarching goal is to deploy these changes, run stress tests (`stress-test.yml`), and ensure they successfully build.
+Update GitHub Action workflows to natively support `dev-mini` and `MULTI-SITE` environment choices, particularly validating that Terraform state backends generate correctly without colliding, and ensuring future tests run natively from the `blaze-actions` repository to avoid token inheritance issues.
 
 ## 2. Current Progress & Modified Files
 
-- **`blaze-actions`**:
-  - Replicated `dev-app` and `dev-network` to `dev-mini-*`.
-  - Updated `main.tf` and `variables.tf` in `dev-*` to have parity with `stage`.
-  - Updated `main.tf` and `variables.tf` in `dev-mini-*` to have isolated states and feature toggles.
-  - Updated `.github/workflows/01-provision-infra.yml`, `02-deploy-app.yml`, and `stress-test.yml` to support `DEV-MINI` as a valid input.
-  - Allowed Image Resize verifications to run on `DEV`.
-  - Created new GitHub environment named `DEV-MINI` and copied secrets via `gh api`.
-  - Updated Agent workflows and checklist to reflect `DEV`/`DEV-MINI` parity.
-  - **All code is committed.**
-  
-- **`blaze-terraform-infra-core`**:
-  - Updated README.md files for `environment-app` and `environment-network` modules to highlight `dev-mini` explicitly.
-  - **All code is committed.**
-
-- **`blaze-template-deploy`**:
-  - Updated `docs/architecture/SYSTEM_OVERVIEW.md` and `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` to reflect `dev-mini` existence.
-  - Updated Google NotebookLM prompts and Infographic Prompts to accurately map `dev-mini` instead of `dev`.
-  - **All code is committed.**
+- `/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows/00_setup_environment.yml`: Added `dev-mini` and `MULTI-SITE` to the `environment` input choices. (Committed & pushed to `dev`).
+- `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.github/workflows/00_setup_environment.yml`: Added `dev-mini` and `MULTI-SITE` to the `environment` input choices to match the reusable action. (Committed & pushed to `dev`).
 
 ## 3. Important Context
 
-- The new target named `DEV-MINI` leverages Cloudflare tunnels rather than an ALB or CloudFront.
-- The new target named `DEV` mirrors `STAGE` and features an ALB, CloudFront, WAF, and Image Resizing capabilities.
-- Cloudflare API and AWS secrets successfully propagated into the new `DEV-MINI` GitHub repository environment.
-- All code files mentioned in the Phase 1, Phase 2, and Document update plans have been processed.
+- **AWS Credentials Issue**: Earlier `stress-test.yml` runs failed when executed from `blaze-template-deploy` (wrapper repo) because it failed to seamlessly pass the `AWS_ROLE_ARN` across standard action steps. Tests should be triggered natively inside `thisisblaze/blaze-actions` if testing core workflows without wrapper dependencies, OR we must ensure wrapper dependencies are passing secrets natively using `secrets: inherit`.
+- **MULTI-SITE Behavior**: `MULTI-SITE` isn't a standard environment like `stage` or `prod`. It provisions its own global state bucket/lock table dynamically (`[client_key]-multi-site-[namespace]-tfstate`) so it does not collide with individual environment states.
+- The user's AWS CLI uses `--profile b9-blaze-dev-byte9admin`.
 
 ## 4. The Immediate Next Steps
 
-1. Push all the committed changes on `dev` branch to the remote repository.
-2. Manually trigger or configure `01-provision-infra.yml` and `02-deploy-app.yml` on the pipeline for both `DEV` and `DEV-MINI` to verify resources build correctly.
-3. Validate operations via `stress-test.yml`.
+1. Verify if `dev-mini` and `MULTI-SITE` options need to be added to `01-provision-infra.yml`, `02-deploy-app.yml`, and `stress-test.yml` dropdowns.
+2. Trigger the `00_setup_environment.yml` workflow natively from `blaze-actions` targeting `MULTI-SITE` to verify the state buckets generation securely without failure.
