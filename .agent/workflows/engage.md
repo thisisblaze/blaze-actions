@@ -57,6 +57,17 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 | `stage` | `blaze-template-deploy/.github/aws/infra/live/stage-network/` | `thebyte9/blaze-template-deploy` |
 | `prod` | `blaze-template-deploy/.github/aws/infra/live/prod-network/` | `thebyte9/blaze-template-deploy` |
 
+### Future Ephemeral CIDR Allocation
+
+| Env | VPC Range | Notes |
+|-----|-----------|-------|
+| `dev` | `10.0.0.0/16` | Primary, always-on |
+| `stage` | `10.1.0.0/16` | Always-on |
+| `prod` | `10.2.0.0/16` | Always-on |
+| `multi-site` | `10.3.0.0/16` | Permanent (nukes OK) — owns this range |
+| `dev-mini` | `10.4.0.0/16` | Ephemeral, spin up/down |
+| Future ephemeral | `10.5.0.0/16`, `10.6.0.0/16` ... | |
+
 ---
 
 ## Steps
