@@ -50,7 +50,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.49.0-fix2"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.49.0-fix3"
 
   providers = {
     aws           = aws
