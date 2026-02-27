@@ -76,9 +76,9 @@ module "environment_network" {
   aws_region             = var.aws_region
 
   # Stage-Specific CIDR (Preserved from original)
-  vpc_cidr              = "10.1.0.0/16"
-  private_subnets_cidrs = ["10.1.1.0/24", "10.1.2.0/24"]
-  public_subnets_cidrs  = ["10.1.101.0/24", "10.1.102.0/24"]
+  vpc_cidr              = "10.2.0.0/16"
+  private_subnets_cidrs = ["10.2.1.0/24", "10.2.2.0/24"]
+  public_subnets_cidrs  = ["10.2.101.0/24", "10.2.102.0/24"]
   # Stage: Use NAT Gateway (Standard) - Fixed connectivity issue
   nat_strategy            = "GATEWAY"
   container_insights_mode = "enabled"
@@ -255,7 +255,7 @@ module "ec2_capacity_provider" {
   cluster_name    = module.environment_network.cluster_name
   vpc_id          = module.environment_network.vpc_id
   subnet_ids      = module.environment_network.app_subnets
-  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.1.0.0/16")]
+  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.2.0.0/16")]
 
   # Instance config
   instance_types   = var.ec2_instance_types

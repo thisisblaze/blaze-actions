@@ -36,10 +36,10 @@ module "environment_network" {
   namespace   = var.namespace
   aws_region  = var.aws_region
 
-  # ── 3-AZ CIDR — 10.3.x.x (non-colliding: dev=10.0, stage=10.1, prod=10.2)
-  vpc_cidr              = "10.3.0.0/16"
-  private_subnets_cidrs = ["10.3.1.0/24", "10.3.2.0/24", "10.3.3.0/24"]
-  public_subnets_cidrs  = ["10.3.101.0/24", "10.3.102.0/24", "10.3.103.0/24"]
+  # ── 3-AZ CIDR — 10.4.x.x (non-colliding: dev=10.0, dev-mini=10.1, stage=10.2, prod=10.3)
+  vpc_cidr              = "10.4.0.0/16"
+  private_subnets_cidrs = ["10.4.1.0/24", "10.4.2.0/24", "10.4.3.0/24"]
+  public_subnets_cidrs  = ["10.4.101.0/24", "10.4.102.0/24", "10.4.103.0/24"]
 
   # NAT Gateway: 1 in eu-west-1a for prod, none for dev/stage (cost saving)
   # Containers run in public subnets with assign_public_ip when no NAT
@@ -103,7 +103,7 @@ module "graviton_cp" {
   # Networking — private subnets (with NAT for prod, public for dev/stage)
   vpc_id          = module.environment_network.vpc_id
   subnet_ids      = module.environment_network.app_subnets
-  vpc_cidr_blocks = ["10.3.0.0/16"]
+  vpc_cidr_blocks = ["10.4.0.0/16"]
 
   # ARM64 Graviton instance types — mixed for Spot pool diversity
   cpu_architecture = "ARM64"
