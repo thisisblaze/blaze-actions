@@ -78,9 +78,9 @@ module "environment_network" {
   client_key              = var.client_key
   project_key             = var.project_key
   namespace               = var.namespace
-  vpc_cidr                = "10.2.0.0/16"
-  private_subnets_cidrs   = ["10.2.1.0/24", "10.2.2.0/24"]
-  public_subnets_cidrs    = ["10.2.101.0/24", "10.2.102.0/24"]
+  vpc_cidr                = "10.3.0.0/16"
+  private_subnets_cidrs   = ["10.3.1.0/24", "10.3.2.0/24"]
+  public_subnets_cidrs    = ["10.3.101.0/24", "10.3.102.0/24"]
   nat_strategy            = "GATEWAY"
   aws_region              = var.aws_region
   container_insights_mode = "enabled"
@@ -225,7 +225,7 @@ module "ec2_capacity_provider" {
   cluster_name    = module.environment_network.cluster_name
   vpc_id          = module.environment_network.vpc_id
   subnet_ids      = module.environment_network.public_subnets # EC2 in Public (Prod has no NAT)
-  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.2.0.0/16")]
+  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.3.0.0/16")]
 
   # Instance config (Prod Optimized)
   instance_types   = var.ec2_instance_types
