@@ -92,6 +92,9 @@ module "environment_network" {
   cloudflare_zone_id   = var.cloudflare_zone_id
   domain_root          = var.domain_root
 
+  # Enable Admin SPA via CloudFront + S3
+  enable_admin_cloudfront = true
+
   # Enable Beta URLs for initial testing
   is_beta = var.is_beta
 

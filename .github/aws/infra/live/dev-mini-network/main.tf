@@ -81,6 +81,9 @@ module "environment_network" {
   # ⚠️ DEV MODE: Disable ALB (Uses Cloudflare Tunnel)
   enable_alb = false
 
+  # Enable Admin SPA via CloudFront + S3
+  enable_admin_cloudfront = true
+
   # ⚠️ DEV MODE: Enable EFS (Persistent Storage)
   enable_efs = false
 
