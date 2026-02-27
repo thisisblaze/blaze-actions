@@ -1117,6 +1117,50 @@ jobs:
 
           echo "✅ Cache purged for $DOMAIN"
 
+  deploy-admin-aws:
+    name: Deploy Admin (AWS S3/CF)
+    needs: [configuration, build-admin, pre-flight-check]
+    # Run for Host Environments (Prod, Stage, Dev Host) on AWS
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: admin-build-assets
+          path: packages/admin/dist
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Deploy to S3 and Invalidate CloudFront
+        run: |
+          ADMIN_DOMAIN="${{ needs.configuration.outputs.stage_key == 'prod' && 'admin' || format('admin-{0}', needs.configuration.outputs.stage_key) }}.${{ needs.configuration.outputs.domain_root }}"
+          echo "Target Domain: $ADMIN_DOMAIN"
+
+          # Find Bucket
+          EXPECTED_BUCKET="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin-spa"
+          echo "Expected Bucket: $EXPECTED_BUCKET"
+
+          # Sync to S3
+          aws s3 sync packages/admin/dist "s3://$EXPECTED_BUCKET" --delete
+
+          # Find CloudFront Distribution ID by Alias
+          CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, '$ADMIN_DOMAIN')].Id | [0]" --output text)
+
+          if [[ "$CF_DIST_ID" != "None" && -n "$CF_DIST_ID" ]]; then
+            echo "Found CloudFront Distribution: $CF_DIST_ID"
+            aws cloudfront create-invalidation --distribution-id "$CF_DIST_ID" --paths "/*"
+            echo "✅ Invalidation triggered for $CF_DIST_ID"
+          else
+            echo "⚠️  CloudFront Distribution for $ADMIN_DOMAIN not found. Did you run the network stack first?"
+          fi
+
   summary:
     name: 📝 Deployment Summary
     needs:
@@ -1132,6 +1176,7 @@ jobs:
         deploy-admin-gcp,
         deploy-admin-azure,
         deploy-admin-pages,
+        deploy-admin-aws,
         deploy-tunnel,
         deploy-sites-multi-site-gcp,
       ]
@@ -1170,6 +1215,7 @@ jobs:
             echo "| **API (ECS)** | $(get_icon "${{ needs.deploy-api.result }}") | ECS Fargate |"
             echo "| **Frontend (ECS)** | $(get_icon "${{ needs.deploy-frontend.result }}") | ECS Fargate |"
             echo "| **Admin (ECS)** | $(get_icon "${{ needs.deploy-admin-ecs.result }}") | ECS Fargate |"
+            echo "| **Admin (AWS S3)** | $(get_icon "${{ needs.deploy-admin-aws.result }}") | S3 + CloudFront |"
             echo "| **Admin (Pages)** | $(get_icon "${{ needs.deploy-admin-pages.result }}") | Cloudflare Pages |"
             echo "| **Tunnel** | $(get_icon "${{ needs.deploy-tunnel.result }}") | Cloudflare Sidecar |"
             # GCP services
