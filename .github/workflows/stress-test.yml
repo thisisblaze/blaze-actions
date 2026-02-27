@@ -267,7 +267,8 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   check-tunnel-exists:
     name: "🔍 Check Tunnel State"
@@ -281,7 +282,8 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   check-network-exists:
     if: inputs.target_type == 'host'
@@ -296,7 +298,8 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   check-mongodb-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -311,7 +314,8 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   check-elastic-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -326,7 +330,8 @@ jobs:
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   # --------------------------------------------------------------------------------
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
@@ -1181,4 +1186,6 @@ jobs:
       cloud_platform: ${{ needs.config.outputs.platform }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-    secrets: inherit
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
