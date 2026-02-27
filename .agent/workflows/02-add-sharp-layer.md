@@ -10,7 +10,8 @@ description: Add Sharp Lambda Layer automation for CloudFront image resize funct
 >
 > - ✅ **STAGE**: Has CloudFront → Sharp Layer + Image Resize supported
 > - ✅ **PROD**: Has CloudFront → Sharp Layer + Image Resize supported
-> - ❌ **DEV**: Cloudflare only (no CloudFront) → No AWS image resize
+> - ❌ **DEV-MINI**: Cloudflare only (no CloudFront) → No AWS image resize
+> - ✅ **DEV**: Image resize supported
 
 ## Overview
 

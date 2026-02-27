@@ -10,7 +10,8 @@ description: Troubleshoot and fix CloudFront cache behaviors, dependency issues,
 >
 > - ✅ **STAGE**: CloudFront enabled
 > - ✅ **PROD**: CloudFront enabled
-> - ❌ **DEV**: Cloudflare only (no CloudFront)
+> - ❌ **DEV-MINI**: Cloudflare only (no CloudFront)
+> - ✅ **DEV**: CloudFront CDN (Parity with Stage/Prod)
 
 ## Quick Health Check
 
