@@ -666,11 +666,25 @@ jobs:
               for SERVICE_ARN in $SERVICES; do
                 DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
                   --region "$REGION" \
-                  --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end)] | join(" ") else "0 0 MISSING 0" end' || echo "0 0 MISSING 0")
+                  --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end), (if .deployments then (.deployments[]? | select(.status == "PRIMARY") | .rolloutState // "UNKNOWN") else "UNKNOWN" end)] | join(" ") else "0 0 MISSING 0 UNKNOWN" end' || echo "0 0 MISSING 0 UNKNOWN")
                 RUNNING=$(echo "$DETAILS" | awk '{print $2}')
                 STATUS=$(echo "$DETAILS" | awk '{print $3}')
                 DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
-                if [ "${RUNNING:-0}" -lt 1 ] || [ "$STATUS" != "ACTIVE" ] || [ "${DEPLOYMENTS:-2}" -gt 1 ]; then
+                ROLLOUT=$(echo "$DETAILS" | awk '{print $5}')
+                
+                # Check stability
+                if [ "${RUNNING:-0}" -lt 1 ] || [ "$STATUS" != "ACTIVE" ]; then
+                  STABLE=false
+                  break
+                fi
+                
+                # Natively handling Blue/Green / ECS Rolling updates
+                if [ "$ROLLOUT" != "UNKNOWN" ]; then
+                  if [ "$ROLLOUT" != "COMPLETED" ]; then
+                    STABLE=false
+                    break
+                  fi
+                elif [ "${DEPLOYMENTS:-2}" -gt 1 ]; then
                   STABLE=false
                   break
                 fi
@@ -698,17 +712,27 @@ jobs:
               SERVICE_NAME=${SERVICE_ARN##*/}
               DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
                 --region "$REGION" \
-                --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end)] | join(" ") else "0 0 MISSING 0" end' || echo "0 0 MISSING 0")
+                --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end), (if .deployments then (.deployments[]? | select(.status == "PRIMARY") | .rolloutState // "UNKNOWN") else "UNKNOWN" end)] | join(" ") else "0 0 MISSING 0 UNKNOWN" end' || echo "0 0 MISSING 0 UNKNOWN")
               DESIRED=$(echo "$DETAILS" | awk '{print $1}')
               RUNNING=$(echo "$DETAILS" | awk '{print $2}')
               STATUS=$(echo "$DETAILS" | awk '{print $3}')
               DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
+              ROLLOUT=$(echo "$DETAILS" | awk '{print $5}')
 
-              # Consider healthy if: running >= 1 AND status is ACTIVE AND only 1 active deployment
-              if [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ] && [ "${DEPLOYMENTS:-2}" -le 1 ]; then
-                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS | ✅ Stable |"
+              # Consider healthy if: running >= 1 AND status is ACTIVE AND rollout is COMPLETED (or deployments 1)
+              IS_STABLE=false
+              if [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ]; then
+                if [ "$ROLLOUT" != "UNKNOWN" ] && [ "$ROLLOUT" = "COMPLETED" ]; then
+                  IS_STABLE=true
+                elif [ "$ROLLOUT" = "UNKNOWN" ] && [ "${DEPLOYMENTS:-2}" -le 1 ]; then
+                  IS_STABLE=true
+                fi
+              fi
+
+              if [ "$IS_STABLE" = "true" ]; then
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS ($ROLLOUT) | ✅ Stable |"
               else
-                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS | ❌ Unstable |"
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS ($ROLLOUT) | ❌ Unstable |"
                 ALL_OK=false
               fi
             done
