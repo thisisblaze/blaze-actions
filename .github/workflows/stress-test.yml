@@ -69,7 +69,7 @@ on:
         required: true
         default: "DEV"
         type: choice
-        options: ["DEV", "DEV-MINI", "STAGE", "PROD"]
+        options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
 
       target_type:
         description: "What to test"
