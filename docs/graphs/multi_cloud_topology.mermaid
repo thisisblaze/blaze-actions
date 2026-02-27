@@ -1,60 +1,89 @@
+%% Blaze Multi-Cloud Topology — Updated 2026-02-27
+%% DEV-MINI: Cloudflare Tunnel only (Admin on Cloudflare Pages)
+%% DEV / STAGE / PROD: Full AWS stack (CloudFront + ALB + ECS, Admin on CloudFront+S3)
+
 graph TB
-    subgraph "Blaze Platform"
-        subgraph "GitHub Actions"
-            CI[CI/CD Pipeline]
-            CALC[calculate-config]
-            CI --> CALC
-        end
-
-        subgraph "AWS (Primary)"
-            direction TB
-            AWS_VPC[VPC]
-            AWS_ALB[ALB]
-            AWS_FARGATE[ECS Fargate]
-            AWS_EC2[ECS EC2]
-            AWS_REDIS[ElastiCache Redis]
-            AWS_S3[S3 State]
-            
-            CALC -->|Deploy| AWS_FARGATE
-            CALC -->|Deploy| AWS_EC2
-            AWS_ALB --> AWS_FARGATE
-            AWS_ALB --> AWS_EC2
-            AWS_FARGATE --> AWS_REDIS
-            AWS_EC2 --> AWS_REDIS
-        end
-
-        subgraph "GCP (Secondary)"
-            direction TB
-            GCP_VPC[VPC]
-            GCP_NAT[Cloud NAT]
-            GCP_RUN[Cloud Run]
-            GCP_MEM[Memorystore Redis]
-            GCP_SQL[Cloud SQL]
-            
-            CALC -->|Deploy| GCP_RUN
-            GCP_RUN --> GCP_MEM
-            GCP_RUN --> GCP_SQL
-        end
-
-        subgraph "Azure (Secondary)"
-            direction TB
-            AZ_VNET[VNet]
-            AZ_ACA[Container Apps]
-            AZ_REDIS[Azure Cache for Redis]
-            AZ_PG[PostgreSQL Flex]
-            
-            CALC -->|Deploy| AZ_ACA
-            AZ_ACA --> AZ_REDIS
-            AZ_ACA --> AZ_PG
-        end
+    subgraph GH["GitHub Actions (Hub)"]
+        CI["CI/CD Pipeline\n(blaze-actions)"]
+        CALC["calculate-config\n(env routing)"]
+        CI --> CALC
     end
 
-    classDef aws fill:#FF9900,stroke:#232F3E,color:white;
-    classDef gcp fill:#4285F4,stroke:#333333,color:white;
-    classDef azure fill:#0078D4,stroke:#333333,color:white;
-    classDef gh fill:#24292e,stroke:#333333,color:white;
+    subgraph DEVMINI["DEV-MINI (Tunnel-only)"]
+        CF_TUNNEL["Cloudflare Tunnel\n(cloudflared)"]
+        CF_ADMIN["Admin SPA\n(Cloudflare Pages)"]
+        ECS_MINI["ECS Fargate\nAPI + Frontend"]
+        CF_TUNNEL --> ECS_MINI
+    end
 
-    class AWS_VPC,AWS_ALB,AWS_FARGATE,AWS_EC2,AWS_REDIS,AWS_S3 aws;
-    class GCP_VPC,GCP_NAT,GCP_RUN,GCP_MEM,GCP_SQL gcp;
-    class AZ_VNET,AZ_ACA,AZ_REDIS,AZ_PG azure;
+    subgraph AWS["AWS — DEV / STAGE / PROD"]
+        direction TB
+        AWS_CF["CloudFront\n(app CDN)"]
+        AWS_ADMIN_CF["CloudFront + S3\n(admin-spa)"]
+        AWS_LE["Lambda@Edge\n(Image Resize)"]
+        AWS_WAF["AWS WAF v2"]
+        AWS_ALB["ALB\n(host routing)"]
+        AWS_FARGATE["ECS Fargate ARM64\n(DEV/STAGE)"]
+        AWS_EC2["ECS EC2 Graviton\n(PROD)"]
+        AWS_REDIS["ElastiCache Redis"]
+        AWS_S3_ASSETS["S3 Assets"]
+        AWS_S3_ADMIN["S3 admin-spa"]
+
+        AWS_CF --> AWS_WAF
+        AWS_CF -.->|"/convert/* miss"| AWS_LE
+        AWS_LE --> AWS_S3_ASSETS
+        AWS_WAF --> AWS_ALB
+        AWS_ALB -->|"API — Native ECS B/G"| AWS_FARGATE
+        AWS_ALB -->|"API — Native ECS B/G"| AWS_EC2
+        AWS_ALB -->|"Frontend — Rolling"| AWS_FARGATE
+        AWS_ADMIN_CF --> AWS_S3_ADMIN
+        AWS_FARGATE --> AWS_REDIS
+    end
+
+    subgraph GCP["GCP"]
+        GCP_RUN["Cloud Run v2"]
+        GCP_CDN["Cloud CDN"]
+        GCP_MEM["Memorystore Redis"]
+        GCP_CDN --> GCP_RUN
+        GCP_RUN --> GCP_MEM
+    end
+
+    subgraph Azure["Azure"]
+        AZ_ACA["Container Apps"]
+        AZ_CDN["Azure Front Door / CDN"]
+        AZ_REDIS["Azure Cache Redis"]
+        AZ_CDN --> AZ_ACA
+        AZ_ACA --> AZ_REDIS
+    end
+
+    subgraph SaaS["Shared SaaS"]
+        MONGO["MongoDB Atlas"]
+        ELASTIC["Elastic Cloud"]
+    end
+
+    %% CI deploys to each env
+    CALC -->|"tunnel deploy"| CF_TUNNEL
+    CALC -->|"Cloudflare Pages"| CF_ADMIN
+    CALC -->|"app deploy"| AWS_CF
+    CALC -->|"S3 sync + invalidate"| AWS_S3_ADMIN
+    CALC -->|deploy| GCP_RUN
+    CALC -->|deploy| AZ_ACA
+
+    %% SaaS connections
+    ECS_MINI --> MONGO
+    AWS_FARGATE --> MONGO
+    AWS_FARGATE --> ELASTIC
+
+    classDef aws fill:#FF9900,stroke:#232F3E,color:#000;
+    classDef gcp fill:#4285F4,stroke:#333,color:#fff;
+    classDef azure fill:#0078D4,stroke:#333,color:#fff;
+    classDef gh fill:#24292e,stroke:#333,color:#fff;
+    classDef devmini fill:#607D8B,stroke:#333,color:#fff;
+    classDef saas fill:#4CAF50,stroke:#333,color:#fff;
+
+    class AWS_CF,AWS_ADMIN_CF,AWS_LE,AWS_WAF,AWS_ALB,AWS_FARGATE,AWS_EC2,AWS_REDIS,AWS_S3_ASSETS,AWS_S3_ADMIN aws;
+    class GCP_RUN,GCP_CDN,GCP_MEM gcp;
+    class AZ_ACA,AZ_CDN,AZ_REDIS azure;
     class CI,CALC gh;
+    class CF_TUNNEL,CF_ADMIN,ECS_MINI devmini;
+    class MONGO,ELASTIC saas;

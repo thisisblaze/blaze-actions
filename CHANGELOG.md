@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.5.0] - 2026-02-27
+
+### Added
+
+- **DEV-MINI Environment**: New `DEV-MINI` GitHub environment created. Cloudflare Tunnel-only — no ALB, no CloudFront. Secrets propagated via `gh api`. `01-provision-infra.yml`, `02-deploy-app.yml`, and `stress-test.yml` all accept `DEV-MINI` as valid input.
+- **Admin SPA Deploy (AWS CloudFront + S3)**: `02-deploy-app.yml` now includes an admin build + S3 sync step followed by CloudFront invalidation for AWS `DEV`/`STAGE`/`PROD` environments. `DEV-MINI` continues to deploy Admin via Cloudflare Pages.
+- **Image Resize Verify on DEV**: `stress-test.yml` now runs image resize endpoint verification on the new `DEV` environment (mirrors STAGE).
+
+### Changed
+
+- **Native ECS Blue/Green (active)**: Removed all CodeDeploy references from deployment workflows. API service Blue/Green is now fully managed by ECS natively — no CodeDeploy application, deployment group, or `appspec.yml`. Strategy toggled via `enable_blue_green` (replaces `enable_codedeploy`).
+- **DEV mirrors STAGE**: New `dev` Terraform stacks (`dev-app`, `dev-network`) now have full parity with `stage` — ALB, CloudFront, WAF, Image Resize, ECS Fargate. The previous tunnel-only `dev` is now `dev-mini`.
+
+### Removed
+
+- **CodeDeploy**: All `aws deploy create-deployment`, `appspec.yml`, and CodeDeploy IAM role references removed from `02-deploy-app.yml`, `deploy-site.yml`, and `99-ops-utility.yml` nuke pre-cleanup.
+
+---
+
 ## [Unreleased] - 2026-02-25
 
 ### Added
@@ -18,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `build` job: Native `ubuntu-24.04-arm` runner — no QEMU, full Graviton build speed. Pushes to ECR with GHA layer caching scoped per `site_key`.
   - `deploy` job: Discovers ECS service by `site_key` suffix dynamically (no hardcoded prefix). Patches container image via `describe-task-definition` + `register-task-definition` + JQ — no task-def JSON files committed to the repo.
   - `rolling` strategy: `aws ecs update-service --force-new-deployment` + `ecs wait services-stable` (standard tier sites).
-  - `blue-green` strategy: CodeDeploy appspec built inline, `aws deploy create-deployment`, polls until Succeeded/Failed (premium tier sites).
+  - `blue-green` strategy: **Native ECS Blue/Green** — ECS manages the task set swap and traffic shift natively. No CodeDeploy required.
   - Full GitHub Step Summary on every run (build digest, service name, strategy, status).
 
 - **Token Frugality Overhaul**: Major refactor of `/engage`, `/allstop`, `/checkengines`, and `/slash-init-context` to implement targeted context loading and the "Prime Directive" of minimal token usage.

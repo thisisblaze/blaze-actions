@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-27
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-27
 
 ---
 
@@ -31,7 +31,7 @@ on:
       environment:
         required: true
         type: choice
-        options: ["dev", "stage", "prod"]
+        options: ["dev-mini", "dev", "stage", "prod"]
 
 jobs:
   deploy:
@@ -178,7 +178,50 @@ jobs:
 
 ---
 
-## ♻️ Mandatory Cleanup Workflow
+## Native ECS Blue/Green (AWS)
+
+Since 2026-02-27, the API service uses **Native ECS Blue/Green** — no CodeDeploy required.
+
+### How It Works
+
+ECS manages the task set swap and traffic shift natively:
+1. New task set created with updated image
+2. ECS shifts traffic from Blue → Green task set
+3. Old task set drained and terminated
+4. `ecs wait services-stable` confirms completion
+
+### Pipeline Usage
+
+```yaml
+jobs:
+  deploy:
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    with:
+      environment: prod
+      target_services: "api"  # Native B/G triggered automatically
+    secrets: inherit
+```
+
+> No `appspec.yml`, no CodeDeploy application, no deployment group needed.
+
+---
+
+## Admin SPA Deploy (AWS)
+
+For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to S3 and invalidates CloudFront.
+
+```yaml
+jobs:
+  deploy:
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    with:
+      environment: prod
+      target_services: "Blaze all"  # Includes admin SPA sync
+      cloud_provider: aws
+    secrets: inherit
+```
+
+> DEV-MINI: Admin continues to deploy to Cloudflare Pages — no S3 sync step runs.
 
 Before destroying any environment, you **MUST** run `reusable-pre-destroy-cleanup.yml`.
 
@@ -525,6 +568,6 @@ Set in `vars/blaze-env.json`:
 
 ---
 
-**Last Updated**: 2026-02-09  
+**Last Updated**: 2026-02-27  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
