@@ -780,7 +780,7 @@ jobs:
 
           # Step 1: Discover image-resize S3 bucket from CloudFront
           DIST_ID=$(aws cloudfront list-distributions \
-            --query "DistributionList.Items[?contains(Aliases.Items, '${CDN_DOMAIN}')].Id | [0]" \
+            --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, '${CDN_DOMAIN}')].Id | [0]" \
             --output text --region us-east-1)
 
           if [ -z "$DIST_ID" ] || [ "$DIST_ID" = "None" ]; then
