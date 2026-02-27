@@ -250,9 +250,9 @@ jobs:
                 TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               else
-                # Dev now uses split stack (like stage/prod)
-                TF_DIR="${INFRA_PREFIX}/dev-network"
-                STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+                # Dev and Dev-Mini now uses split stack (like stage/prod)
+                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
+                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               fi
               ;;
             "app" | "application-layer")
@@ -260,20 +260,20 @@ jobs:
                 TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
               else
-                # Dev now uses split stack (like stage/prod)
-                TF_DIR="${INFRA_PREFIX}/dev-app"
+                # Dev and Dev-Mini now uses split stack (like stage/prod)
+                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                 if [[ -n "$BRANCH_TAG" ]]; then
                   # Feature branches have their own app state
                   STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}.tfstate"
                 else
                   # Host app state
-                  STATE_KEY="infra/${PROJECT_KEY}/dev/app.tfstate"
+                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
                 fi
               fi
               ;;
             "feature-branch")
-              # Feature branches use dev-app directory but separate state
-              TF_DIR="${INFRA_PREFIX}/dev-app"
+              # Feature branches use stage-specific app directory but separate state
+              TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
               if [[ -z "$BRANCH_TAG" ]]; then
                   echo "❌ ERROR: Branch Tag is REQUIRED when targeting 'feature-branch' stack."
                   echo "   To target the Host Environment, use 'host-environment' or 'application-layer'."
@@ -281,7 +281,7 @@ jobs:
               fi
               
               STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}.tfstate"
-              CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-dev-${BRANCH_TAG}-cluster"
+              CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${BRANCH_TAG}-cluster"
               ;;
             "host-environment")
               if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
@@ -289,9 +289,9 @@ jobs:
                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               else
-                 # Dev now uses split stack - 'Host' means network layer
-                 TF_DIR="${INFRA_PREFIX}/dev-network"
-                 STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+                 # Dev and Dev-Mini now uses split stack - 'Host' means network layer
+                 TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
+                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
               fi
               ;;
             "multi-site-network")

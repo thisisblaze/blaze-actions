@@ -410,24 +410,24 @@ runs:
             fi
             
         else
-            # DEV (V2 Architecture)
+            # DEV & DEV-MINI (V2 Architecture with Feature Branches)
             if [[ "$STACK" == "network" ]]; then
-               TF_DIR="${INFRA_PREFIX}/dev-network"
-               STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
             elif [[ "$STACK" == "data" ]]; then
-               TF_DIR="${INFRA_PREFIX}/dev-data"
-               STATE_KEY="infra/${PROJECT_KEY}/dev/data.tfstate"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"
             elif [[ "$STACK" == "cdn" ]]; then
-               TF_DIR="${INFRA_PREFIX}/dev-cdn"
-               STATE_KEY="infra/${PROJECT_KEY}/dev/cdn.tfstate"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-cdn"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/cdn.tfstate"
             else
                # App stack
-               TF_DIR="${INFRA_PREFIX}/dev-app"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
                if [[ -n "${{ inputs.branch_name }}" ]]; then
                   STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
                else
                   # Host app state
-                  STATE_KEY="infra/${PROJECT_KEY}/dev/app.tfstate"
+                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
                fi
             fi
         fi
