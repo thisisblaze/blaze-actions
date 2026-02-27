@@ -121,7 +121,7 @@ resource "cloudflare_dns_record" "feature_branch_dns" {
 # APPLICATION MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.49.0-fix3"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.49.0-fix4"
 
   context     = null # Will be generated inside if null, or pass label module output if we want strictly consistent labeling
   client_key  = var.client_key
