@@ -64,9 +64,9 @@ module "environment_network" {
   aws_region  = var.aws_region
 
   # Dev-Specific CIDR (Preserved)
-  vpc_cidr              = "10.3.0.0/16"
-  private_subnets_cidrs = ["10.3.1.0/24", "10.3.2.0/24"]
-  public_subnets_cidrs  = ["10.3.101.0/24", "10.3.102.0/24"]
+  vpc_cidr              = "10.4.0.0/16"
+  private_subnets_cidrs = ["10.4.1.0/24", "10.4.2.0/24"]
+  public_subnets_cidrs  = ["10.4.101.0/24", "10.4.102.0/24"]
 
   # Cost Optimization: Use Public Subnets (No NAT Gateway)
   nat_strategy = "NONE"
