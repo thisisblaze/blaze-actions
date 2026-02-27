@@ -23,7 +23,7 @@
 
 **Inputs**:
 
-- `environment` (required): Target environment (DEV/STAGE/PROD)
+- `environment` (required): Target environment (DEV-MINI/DEV/STAGE/PROD)
 - `aws_region` (optional): AWS region (default: eu-west-1)
 
 **What it does**:
@@ -43,7 +43,7 @@
 
 **Inputs**:
 
-- `environment` (required): DEV/STAGE/PROD
+- `environment` (required): DEV-MINI/DEV/STAGE/PROD
 - `project` (optional): Project key (default: thisisblaze)
 - `cloud_provider` (required): aws|gcp|azure (default: aws)
 - `stack` (required): network|acm|tunnel|app|account-settings|third-party-mongodb|third-party-elastic
@@ -71,7 +71,7 @@
 
 **Inputs**:
 
-- `environment` (required): dev/stage/prod
+- `environment` (required): dev-mini/dev/stage/prod
 - `cloud_provider` (required): aws|gcp|azure (default: aws)
 - `target_services` (required): Service filter (e.g., "api", "Blaze all")
 - `branch_tag` (optional): Feature branch tag
@@ -107,7 +107,7 @@
 
 **Inputs**:
 
-- `environment` (required): dev/stage/prod
+- `environment` (required): dev-mini/dev/stage/prod
 - `target_type` (optional): host|feature-branch
 - `branch_tag` (optional): Feature branch tag
 - `mode` (required): Execution mode
