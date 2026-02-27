@@ -121,7 +121,7 @@ resource "cloudflare_dns_record" "feature_branch_dns" {
 # APPLICATION MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.49.0-fix2"
 
   context     = null # Will be generated inside if null, or pass label module output if we want strictly consistent labeling
   client_key  = var.client_key
@@ -130,6 +130,8 @@ module "app" {
   namespace   = var.namespace
   aws_region  = var.aws_region
   platform    = var.platform
+
+  enable_image_resize = false
 
   # Network Inputs
   cluster_id                     = try(data.terraform_remote_state.network.outputs.cluster_id, "")
