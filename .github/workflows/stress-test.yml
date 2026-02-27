@@ -769,7 +769,7 @@ jobs:
           echo "✅ All URLs reachable"
 
       - name: Verify Image Resize
-        if: inputs.environment == 'prod'
+        if: inputs.environment == 'prod' || inputs.environment == 'stage'
         run: |
           {
             echo "## 🖼️ Image Resize Verification"
