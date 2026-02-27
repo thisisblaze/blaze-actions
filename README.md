@@ -3,7 +3,7 @@
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.2.0--multi--cloud--foundation-green.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v1.5.0-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 > [!CAUTION]
 > ### 🚨 THIS REPO IS A WORKFLOW LIBRARY — NOT FOR DIRECT RUNS 🚨
@@ -228,11 +228,13 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 
 ### 🎯 What You Can Do
 
-- ✅ Deploy multi-environment infrastructure (DEV, STAGE, PROD)
+- ✅ Deploy multi-environment infrastructure (DEV-MINI / DEV / STAGE / PROD)
 - ✅ Multi-cloud support (AWS, GCP, Azure) via `cloud_provider` routing
-- ✅ Automated ECS deployments with circuit breakers
+- ✅ **Native ECS Blue/Green** API deployments (no CodeDeploy)
+- ✅ ECS Fargate + EC2 Hybrid (Graviton ARM64, bin-packing)
+- ✅ **Admin SPA deploy**: S3 sync + CloudFront invalidation for AWS DEV/STAGE/PROD
 - ✅ GCP Cloud Run and Azure Container Apps provisioning
-- ✅ Cloudflare Pages and Tunnels management
+- ✅ Cloudflare Pages (Admin on DEV-MINI) and Tunnels management
 - ✅ MongoDB Atlas and Elastic Cloud provisioning
 - ✅ Feature branch deployments for testing
 - ✅ Comprehensive health checks and monitoring
@@ -477,7 +479,7 @@ jobs:
 
 ## Versioning
 
-**Current Version**: `v1.2.0-multi-cloud-foundation`
+**Current Version**: `v1.5.0`
 
 Follow semantic versioning:
 
@@ -500,8 +502,11 @@ Follow semantic versioning:
 | Workflow               | Purpose                  | Inputs                                             |
 | :--------------------- | :----------------------- | :------------------------------------------------- |
 | **01-provision-infra** | Provision infrastructure | env, stack, cloud_provider, api_launch_type |
-| **02-deploy-app**      | Deploy App (Hybrid)      | env, cloud_provider, api_launch_type        |
+| **02-deploy-app**      | Deploy App + Admin SPA   | env, cloud_provider, api_launch_type, target_services |
 | **stress-test**        | Full environment test    | environment, mode                           |
 | **99-ops-utility**     | Operations utility       | action, confirmation (cleanup integrated)   |
+
+> Environments: `dev-mini` | `dev` | `stage` | `prod`
+> Admin SPA: S3+CloudFront on DEV/STAGE/PROD · Cloudflare Pages on DEV-MINI
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.

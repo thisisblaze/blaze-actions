@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-19
+**Last Updated**: 2026-02-27
 **Owner**: Infrastructure Team
 
 ---
@@ -6,9 +6,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 24 (17 main + 7 reusable)  
-**Version**: v1.2.0-multi-cloud-foundation  
-**Last Updated**: 2026-02-19
+**Total Workflows**: 26 (19 main + 7 reusable)  
+**Version**: v1.5.0  
+**Last Updated**: 2026-02-27
 
 ---
 
@@ -66,8 +66,8 @@
 
 #### 02-deploy-app.yml
 
-**Purpose**: Application deployment (ECS, Cloud Run, or Container Apps)  
-**Use Case**: Deploy Docker containers
+**Purpose**: Application deployment (ECS, Cloud Run, or Container Apps)
+**Use Case**: Deploy Docker containers + Admin SPA (S3/CloudFront for AWS)
 
 **Inputs**:
 
@@ -85,7 +85,12 @@
 - Builds Docker images (multi-arch: AMD64 + ARM64)
 - Pushes to registry (ECR/AR/ACR based on `cloud_provider`)
 - Updates service definitions
-- Deploys to target platform (AWS ECS, GCP Cloud Run, or Azure Container Apps)
+- Deploys to target platform:
+  - **AWS API**: **Native ECS Blue/Green** (no CodeDeploy)
+  - **AWS Frontend**: Rolling deployment
+  - **AWS Admin SPA**: S3 sync + CloudFront cache invalidation (DEV/STAGE/PROD only; DEV-MINI uses Cloudflare Pages)
+  - **GCP**: Cloud Run revision rollout
+  - **Azure**: Container Apps revision rollout
 
 **When to run**: Code deployments
 
@@ -455,15 +460,27 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
-**v1.0.0** (2026-01-07):
+**v1.5.0** (2026-02-27):
 
-- Initial release
-- 24 workflows
-- 7 reusable workflows
+- Native ECS Blue/Green (no CodeDeploy)
+- DEV-MINI environment (Cloudflare Tunnel only)
+- Admin SPA: S3 sync + CloudFront invalidation added to `02-deploy-app`
+- DEV mirrors STAGE (full CloudFront + WAF + ALB + Image Resize)
+- `deploy-site.yml` blue-green migrated from CodeDeploy to Native ECS B/G
+
+**v1.4.0-workflow-consolidation** (2026-02-17):
+
+- Ops Utility expansion: `cleanup-dns`, `nuke-cloudfront`
+- Stress Test Wrapper Pattern
+
+**v1.2.0-multi-cloud-foundation** (2026-02-16):
+
+- Multi-cloud foundation (AWS/GCP/Azure)
+- 24 workflows, 7 reusable
 - Hub & Spoke architecture
 
 ---
 
-**Last Updated**: 2026-02-19  
+**Last Updated**: 2026-02-27  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
