@@ -1,25 +1,26 @@
 # Session Handoff State
 
-**Date/Time**: 2026-02-26T16:30:00Z
+**Date/Time**: 2026-02-27T13:49:12Z
 
 ## 1. The Exact Objective
 
-Shift focus entirely to AWS tasks. We are explicitly splitting AWS from Azure and pausing all Azure work for today. The sole focus is configuring and continuing the infrastructure and automation setup for AWS.
+Monitor and verify the end-to-end ECS native Blue/Green deployment migration via the `stress-test.yml` workflow on DEV.
 
 ## 2. Current Progress & Modified Files
 
-- Previously monitored `full-circle` stress tests on `dev` for both `aws` (stage) and `azure` (dev).
-- Azure showed Docker build errors, but those are suspended for now. 
-- AWS stress test failed early on an AWS credentials/OIDC trust issue within GitHub Actions.
+- `blaze-terraform-infra-core/modules/aws/ecs/service/*`: Updated the Terraform module to support `use_native_blue_green`, properly routing Controller types and managing the Circuit Breaker without CodeDeploy. (Committed & Pushed)
+- `blaze-actions/.github/actions/deploy-ecs-service/action.yml`: Dynamically accounts for native ECS Deployments and bypasses AppSpec generation. (Committed & Pushed)
+- `blaze-actions/.github/workflows/stress-test.yml`: Patched the `Verify ECS Services` job to query the `rolloutState` rather than strictly evaluating the `deployments` array length, natively supporting B/G health checks. (Committed & Pushed)
+- *All changes have been successfully committed and pushed to `dev` branch.*
 
 ## 3. Important Context
 
-- **AWS ONLY Mode**: Do not engage in Azure tasks today. Focus 100% on the single AWS hosting environment.
-- **AWS CLI Conventions**: When interacting with AWS infrastructure from the terminal, you **MUST** use the AWS CLI with your appropriate developer profile (e.g., using `--profile YOUR_AWS_PROFILE` or exporting `AWS_PROFILE=YOUR_AWS_PROFILE`).
-- **GitHub CLI Conventions**: Use the `gh` CLI strictly for querying runs, triggers, and logs.
+- **Environment**: STAGE is a precise replica of PROD. We must fully validate the Circuit Breaker and automated rollbacks on STAGE before propagating to PROD.
+- **Workflow State**: The `stress-test.yml` was manually triggered on DEV (`mode=standard`). It is currently executing on GitHub Actions (Run ID: `22488760819`). 
 
 ## 4. The Immediate Next Steps
 
-1. Continue with the AWS hosting setup on the current machine.
-2. Resolve the AWS credentials/OIDC failure blocking the AWS workflows. Use `AWS_PROFILE=YOUR_AWS_PROFILE` to inspect AWS IAM OIDC roles if necessary.
-3. Proceed with the planned AWS-specific deployments and tasks.
+1. Execute `gh run view 22488760819 --log` to inspect the results of the DEV stress test. Verify the Blue/Green stability checks in the verification stage successfully evaluated rollout states.
+2. If DEV succeeds, implement the `use_native_blue_green: true` configuration inside the STAGE configuration block and run `01-provision-infra.yml` or `deploy-site.yml` to apply it.
+3. Terminate a task or induce a failure in STAGE to simulate a failure and ensure the Native ECS Circuit Breaker rolls back effortlessly.
+4. Scale rollout to PROD upon verified success.
