@@ -62,10 +62,10 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 | Env | VPC Range | Notes |
 |-----|-----------|-------|
 | `dev` | `10.0.0.0/16` | Primary, always-on |
-| `stage` | `10.1.0.0/16` | Always-on |
-| `prod` | `10.2.0.0/16` | Always-on |
-| `multi-site` | `10.3.0.0/16` | Permanent (nukes OK) — owns this range |
-| `dev-mini` | `10.4.0.0/16` | Ephemeral, spin up/down |
+| `dev-mini` | `10.1.0.0/16` | Ephemeral, spin up/down |
+| `stage` | `10.2.0.0/16` | Always-on |
+| `prod` | `10.3.0.0/16` | Always-on |
+| `multi-site` | `10.4.0.0/16` | Permanent (nukes OK) |
 | Future ephemeral | `10.5.0.0/16`, `10.6.0.0/16` ... | |
 
 ---
