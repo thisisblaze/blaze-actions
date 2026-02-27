@@ -19,7 +19,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["DEV", "STAGE", "PROD", "MULTI-SITE"]
+        options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
         required: true
       project:
         description: "Project (App Identity) - e.g. thisisblaze"

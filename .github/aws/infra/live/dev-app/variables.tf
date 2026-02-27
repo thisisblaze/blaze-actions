@@ -1,39 +1,96 @@
-variable "aws_region" {
-  description = "AWS Region"
+variable "project_key" {
+  description = "The project key (e.g. thisisblaze)"
   type        = string
-  default     = "eu-west-1"
 }
 
 variable "client_key" {
-  description = "Client identifier (e.g. b9)"
-  type        = string
-}
-
-variable "project_key" {
-  description = "Project identifier (e.g. blaze)"
+  description = "The short client identifier (e.g., b9)."
   type        = string
 }
 
 variable "namespace" {
-  description = "Namespace identifier (e.g. blaze)"
+  description = "The namespace for resource naming (e.g. blaze)"
   type        = string
-  default     = "b9"
+  default     = "blaze"
 }
 
 variable "stage" {
-  description = "Stage/Environment (e.g. dev, prod)"
+  description = "The deployment stage (dev, prod, etc.)"
   type        = string
-  default     = "dev"
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare Account ID"
+  type        = string
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+}
+
+variable "domain_root" {
+  description = "Root domain (e.g. thisisblaze.uk)"
+  type        = string
+}
+
+variable "basic_auth_credentials" {
+  description = "List of base64-encoded username:password credentials for Basic Auth"
+  type        = list(string)
+  sensitive   = true
+  default     = ["Ynl0ZTk6c3RhZ2luZw=="] # byte9:staging (default for DEV)
+}
+
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "eu-west-1"
 }
 
 variable "platform" {
-  description = "Platform identifier (e.g. aws)"
+  description = "Platform identifier (e.g. ecs)"
   type        = string
-  default     = "aws"
+  default     = "ecs"
 }
 
-variable "branch_name" {
-  description = "Name of the feature branch (if applicable)"
+variable "tag_managed_by" {
+  description = "Managed by tag"
+  type        = string
+  default     = "terraform"
+}
+
+variable "tag_support" {
+  description = "Support email tag"
+  type        = string
+  default     = "support@byte9.io"
+}
+
+variable "tag_state" {
+  description = "State tag (active/archived)"
+  type        = string
+  default     = "active"
+}
+
+variable "is_beta" {
+  description = "Is this a beta environment?"
+  type        = bool
+  default     = false
+}
+
+variable "route53_parent_zone_id" {
+  description = "Route53 parent zone ID"
+  type        = string
+  default     = ""
+}
+
+variable "sharp_layer_arn" {
+  description = "Lambda Layer ARN for Sharp image processing"
   type        = string
   default     = ""
 }
@@ -42,12 +99,6 @@ variable "deploy_stateful_services" {
   description = "Using stateful services?"
   type        = bool
   default     = false
-}
-
-variable "enable_tunnel" {
-  description = "Enable Cloudflare Tunnel?"
-  type        = bool
-  default     = true # Enabled for DEV by default
 }
 
 variable "use_ecr_images" {
@@ -62,13 +113,6 @@ variable "mongo_image_tag" {
   default     = "latest"
 }
 
-variable "domain_root" {
-  description = "Root domain for the environment"
-  type        = string
-  default     = "example.com"
-}
-
-
 variable "elasticsearch_image_tag" {
   description = "Tag for Elasticsearch image"
   type        = string
@@ -81,27 +125,52 @@ variable "kibana_image_tag" {
   default     = "9.2.2"
 }
 
-variable "acm_certificate_arn" {
+variable "cloudfront_acm_certificate_arn" {
   description = "ARN of the ACM certificate for CloudFront"
   type        = string
   default     = ""
 }
 
-variable "cloudflare_api_token" {
-  description = "Cloudflare API Token"
-  type        = string
-  sensitive   = true
-  default     = "" # Optional if not using tunnel/cloudflare features
+variable "backup_retention_days" {
+  description = "Number of days to retain backups"
+  type        = number
+  default     = 30
 }
 
-variable "cloudflare_account_id" {
-  description = "Cloudflare Account ID"
+
+variable "branch_name" {
+  description = "Name of the feature branch (if applicable)"
   type        = string
   default     = ""
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare Zone ID"
+# EC2 Capacity Provider (Hybrid ECS)
+variable "ec2_cpu_architecture" {
+  description = "CPU architecture for EC2 instances (X86_64 or ARM64)"
   type        = string
-  default     = ""
+  default     = "ARM64"
+}
+
+variable "ec2_instance_types" {
+  description = "EC2 instance types for the capacity provider"
+  type        = list(string)
+  default     = ["t4g.medium"]
+}
+
+variable "ec2_min_size" {
+  description = "Minimum number of EC2 instances in the ASG"
+  type        = number
+  default     = 0
+}
+
+variable "ec2_max_size" {
+  description = "Maximum number of EC2 instances in the ASG"
+  type        = number
+  default     = 3
+}
+
+variable "ec2_desired_size" {
+  description = "Desired number of EC2 instances in the ASG"
+  type        = number
+  default     = 1
 }
