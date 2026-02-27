@@ -672,7 +672,7 @@ jobs:
               SERVICE_NAME=${SERVICE_ARN##*/}
               DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
                 --region "$REGION" \
-                --output json | jq -r 'if .services | length > 0 then "\(.services[0].desiredCount // 0) \(.services[0].runningCount // 0) \(.services[0].status // \"MISSING\") \(.services[0].deployments | length)" else "0 0 MISSING 0" end' || echo "0 0 MISSING 0")
+                --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end)] | join(" ") else "0 0 MISSING 0" end' || echo "0 0 MISSING 0")
               DESIRED=$(echo "$DETAILS" | awk '{print $1}')
               RUNNING=$(echo "$DETAILS" | awk '{print $2}')
               STATUS=$(echo "$DETAILS" | awk '{print $3}')
