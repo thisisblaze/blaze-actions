@@ -50,7 +50,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=239b1fe"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.49.0-fix1"
 
   providers = {
     aws           = aws
@@ -123,7 +123,7 @@ module "environment_network" {
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
 # --------------------------------------------------------------------------------
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=239b1fe"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.49.0-fix1"
   count  = var.enable_ec2 ? 1 : 0
 
   # Identity (context provides label defaults, but these are required)
@@ -154,7 +154,7 @@ module "ec2_capacity_provider" {
 }
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=239b1fe"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.49.0-fix1"
   name    = "logs"
   context = module.environment_network.context
 }
