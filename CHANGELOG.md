@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-02-28
+## [v1.5.1] - 2026-02-28
 
 ### Changed
+- infra: upgrade core modules to `v1.50.4` (fixes ALB logging `Access Denied` on prefixed paths)
 - docs: AI_CONTEXT_GOVERNANCE updated with Section 11 (dual-ALB, VPC CIDRs, module v1.50.3, Lambda@Edge scope)
 - docs: REPOSITORY_SYSTEM_PROMPT + PART_03 NotebookLM updated for dual-ALB architecture
 
