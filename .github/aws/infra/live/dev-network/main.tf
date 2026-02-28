@@ -51,7 +51,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.49.0-fix4"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.49.0-fix5"
 
   # Override Frontend Subdomain to be 'frontend-dev'
   frontend_subdomain_override = "frontend-dev"
@@ -219,7 +219,7 @@ module "environment_network" {
 # Unified Config Output (New Standard)
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.49.0-fix4"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.49.0-fix5"
   name    = "logs"
   context = module.environment_network.context
 }
