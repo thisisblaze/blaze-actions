@@ -1,24 +1,27 @@
 # Session Handoff State
 
-**Date/Time**: 2026-02-28T06:37:04Z
+**Date/Time**: 2026-02-28T13:45:00Z
 
 ## 1. The Exact Objective
 
-Ensure the API deployment runs successfully across newly provisioned environments (like `dev-mini`) by resolving startup crashes and pipeline failures. Right now, the priority is to stabilize the `dev` environment rather than `dev-mini`.
+All environments (DEV, STAGE, PROD) now use a **separate API ALB** that bypasses CloudFront, resolving CORS header issues. The `dev-mini` environment is unchanged (Cloudflare Tunnel). The DEV environment is stable and mirrors STAGE/PROD.
 
 ## 2. Current Progress & Modified Files
 
-- `blaze-actions/.github/actions/deploy-ecs-service/action.yml` (committed and pushed to `dev`): Adjusted the deployment logic to inject a default fallback `MONGO_PASS` and `BLAZE_AUTH_JWT_PRIVATE_KEY` during ECS task rendering. This prevents the API from crashing in `EssentialContainerExited` state when those secrets are not yet defined in a new GitHub environment.
-- `blaze-actions/.github/workflows/stress-test.yml` (uncommitted): Added `|| vars.AWS_ROLE_ARN` fallbacks to IAM role secret inputs to circumvent missing roles causing "Could not load credentials from any providers" failures.
+- `blaze-terraform-infra-core`: Added `separate_api_alb` variable, dedicated API ALB resources, updated DNS wiring. Released as `v1.50.0` → `v1.50.3`.
+- `blaze-template-deploy`: Enabled `separate_api_alb = true` in `dev-network`, `stage-network`, `prod-network`. Bumped module ref to `v1.50.3`. Wired `api_alb_listener_arn` in `dev-app`, `stage-app`, `prod-app`.
+- All network applies completed: ✅ DEV · ✅ STAGE · ✅ PROD.
+- Documentation updated across all repos.
 
 ## 3. Important Context
 
-- **Environment Priorities**: The primary focus must shift to stabilizing the `dev` environment over `dev-mini`.
-- **dev-mini & dev GitHub Secrets Note**: Before `dev-mini` (or `dev`) can function organically outside of fallback mechanisms, you **must first add** the appropriate GitHub environment variables and secrets specifically (e.g. `BLAZE_CONNECTION_STRING` or `MONGO_INITDB_ROOT_PASSWORD`, `AWS_ROLE_ARN`, `BLAZE_AUTH_JWT_PRIVATE_KEY`). 
-- **Last Failure**: A `quick-test` deployment stress test on `DEV-MINI` failed at the `Check App State` / `Verify Deployment` steps with `aws-actions/configure-aws-credentials@v4` unable to resolve the AWS Role ARN due to missing environment secrets context, regardless of the `vars.AWS_ROLE_ARN` fallback applied in `stress-test.yml`.
+- `api-{stage}.domain` (Cloudflare) now points directly to the API ALB — no CloudFront.
+- CORS headers from the API are no longer altered by CloudFront.
+- Frontend traffic flow unchanged: CloudFront → WAF → Frontend ALB → ECS Frontend.
+- `separate_api_alb = false` (default) maintains backward compatibility.
 
 ## 4. The Immediate Next Steps
 
-1. Configure necessary GitHub environment variables and secrets, starting with the `dev` environment (highest priority). This includes setting `AWS_ROLE_ARN`.
-2. Commit and test the uncommitted modifications to `/blaze-actions/.github/workflows/stress-test.yml`.
-3. Run a stress test on the `dev` environment rather than `dev-mini` to verify that environment variables are propagating and credentials are authenticated accurately.
+1. **App stack re-deploy**: Trigger `01-provision-infra` (`stack=app`) for DEV, STAGE, PROD to wire services to `api_alb_listener_arn`.
+2. **Stress test**: Run `stress-test.yml` on DEV to validate end-to-end under the new architecture.
+3. **Monitor**: Check API CORS errors in browser devtools to confirm resolution.

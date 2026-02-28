@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-16
+**Last Updated**: 2026-02-28
 **Owner**: Infrastructure Team
 
 ---
@@ -62,8 +62,14 @@
     - **AWS ECS**: Hosts API and Frontend services. Supports mixed `FARGATE` and `EC2` (via Capacity Providers).
     - **EC2 Capacity Provider**: used for high-density compute (e.g. `c7g.xlarge`). **MUST** be explicitly detached and deleted during cleanup.
     - **Launch Templates**: Associated with EC2 CPs. **MUST** be deleted during cleanup.
-    - **Cloudflare Pages**: Hosts Admin app (Static/SPA).
+    - **Cloudflare Pages**: Hosts Admin app (Static/SPA) for DEV-MINI. DEV/STAGE/PROD use CloudFront+S3.
     - **Compute Modes**: `ecsfg` (Fargate), `ecsec2-arm` (EC2 ARM64), `ecsec2-x86` (EC2 x86).
+    - **Dual-ALB Architecture** (DEV/STAGE/PROD, v1.50.0+): Two separate ALBs per environment:
+      - **Frontend ALB**: Behind CloudFront → WAF. Routes `/*` to ECS Frontend.
+      - **API ALB**: Direct (no CloudFront). Routes `/graphql`, `/api/*` to ECS API. Resolves CORS.
+      - Cloudflare DNS `api-{stage}.domain` → API ALB. `frontend-{stage}.domain` → CloudFront.
+      - Enable via `separate_api_alb = true` in `environment-network` module.
+    - **DEV-MINI**: Cloudflare Tunnel only. No ALB, no CloudFront.
 3.  **Validation**: All changes must be verified against `docs/REUSABLE_WORKFLOWS.md`.
 
 ### 🚨 CRITICAL: Namespace Rules
@@ -137,6 +143,7 @@ Terraform alone cannot handle:
 3.  **Launch Templates** (Orphaned by ASG deletion).
 4.  **CloudWatch Logs** (Prevent accumulation).
 5.  **Zombie Resources** (Lambda@Edge, OACs, lingering IAM roles).
+6.  **Dual ALBs** (`aws_lb.main` and `aws_lb.api`) — both must be destroyed when `separate_api_alb = true`. Cleanup script must handle both.
 
 ### Cleanup Workflow Contract
 The `reusable-pre-destroy-cleanup.yml` workflow guarantees:
