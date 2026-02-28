@@ -384,16 +384,19 @@ runs:
         if [[ -n "${MONGODB_URI:-}" ]]; then
           echo "✅ Using provided MONGODB_URI (external MongoDB, e.g. Atlas)."
         else
-          if [[ -n "${MONGO_PASS:-}" ]]; then
-            export MONGODB_URI="mongodb://root:${MONGO_PASS}@mongo.${NAMESPACE_NAME}:27017/blaze_${PROJECT_KEY}_web?authSource=admin"
-            echo "✅ Using in-cluster MongoDB via service discovery."
+          if [[ -z "${MONGO_PASS:-}" ]]; then
+            echo "⚠️  Neither MONGODB_URI nor MONGO_PASS provided. Using default in-cluster MongoDB credentials for dev."
+            export MONGO_PASS="blaze-default-dev-pass-123!"
           else
-            # Warning only relevant for API service, as others don't typically use this Env Var
-            if [[ "$SERVICE_NAME" == "api" ]]; then
-               echo "⚠️ Neither MONGODB_URI nor MONGO_PASS provided; API Mongo connection may be empty."
-            fi
-            export MONGODB_URI=""
+            echo "✅ Using in-cluster MongoDB via service discovery."
           fi
+          export MONGODB_URI="mongodb://root:${MONGO_PASS}@mongo.${NAMESPACE_NAME}:27017/blaze_${PROJECT_KEY}_web?authSource=admin"
+        fi
+
+        # Default JWT Token if missing (prevent API crash)
+        if [[ -z "${BLAZE_AUTH_JWT_PRIVATE_KEY:-}" ]]; then
+           export BLAZE_AUTH_JWT_PRIVATE_KEY="blaze-default-secret-key-12345"
+           echo "⚠️  BLAZE_AUTH_JWT_PRIVATE_KEY missing. Using dummy token."
         fi
         export MONGODB_URI
 
