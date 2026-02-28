@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "tfstate_backend" {
-  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/tfstate-backend?ref=v1.50.3"
+  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/tfstate-backend?ref=v1.50.4"
   namespace = var.client_key
   stage     = var.stage
   name      = var.project_key
