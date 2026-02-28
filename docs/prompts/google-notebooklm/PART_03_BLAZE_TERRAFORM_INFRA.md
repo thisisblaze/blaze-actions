@@ -4,6 +4,8 @@
 **Target Length:** 2-3 minutes of presentation content  
 **Focus:** Reusable Terraform modules and infrastructure patterns
 
+**Updated:** 2026-02-28
+
 ---
 
 ## blaze-terraform-infra-core: The Module Library
@@ -93,20 +95,27 @@ VPC
 │   ├── ALB (ports 80, 443)
 │   ├── ECS (port 3000)
 │   └── Database (port 27017)
-├── Application Load Balancer
+├── Frontend ALB (behind CloudFront + WAF)
 │   ├── HTTP → HTTPS redirect
-│   └── HTTPS listeners
+│   └── HTTPS listeners → ECS Frontend
+├── API ALB (direct — separate_api_alb = true)
+│   ├── Bypasses CloudFront (CORS-safe)
+│   └── api-{stage}.domain → API ALB → ECS API
 └── EC2 Capacity Provider (optional)
     ├── Auto Scaling Group (Graviton ARM64)
     ├── Launch Template (ECS-optimized AMI)
     └── IAM Role + Security Group
 ```
 
+**Key Feature — Separate API ALB (v1.50.0+):**
+
+By setting `separate_api_alb = true`, the module provisions a dedicated ALB for API traffic that bypasses CloudFront. Cloudflare DNS `api-{stage}.domain` points directly to this ALB, resolving CORS header issues caused by CloudFront header rewriting.
+
 **Usage:**
 
 ```hcl
 module "network" {
-  source = "git::https://github.com/thisisblaze/blaze-terraform-infra-core.git//modules/environment-network?ref=v2.0.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.50.3"
 
   namespace    = var.namespace  # e.g., "blaze"
   client_key   = "b9"
@@ -115,6 +124,9 @@ module "network" {
 
   vpc_cidr     = "10.0.0.0/16"
   azs          = ["eu-west-1a", "eu-west-1b"]
+
+  # Separate API ALB — bypasses CloudFront for CORS-safe API access
+  separate_api_alb = true
 }
 ```
 
@@ -247,6 +259,6 @@ module "app" {
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-02-22  
+**Document Version:** 1.1  
+**Last Updated:** 2026-02-28  
 **Estimated Presentation Time:** 2-3 minutes
