@@ -1,4 +1,4 @@
-**Last Updated**: 2026-02-25
+**Last Updated**: 2026-02-28
 **Owner**: Infrastructure Team
 
 ---
@@ -143,6 +143,23 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
 | `blaze-template-deploy` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
+
+
+## 11. Deployment Architecture Facts (2026-02-28)
+
+**Status: MANDATORY — agents must not assume older patterns**
+
+| Fact | Detail |
+| :--- | :----- |
+| **ECS API Deployment** | **Native ECS Blue/Green** — no CodeDeploy, no `appspec.yml`, no deployment group |
+| **Admin Hosting (DEV/STAGE/PROD)** | CloudFront + S3 (OAC). Separate distribution from app CDN |
+| **Admin Hosting (DEV-MINI)** | Cloudflare Pages — no S3 sync step runs |
+| **Dev Environment** | `dev` is full AWS stack (CloudFront + WAF + **Dual ALB** + Image Resize) |
+| **Dual ALB (DEV/STAGE/PROD)** | Frontend ALB behind CloudFront+WAF, API ALB direct (no CloudFront) — CORS-safe |
+| **VPC CIDRs** | DEV=10.0.0.0/16, DEV-MINI=10.1.0.0/16, STAGE=10.2.0.0/16, PROD=10.3.0.0/16, MULTI-SITE=10.4.0.0/16 |
+| **Lambda@Edge / Image Resize** | **Frontend only** — CloudFront path. Enabled on DEV, STAGE, PROD. NOT on DEV-MINI |
+| **Module Version** | `blaze-terraform-infra-core` @ **v1.50.3** |
+| **CodeDeploy** | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug |
 
 ---
 
