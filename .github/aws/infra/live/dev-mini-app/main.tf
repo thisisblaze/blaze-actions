@@ -318,7 +318,7 @@ module "pages_project_admin" {
   # Create only for base DEV environment, not feature branches
   count = var.branch_name == "" ? 1 : 0
 
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.49.0-fix4"
 
   account_id = var.cloudflare_account_id
 
