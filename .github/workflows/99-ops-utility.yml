@@ -30,7 +30,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["DEV", "STAGE", "PROD"]
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"

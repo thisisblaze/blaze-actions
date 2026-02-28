@@ -121,7 +121,7 @@ resource "cloudflare_dns_record" "feature_branch_dns" {
 # APPLICATION MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.49.0-fix5"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.50.3"
 
   context     = null # Will be generated inside if null, or pass label module output if we want strictly consistent labeling
   client_key  = var.client_key
@@ -318,7 +318,7 @@ module "pages_project_admin" {
   # Create only for base DEV environment, not feature branches
   count = var.branch_name == "" ? 1 : 0
 
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.49.0-fix5"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.50.3"
 
   account_id = var.cloudflare_account_id
 
