@@ -227,7 +227,7 @@ jobs:
       terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
       branch_tag: ${{ needs.setup.outputs.branch_tag }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   # --------------------------------------------------------------------------------
   # 1.5 PRODUCTION SAFETY CHECK
@@ -268,7 +268,7 @@ jobs:
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   check-tunnel-exists:
     name: "🔍 Check Tunnel State"
@@ -283,7 +283,7 @@ jobs:
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   check-network-exists:
     if: inputs.target_type == 'host'
@@ -299,7 +299,7 @@ jobs:
       state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   check-mongodb-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -315,7 +315,7 @@ jobs:
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   check-elastic-exists:
     if: inputs.include_third_party && inputs.target_type == 'host'
@@ -331,7 +331,7 @@ jobs:
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   # --------------------------------------------------------------------------------
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
@@ -349,7 +349,7 @@ jobs:
       force_delete: true
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   # --------------------------------------------------------------------------------
   # 3. TEARDOWN (Infrastructure)
@@ -374,7 +374,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -399,7 +399,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   destroy-third-party-elastic:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
@@ -420,7 +420,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
@@ -443,7 +443,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
@@ -466,7 +466,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   # --------------------------------------------------------------------------------
@@ -486,7 +486,7 @@ jobs:
       apply: true
       enable_ec2: ${{ inputs.environment == 'dev' }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -505,7 +505,7 @@ jobs:
       stack: "tunnel"
       apply: true
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -525,7 +525,7 @@ jobs:
       enable_ec2: ${{ inputs.environment == 'dev' }}
       api_launch_type: ${{ inputs.environment == 'dev' && 'EC2' || 'FARGATE' }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -544,7 +544,7 @@ jobs:
       stack: "third-party-mongodb"
       apply: true
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   provision-third-party-elastic:
@@ -560,7 +560,7 @@ jobs:
       stack: "third-party-elastic"
       apply: true
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   # --------------------------------------------------------------------------------
@@ -585,7 +585,7 @@ jobs:
       # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
       skip_stability_wait: "true"
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1117,7 +1117,7 @@ jobs:
       force_delete: true
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   destroy-app-final:
     if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
@@ -1139,7 +1139,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -1165,7 +1165,7 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   destroy-network-final:
     if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
@@ -1187,5 +1187,5 @@ jobs:
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
