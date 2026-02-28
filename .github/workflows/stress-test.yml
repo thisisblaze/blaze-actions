@@ -424,14 +424,14 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
-    if: ${{ contains(inputs.environment, 'dev') && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-tunnel-exists]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
       bucket: ${{ needs.config.outputs.bucket }}
       state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
@@ -484,7 +484,7 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "network"
       apply: true
-      enable_ec2: ${{ inputs.environment == 'dev' }}
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -493,7 +493,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   provision-tunnel:
-    if: always() && contains(inputs.environment, 'dev') && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
+    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
     needs:
       - provision-network
       - destroy-tunnel
@@ -521,9 +521,9 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "app"
       apply: true
-      enable_tunnel: ${{ inputs.environment == 'dev' }}
-      enable_ec2: ${{ inputs.environment == 'dev' }}
-      api_launch_type: ${{ inputs.environment == 'dev' && 'EC2' || 'FARGATE' }}
+      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      api_launch_type: ${{ inputs.environment == 'dev-mini' && 'EC2' || 'FARGATE' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1146,16 +1146,16 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   destroy-tunnel-final:
-    if: contains(inputs.environment, 'dev') && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    if: inputs.environment == 'dev-mini' && inputs.mode == 'full-circle' && needs.verify.result == 'success'
     name: "🧨 Final Destroy Tunnel"
 
     needs: [config, destroy-app-final, verify]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-tunnel"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/tunnel.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}

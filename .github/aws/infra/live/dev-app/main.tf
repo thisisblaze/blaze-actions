@@ -83,7 +83,7 @@ locals {
 
 
 module "label" {
-  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v1.49.0-fix5"
+  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v1.50.3"
   client    = var.client_key
   project   = var.project_key
   stage     = var.stage
@@ -94,7 +94,7 @@ module "label" {
 # APPLICATION MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.49.0-fix5"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v1.50.3"
 
   context     = module.label.context
   client_key  = var.client_key
@@ -200,7 +200,7 @@ data "aws_lb_target_group" "fe_green" {
 # CLOUDFLARE PAGES PROJECT (Admin)
 # --------------------------------------------------------------------------------
 module "pages_project_admin" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.49.0-fix5"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.50.3"
 
   account_id        = var.cloudflare_account_id
   project_name      = "${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-admin"
