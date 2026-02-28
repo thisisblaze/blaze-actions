@@ -8,7 +8,7 @@ output "vpc_id" {
 
 output "vpc_cidr" {
   description = "VPC CIDR"
-  value       = var.vpc_cidr
+  value       = try(module.environment_network.config.vpc_cidr_block, "10.0.0.0/16")
 }
 
 output "public_subnets" {

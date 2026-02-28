@@ -217,61 +217,6 @@ module "environment_network" {
 
 # Unified Output
 # Unified Config Output (New Standard)
-output "config" { value = module.environment_network.config }
-
-# Flattened Outputs (Legacy Compatibility for stage-app)
-output "cluster_id" { value = module.environment_network.config.cluster_id }
-output "cluster_name" { value = module.environment_network.config.cluster_name }
-output "vpc_id" { value = module.environment_network.config.vpc_id }
-output "private_subnets" { value = module.environment_network.config.private_subnets }
-output "ecs_sg_id" { value = module.environment_network.config.ecs_sg_id }
-output "service_discovery_ns_id" { value = module.environment_network.config.service_discovery_ns_id }
-output "execution_role_arn" { value = module.environment_network.config.execution_role_arn }
-output "codedeploy_role_arn" { value = module.environment_network.config.codedeploy_role_arn }
-output "efs_id" { value = module.environment_network.config.efs_id }
-output "api_ap_id" { value = module.environment_network.config.api_ap_id }
-output "alb_listener_arn" { value = module.environment_network.config.alb_listener_arn }
-
-# --------------------------------------------------------------------------------
-# EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
-# --------------------------------------------------------------------------------
-
-# Import orphaned IAM role — exists in AWS but was lost from state during a
-# previous nuke/re-provision cycle. This block reconciles it so Terraform can
-# manage it without hitting EntityAlreadyExists on the next apply.
-# Safe to leave in place; Terraform ignores import blocks after first apply.
-
-
-module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.49.0-fix4"
-  count  = var.enable_ec2 ? 1 : 0
-
-  # Identity (context provides label defaults, but these are required)
-  client_key  = var.client_key
-  project_key = var.project_key
-  namespace   = var.namespace
-  env_handle  = var.stage
-  context     = module.environment_network.context
-
-  # Networking
-  cluster_name    = module.environment_network.cluster_name
-  vpc_id          = module.environment_network.vpc_id
-  subnet_ids      = module.environment_network.app_subnets
-  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.0.0.0/16")]
-
-  # Instance config
-  instance_types   = var.ec2_instance_types
-  cpu_architecture = var.ec2_cpu_architecture
-
-  # STAGE: Spot only for cost savings (Demo Mode)
-  on_demand_base_capacity         = 0
-  on_demand_percentage_above_base = 0
-
-  # ASG sizing
-  asg_min_size         = var.ec2_min_size
-  asg_max_size         = var.ec2_max_size
-  asg_desired_capacity = var.ec2_desired_size
-}
 
 module "log_bucket" {
   source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.49.0-fix4"
@@ -279,7 +224,3 @@ module "log_bucket" {
   context = module.environment_network.context
 }
 
-output "ec2_capacity_provider_name" {
-  description = "Name of the EC2 Capacity Provider"
-  value       = var.enable_ec2 ? module.ec2_capacity_provider[0].capacity_provider_name : ""
-}
