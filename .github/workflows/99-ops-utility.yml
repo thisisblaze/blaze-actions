@@ -306,6 +306,10 @@ jobs:
       cloud_region: ${{ steps.config.outputs.cloud_region }}
       infra_prefix: ${{ steps.config.outputs.infra_prefix }}
       gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
+      has_network: ${{ steps.check-dirs.outputs.has_network }}
+      has_data: ${{ steps.check-dirs.outputs.has_data }}
+      has_app: ${{ steps.check-dirs.outputs.has_app }}
+      has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -342,6 +346,46 @@ jobs:
           build_images: "false"
           deploy_services: "false"
           event_name: "workflow_dispatch"
+
+      - name: Check Stack Directories
+        id: check-dirs
+        run: |
+          PREFIX="${{ steps.config.outputs.infra_prefix }}"
+          STAGE="${{ steps.config.outputs.stage_key }}"
+
+          echo "🔍 Checking directories in $PREFIX for stage $STAGE..."
+
+          if [[ -d "$PREFIX/${STAGE}-network" ]]; then
+            echo "✅ Network dir found"
+            echo "has_network=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Network dir NOT found"
+            echo "has_network=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-data" ]]; then
+            echo "✅ Data dir found"
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Data dir NOT found"
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-app" ]]; then
+            echo "✅ App dir found"
+            echo "has_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ App dir NOT found"
+            echo "has_app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-cdn" ]]; then
+            echo "✅ CDN dir found"
+            echo "has_cdn=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ CDN dir NOT found"
+            echo "has_cdn=false" >> "$GITHUB_OUTPUT"
+          fi
 
   kill-workflows:
     name: 🧟‍♂️ Kill Workflows
@@ -1586,7 +1630,8 @@ jobs:
       (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_app == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1712,7 +1757,8 @@ jobs:
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
       (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1865,7 +1911,8 @@ jobs:
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1923,7 +1970,8 @@ jobs:
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-data-gcp.result == 'success' || needs.nuke-destroy-data-gcp.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_cdn == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1965,7 +2013,8 @@ jobs:
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-cdn-gcp.result == 'success' || needs.nuke-destroy-cdn-gcp.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2017,7 +2066,8 @@ jobs:
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2070,7 +2120,8 @@ jobs:
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-data-azure.result == 'success' || needs.nuke-destroy-data-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2120,7 +2171,8 @@ jobs:
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-cdn-azure.result == 'success' || needs.nuke-destroy-cdn-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2172,7 +2224,8 @@ jobs:
       (needs.nuke-destroy-tunnel.result == 'success' || needs.nuke-destroy-tunnel.result == 'skipped') &&
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
