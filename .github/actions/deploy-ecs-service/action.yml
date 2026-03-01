@@ -395,7 +395,7 @@ runs:
 
         # Default JWT Token if missing (prevent API crash)
         if [[ -z "${BLAZE_AUTH_JWT_PRIVATE_KEY:-}" ]]; then
-           export BLAZE_AUTH_JWT_PRIVATE_KEY="blaze-default-secret-key-12345"
+           export BLAZE_AUTH_JWT_PRIVATE_KEY="blaze-default-secret-key-12345" # gitleaks:allow
            echo "⚠️  BLAZE_AUTH_JWT_PRIVATE_KEY missing. Using dummy token."
         fi
         export MONGODB_URI
