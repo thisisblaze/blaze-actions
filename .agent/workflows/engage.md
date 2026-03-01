@@ -16,11 +16,11 @@ This project spans **3 repositories** with strict dependency rules. Violating th
 
 ### Repo Map
 
-| Repo | GitHub | Local Path | Role |
-|------|--------|-----------|------|
-| **`blaze-template-deploy`** | `thebyte9/blaze-template-deploy` | `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy` | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.** |
-| **`blaze-actions`** | `thisisblaze/blaze-actions` | `/Users/marek/Workspace/thisisblaze/blaze-actions` | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
-| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core` | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks. |
+| Repo                             | GitHub                                   | Local Path                                                                             | Role                                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy` | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.**                                                             |
+| **`blaze-actions`**              | `thisisblaze/blaze-actions`              | `/Users/marek/Workspace/thisisblaze/blaze-actions`                                     | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
+| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`                        | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks.                                                                                                                         |
 
 ### Dependency Chain
 
@@ -50,23 +50,23 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 
 ### Environment → Repo Mapping
 
-| Environment | Terraform Stack Location | Workflow Trigger Repo |
-|-------------|--------------------------|----------------------|
-| `dev` | `blaze-template-deploy/.github/aws/infra/live/dev-network/` | `thebyte9/blaze-template-deploy` |
-| `dev-mini` | `blaze-actions/.github/aws/infra/live/dev-mini-network/` | `thebyte9/blaze-template-deploy` (still) |
-| `stage` | `blaze-template-deploy/.github/aws/infra/live/stage-network/` | `thebyte9/blaze-template-deploy` |
-| `prod` | `blaze-template-deploy/.github/aws/infra/live/prod-network/` | `thebyte9/blaze-template-deploy` |
+| Environment | Terraform Stack Location                                      | Workflow Trigger Repo                    |
+| ----------- | ------------------------------------------------------------- | ---------------------------------------- |
+| `dev`       | `blaze-template-deploy/.github/aws/infra/live/dev-network/`   | `thebyte9/blaze-template-deploy`         |
+| `dev-mini`  | `blaze-actions/.github/aws/infra/live/dev-mini-network/`      | `thebyte9/blaze-template-deploy` (still) |
+| `stage`     | `blaze-template-deploy/.github/aws/infra/live/stage-network/` | `thebyte9/blaze-template-deploy`         |
+| `prod`      | `blaze-template-deploy/.github/aws/infra/live/prod-network/`  | `thebyte9/blaze-template-deploy`         |
 
 ### Future Ephemeral CIDR Allocation
 
-| Env | VPC Range | Notes |
-|-----|-----------|-------|
-| `dev` | `10.0.0.0/16` | Primary, always-on |
-| `dev-mini` | `10.1.0.0/16` | Ephemeral, spin up/down |
-| `stage` | `10.2.0.0/16` | Always-on |
-| `prod` | `10.3.0.0/16` | Always-on |
-| `multi-site` | `10.4.0.0/16` | Permanent (nukes OK) |
-| Future ephemeral | `10.5.0.0/16`, `10.6.0.0/16` ... | |
+| Env              | VPC Range                        | Notes                   |
+| ---------------- | -------------------------------- | ----------------------- |
+| `dev`            | `10.0.0.0/16`                    | Primary, always-on      |
+| `dev-mini`       | `10.1.0.0/16`                    | Ephemeral, spin up/down |
+| `stage`          | `10.2.0.0/16`                    | Always-on               |
+| `prod`           | `10.3.0.0/16`                    | Always-on               |
+| `multi-site`     | `10.4.0.0/16`                    | Permanent (nukes OK)    |
+| Future ephemeral | `10.5.0.0/16`, `10.6.0.0/16` ... |                         |
 
 ---
 
@@ -99,6 +99,8 @@ Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the 
 ### 4. Load Context (Hub Repo)
 
 Read `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` from `blaze-template-deploy`.
+
+Also check `docs/reports/ENV_COMPARISON_AWS.md` **Action Items** table — scan for any 🔴 items that are not marked ✅ DONE and surface them in the Ready Report.
 
 **CRITICAL TOKEN FRUGALITY RULE:**
 Do **NOT** automatically read `AI_CONTEXT_GOVERNANCE.md`, architecture graphs, or the knowledge library on startup.
@@ -140,6 +142,10 @@ MODULE REF CHECK:
   actions/dev-network: ?ref=<version>
   infra-core head tag: <latest tag>
   ✅ In sync | ⚠️ SPLIT BRAIN DETECTED
+
+ENV COMPARISON REPORT (docs/reports/ENV_COMPARISON_AWS.md):
+  🔴 Open action items: <count> | ✅ All clear
+  Key flags: <list any unresolved 🔴 items>
 
 CONTEXT: Loaded (Multi-Cloud AWS/GCP/Azure)
 RECENT ACTIVITY: <summary of last commits>

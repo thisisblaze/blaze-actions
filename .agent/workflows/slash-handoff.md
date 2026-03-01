@@ -32,6 +32,13 @@ The file MUST use the following format exactly:
 [List any specific rules, constraints, or environment details the new agent must know. E.g. "We are only working on Azure, do not touch AWS."]
 [List any specific errors or blockers encountered so far]
 
+**ENV Comparison Report Status** (`docs/reports/ENV_COMPARISON_AWS.md`):
+
+- Open 🔴 action items: [list them from the Action Items table]
+- WAF policy: CloudFront-only (stage/prod). ALBs are internal.
+- NAT policy: GATEWAY when >5 services, NONE otherwise.
+- Redis: prod-only. Prod Redis must be on private subnets (not public).
+
 ## 4. The Immediate Next Steps
 
 1. [Actionable Step 1]
