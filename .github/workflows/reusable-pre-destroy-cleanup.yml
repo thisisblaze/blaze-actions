@@ -1,659 +1,766 @@
 name: Pre-Destroy Cleanup
 
 on:
-   workflow_call:
-      inputs:
-         cloud_provider:
-            required: false
-            type: string
-            default: "aws"
-            description: "Cloud provider (aws/gcp/azure). Default: aws"
-         cluster_name:
-            required: true
-            type: string
-         aws_region:
-            required: true
-            type: string
-         stage_filter:
-            required: false
-            type: string
-            description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
-         force_delete:
-            required: false
-            type: boolean
-            default: false
-            description: "Force delete services even if tasks are running"
-         environment:
-            required: false
-            type: string
-            description: "GitHub Environment"
-         wif_audience:
-            description: "WIF Audience (Optional)"
-            required: false
-            type: string
-            default: ""
-      secrets:
-         AWS_ROLE_ARN:
-            required: false
+  workflow_call:
+    inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
+      cluster_name:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      stage_filter:
+        required: false
+        type: string
+        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
+      force_delete:
+        required: false
+        type: boolean
+        default: false
+        description: "Force delete services even if tasks are running"
+      environment:
+        required: false
+        type: string
+        description: "GitHub Environment"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
 
-         CLOUDFLARE_API_TOKEN:
-            required: false
-         CLOUDFLARE_ZONE_ID:
-            required: false
-         CLOUDFLARE_ACCOUNT_ID:
-            required: false
-      outputs:
-         cleanup_status:
-            value: ${{ jobs.cleanup.outputs.status }}
-         services_deleted:
-            value: ${{ jobs.cleanup.outputs.services }}
-         tasks_deleted:
-            value: ${{ jobs.cleanup.outputs.tasks_deleted }}
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+    outputs:
+      cleanup_status:
+        value: ${{ jobs.cleanup.outputs.status }}
+      services_deleted:
+        value: ${{ jobs.cleanup.outputs.services }}
+      tasks_deleted:
+        value: ${{ jobs.cleanup.outputs.tasks_deleted }}
 
 permissions:
-   id-token: write
-   contents: read
+  id-token: write
+  contents: read
 
 jobs:
-   cleanup:
-      name: Pre-Destroy Cleanup
-      runs-on: ubuntu-latest
-      timeout-minutes: 15
-      environment: ${{ inputs.environment }}
+  cleanup:
+    name: Pre-Destroy Cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
 
-      outputs:
-         status: ${{ steps.cleanup.outputs.status }}
-         services: ${{ steps.cleanup.outputs.services }}
-         tasks_deleted: ${{ steps.cleanup.outputs.tasks_deleted }}
+    outputs:
+      status: ${{ steps.cleanup.outputs.status }}
+      services: ${{ steps.cleanup.outputs.services }}
+      tasks_deleted: ${{ steps.cleanup.outputs.tasks_deleted }}
 
-      steps:
-         - name: Setup AWS CLI
-           uses: aws-actions/configure-aws-credentials@v4
-           with:
-              role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-              role-session-name: GitHubActions-PreDestroy
-              aws-region: ${{ inputs.aws_region || 'eu-west-1' }}
+    steps:
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-PreDestroy
+          aws-region: ${{ inputs.aws_region || 'eu-west-1' }}
 
-         - name: Parse Context
-           id: context
-           run: |
-              CLUSTER="${{ inputs.cluster_name }}"
-              echo "Parsing context from Cluster: $CLUSTER"
+      - name: Parse Context
+        id: context
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          echo "Parsing context from Cluster: $CLUSTER"
 
-              if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
-                 NAMESPACE="${BASH_REMATCH[1]}"
-                 CLIENT_KEY="${BASH_REMATCH[2]}"
-                 PROJECT_KEY="${BASH_REMATCH[3]}"
-                 STAGE_KEY="${BASH_REMATCH[4]}"
-                 echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
-                 echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
-                 echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
-                 echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
-                 echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
-              elif [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
-                 # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
-                 # Assuming: namespace-project-stage (where client might be same as project or omitted)
-                 NAMESPACE="${BASH_REMATCH[1]}"
-                 PROJECT_KEY="${BASH_REMATCH[2]}"
-                 STAGE_KEY="${BASH_REMATCH[3]}"
-                 CLIENT_KEY="$PROJECT_KEY" # Default client to project if missing
-                 
-                 echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
-                 echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
-                 echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
-                 echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
-                 echo "Parsed (Compact): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
-              else
-                 echo "⚠️ Could not parse Cluster Name. Keys will be empty."
-                 echo "NAMESPACE=" >> $GITHUB_ENV
-                 echo "CLIENT_KEY=" >> $GITHUB_ENV
-                 echo "PROJECT_KEY=" >> $GITHUB_ENV
-                 echo "STAGE_KEY=" >> $GITHUB_ENV
+          if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+             NAMESPACE="${BASH_REMATCH[1]}"
+             CLIENT_KEY="${BASH_REMATCH[2]}"
+             PROJECT_KEY="${BASH_REMATCH[3]}"
+             STAGE_KEY="${BASH_REMATCH[4]}"
+             echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+             echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
+             echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
+             echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
+             echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+          elif [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+             # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
+             # Assuming: namespace-project-stage (where client might be same as project or omitted)
+             NAMESPACE="${BASH_REMATCH[1]}"
+             PROJECT_KEY="${BASH_REMATCH[2]}"
+             STAGE_KEY="${BASH_REMATCH[3]}"
+             CLIENT_KEY="$PROJECT_KEY" # Default client to project if missing
+             
+             echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+             echo "CLIENT_KEY=$CLIENT_KEY" >> $GITHUB_ENV
+             echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
+             echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
+             echo "Parsed (Compact): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
+          else
+             echo "⚠️ Could not parse Cluster Name. Keys will be empty."
+             echo "NAMESPACE=" >> $GITHUB_ENV
+             echo "CLIENT_KEY=" >> $GITHUB_ENV
+             echo "PROJECT_KEY=" >> $GITHUB_ENV
+             echo "STAGE_KEY=" >> $GITHUB_ENV
+          fi
+
+      - name: Cleanup S3 Buckets
+        if: env.CLIENT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+
+          CANDIDATES=(
+            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
+          )
+
+          for BUCKET_NAME in "${CANDIDATES[@]}"; do
+             echo "Checking bucket: $BUCKET_NAME"
+             if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
+                echo "   Found bucket. Emptying..."
+                pip install boto3 >/dev/null 2>&1 || true
+                
+                cat <<EOF > empty_bucket.py
+          import boto3
+          import sys
+          bucket_name = sys.argv[1]
+          s3 = boto3.resource('s3')
+          bucket = s3.Bucket(bucket_name)
+          try:
+              bucket.object_versions.delete()
+              print("Deleted contents.")
+          except Exception as e:
+              print(f"Error: {e}")
+          EOF
+                python3 empty_bucket.py "$BUCKET_NAME"
+                rm empty_bucket.py
+             fi
+          done
+
+      - name: Cleanup ACM Certificates
+        if: env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "Searching unused certificates for *${PROJECT_KEY}* in $REGION..."
+
+          JSON_LIST=$(aws acm list-certificates --region "$REGION" --includes keyTypes=RSA_2048 --output json)
+
+          # Filter: Domain matches Project AND InUse is false
+          # We use jq to handle the filtering safely
+          TARGET_ARNS=$(echo "$JSON_LIST" | jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | select(.InUse == false) | .CertificateArn')
+
+          if [[ -n "$TARGET_ARNS" ]]; then
+             for ARN in $TARGET_ARNS; do
+               echo "   🗑️ Deleting UNUSED cert: $ARN"
+               aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
+             done
+           fi
+
+      - name: Cleanup CloudWatch Logs
+        if: env.CLIENT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🧹 CloudWatch Log Cleanup..."
+
+          delete_log_groups() {
+              local PREFIX=$1
+              local REGION_ARG=$2
+              
+              echo "   🔍 Searching for log groups starting with '$PREFIX' in $REGION_ARG..."
+              GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None")
+
+              
+              if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
+                  echo "      ✅ No logs found."
+                  return
               fi
 
-         - name: Cleanup S3 Buckets
-           if: env.CLIENT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-
-              CANDIDATES=(
-                "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-                "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-                "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
-              )
-
-              for BUCKET_NAME in "${CANDIDATES[@]}"; do
-                 echo "Checking bucket: $BUCKET_NAME"
-                 if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
-                    echo "   Found bucket. Emptying..."
-                    pip install boto3 >/dev/null 2>&1 || true
-                    
-                    cat <<EOF > empty_bucket.py
-              import boto3
-              import sys
-              bucket_name = sys.argv[1]
-              s3 = boto3.resource('s3')
-              bucket = s3.Bucket(bucket_name)
-              try:
-                  bucket.object_versions.delete()
-                  print("Deleted contents.")
-              except Exception as e:
-                  print(f"Error: {e}")
-              EOF
-                    python3 empty_bucket.py "$BUCKET_NAME"
-                    rm empty_bucket.py
-                 fi
+              for GROUP in $GROUPS; do
+                  echo "      🗑️ Deleting $GROUP..."
+                  aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
               done
+          }
 
-         - name: Cleanup ACM Certificates
-           if: env.PROJECT_KEY != ''
-           run: |
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              REGION="${{ inputs.aws_region }}"
+          # 1. Main Region Patterns
+          PREFIXES=(
+            "/ecs/${NAMESPACE}-${PROJECT_KEY}-${STAGE_KEY}"          # Cluster / Feature Branch
+            "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # App / Stateful
+            "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-" # App Lambdas
+            "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-"   # SES Webhooks
+            "/aws/ecs/containerinsights/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # Container Insights
+          )
 
-              echo "Searching unused certificates for *${PROJECT_KEY}* in $REGION..."
+          for PREFIX in "${PREFIXES[@]}"; do
+             delete_log_groups "$PREFIX" "$REGION" || true
+          done
 
-              JSON_LIST=$(aws acm list-certificates --region "$REGION" --includes keyTypes=RSA_2048 --output json)
+          # 2. Edge Region (us-east-1) Patterns
+          # Edge functions often have the region prefix in the log group name when created by Lambda@Edge
+          delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1" || true
 
-              # Filter: Domain matches Project AND InUse is false
-              # We use jq to handle the filtering safely
-              TARGET_ARNS=$(echo "$JSON_LIST" | jq -r --arg kw "$PROJECT_KEY" '.CertificateSummaryList[] | select(.DomainName | contains($kw)) | select(.InUse == false) | .CertificateArn')
+      - name: Cleanup Service Discovery
+        if: env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
 
-              if [[ -n "$TARGET_ARNS" ]]; then
-                 for ARN in $TARGET_ARNS; do
-                   echo "   🗑️ Deleting UNUSED cert: $ARN"
-                   aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
-                 done
-               fi
+          # Pattern used in core modules: ${project_key}-${stage}.local
+          echo "🔎 Searching for Service Discovery Namespaces related to stage: $STAGE_KEY in $REGION..."
 
-         - name: Cleanup CloudWatch Logs
-           if: env.CLIENT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              REGION="${{ inputs.aws_region }}"
+          NAMESPACE_IDS=$(aws servicediscovery list-namespaces --region "$REGION" \
+              --query "Namespaces[?contains(Name, '${STAGE_KEY}.local') || Id=='ns-cx52mhhntqenlnjw'].Id" --output text)
 
-              echo "🧹 CloudWatch Log Cleanup..."
-
-              delete_log_groups() {
-                  local PREFIX=$1
-                  local REGION_ARG=$2
-                  
-                  echo "   🔍 Searching for log groups starting with '$PREFIX' in $REGION_ARG..."
-                  GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None")
-
-                  
-                  if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
-                      echo "      ✅ No logs found."
-                      return
-                  fi
-
-                  for GROUP in $GROUPS; do
-                      echo "      🗑️ Deleting $GROUP..."
-                      aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
-                  done
-              }
-
-              # 1. Main Region Patterns
-              PREFIXES=(
-                "/ecs/${NAMESPACE}-${PROJECT_KEY}-${STAGE_KEY}"          # Cluster / Feature Branch
-                "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # App / Stateful
-                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-" # App Lambdas
-                "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-"   # SES Webhooks
-                "/aws/ecs/containerinsights/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # Container Insights
-              )
-
-              for PREFIX in "${PREFIXES[@]}"; do
-                 delete_log_groups "$PREFIX" "$REGION" || true
-              done
-
-              # 2. Edge Region (us-east-1) Patterns
-              # Edge functions often have the region prefix in the log group name when created by Lambda@Edge
-              delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1" || true
-
-         - name: Cleanup Service Discovery
-           if: env.PROJECT_KEY != ''
-           run: |
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              REGION="${{ inputs.aws_region }}"
-
-              # Pattern used in core modules: ${project_key}-${stage}.local
-              echo "🔎 Searching for Service Discovery Namespaces related to stage: $STAGE_KEY in $REGION..."
-
-              NAMESPACE_IDS=$(aws servicediscovery list-namespaces --region "$REGION" \
-                  --query "Namespaces[?contains(Name, '${STAGE_KEY}.local') || Id=='ns-cx52mhhntqenlnjw'].Id" --output text)
-
-              if [[ -z "$NAMESPACE_IDS" || "$NAMESPACE_IDS" == "None" ]]; then
-                  echo "✅ No relevant Namespaces found."
-              else
-                  for NAMESPACE_ID in $NAMESPACE_IDS; do
-                      if [[ -n "$NAMESPACE_ID" && "$NAMESPACE_ID" != "None" ]]; then
-                          echo "🎯 Processing Namespace ID: $NAMESPACE_ID"
-                          echo "📋 Listing services..."
-                          SERVICE_IDS=$(aws servicediscovery list-services --filters "Name=NAMESPACE_ID,Values=$NAMESPACE_ID" --region "$REGION" --query "Services[].Id" --output text)
-                          
-                          if [[ -n "$SERVICE_IDS" && "$SERVICE_IDS" != "None" ]]; then
-                              for SERVICE_ID in $SERVICE_IDS; do
-                                  echo "   Processing Service: $SERVICE_ID"
-                                  # Deregister Instances
-                                  INSTANCE_IDS=$(aws servicediscovery list-instances --service-id "$SERVICE_ID" --region "$REGION" --query "Instances[].Id" --output text)
-                                  if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
-                                      for INSTANCE_ID in $INSTANCE_IDS; do
-                                          echo "      🔪 Deregistering instance: $INSTANCE_ID"
-                                          aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
-                                      done
-                                  fi
-                                  
-                                  # Delete Service
-                                  echo "   🗑️ Deleting Service: $SERVICE_ID"
-                                  aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
-                              done
-                          else
-                              echo "   ℹ️  No services found in namespace $NAMESPACE_ID."
-                          fi
+          if [[ -z "$NAMESPACE_IDS" || "$NAMESPACE_IDS" == "None" ]]; then
+              echo "✅ No relevant Namespaces found."
+          else
+              for NAMESPACE_ID in $NAMESPACE_IDS; do
+                  if [[ -n "$NAMESPACE_ID" && "$NAMESPACE_ID" != "None" ]]; then
+                      echo "🎯 Processing Namespace ID: $NAMESPACE_ID"
+                      echo "📋 Listing services..."
+                      SERVICE_IDS=$(aws servicediscovery list-services --filters "Name=NAMESPACE_ID,Values=$NAMESPACE_ID" --region "$REGION" --query "Services[].Id" --output text)
+                      
+                      if [[ -n "$SERVICE_IDS" && "$SERVICE_IDS" != "None" ]]; then
+                          for SERVICE_ID in $SERVICE_IDS; do
+                              echo "   Processing Service: $SERVICE_ID"
+                              # Deregister Instances
+                              INSTANCE_IDS=$(aws servicediscovery list-instances --service-id "$SERVICE_ID" --region "$REGION" --query "Instances[].Id" --output text)
+                              if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
+                                  for INSTANCE_ID in $INSTANCE_IDS; do
+                                      echo "      🔪 Deregistering instance: $INSTANCE_ID"
+                                      aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
+                                  done
+                              fi
+                              
+                              # Delete Service
+                              echo "   🗑️ Deleting Service: $SERVICE_ID"
+                              aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
+                          done
+                      else
+                          echo "   ℹ️  No services found in namespace $NAMESPACE_ID."
                       fi
-                  done
+                  fi
+              done
+          fi
+
+      - name: Cleanup Zombie Resources (OAC/IAM)
+        if: env.PROJECT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          RESOURCE_NAMESPACE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🧟 Cleanup Zombie Resources for $RESOURCE_NAMESPACE in $REGION"
+
+          # ---------------------------------------------------------
+          # 1. CloudFront Origin Access Control (OAC)
+          # ---------------------------------------------------------
+          OAC_NAME="${RESOURCE_NAMESPACE}-cdn-oac"
+          echo "   🔍 Checking OAC: $OAC_NAME"
+          OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
+
+          if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
+             echo "      🗑️ Deleting OAC: $OAC_ID"
+             aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
+          else
+             echo "      ✅ OAC not found"
+          fi
+
+          # ---------------------------------------------------------
+          # 2. IAM Roles
+          # ---------------------------------------------------------
+          # Expanded list to include Lambda@Edge roles which often stick around
+          ROLES=(
+            "${RESOURCE_NAMESPACE}-exec-role" 
+            "${RESOURCE_NAMESPACE}-codedeploy-role" 
+            "${RESOURCE_NAMESPACE}-task-role"
+            "${NAMESPACE}-${STAGE_KEY}-lambda-edge-role"
+          )
+
+          # Also check for specific standalone policies that might conflict
+          POLICIES_TO_DELETE=("${NAMESPACE}-${STAGE_KEY}-lambda-edge-s3-write-transformed")
+
+          # A. DELETE POLICIES FIRST
+          for POLICY_NAME in "${POLICIES_TO_DELETE[@]}"; do
+             ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+             POLICY_ARN="arn:aws:iam::${ACCOUNT_ID}:policy/${POLICY_NAME}"
+             echo "   🔍 Checking Policy: $POLICY_NAME"
+             if aws iam get-policy --policy-arn "$POLICY_ARN" >/dev/null 2>&1; then
+                echo "      🗑️ Deleting Policy: $POLICY_ARN"
+                aws iam delete-policy --policy-arn "$POLICY_ARN" || echo "      ⚠️ Failed (might be attached?)"
+             else
+                echo "      ✅ Policy not found"
+             fi
+          done
+
+          # B. DELETE ROLES
+          for ROLE in "${ROLES[@]}"; do
+             echo "   🔍 Checking Role: $ROLE"
+             if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
+                echo "      🗑️ Deleting Role: $ROLE"
+                # Detach all policies first
+                POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
+                for POLICY in $POLICIES; do
+                   echo "         About to detach $POLICY"
+                   aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$POLICY"
+                done
+                
+                # Delete inline policies
+                pst=$(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames' --output text)
+                for p in $pst; do
+                   if [ "$p" != "None" ]; then
+                     echo "         Deleting inline policy $p"
+                     aws iam delete-role-policy --role-name "$ROLE" --policy-name "$p"
+                   fi
+                done
+
+                # Delete instance profiles
+                PROFILES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text)
+                 for PROFILE in $PROFILES; do
+                   if [ "$PROFILE" != "None" ]; then
+                     echo "         Removing role from instance profile $PROFILE"
+                     aws iam remove-role-from-instance-profile --instance-profile-name "$PROFILE" --role-name "$ROLE"
+                   fi
+                done
+
+                aws iam delete-role --role-name "$ROLE" || echo "      ⚠️ Failed to delete role"
+             else
+                echo "      ✅ Role not found"
+             fi
+          done
+
+      - name: Cleanup Zombie Cloudflare Records
+        if: env.PROJECT_KEY != ''
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          if [[ -z "$CF_API_TOKEN" ]]; then
+             echo "Skipping Cloudflare cleanup: CLOUDFLARE_API_TOKEN not provided."
+             exit 0
+          fi
+
+          DOMAIN="thisisblaze.uk" # Fallback/Default
+          # In a real scenario we might want to pass domain_root as input, but for this specific "validation" record issue:
+
+          echo "🔍 Checking for zombie Cloudflare records..."
+
+          # Patterns to clean
+          # 1. Validation records (ACM)
+          # 2. Specific host records for the stage being destroyed
+
+          RECORDS=("validation.${DOMAIN}" "${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
+
+          for REC_NAME in "${RECORDS[@]}"; do
+             echo "   Checking $REC_NAME"
+             REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$REC_NAME" \
+               -H "Authorization: Bearer $CF_API_TOKEN" \
+               -H "Content-Type: application/json" | jq -r '.result[0].id // empty')
+               
+             if [[ -n "$REC_ID" ]]; then
+                echo "      🗑️ Deleting $REC_NAME ($REC_ID)"
+                curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
+                   -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
+             else
+                echo "      ✅ Not found"
+             fi
+          done
+
+      - name: 🛑 Pre-Destroy CloudFront Distributions & Cache Policies
+        if: env.PROJECT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="us-east-1"  # CloudFront is always global (us-east-1)
+
+          # Pattern: blaze-{client}-{project}-{stage}-*
+          LABEL_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+          echo "🔍 Searching for CloudFront distributions matching: *${LABEL_PREFIX}*"
+
+          # Get all distribution IDs that have an alias or comment matching our label prefix
+          DIST_IDS=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment!=null] | [?starts_with(Comment,'${LABEL_PREFIX}') || contains(to_string(Aliases.Items),'${STAGE_KEY}')].Id" \
+            --output text --region "$REGION" 2>/dev/null || echo "")
+
+          if [[ -z "$DIST_IDS" || "$DIST_IDS" == "None" ]]; then
+            echo "   ✅ No CloudFront distributions found. Nothing to clean up."
+            exit 0
+          fi
+
+          for DIST_ID in $DIST_IDS; do
+            echo "   🎯 Processing distribution: $DIST_ID"
+
+            # Get current config + ETag
+            CONFIG=$(aws cloudfront get-distribution-config --id "$DIST_ID" 2>/dev/null || echo "")
+            if [[ -z "$CONFIG" ]]; then
+              echo "   ⚠️  Could not fetch config for $DIST_ID — skipping"
+              continue
+            fi
+
+            ETAG=$(echo "$CONFIG" | jq -r '.ETag')
+            STATUS=$(echo "$CONFIG" | jq -r '.DistributionConfig.Enabled')
+
+            if [[ "$STATUS" == "true" ]]; then
+              echo "   📴 Disabling distribution $DIST_ID..."
+              DISABLED_CONFIG=$(echo "$CONFIG" | jq '.DistributionConfig.Enabled = false | .DistributionConfig')
+              NEW_ETAG=$(aws cloudfront update-distribution \
+                --id "$DIST_ID" \
+                --distribution-config "$DISABLED_CONFIG" \
+                --if-match "$ETAG" \
+                --query 'ETag' --output text 2>/dev/null || echo "")
+
+              if [[ -z "$NEW_ETAG" ]]; then
+                echo "   ⚠️  Failed to disable $DIST_ID — skipping"
+                continue
               fi
+              ETAG="$NEW_ETAG"
 
-         - name: Cleanup Zombie Resources (OAC/IAM)
-           if: env.PROJECT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              RESOURCE_NAMESPACE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
-              REGION="${{ inputs.aws_region }}"
-
-              echo "🧟 Cleanup Zombie Resources for $RESOURCE_NAMESPACE in $REGION"
-
-              # ---------------------------------------------------------
-              # 1. CloudFront Origin Access Control (OAC)
-              # ---------------------------------------------------------
-              OAC_NAME="${RESOURCE_NAMESPACE}-cdn-oac"
-              echo "   🔍 Checking OAC: $OAC_NAME"
-              OAC_ID=$(aws cloudfront list-origin-access-controls --query "OriginAccessControlList.Items[?Name=='$OAC_NAME'].Id" --output text)
-
-              if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
-                 echo "      🗑️ Deleting OAC: $OAC_ID"
-                 aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
-              else
-                 echo "      ✅ OAC not found"
-              fi
-
-              # ---------------------------------------------------------
-              # 2. IAM Roles
-              # ---------------------------------------------------------
-              # Expanded list to include Lambda@Edge roles which often stick around
-              ROLES=(
-                "${RESOURCE_NAMESPACE}-exec-role" 
-                "${RESOURCE_NAMESPACE}-codedeploy-role" 
-                "${RESOURCE_NAMESPACE}-task-role"
-                "${NAMESPACE}-${STAGE_KEY}-lambda-edge-role"
-              )
-
-              # Also check for specific standalone policies that might conflict
-              POLICIES_TO_DELETE=("${NAMESPACE}-${STAGE_KEY}-lambda-edge-s3-write-transformed")
-
-              # A. DELETE POLICIES FIRST
-              for POLICY_NAME in "${POLICIES_TO_DELETE[@]}"; do
-                 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-                 POLICY_ARN="arn:aws:iam::${ACCOUNT_ID}:policy/${POLICY_NAME}"
-                 echo "   🔍 Checking Policy: $POLICY_NAME"
-                 if aws iam get-policy --policy-arn "$POLICY_ARN" >/dev/null 2>&1; then
-                    echo "      🗑️ Deleting Policy: $POLICY_ARN"
-                    aws iam delete-policy --policy-arn "$POLICY_ARN" || echo "      ⚠️ Failed (might be attached?)"
-                 else
-                    echo "      ✅ Policy not found"
-                 fi
+              # Wait for Deployed state (max 20 min)
+              echo "   ⏳ Waiting for distribution $DIST_ID to reach Deployed state..."
+              TIMEOUT=1200
+              ELAPSED=0
+              while [[ $ELAPSED -lt $TIMEOUT ]]; do
+                CURRENT_STATUS=$(aws cloudfront get-distribution --id "$DIST_ID" \
+                  --query 'Distribution.Status' --output text 2>/dev/null || echo "Unknown")
+                echo "      Status: $CURRENT_STATUS (${ELAPSED}s elapsed)"
+                if [[ "$CURRENT_STATUS" == "Deployed" ]]; then
+                  break
+                fi
+                sleep 30
+                ELAPSED=$((ELAPSED + 30))
               done
 
-              # B. DELETE ROLES
-              for ROLE in "${ROLES[@]}"; do
-                 echo "   🔍 Checking Role: $ROLE"
-                 if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
-                    echo "      🗑️ Deleting Role: $ROLE"
-                    # Detach all policies first
-                    POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
-                    for POLICY in $POLICIES; do
-                       echo "         About to detach $POLICY"
-                       aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$POLICY"
-                    done
-                    
-                    # Delete inline policies
-                    pst=$(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames' --output text)
-                    for p in $pst; do
-                       if [ "$p" != "None" ]; then
-                         echo "         Deleting inline policy $p"
-                         aws iam delete-role-policy --role-name "$ROLE" --policy-name "$p"
-                       fi
-                    done
+              # Refresh ETag after wait
+              ETAG=$(aws cloudfront get-distribution-config --id "$DIST_ID" --query 'ETag' --output text 2>/dev/null || echo "$ETAG")
+            else
+              echo "   ✅ Distribution $DIST_ID already disabled"
+            fi
 
-                    # Delete instance profiles
-                    PROFILES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text)
-                     for PROFILE in $PROFILES; do
-                       if [ "$PROFILE" != "None" ]; then
-                         echo "         Removing role from instance profile $PROFILE"
-                         aws iam remove-role-from-instance-profile --instance-profile-name "$PROFILE" --role-name "$ROLE"
-                       fi
-                    done
+            # Delete the distribution
+            echo "   🗑️  Deleting distribution $DIST_ID..."
+            aws cloudfront delete-distribution --id "$DIST_ID" --if-match "$ETAG" 2>/dev/null \
+              && echo "   ✅ Deleted $DIST_ID" \
+              || echo "   ⚠️  Failed to delete $DIST_ID (may already be gone)"
 
-                    aws iam delete-role --role-name "$ROLE" || echo "      ⚠️ Failed to delete role"
-                 else
-                    echo "      ✅ Role not found"
-                 fi
-              done
+            echo "   ✅ Done with $DIST_ID"
+          done
 
-         - name: Cleanup Zombie Cloudflare Records
-           if: env.PROJECT_KEY != ''
-           env:
-              CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-              CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-           run: |
-              if [[ -z "$CF_API_TOKEN" ]]; then
-                 echo "Skipping Cloudflare cleanup: CLOUDFLARE_API_TOKEN not provided."
-                 exit 0
+          # ─── Cleanup orphaned custom cache policies ───────────────────────
+          # After distributions are deleted, find and remove any leftover custom
+          # cache policies matching the project label prefix.
+          echo ""
+          echo "🧹 Scanning for orphaned CloudFront cache policies matching: ${LABEL_PREFIX}*"
+
+          POLICY_IDS=$(aws cloudfront list-cache-policies --type custom \
+            --query "CachePolicyList.Items[?CachePolicy.CachePolicyConfig.Name!=null] | [?starts_with(CachePolicy.CachePolicyConfig.Name,'${LABEL_PREFIX}')].CachePolicy.Id" \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$POLICY_IDS" || "$POLICY_IDS" == "None" ]]; then
+            echo "   ✅ No orphaned cache policies found."
+          else
+            for POLICY_ID in $POLICY_IDS; do
+              POLICY_ETAG=$(aws cloudfront get-cache-policy --id "$POLICY_ID" --query 'ETag' --output text 2>/dev/null || echo "")
+              if [[ -z "$POLICY_ETAG" ]]; then
+                echo "   ⚠️  Cannot get ETag for policy $POLICY_ID — skipping"
+                continue
               fi
+              echo "   🗑️  Deleting cache policy $POLICY_ID..."
+              aws cloudfront delete-cache-policy --id "$POLICY_ID" --if-match "$POLICY_ETAG" 2>/dev/null \
+                && echo "   ✅ Deleted policy $POLICY_ID" \
+                || echo "   ⚠️  Could not delete policy $POLICY_ID (may still be in use — Terraform will handle it)"
+            done
+          fi
 
-              DOMAIN="thisisblaze.uk" # Fallback/Default
-              # In a real scenario we might want to pass domain_root as input, but for this specific "validation" record issue:
+      - name: Cleanup Lambda@Edge
+        if: env.CLIENT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
 
-              echo "🔍 Checking for zombie Cloudflare records..."
+          PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+          echo "Searching for functions starting with: $PREFIX"
 
-              # Patterns to clean
-              # 1. Validation records (ACM)
-              # 2. Specific host records for the stage being destroyed
+          FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
 
-              RECORDS=("validation.${DOMAIN}" "${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
+          if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+             for FUNC_NAME in $FUNCTIONS; do
+                echo "   🔄 Checking function: $FUNC_NAME"
+                if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
+                   echo "   ✅ Deleted $FUNC_NAME"
+                else
+                   echo "   ⚠️ Delete failed (likely Replicated). Skipping."
+                fi
+             done
+          else
+             echo "   ok: No functions found."
+          fi
 
-              for REC_NAME in "${RECORDS[@]}"; do
-                 echo "   Checking $REC_NAME"
-                 REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$REC_NAME" \
-                   -H "Authorization: Bearer $CF_API_TOKEN" \
-                   -H "Content-Type: application/json" | jq -r '.result[0].id // empty')
-                   
-                 if [[ -n "$REC_ID" ]]; then
-                    echo "      🗑️ Deleting $REC_NAME ($REC_ID)"
-                    curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
-                       -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
-                 else
-                    echo "      ✅ Not found"
-                 fi
-              done
+      - name: Cleanup CodeDeploy Apps
+        if: env.STAGE_KEY != ''
+        run: |
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
 
-         - name: Cleanup Lambda@Edge
-           if: env.CLIENT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
+          echo "🧹 Cleanup CodeDeploy Applications for Stage: $STAGE_KEY in $REGION"
 
-              PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
-              echo "Searching for functions starting with: $PREFIX"
+          # Find all apps ending with "-${STAGE_KEY}-app" or contains it
+          APPS=$(aws deploy list-applications --region "$REGION" --query "applications[?contains(@, '-${STAGE_KEY}-app')]" --output text)
 
-              FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
+          if [[ -n "$APPS" && "$APPS" != "None" ]]; then
+             for APP in $APPS; do
+                echo "      🗑️ Deleting CodeDeploy App: $APP"
+                aws deploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
+             done
+          else
+             echo "      ✅ No CodeDeploy Apps found"
+          fi
 
-              if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
-                 for FUNC_NAME in $FUNCTIONS; do
-                    echo "   🔄 Checking function: $FUNC_NAME"
-                    if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
-                       echo "   ✅ Deleted $FUNC_NAME"
-                    else
-                       echo "   ⚠️ Delete failed (likely Replicated). Skipping."
-                    fi
-                 done
-              else
-                 echo "   ok: No functions found."
-              fi
+      - name: Cleanup EC2 Capacity Provider
+        if: env.CLIENT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+          CLUSTER="${{ inputs.cluster_name }}"
+          RESOURCE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
 
-         - name: Cleanup CodeDeploy Apps
-           if: env.STAGE_KEY != ''
-           run: |
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              REGION="${{ inputs.aws_region }}"
+          echo "🖥️ EC2 Capacity Provider Cleanup for $RESOURCE_PREFIX in $REGION"
 
-              echo "🧹 Cleanup CodeDeploy Applications for Stage: $STAGE_KEY in $REGION"
+          # ---------------------------------------------------------
+          # 1. Find and scale down ASG
+          # ---------------------------------------------------------
+          ASG_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp-asg"
+          echo "   🔍 Checking ASG: $ASG_NAME"
+          ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "$ASG_NAME" \
+            --region "$REGION" \
+            --query "AutoScalingGroups[0].AutoScalingGroupName" \
+            --output text 2>/dev/null || echo "None")
 
-              # Find all apps ending with "-${STAGE_KEY}-app" or contains it
-              APPS=$(aws deploy list-applications --region "$REGION" --query "applications[?contains(@, '-${STAGE_KEY}-app')]" --output text)
+          if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
+             echo "      📉 Scaling ASG to 0..."
+             aws autoscaling update-auto-scaling-group \
+               --auto-scaling-group-name "$ASG_NAME" \
+               --min-size 0 --max-size 0 --desired-capacity 0 \
+               --region "$REGION" || echo "      ⚠️ Failed to scale ASG"
 
-              if [[ -n "$APPS" && "$APPS" != "None" ]]; then
-                 for APP in $APPS; do
-                    echo "      🗑️ Deleting CodeDeploy App: $APP"
-                    aws deploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
-                 done
-              else
-                 echo "      ✅ No CodeDeploy Apps found"
-              fi
-
-         - name: Cleanup EC2 Capacity Provider
-           if: env.CLIENT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              REGION="${{ inputs.aws_region }}"
-              CLUSTER="${{ inputs.cluster_name }}"
-              RESOURCE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
-
-              echo "🖥️ EC2 Capacity Provider Cleanup for $RESOURCE_PREFIX in $REGION"
-
-              # ---------------------------------------------------------
-              # 1. Find and scale down ASG
-              # ---------------------------------------------------------
-              ASG_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp-asg"
-              echo "   🔍 Checking ASG: $ASG_NAME"
-              ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
-                --auto-scaling-group-names "$ASG_NAME" \
-                --region "$REGION" \
-                --query "AutoScalingGroups[0].AutoScalingGroupName" \
-                --output text 2>/dev/null || echo "None")
-
-              if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
-                 echo "      📉 Scaling ASG to 0..."
-                 aws autoscaling update-auto-scaling-group \
-                   --auto-scaling-group-name "$ASG_NAME" \
-                   --min-size 0 --max-size 0 --desired-capacity 0 \
-                   --region "$REGION" || echo "      ⚠️ Failed to scale ASG"
-
-                 # Wait for instances to drain (max 3 minutes)
-                 echo "      ⏳ Waiting for instances to drain..."
-                 timeout=180
-                 elapsed=0
-                 while [ $elapsed -lt $timeout ]; do
-                    INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
-                      --auto-scaling-group-names "$ASG_NAME" \
-                      --region "$REGION" \
-                      --query "AutoScalingGroups[0].Instances | length(@)" \
-                      --output text 2>/dev/null || echo "0")
-                    if [[ "$INSTANCE_COUNT" == "0" ]]; then
-                       echo "      ✅ All instances drained"
-                       break
-                    fi
-                    echo "      ... $INSTANCE_COUNT instances remaining"
-                    sleep 15
-                    elapsed=$((elapsed+15))
-                 done
-              else
-                 echo "      ✅ ASG not found (no EC2 capacity provider)"
-              fi
-
-              # ---------------------------------------------------------
-              # 2. Deregister ECS Capacity Provider (if exists)
-              # ---------------------------------------------------------
-              CP_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp"
-              echo "   🔍 Checking Capacity Provider: $CP_NAME"
-              CP_EXISTS=$(aws ecs describe-capacity-providers \
-                --capacity-providers "$CP_NAME" \
-                --region "$REGION" \
-                --query "capacityProviders[0].name" \
-                --output text 2>/dev/null || echo "None")
-
-              if [[ -n "$CP_EXISTS" && "$CP_EXISTS" != "None" && "$CP_EXISTS" != "FARGATE" ]]; then
-                 echo "      🔄 Removing capacity provider from cluster strategy..."
-                 # Get current providers minus the EC2 one
-                 CURRENT_CPS=$(aws ecs describe-clusters \
-                   --clusters "$CLUSTER" \
-                   --region "$REGION" \
-                   --query "clusters[0].capacityProviders" \
-                   --output json 2>/dev/null || echo "[]")
-
-                 FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
-                 
-                 # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
-                 # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
-                 if [[ "$FILTERED_CPS" == "[]" ]]; then
-                    echo "      ⚠️ No other providers left. Defaulting to FARGATE/FARGATE_SPOT to detach EC2 CP."
-                    aws ecs put-cluster-capacity-providers \
-                      --cluster "$CLUSTER" \
-                      --capacity-providers FARGATE FARGATE_SPOT \
-                      --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-                      --region "$REGION" || echo "      ⚠️ Failed to reset cluster strategy"
-                 else
-                     aws ecs put-cluster-capacity-providers \
-                       --cluster "$CLUSTER" \
-                       --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
-                       --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-                       --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
-                 fi
-                 
-                 echo "      ✅ Capacity provider detached from cluster."
-                 
-                 # EXPLICITLY DELETE THE CAPACITY PROVIDER
-                 # Terraform hangs if it exists but is not in state, or if it's just disassociated but still "active"
-                 echo "      🗑️ Explicitly deleting Capacity Provider: $CP_NAME"
-                 aws ecs delete-capacity-provider --capacity-provider "$CP_NAME" --region "$REGION" || echo "      ⚠️ Failed to delete capacity provider resource"
-                 
-              else
-                 echo "      ✅ Capacity provider not found"
-              fi
-
-         - name: Cleanup Launch Templates
-           if: env.CLIENT_KEY != ''
-           run: |
-              NAMESPACE="${{ env.NAMESPACE }}"
-              CLIENT_KEY="${{ env.CLIENT_KEY }}"
-              PROJECT_KEY="${{ env.PROJECT_KEY }}"
-              STAGE_KEY="${{ env.STAGE_KEY }}"
-              REGION="${{ inputs.aws_region }}"
-
-              # Construct the implementation-standard name
-              LT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
-
-              echo "🚀 Checking for Launch Template: $LT_NAME in $REGION..."
-
-              # Check if exists
-              LT_ID=$(aws ec2 describe-launch-templates \
-                  --launch-template-names "$LT_NAME" \
+             # Wait for instances to drain (max 3 minutes)
+             echo "      ⏳ Waiting for instances to drain..."
+             timeout=180
+             elapsed=0
+             while [ $elapsed -lt $timeout ]; do
+                INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+                  --auto-scaling-group-names "$ASG_NAME" \
                   --region "$REGION" \
-                  --query "LaunchTemplates[0].LaunchTemplateId" \
-                  --output text 2>/dev/null || echo "None")
+                  --query "AutoScalingGroups[0].Instances | length(@)" \
+                  --output text 2>/dev/null || echo "0")
+                if [[ "$INSTANCE_COUNT" == "0" ]]; then
+                   echo "      ✅ All instances drained"
+                   break
+                fi
+                echo "      ... $INSTANCE_COUNT instances remaining"
+                sleep 15
+                elapsed=$((elapsed+15))
+             done
+          else
+             echo "      ✅ ASG not found (no EC2 capacity provider)"
+          fi
 
-              if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
-                 echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
-                 aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" || echo "      ⚠️ Failed to delete Launch Template"
-              else
-                 echo "      ✅ Launch Template not found"
-              fi
+          # ---------------------------------------------------------
+          # 2. Deregister ECS Capacity Provider (if exists)
+          # ---------------------------------------------------------
+          CP_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp"
+          echo "   🔍 Checking Capacity Provider: $CP_NAME"
+          CP_EXISTS=$(aws ecs describe-capacity-providers \
+            --capacity-providers "$CP_NAME" \
+            --region "$REGION" \
+            --query "capacityProviders[0].name" \
+            --output text 2>/dev/null || echo "None")
 
-         - name: Cleanup ECS Services
-           id: cleanup
-           run: |
-              set -e
-              CLUSTER="${{ inputs.cluster_name }}"
-              STAGE_FILTER="${{ inputs.stage_filter }}"
+          if [[ -n "$CP_EXISTS" && "$CP_EXISTS" != "None" && "$CP_EXISTS" != "FARGATE" ]]; then
+             echo "      🔄 Removing capacity provider from cluster strategy..."
+             # Get current providers minus the EC2 one
+             CURRENT_CPS=$(aws ecs describe-clusters \
+               --clusters "$CLUSTER" \
+               --region "$REGION" \
+               --query "clusters[0].capacityProviders" \
+               --output json 2>/dev/null || echo "[]")
 
-              echo "🧹 Cleaning up ECS Services in $CLUSTER..."
+             FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
+             
+             # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
+             # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
+             if [[ "$FILTERED_CPS" == "[]" ]]; then
+                echo "      ⚠️ No other providers left. Defaulting to FARGATE/FARGATE_SPOT to detach EC2 CP."
+                aws ecs put-cluster-capacity-providers \
+                  --cluster "$CLUSTER" \
+                  --capacity-providers FARGATE FARGATE_SPOT \
+                  --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                  --region "$REGION" || echo "      ⚠️ Failed to reset cluster strategy"
+             else
+                 aws ecs put-cluster-capacity-providers \
+                   --cluster "$CLUSTER" \
+                   --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
+                   --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                   --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
+             fi
+             
+             echo "      ✅ Capacity provider detached from cluster."
+             
+             # EXPLICITLY DELETE THE CAPACITY PROVIDER
+             # Terraform hangs if it exists but is not in state, or if it's just disassociated but still "active"
+             echo "      🗑️ Explicitly deleting Capacity Provider: $CP_NAME"
+             aws ecs delete-capacity-provider --capacity-provider "$CP_NAME" --region "$REGION" || echo "      ⚠️ Failed to delete capacity provider resource"
+             
+          else
+             echo "      ✅ Capacity provider not found"
+          fi
 
-              if [[ -n "$STAGE_FILTER" ]]; then
-                 echo "   🎯 Stage filter enabled: $STAGE_FILTER"
-              fi
+      - name: Cleanup Launch Templates
+        if: env.CLIENT_KEY != ''
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
 
-              SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null | tr '\t' '\n' || echo "")
+          # Construct the implementation-standard name
+          LT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
 
-              if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
-                 echo "✅ No active services found"
-                 echo "status=no_services" >> "$GITHUB_OUTPUT"
-                 echo "services=" >> "$GITHUB_OUTPUT"
-                 exit 0
-              fi
+          echo "🚀 Checking for Launch Template: $LT_NAME in $REGION..."
 
-              if [[ -n "$STAGE_FILTER" ]]; then
-                 SERVICES_FILTERED=$(echo "$SERVICES" | grep -F "-${STAGE_FILTER}-" || echo "")
-                 if [[ -z "$SERVICES_FILTERED" ]]; then
-                   echo "✅ No services matched stage_filter"
-                   echo "status=no_services" >> "$GITHUB_OUTPUT"
-                   echo "services=" >> "$GITHUB_OUTPUT"
-                   exit 0
-                 fi
-                 SERVICES="$SERVICES_FILTERED"
-              fi
+          # Check if exists
+          LT_ID=$(aws ec2 describe-launch-templates \
+              --launch-template-names "$LT_NAME" \
+              --region "$REGION" \
+              --query "LaunchTemplates[0].LaunchTemplateId" \
+              --output text 2>/dev/null || echo "None")
 
-              DELETED_SERVICES=""
-              while IFS= read -r SVC_ARN; do
-                 [[ -z "$SVC_ARN" ]] && continue
-                 SVC_NAME=$(echo "$SVC_ARN" | sed 's|.*/||')
-                 echo "🔄 Processing service: $SVC_NAME"
-                 
-                 aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-                 
-                 # Wait for tasks to stop (Simplified)
-                 timeout=300
-                 elapsed=0
-                 while [ $elapsed -lt $timeout ]; do
-                    RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/dev/null || echo "0")
-                    if [[ "$RUNNING_TASKS" == "0" ]]; then
-                       break
-                    fi
-                    sleep 10
-                    elapsed=$((elapsed+10))
-                 done
+          if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
+             echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
+             aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" || echo "      ⚠️ Failed to delete Launch Template"
+          else
+             echo "      ✅ Launch Template not found"
+          fi
 
-                 # Force Stop if needed
-                 if [[ $elapsed -ge $timeout ]]; then
-                    RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/dev/null || echo "")
-                    if [[ -n "$RUNNING_TASKS" && "$RUNNING_TASKS" != "None" ]]; then
-                       for TASK in $RUNNING_TASKS; do
-                          aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-                       done
-                       sleep 30
-                    fi
-                 fi
-                 
-                 aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
-                 echo "   ✅ Deleted $SVC_NAME"
-                 DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
-              done <<< "$SERVICES"
+      - name: Cleanup ECS Services
+        id: cleanup
+        run: |
+          set -e
+          CLUSTER="${{ inputs.cluster_name }}"
+          STAGE_FILTER="${{ inputs.stage_filter }}"
 
-              echo "status=success" >> "$GITHUB_OUTPUT"
-              echo "services=$DELETED_SERVICES" >> "$GITHUB_OUTPUT"
+          echo "🧹 Cleaning up ECS Services in $CLUSTER..."
 
-              # ---------------------------------------------------------
-              # 📋 CLEANUP TASK DEFINITIONS (Attempt)
-              # ---------------------------------------------------------
-              # Only if stage filter is NOT set (shared cluster safety)
-              if [[ -z "$STAGE_FILTER" && "$CLUSTER" =~ (.+)-cluster ]]; then
-                 BASE_PREFIX="${BASH_REMATCH[1]}"
-                 KNOWN_SERVICES=("api" "frontend" "admin" "tunnel" "mongo" "elasticsearch" "kibana")
-                 for SVC in "${KNOWN_SERVICES[@]}"; do
-                    FAMILY="${BASE_PREFIX}-${SVC}"
-                    TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
-                    if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
-                       echo "      Cleaning task defs for $FAMILY..."
-                       for ARN in $TASK_DEF_ARNS; do
-                          aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
-                          aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
-                       done
-                    fi
-                 done
-              fi
+          if [[ -n "$STAGE_FILTER" ]]; then
+             echo "   🎯 Stage filter enabled: $STAGE_FILTER"
+          fi
 
-              echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
+          SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null | tr '\t' '\n' || echo "")
+
+          if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
+             echo "✅ No active services found"
+             echo "status=no_services" >> "$GITHUB_OUTPUT"
+             echo "services=" >> "$GITHUB_OUTPUT"
+             exit 0
+          fi
+
+          if [[ -n "$STAGE_FILTER" ]]; then
+             SERVICES_FILTERED=$(echo "$SERVICES" | grep -F "-${STAGE_FILTER}-" || echo "")
+             if [[ -z "$SERVICES_FILTERED" ]]; then
+               echo "✅ No services matched stage_filter"
+               echo "status=no_services" >> "$GITHUB_OUTPUT"
+               echo "services=" >> "$GITHUB_OUTPUT"
+               exit 0
+             fi
+             SERVICES="$SERVICES_FILTERED"
+          fi
+
+          DELETED_SERVICES=""
+          while IFS= read -r SVC_ARN; do
+             [[ -z "$SVC_ARN" ]] && continue
+             SVC_NAME=$(echo "$SVC_ARN" | sed 's|.*/||')
+             echo "🔄 Processing service: $SVC_NAME"
+             
+             aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+             
+             # Wait for tasks to stop (Simplified)
+             timeout=300
+             elapsed=0
+             while [ $elapsed -lt $timeout ]; do
+                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/dev/null || echo "0")
+                if [[ "$RUNNING_TASKS" == "0" ]]; then
+                   break
+                fi
+                sleep 10
+                elapsed=$((elapsed+10))
+             done
+
+             # Force Stop if needed
+             if [[ $elapsed -ge $timeout ]]; then
+                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/dev/null || echo "")
+                if [[ -n "$RUNNING_TASKS" && "$RUNNING_TASKS" != "None" ]]; then
+                   for TASK in $RUNNING_TASKS; do
+                      aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+                   done
+                   sleep 30
+                fi
+             fi
+             
+             aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+             echo "   ✅ Deleted $SVC_NAME"
+             DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
+          done <<< "$SERVICES"
+
+          echo "status=success" >> "$GITHUB_OUTPUT"
+          echo "services=$DELETED_SERVICES" >> "$GITHUB_OUTPUT"
+
+          # ---------------------------------------------------------
+          # 📋 CLEANUP TASK DEFINITIONS (Attempt)
+          # ---------------------------------------------------------
+          # Only if stage filter is NOT set (shared cluster safety)
+          if [[ -z "$STAGE_FILTER" && "$CLUSTER" =~ (.+)-cluster ]]; then
+             BASE_PREFIX="${BASH_REMATCH[1]}"
+             KNOWN_SERVICES=("api" "frontend" "admin" "tunnel" "mongo" "elasticsearch" "kibana")
+             for SVC in "${KNOWN_SERVICES[@]}"; do
+                FAMILY="${BASE_PREFIX}-${SVC}"
+                TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
+                if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
+                   echo "      Cleaning task defs for $FAMILY..."
+                   for ARN in $TASK_DEF_ARNS; do
+                      aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
+                      aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
+                   done
+                fi
+             done
+          fi
+
+          echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
