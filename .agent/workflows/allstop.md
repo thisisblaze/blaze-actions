@@ -90,18 +90,79 @@ In `blaze-actions`:
 1. Verify `docs/knowledge/README.md` exists.
 2. Ensure any new `.md` files added to `docs/knowledge/` today are properly linked in the `README.md` index.
 
-### 5.7. ENV Comparison Report Check
+### 5.7. ENV Comparison Report — Diff and Update
 
-In `blaze-template-deploy`, verify `docs/reports/ENV_COMPARISON_AWS.md`:
+In `blaze-template-deploy`, run the following checks **every time** (not just when you think things changed).
+This is a mechanical diff — execute the commands, compare output to report table, update if any mismatch.
 
-1. Check the `Last Updated` date — if changes were made to any `live/*/main.tf` today, the report must be updated.
-2. Verify the **Action Items** table: mark any completed items as ✅ DONE.
-3. Key invariants to re-validate quickly (`grep` only — do NOT read the full file):
-   - `enable_waf` in `dev-network/main.tf` must be `false` (WAF is CF-only, stage/prod)
-   - All `*-network` module refs should match the latest infra-core tag
-   - `prod-data/main.tf` Redis subnet should reference `private_subnets`
+#### A. Detect Changed Infra Files Today
 
-**If the report is stale → update `Last Updated` and sync Action Items before committing.**
+// turbo
+
+```bash
+cd /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+git diff --name-only HEAD~5 HEAD -- '*.tf' | grep 'live/' | sort
+```
+
+If **any** `live/*/main.tf` appears in this output, the report table rows for that env MUST be verified.
+
+#### B. Mechanical Variable Check (run always — fast greps)
+
+// turbo
+
+```bash
+# WAF: dev must be false, stage/prod must be true
+grep -h "enable_waf" \
+  .github/aws/infra/live/dev-network/main.tf \
+  .github/aws/infra/live/stage-network/main.tf \
+  .github/aws/infra/live/prod-network/main.tf
+
+# NAT strategy per env
+grep -h "nat_strategy" \
+  .github/aws/infra/live/dev-network/main.tf \
+  .github/aws/infra/live/stage-network/main.tf \
+  .github/aws/infra/live/prod-network/main.tf
+
+# Module refs — must all match latest infra-core tag
+grep -rh "ref=" .github/aws/infra/live/ --include="*.tf" | sort | uniq -c | sort -rn | head -20
+
+# Redis subnet — prod-data must say private_subnets NOT public_subnets
+grep -n "subnet" .github/aws/infra/live/prod-data/main.tf
+
+# Redis enabled flags — dev/stage must be false, prod must be true
+grep -rh "enable_redis" .github/aws/infra/live/ --include="*.tf"
+
+# Image resize per env
+grep -rh "enable_image_resize" .github/aws/infra/live/ --include="*.tf"
+
+# separate_api_alb
+grep -rh "separate_api_alb" .github/aws/infra/live/ --include="*.tf"
+```
+
+#### C. Compare Against Report Table
+
+For each value returned above, check if it matches the corresponding cell in `docs/reports/ENV_COMPARISON_AWS.md`:
+
+| Grep result                       | Expected in report               | Action if mismatch      |
+| --------------------------------- | -------------------------------- | ----------------------- |
+| `enable_waf = false` in dev       | `❌ off` in dev column           | Update WAF row          |
+| `enable_waf = true` in stage/prod | `✅ Main+CDN CF` / `✅ All CF`   | Update WAF row          |
+| `nat_strategy = "GATEWAY"`        | `GATEWAY (>5 svc)`               | Update NAT row          |
+| `ref=v1.50.9` everywhere          | `v1.50.9` in module ref row      | Update module ref row   |
+| `private_subnets` in prod-data    | `✅ private` in Redis Subnet row | Mark 🔴 resolved → ✅   |
+| `public_subnets` in prod-data     | `🔴 currently public`            | Ensure bug is flagged   |
+| `enable_image_resize = false`     | `❌ off` for that env            | Update image resize row |
+
+#### D. Update the Report (mandatory if any mismatch found)
+
+1. Open `docs/reports/ENV_COMPARISON_AWS.md`
+2. Update the affected table row(s) — be surgical, change only the mismatched cells
+3. Update `**Last Updated**` date with a brief change note, e.g. `2026-03-01 (fixed Redis subnet)`
+4. Update the **Action Items** table: mark ✅ DONE any items now resolved
+5. Stage the file — it will be included in the end-of-day commit (step 6)
+
+> [!IMPORTANT]
+> **This step is NOT optional if any grep output differs from the report.** The report is the single source of truth for environment state — it must always reflect actual code.
 
 ### 5.8. Micro-Session Handoff Check
 
