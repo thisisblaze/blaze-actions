@@ -638,7 +638,7 @@ jobs:
           CLUSTER="${{ needs.config.outputs.cluster_name }}"
           REGION="${{ needs.config.outputs.aws_region }}"
 
-          echo "⏳ Waiting up to 5 min for all ECS services to reach stable state..."
+          echo "⏳ Waiting up to 10 min for all ECS services to reach stable state..."
 
           {
             echo "## 🎯 ECS Service Status"
@@ -658,7 +658,7 @@ jobs:
             SERVICE_NAMES=$(echo "$SERVICES" | xargs -I{} sh -c 'echo "${1##*/}"' -- {})
             echo "Waiting for services: $SERVICE_NAMES" >&2
             
-            TIMEOUT=300
+            TIMEOUT=600
             ELAPSED=0
             STABLE=false
             while [ $ELAPSED -lt $TIMEOUT ]; do
