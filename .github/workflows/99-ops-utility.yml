@@ -825,6 +825,65 @@ jobs:
              fi
           fi
 
+      - name: Find and Delete Orphaned Log Groups
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned log groups matching *${PREFIX}*${ENV_KEY}*..."
+          ALL_LOGS=$(aws logs describe-log-groups --query "logGroups[].logGroupName" --output text)
+          
+          for log in $ALL_LOGS; do
+             if [[ "$log" == *"${PREFIX}"* ]] && [[ "$log" == *"${ENV_KEY}"* ]]; then
+                echo "🗑️ Found orphaned log group: $log"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws logs delete-log-group --log-group-name "$log" || echo "⚠️ Failed to delete $log"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $log"
+                fi
+             fi
+          done
+
+      - name: Find and Delete Orphaned Target Groups
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned target groups matching *${PREFIX}*${ENV_KEY}*..."
+          ALL_TGS=$(aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text)
+          
+          for tg_arn in $ALL_TGS; do
+             tg_name=$(aws elbv2 describe-target-groups --target-group-arns "$tg_arn" --query "TargetGroups[0].TargetGroupName" --output text)
+             if [[ "$tg_name" == *"${PREFIX}"* ]] && [[ "$tg_name" == *"${ENV_KEY}"* ]]; then
+                echo "🗑️ Found orphaned target group: $tg_name ($tg_arn)"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws elbv2 delete-target-group --target-group-arn "$tg_arn" || echo "⚠️ Failed to delete $tg_name"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $tg_name"
+                fi
+             fi
+          done
+
+      - name: Find and Delete Orphaned CloudFront Functions
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}*${ENV_KEY}*..."
+          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text || echo "")
+          
+          for func in $ALL_FUNCS; do
+             if [[ "$func" == *"${PREFIX}"* ]] && [[ "$func" == *"${ENV_KEY}"* ]]; then
+                echo "🗑️ Found orphaned function: $func"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text)
+                   aws cloudfront delete-function --name "$func" --if-match "$ETAG" || echo "⚠️ Failed to delete $func"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $func"
+                fi
+             fi
+          done
+          
   sync-cloudflare-config:
     name: Sync Cloudflare Config
     needs: [configuration]
