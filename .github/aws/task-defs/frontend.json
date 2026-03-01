@@ -33,6 +33,10 @@
       },
       "environment": [
         {
+          "name": "HOSTNAME",
+          "value": "0.0.0.0"
+        },
+        {
           "name": "BLAZE_GRAPHQL_URI",
           "value": "${BLAZE_GRAPHQL_URI}"
         },
