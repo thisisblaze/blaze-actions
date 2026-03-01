@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Scope Safety — Cleanup Scripts** (`99-ops-utility.yml`): Corrected resource matching logic in all cleanup steps to strictly use `namespace-client_key-project_key-environment` exact prefix, preventing accidental deletion of resources from other projects sharing the same AWS account (e.g. `blaze-b9-dev-core-*`).
+- **CloudFront Destroy Ordering Workarounds Removed**: With `environment-network` v1.50.15 introducing the `terraform_data.cf_policy_destroy_gate` native fix, all CLI-based workarounds have been removed:
+  - `99-ops-utility.yml`: Removed `terraform state rm` for CF cache policies (6 resources) and LB listeners (3 resources) from nuke network `pre_apply_script`.
+  - `01-provision-infra.yml`: Removed the `if: destroy && stack == network` guard block with CF policy + LB listener state rm.
+  - `reusable-pre-destroy-cleanup.yml`: Removed the 100+ line "🛑 Pre-Destroy CloudFront Distributions & Cache Policies" step (CLI disable/wait/delete logic).
+  - Lambda@Edge state rm intentionally retained — valid workaround for AWS's multi-hour replica propagation delay.
 
 ## [v1.5.1] - 2026-02-28
 
