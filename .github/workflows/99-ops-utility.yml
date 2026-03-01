@@ -796,14 +796,15 @@ jobs:
 
       - name: Find and Delete Orphaned Buckets
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned buckets matching *${PREFIX}* (excluding tfstate)..."
+          echo "🧹 Looking for orphaned buckets matching *${PREFIX}*${ENV_KEY}* (excluding tfstate)..."
           ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
           
           FOUND_COUNT=0
           for bucket in $ALL_BUCKETS; do
-             if [[ "$bucket" == *"${PREFIX}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
+             if [[ "$bucket" == *"${PREFIX}"* ]] && [[ "$bucket" == *"${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
                 echo "🗑️ Found orphaned bucket: $bucket"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    aws s3 rb "s3://$bucket" --force || echo "⚠️ Failed to delete $bucket"
