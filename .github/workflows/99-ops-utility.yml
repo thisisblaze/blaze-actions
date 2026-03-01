@@ -15,6 +15,7 @@ on:
           - "manage-environment"
           - "destroy-resources"
           - "cleanup-orphaned-lambdas"
+          - "cleanup-orphaned-buckets"
           - "nuke-environment"
           - "destroy-cloudflare-pages"
           - "cleanup-cloudflare-deployments"
@@ -237,7 +238,7 @@ jobs:
           fi
 
           # Validation for destructive actions
-          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" ]]; then
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
             if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
               echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
               exit 1
@@ -767,6 +768,60 @@ jobs:
              echo "⚠️ This was a DRY RUN. To actually delete these resources, set 'Confirmation' to 'EXECUTE'."
           else
              echo "✅ Garbage Collection Complete."
+          fi
+
+  cleanup-orphaned-buckets:
+    name: 🧹 Cleanup Orphaned Buckets
+    needs: [configuration]
+    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "EXECUTE" ] && [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+             echo "⚠️ Confirmation not set to EXECUTE/DESTROY. Running in DRY-RUN mode."
+             echo "CONFIRM_MODE=DRY_RUN" >> $GITHUB_ENV
+          else
+             echo "🚨 EXECUTION MODE CONFIRMED"
+             echo "CONFIRM_MODE=EXECUTE" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Find and Delete Orphaned Buckets
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned buckets matching *${PREFIX}* (excluding tfstate)..."
+          ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
+          
+          FOUND_COUNT=0
+          for bucket in $ALL_BUCKETS; do
+             if [[ "$bucket" == *"${PREFIX}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
+                echo "🗑️ Found orphaned bucket: $bucket"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws s3 rb "s3://$bucket" --force || echo "⚠️ Failed to delete $bucket"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $bucket"
+                fi
+                FOUND_COUNT=$((FOUND_COUNT+1))
+             fi
+          done
+          
+          if [ "$FOUND_COUNT" -eq 0 ]; then
+             echo "✅ No orphaned buckets found."
+          else
+             if [ "$CONFIRM_MODE" != "EXECUTE" ]; then
+                echo "⚠️ This was a DRY RUN. To actually delete these $FOUND_COUNT resources, set 'Confirmation' to 'EXECUTE'."
+             else
+                echo "✅ Successfully cleaned $FOUND_COUNT buckets."
+             fi
           fi
 
   sync-cloudflare-config:
@@ -2452,8 +2507,12 @@ jobs:
              echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
+           if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
              echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ inputs.action }}" == "cleanup-orphaned-buckets" ]]; then
+             echo "| **Cleanup Buckets** | $(get_icon ${{ needs.cleanup-orphaned-buckets.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
 
            if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
