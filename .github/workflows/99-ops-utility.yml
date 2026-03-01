@@ -1691,7 +1691,7 @@ jobs:
   # to fail when resources are already destroyed (count depends on unknown attributes).
   nuke-app-gate:
     name: ✅ Nuke 2g - App Gate (absorb failure)
-    needs: [configuration, nuke-app-gate]
+    needs: [configuration, nuke-destroy-app]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
