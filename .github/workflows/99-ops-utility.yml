@@ -2408,29 +2408,6 @@ jobs:
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" 2>/dev/null || true
         echo "✅ Lambda@Edge orphaned."
 
-        # ----- CLOUDFRONT CACHE POLICIES -----
-        # Remove CF cache policies from state BEFORE plan so Terraform never races
-        # their deletion against active distributions. They are cleaned via CLI in
-        # pre-destroy.sh (after this script but still before apply runs).
-        echo "🔪 REMOVING CF CACHE POLICIES FROM STATE..."
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.files" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.sitemap" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.files_cdn" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.sitemap_cdn" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.cdn_default" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_cloudfront_cache_policy.image_resize" 2>/dev/null || true
-        echo "✅ CF cache policies removed from state."
-
-        # ----- LB LISTENERS -----
-        # Remove LB listeners from state BEFORE plan so Terraform doesn't manage
-        # the listener→TG destroy dependency. Listeners are deleted via CLI in
-        # pre-destroy.sh, ensuring TGs have no in-use references during destroy.
-        echo "🔪 REMOVING LB LISTENERS FROM STATE..."
-        terraform state rm "module.environment_network.aws_lb_listener.https" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_lb_listener.api_https" 2>/dev/null || true
-        terraform state rm "module.environment_network.aws_lb_listener.http" 2>/dev/null || true
-        echo "✅ LB listeners removed from state."
-
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
         # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
         # This prevents destroy from hanging on ECS managed termination protection.

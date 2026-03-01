@@ -419,24 +419,6 @@ jobs:
           bash "$SCRIPT"
         fi
 
-        # ----- NETWORK DESTROY: REMOVE CF POLICIES + LB LISTENERS FROM STATE -----
-        # Must run BEFORE plan to avoid stale-plan errors from pre-destroy.sh.
-        # CF cache policies → Terraform never races their deletion against distributions.
-        # LB listeners → Terraform won't manage listener→TG dependency; CLI handles it.
-        if [[ "${{ inputs.destroy }}" == "true" && "${{ inputs.stack }}" == "network" ]]; then
-          echo "🔪 [network destroy] Removing CF cache policies from state..."
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.files" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.sitemap" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.files_cdn" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.sitemap_cdn" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.cdn_default" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_cloudfront_cache_policy.image_resize" 2>/dev/null || true
-          echo "🔪 [network destroy] Removing LB listeners from state..."
-          terraform state rm "module.environment_network.aws_lb_listener.https" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_lb_listener.api_https" 2>/dev/null || true
-          terraform state rm "module.environment_network.aws_lb_listener.http" 2>/dev/null || true
-          echo "✅ CF policies + LB listeners removed from state."
-        fi
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
