@@ -156,7 +156,17 @@ For each pair:
 - Flag any module present in one environment but **missing** from its counterpart.
 - Flag any **provider version differences** between paired stacks.
 
-**If drift found → Recommend: `/cross-environment-consistency`**
+4. **ENV Comparison Report audit** (`docs/reports/ENV_COMPARISON_AWS.md`):
+   - `grep -n "Last Updated"` to check if the date is current.
+   - `grep -n "🔴"` to list open critical action items — flag any unresolved ones.
+   - Validate key invariants with quick greps (do NOT read the whole report):
+     - `grep -n "enable_waf" .github/aws/infra/live/dev-network/main.tf` → must be `false`
+     - `grep -n "ref=" .github/aws/infra/live/dev-app/main.tf` → must NOT be `ref=dev`
+     - `grep -n "public_subnets" .github/aws/infra/live/prod-data/main.tf` → must be empty (Redis on private)
+   - Compare the environments in the report with code: `dev-mini`, `dev`, `stage`, `prod`, `multi-site` must all have table columns.
+
+**If drift found → Recommend: `/cross-environment-consistency`**  
+**If report stale → Recommend: `/01-analyze` or update `ENV_COMPARISON_AWS.md` directly**
 
 ## Engine 8: Workflow & Slash Command Inventory
 
@@ -230,7 +240,7 @@ ENGINE 3 — GRAPH DRIFT:           ✅ OK | ⚠️ drift detected
 ENGINE 4 — MODULE VERSIONS:       ✅ OK | ⚠️ N misaligned
 ENGINE 5 — SECURITY PATTERNS:     ✅ OK | 🔴 banned pattern found
 ENGINE 6 — HYGIENE:               ✅ OK | ⚠️ N loose files
-ENGINE 7 — CROSS-ENV PARITY:      ✅ OK | ⚠️ drift found
+ENGINE 7 — CROSS-ENV PARITY:      ✅ OK | ⚠️ drift found | ⚠️ ENV_COMPARISON_AWS stale or open 🔴 items
 ENGINE 8 — WORKFLOW INVENTORY:    ✅ OK | ⚠️ orphans found
 ENGINE 9 — STRESS TEST HEALTH:    ✅ OK | ⚠️ overdue / missing reports
 ENGINE 10 — KNOWLEDGE LIBRARY:    ✅ OK | ⚠️ orphans / broken links

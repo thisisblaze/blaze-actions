@@ -90,7 +90,20 @@ In `blaze-actions`:
 1. Verify `docs/knowledge/README.md` exists.
 2. Ensure any new `.md` files added to `docs/knowledge/` today are properly linked in the `README.md` index.
 
-### 5.7. Micro-Session Handoff Check
+### 5.7. ENV Comparison Report Check
+
+In `blaze-template-deploy`, verify `docs/reports/ENV_COMPARISON_AWS.md`:
+
+1. Check the `Last Updated` date — if changes were made to any `live/*/main.tf` today, the report must be updated.
+2. Verify the **Action Items** table: mark any completed items as ✅ DONE.
+3. Key invariants to re-validate quickly (`grep` only — do NOT read the full file):
+   - `enable_waf` in `dev-network/main.tf` must be `false` (WAF is CF-only, stage/prod)
+   - All `*-network` module refs should match the latest infra-core tag
+   - `prod-data/main.tf` Redis subnet should reference `private_subnets`
+
+**If the report is stale → update `Last Updated` and sync Action Items before committing.**
+
+### 5.8. Micro-Session Handoff Check
 
 Before committing, proactively ask yourself and the user:
 
