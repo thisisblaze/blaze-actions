@@ -5,9 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.5.2] - 2026-03-01
+
+### Added
+
+- **`cleanup-orphaned-buckets` ops action** (`99-ops-utility.yml`): New action to find and force-delete orphaned S3 buckets matching the project prefix (excludes tfstate). Accepts `DRY_RUN` or `EXECUTE` confirmation.
+- **Orphaned Resource Cleanup — Extended** (`99-ops-utility.yml`): Added cleanup steps for orphaned CloudWatch Log Groups, ALB Target Groups, and CloudFront Functions within the `cleanup-orphaned-buckets` action to resolve Terraform `AlreadyExists` conflicts after partial environment destroy.
+- **`gh-actions-troubleshooter` Antigravity Skill**: Created global Antigravity skill at `~/.gemini/antigravity/skills/gh-actions-troubleshooter/` implementing local-first PDCA diagnostic cycle, `get_failed_logs.sh`, `run_local_act.sh` (with `--doctor` check), and curated `ERROR_PATTERNS.txt` reference library.
+
+### Fixed
+
+- **Scope Safety — Cleanup Scripts** (`99-ops-utility.yml`): Corrected resource matching logic in all cleanup steps to strictly use `namespace-client_key-project_key-environment` exact prefix, preventing accidental deletion of resources from other projects sharing the same AWS account (e.g. `blaze-b9-dev-core-*`).
+
 ## [v1.5.1] - 2026-02-28
 
 ### Changed
+
 - infra: upgrade core modules to `v1.50.4` (fixes ALB logging `Access Denied` on prefixed paths)
 - docs: AI_CONTEXT_GOVERNANCE updated with Section 11 (dual-ALB, VPC CIDRs, module v1.50.3, Lambda@Edge scope)
 - docs: REPOSITORY_SYSTEM_PROMPT + PART_03 NotebookLM updated for dual-ALB architecture
