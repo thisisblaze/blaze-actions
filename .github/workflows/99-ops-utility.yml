@@ -1621,12 +1621,11 @@ jobs:
         nuke-stop-services-azure,
       ]
     if: |
-      always() && 
-      inputs.action == 'nuke-environment' && 
-      (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') && 
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') &&
       (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
-      !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_app == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
@@ -1686,9 +1685,29 @@ jobs:
         terraform state rm "module.app.module.frontend_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
         terraform state rm "module.app.module.frontend_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
         echo "✅ Orphaned CodeDeploy state removed."
+
+  # Gate job: runs after app destroy (success OR failure) so data/network stacks proceed.
+  # Needed because the environment-app module has a Terraform count bug that causes plan
+  # to fail when resources are already destroyed (count depends on unknown attributes).
+  nuke-app-gate:
+    name: ✅ Nuke 2g - App Gate (absorb failure)
+    needs: [configuration, nuke-app-gate]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate
+        run: |
+          RESULT="${{ needs.nuke-destroy-app.result }}"
+          echo "App stack result: $RESULT"
+          if [ "$RESULT" = "cancelled" ]; then exit 1; fi
+          echo "✅ Proceeding with data/network destroy regardless of app result"
+
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
-    needs: [configuration, nuke-destroy-app]
+    needs: [configuration, nuke-app-gate]
     if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1747,12 +1766,12 @@ jobs:
   # but before network (Redis depends on VPC subnets/SGs).
   nuke-destroy-data-aws:
     name: 💾 Nuke 3/5 - Data Stack (AWS)
-    needs: [configuration, nuke-destroy-app]
+    needs: [configuration, nuke-app-gate]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
-      (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
@@ -1798,7 +1817,7 @@ jobs:
         azure_region=${{ needs.configuration.outputs.cloud_region }}
   nuke-destroy-tunnel:
     name: 🚇 Nuke 3/5 - Tunnel
-    needs: [configuration, nuke-destroy-app]
+    needs: [configuration, nuke-app-gate]
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
@@ -1901,13 +1920,12 @@ jobs:
   # GCP has a dedicated data stack (Redis, Cloud SQL) that must be destroyed after app.
   nuke-destroy-data-gcp:
     name: 💾 Nuke 3/5 - Data Stack (GCP)
-    needs: [configuration, nuke-destroy-app]
+    needs: [configuration, nuke-app-gate]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
       inputs.cloud_provider == 'gcp' &&
-      (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
-      !contains(needs.*.result, 'failure') &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
@@ -2056,13 +2074,12 @@ jobs:
   # For Azure, we have a dedicated data stack that must be destroyed after app.
   nuke-destroy-data-azure:
     name: 💾 Nuke 3/5 - Data Stack (Azure)
-    needs: [configuration, nuke-destroy-app]
+    needs: [configuration, nuke-app-gate]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
       inputs.cloud_provider == 'azure' &&
-      (needs.nuke-destroy-app.result == 'success' || needs.nuke-destroy-app.result == 'skipped') &&
-      !contains(needs.*.result, 'failure') &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
     uses: ./.github/workflows/reusable-terraform.yml
