@@ -439,7 +439,6 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
@@ -523,7 +522,6 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -1499,7 +1497,6 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
