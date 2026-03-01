@@ -796,15 +796,15 @@ jobs:
 
       - name: Find and Delete Orphaned Buckets
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned buckets matching *${PREFIX}*${ENV_KEY}* (excluding tfstate)..."
+          echo "🧹 Looking for orphaned buckets matching *${PREFIX}-${ENV_KEY}* (excluding tfstate)..."
           ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
           
           FOUND_COUNT=0
           for bucket in $ALL_BUCKETS; do
-             if [[ "$bucket" == *"${PREFIX}"* ]] && [[ "$bucket" == *"${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
+             if [[ "$bucket" == *"${PREFIX}-${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
                 echo "🗑️ Found orphaned bucket: $bucket"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    aws s3 rb "s3://$bucket" --force || echo "⚠️ Failed to delete $bucket"
@@ -827,14 +827,14 @@ jobs:
 
       - name: Find and Delete Orphaned Log Groups
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned log groups matching *${PREFIX}*${ENV_KEY}*..."
+          echo "🧹 Looking for orphaned log groups matching *${PREFIX}-${ENV_KEY}*..."
           ALL_LOGS=$(aws logs describe-log-groups --query "logGroups[].logGroupName" --output text)
           
           for log in $ALL_LOGS; do
-             if [[ "$log" == *"${PREFIX}"* ]] && [[ "$log" == *"${ENV_KEY}"* ]]; then
+             if [[ "$log" == *"${PREFIX}-${ENV_KEY}"* ]]; then
                 echo "🗑️ Found orphaned log group: $log"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    aws logs delete-log-group --log-group-name "$log" || echo "⚠️ Failed to delete $log"
@@ -845,16 +845,19 @@ jobs:
           done
 
       - name: Find and Delete Orphaned Target Groups
+        # Note: Target groups don't include namespace/client_key/project_key by our current terraform naming,
+        # they usually start with project name (blaze) and environment (dev).
+        # To be safe, we'll only match exact patterns for thisisblaze.
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}
+          PROJECT_PREFIX: "blaze" # Assuming project_key translates to blaze in tg names
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned target groups matching *${PREFIX}*${ENV_KEY}*..."
+          echo "🧹 Looking for orphaned target groups matching *${PROJECT_PREFIX}-${ENV_KEY}-*..."
           ALL_TGS=$(aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text)
           
           for tg_arn in $ALL_TGS; do
              tg_name=$(aws elbv2 describe-target-groups --target-group-arns "$tg_arn" --query "TargetGroups[0].TargetGroupName" --output text)
-             if [[ "$tg_name" == *"${PREFIX}"* ]] && [[ "$tg_name" == *"${ENV_KEY}"* ]]; then
+             if [[ "$tg_name" == *"${PROJECT_PREFIX}-${ENV_KEY}-"* ]]; then
                 echo "🗑️ Found orphaned target group: $tg_name ($tg_arn)"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    aws elbv2 delete-target-group --target-group-arn "$tg_arn" || echo "⚠️ Failed to delete $tg_name"
@@ -866,14 +869,14 @@ jobs:
 
       - name: Find and Delete Orphaned CloudFront Functions
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}*${ENV_KEY}*..."
+          echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
           ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text || echo "")
           
           for func in $ALL_FUNCS; do
-             if [[ "$func" == *"${PREFIX}"* ]] && [[ "$func" == *"${ENV_KEY}"* ]]; then
+             if [[ "$func" == *"${PREFIX}-${ENV_KEY}"* ]]; then
                 echo "🗑️ Found orphaned function: $func"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text)
