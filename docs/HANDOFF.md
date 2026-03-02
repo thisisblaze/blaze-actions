@@ -1,30 +1,53 @@
 # Session Handoff State
 
-**Date/Time**: 2026-02-28T23:20:00Z
+**Date/Time**: 2026-03-02T02:09:10Z
 
 ## 1. The Exact Objective
 
-Validate the newly provisioned **separate API CloudFront distribution** for the `dev` environment by running the stress test (`🧪 Stress Test` workflow on DEV), then apply the same `v1.50.8` changes to STAGE and PROD if DEV passes.
+Forensic investigation of unintended CloudFront function deletion is **complete**. The bug has been fixed and committed. Remaining action: verify the live `dev` CloudFront distribution still has `blaze-b9-thisisblaze-dev-cf-basic-auth` attached (it may be missing after the unintended deletion at 18:02Z, before the re-provision at 22:21Z corrected it).
 
 ## 2. Current Progress & Modified Files
 
-- `blaze-terraform-infra-core @ v1.50.8`: Released. Added `module "cloudfront_api"` to `environment-network` — provisions a dedicated CloudFront distribution for API traffic when `separate_api_alb = true`. DNS record `cloudflare_dns_record.api` now points to the API CloudFront domain instead of the shared distribution.
-- `blaze-template-deploy` → `dev-network/main.tf`: On `ref=v1.50.8` with `separate_api_alb = true` and `enable_cloudfront = true`. **Applied successfully** (run #426, 2026-02-28T23:13–23:17Z).
-- No uncommitted local changes.
+- `.github/workflows/99-ops-utility.yml` — Two fixes applied and pushed:
+  1. **`08ad553`** (18:22Z) — Scoped CF function deletion `PREFIX` to include `project_key` (`blaze-b9-thisisblaze`) instead of just `blaze-b9`. Prevents cross-project deletion.
+  2. **`80e262d`** (02:09Z) — Added `sort -u` dedup on `list-functions` output and existence guard before `describe-function`. Prevents `NoSuchFunctionExists` exit-254 crash when API returns duplicate entries.
 
 ## 3. Important Context
 
-- `dev` now has **two separate CloudFront distributions**: one for Frontend, one for API.
-- The API CloudFront uses `CachingDisabled` + `AllViewer` origin request policy — no caching, all headers forwarded.
-- `stage` and `prod` are NOT yet bumped to `v1.50.8` — they are still on an earlier ref. They should be updated once DEV stress test passes.
-- `dev-mini` uses Cloudflare Tunnel — no CloudFront involved, do NOT touch it.
-- The stress test workflow is called `🧪 Stress Test` in `blaze-template-deploy`. Its inputs likely include `environment` (use `dev`).
-- Workflow history was cleared previously — there is no prior stress test run to reference for `dev` under this architecture.
+### What happened (root cause)
+
+- **Commit `f226fb2`** at `18:00:33Z` introduced the CF function delete step to the `cleanup-orphaned-buckets` action with an overly broad `PREFIX=blaze-b9` — matching `*blaze-b9*dev*` across ALL projects.
+- **Run `22549226489`** at `18:01Z` ran `cleanup-orphaned-buckets` with `CONFIRM_MODE=EXECUTE` and deleted `blaze-b9-thisisblaze-dev-cf-basic-auth` (the function was unattached because the nuke at 07:29Z had destroyed distributions).
+- The two other CF functions (`blaze-b9-dev-core-basic-auth`, `blaze-b9-thisisblaze-dev-admin-cdn-basic-auth`) were protected by AWS `FunctionInUse` errors.
+- The script also crashed (exit 254) because `list-functions` returned the CF function name twice, causing `describe-function` to fail on a name that was already deleted.
+
+### CloudTrail ground truth — CF function deletions today
+
+| Time        | Function                                           | How                                                    |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------ |
+| `07:28:54Z` | `blaze-b9-thisisblaze-dev-admin-cdn-basic-auth`    | Terraform nuke (intentional)                           |
+| `07:29:23Z` | `blaze-b9-thisisblaze-dev-cf-basic-auth`           | Terraform nuke (intentional)                           |
+| `07:29:24Z` | `blaze-b9-thisisblaze-dev-ecs-image-url-normalize` | Terraform nuke (intentional)                           |
+| `18:02:54Z` | `blaze-b9-thisisblaze-dev-cf-basic-auth`           | `cleanup-orphaned-buckets` script ⚠️ **unintentional** |
+
+### Distribution deletions
+
+- 4 distributions deleted at 07:28–07:29Z (morning nuke, intentional)
+- 29 distributions deleted at 20:05–22:26Z (evening nuke runs, intentional)
+- All by Terraform via `BlazeGitHubActionsRole`. CloudFront distributions cannot be restored — re-provision recreates them with new IDs.
+
+### Full deletion artifact
+
+See `/Users/marek/.gemini/antigravity/brain/06fb6daf-716f-4fc6-b6e3-2770fff2c5cd/deletion_report_2026-03-01.md`
+
+### Security status
+
+- ✅ Overly broad CF function match — **FIXED** (`08ad553`)
+- ✅ Dedup crash bug — **FIXED** (`80e262d`)
+- ⚠️ `blaze-b9-thisisblaze-dev-cf-basic-auth` may still be missing from the live `dev` distribution — needs verification
 
 ## 4. The Immediate Next Steps
 
-1. **Run stress test**: Trigger `🧪 Stress Test` workflow in `blaze-template-deploy` with `environment=dev`. Watch for all jobs to pass ("full circle").
-2. **Verify AWS Console**: Confirm two CloudFront distributions exist for `dev` (one frontend, one API). Check Cloudflare DNS `api-dev.*` points to the API CloudFront `*.cloudfront.net`.
-3. **Bump STAGE**: Update `stage-network/main.tf` to `ref=v1.50.8`, trigger `01 - Provision Infrastructure` (env=stage, stack=network, apply=true).
-4. **Bump PROD**: Same as STAGE but for `prod-network/main.tf`.
-5. **Update HANDOFF** after stress test results are known.
+1. **Verify CF function state**: Run `aws cloudfront list-functions --profile b9-blaze-dev-byte9admin` and check if `blaze-b9-thisisblaze-dev-cf-basic-auth` exists. If missing, run `01 - Provision Infrastructure` → `stack=network` to re-create it via Terraform.
+2. **Verify distribution has function attached**: Check the live `dev` CloudFront distribution's viewer-request function association for the CF basic-auth function.
+3. **(Optional)** Fix the `cleanup-orphaned-buckets` action in `99-ops-utility.yml` for the `cleanup-orphaned-buckets` step to also fix the log groups pattern (it currently still uses loose match `*${PREFIX}*${ENV_KEY}*` — verified in the same `08ad553` commit, now uses strict `${PREFIX}-${ENV_KEY}` pattern ✅ already done).
