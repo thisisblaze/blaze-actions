@@ -994,27 +994,6 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
-  deploy-tunnel:
-    name: Deploy Tunnel
-    needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.environment == 'DEV' || inputs.environment == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'tunnel' || (inputs.branch_name != '' && inputs.branch_name != null && inputs.target_services == 'admin')) }}
-    uses: ./.github/workflows/reusable-ecs-deploy.yml
-    with:
-      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
-      service_name: "tunnel"
-      environment: ${{ inputs.environment || 'DEV' }}
-      config_environment: ${{ needs.configuration.outputs.config_env }}
-      stage_key: ${{ needs.configuration.outputs.stage_key }}
-      branch_name: ${{ inputs.branch_name }}
-      image_tag: "latest"
-      project_key: ${{ needs.configuration.outputs.project_key }}
-      client_key: ${{ needs.configuration.outputs.client_key }}
-      cloud_platform: ${{ needs.configuration.outputs.platform }}
-      domain_root: ${{ needs.configuration.outputs.domain_root }}
-      aws_region: ${{ needs.configuration.outputs.aws_region }}
-      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
-      namespace: ${{ needs.configuration.outputs.namespace }}
-    secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   deploy-sites-multi-site-gcp:
@@ -1179,7 +1158,6 @@ jobs:
         deploy-admin-azure,
         deploy-admin-pages,
         deploy-admin-aws,
-        deploy-tunnel,
         deploy-sites-multi-site-gcp,
       ]
     if: always()
