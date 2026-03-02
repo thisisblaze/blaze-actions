@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Scope Safety — Cleanup Scripts** (`99-ops-utility.yml`): Corrected resource matching logic in all cleanup steps to strictly use `namespace-client_key-project_key-environment` exact prefix, preventing accidental deletion of resources from other projects sharing the same AWS account (e.g. `blaze-b9-dev-core-*`).
+- **CF Function Dedup Crash** (`99-ops-utility.yml`): Fixed `NoSuchFunctionExists` exit-254 crash in the `cleanup-orphaned-buckets` action. `aws cloudfront list-functions` can return duplicate entries — if a function was deleted on loop iteration 1, the second pass would call `describe-function` on a now-gone name and crash. Fixed by: `sort -u` on list output to deduplicate, plus an existence guard (empty ETag check) before attempting `delete-function`.
 - **CloudFront Destroy Ordering Workarounds Removed**: With `environment-network` v1.50.15 introducing the `terraform_data.cf_policy_destroy_gate` native fix, all CLI-based workarounds have been removed:
   - `99-ops-utility.yml`: Removed `terraform state rm` for CF cache policies (6 resources) and LB listeners (3 resources) from nuke network `pre_apply_script`.
   - `01-provision-infra.yml`: Removed the `if: destroy && stack == network` guard block with CF policy + LB listener state rm.
