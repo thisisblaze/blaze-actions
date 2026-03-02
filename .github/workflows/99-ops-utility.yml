@@ -873,14 +873,22 @@ jobs:
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
           echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
-          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text || echo "")
-          
+          # Deduplicate: list-functions can return duplicate entries causing describe-function
+          # to crash with NoSuchFunctionExists on the second pass of an already-deleted function.
+          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text 2>/dev/null | tr '\t' '\n' | sort -u || echo "")
+
           for func in $ALL_FUNCS; do
+             [[ -z "$func" ]] && continue
              if [[ "$func" == *"${PREFIX}-${ENV_KEY}"* ]]; then
                 echo "🗑️ Found orphaned function: $func"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
-                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text)
-                   aws cloudfront delete-function --name "$func" --if-match "$ETAG" || echo "⚠️ Failed to delete $func"
+                   # Guard: verify still exists before describe (handles duplicates / race conditions)
+                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text 2>/dev/null || echo "")
+                   if [[ -z "$ETAG" || "$ETAG" == "None" ]]; then
+                      echo "ℹ️ $func already deleted or not found — skipping"
+                      continue
+                   fi
+                   aws cloudfront delete-function --name "$func" --if-match "$ETAG" && echo "✅ Deleted $func" || echo "⚠️ Failed to delete $func"
                 else
                    echo "ℹ️ [DRY RUN] Would delete $func"
                 fi
