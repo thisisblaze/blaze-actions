@@ -1158,7 +1158,7 @@ jobs:
         deploy-admin-azure,
         deploy-admin-pages,
         deploy-admin-aws,
-        deploy-sites-multi-site-gcp,
+        deploy-sites-multi-site-gcp
       ]
     if: always()
     runs-on: ubuntu-latest
