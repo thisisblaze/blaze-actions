@@ -419,6 +419,13 @@ jobs:
           bash "$SCRIPT"
         fi
 
+        # Run local pre_apply.sh if it exists (for environment-specific drifts)
+        if [[ -f "pre_apply.sh" ]]; then
+          echo "🔧 Found local pre_apply.sh in $(pwd), executing..."
+          chmod +x pre_apply.sh
+          ./pre_apply.sh
+        fi
+
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
