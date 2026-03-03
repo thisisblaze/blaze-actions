@@ -473,7 +473,7 @@ jobs:
           REGION="${{ inputs.aws_region }}"
 
           echo "🔍 Checking for stale locks..."
-          LOCK_DATA=$(aws dynamodb get-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "$REGION" 2>/dev/null)
+          LOCK_DATA=$(aws dynamodb get-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" --region "$REGION" 2>/dev/null || true)
 
           if echo "$LOCK_DATA" | grep -q "Item"; then
              echo "📋 Lock found, checking age..."
