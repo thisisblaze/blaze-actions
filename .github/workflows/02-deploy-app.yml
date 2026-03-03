@@ -994,8 +994,6 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
-
   deploy-sites-multi-site-gcp:
     name: "🌐 Deploy Multi-Site Fleet (GCP)"
     needs: [configuration, build-frontend, pre-flight-check]
