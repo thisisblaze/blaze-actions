@@ -261,12 +261,6 @@ jobs:
             echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
           fi
 
-          if [[ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ]]; then
-            echo "✅ AWS_ACCESS_KEY_ID is SET"
-          else
-            echo "ℹ️ AWS_ACCESS_KEY_ID is NOT SET (OIDC might be used)"
-          fi
-
           if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
              echo "✅ CLOUDFLARE_API_TOKEN is SET"
           else

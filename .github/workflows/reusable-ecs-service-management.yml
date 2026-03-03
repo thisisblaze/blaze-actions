@@ -35,10 +35,6 @@ on:
         type: string
         description: "GitHub Environment to run in (access secrets)"
     secrets:
-      AWS_ACCESS_KEY_ID:
-        required: false
-      AWS_SECRET_ACCESS_KEY:
-        required: false
       AWS_ROLE_ARN:
         required: false
     outputs:
