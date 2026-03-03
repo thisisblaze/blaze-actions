@@ -322,7 +322,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Decode Azure Credentials
         if: inputs.cloud_provider == 'azure'
@@ -385,7 +385,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Check AWS Infrastructure
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
@@ -532,7 +532,7 @@ jobs:
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
@@ -566,7 +566,7 @@ jobs:
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
@@ -637,7 +637,7 @@ jobs:
       image_tag: ${{ github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
@@ -711,7 +711,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) }}
       port: 3001
@@ -793,7 +793,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) }}
       port: 3000
@@ -941,7 +941,7 @@ jobs:
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.project_key) }}
       port: 80 # Admin Nginx
