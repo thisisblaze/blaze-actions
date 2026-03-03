@@ -48,6 +48,10 @@ inputs:
   azure-subscription-id:
     description: "Azure Subscription ID"
     required: false
+  gcp-wif-audience:
+    description: "GCP WIF Audience (Optional)"
+    required: false
+    default: ""
 
 outputs:
   registry:
@@ -100,6 +104,7 @@ runs:
         workload_identity_provider: ${{ inputs.gcp-workload-identity-provider }}
         service_account: ${{ inputs.gcp-service-account }}
         project_id: ${{ inputs.gcp-project-id }}
+        audience: ${{ inputs.gcp-wif-audience }}
 
     - name: Set up Google Cloud SDK
       if: inputs.cloud-provider == 'gcp'
