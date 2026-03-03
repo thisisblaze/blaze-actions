@@ -322,7 +322,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+          audience: ${{ inputs.wif_audience }}
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
@@ -446,7 +446,7 @@ jobs:
       DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
-      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      wif_audience: ${{ inputs.wif_audience }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment }}
