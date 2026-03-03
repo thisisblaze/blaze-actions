@@ -150,6 +150,10 @@ on:
         description: "Image Resize Status"
         value: ${{ jobs.terraform.outputs.image_resize_enabled }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   terraform:
     name: Terraform

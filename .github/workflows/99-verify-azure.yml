@@ -44,6 +44,10 @@ on:
                 default: false
                 type: boolean
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     verify-azure-cdn:
         name: 🔍 Azure CDN Health Checks

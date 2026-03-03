@@ -12,6 +12,10 @@ permissions:
     contents: write # Needed to commit CHANGELOG updates
     pull-requests: write # Needed to create PR if desired
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     update-changelog:
         name: Generate and Update CHANGELOG

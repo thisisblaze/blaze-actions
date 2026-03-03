@@ -41,6 +41,10 @@ on:
       service_status:
         value: ${{ jobs.manage.outputs.status }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   manage:
     name: ECS ${{ inputs.action }}
