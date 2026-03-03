@@ -117,6 +117,10 @@ on:
 # JOB 1: BUILD ARM64 IMAGE
 # Uses native ubuntu-24.04-arm runner — no QEMU, full speed
 # ─────────────────────────────────────────────────────────────────────────────
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     build:
         name: "🔨 Build ARM64 [${{ inputs.site_key }}]"

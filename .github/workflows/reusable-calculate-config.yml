@@ -61,6 +61,10 @@ on:
       gcp_docker_repo:
         value: ${{ jobs.calculate.outputs.gcp_docker_repo }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   calculate:
     name: Calculate Config

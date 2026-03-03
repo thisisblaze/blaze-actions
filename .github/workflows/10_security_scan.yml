@@ -21,6 +21,10 @@ permissions:
   issues: read # Required for OSSF Scorecard checks
   checks: read # Required for OSSF Scorecard checks
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ------------------------------------------------------------------
   # JOB 1: SECRET SCANNING (Fail Fast)

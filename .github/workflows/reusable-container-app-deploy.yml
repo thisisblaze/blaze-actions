@@ -108,6 +108,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     deploy:
         name: Deploy ${{ inputs.service_name }} (Container App)
