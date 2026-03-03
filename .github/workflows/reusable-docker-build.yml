@@ -143,7 +143,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience }}
+          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
@@ -249,7 +249,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience }}
+          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
@@ -353,7 +353,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ inputs.wif_audience }}
+          audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
