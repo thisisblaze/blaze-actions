@@ -7,7 +7,7 @@
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
-**REPO ROLE**: Shared/Reusable GitHub Actions Workflows
+**REPO ROLE**: Application Implementation & Infrastructure Instantiation (Hub)
 
 ## 1. The Prime Directive
 
@@ -34,28 +34,34 @@ Before writing a single line of code or answering a complex architectural questi
 
 ### A. Start of Session (Bootstrapping)
 
+**Command**: `/init-context`
+_(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-context.md))_
+
 **Action**:
 
-1.  Read the **Architecture**: `docs/REUSABLE_WORKFLOWS.md`
-2.  Read the **Catalog**: `docs/WORKFLOW_CATALOG.md`
-3.  View the **Topology**: `docs/graphs/multi_cloud_topology.mermaid`
-4.  **Ack**: "Context Loaded. I am ready to work on the Blaze Actions repository."
+1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
+2.  View the **Territory**: `docs/graphs/aws_resource_topology.mermaid` (AWS), `.github/gcp/` (GCP), `.github/azure/` (Azure)
+3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
+4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS/GCP/Azure) Blaze stack."
 
 ### B. During Execution (Navigation)
 
-If you are unsure where a workflow lives or how data flows:
+If you are unsure where a resource lives or how data flows:
 
 1.  **Don't Guess.**
-2.  **Consult the Catalog**: `docs/WORKFLOW_CATALOG.md`.
+2.  **Consult the Visual Hub**: Look at `docs/graphs/`.
 3.  **Trace the Config**: Look at `reusable-calculate-config.yml`.
 
 ### C. End of Cycle (Maintenance)
 
-**Trigger**: Weekly or after significant workflow changes.
+**Command**: `/weekly-graph`
+_(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly-graph.md))_
+
+**Trigger**: Weekly or after significant architectural changes.
 **Action**:
 
-1.  Compare actual workflows vs. catalog and topology.
-2.  Update docs to reflect reality.
+1.  Compare actual Code vs. Visual Graphs.
+2.  Update Graphs to reflect reality.
 3.  This ensures the _next_ agent has accurate maps.
 
 ## 4. Data Retention Policy
@@ -70,20 +76,19 @@ If you are unsure where a workflow lives or how data flows:
 
 Consult these approved workflows for specific operational tasks:
 
-- **Add Workflow**: `.agent/workflows/01-add-workflow.md`
-- **Add Sharp Layer**: `.agent/workflows/02-add-sharp-layer.md`
-- **Docs Maintenance**: `.agent/workflows/09-maintain-docs.md`
-- **Debug CI/CD**: `.agent/workflows/debug-cicd-workflows.md`
-- **Troubleshoot CloudFront**: `.agent/workflows/troubleshoot-cloudfront.md`
-- **Troubleshoot TF Locks**: `.agent/workflows/troubleshoot-terraform-locks.md`
+- **Analysis**: `/01-analyze` → `.agent/workflows/01-analyze.md`
+- **Testing**: `/02-test` → `.agent/workflows/02-test.md`
+- **Security Audit**: `/08-audit` → `.agent/workflows/08-audit.md`
+- **Consistency Check**: `/cross-environment-consistency` → `.agent/workflows/cross-environment-consistency.md`
+- **Image Resize Deploy**: `/09-deploy-image-resize` → `.agent/workflows/09-deploy-image-resize.md` (AWS only)
+- **Troubleshooting**: `/04-troubleshoot` → `.agent/workflows/04-troubleshoot.md`
+- **Docs Maintenance**: `/09-maintain-docs` → `.agent/workflows/09-maintain-docs.md`
 
 ## 6. Key References
 
-- **Workflow Catalog**: `docs/WORKFLOW_CATALOG.md`
-- **Reusable Workflows**: `docs/REUSABLE_WORKFLOWS.md`
-- **Cross-Org Secrets**: `docs/cross-org-secrets.md`
-- **Cloudflare Operations**: `docs/cloudflare-operations.md`
-- **Visual Topology**: `docs/graphs/multi_cloud_topology.mermaid`
+- **Naming Standard**: `docs/reference/NETWORK_STACK_RESOURCES.md`
+- **Visual Hub**: `docs/graphs/`
+- **Maintenance Prompt**: `docs/prompts/02_weekly/WEEKLY_VISUALIZATION_UPDATE.md`
 
 ## 7. Stage Safety Protocol (Cost Control)
 
