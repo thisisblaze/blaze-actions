@@ -207,10 +207,19 @@ aws s3 ls s3://blaze-b9-thisisblaze-stage-image-resize/converted/ --recursive
 
 ## Troubleshooting
 
-### Issue: "Sharp is not defined" in Lambda logs
+### Issue: "Sharp is not defined" or "Cannot find module 'sharp'" in Lambda logs
 
-**Cause:** Layer not attached or wrong architecture  
-**Fix:** Check lambda layers (step 1 above)
+**Cause:** Layer not attached, wrong architecture, or the lambda failed to find the layer.  
+**Fix:** Check lambda layers (step 1 above) and ensure the provision workflow correctly invoked `build-sharp-layer` and passed the ARN to terraform.
+
+### Issue: Test scripts or logs show no errors but the CloudFront endpoint returns 503
+
+**Cause:** You might be checking the logs of an INACTIVE, older version of the Lambda function. When looking up Lambda functions by name (`list-functions`), AWS returns all matching functions. `test-image-resize.yml` and manual troubleshooting often mistakenly parse the first returned ARN.
+**Fix:** Always ensure you are querying the _active_ Lambda ARN attached to the specific CloudFront distribution's cache behavior. A quick CLI fix is to sort by `LastModified`:
+
+```bash
+aws lambda list-functions --region us-east-1 --query 'sort_by(Functions[?contains(FunctionName, `resize-image`)], &LastModified)[-1].FunctionName'
+```
 
 ### Issue: "AccessDenied" when writing to S3
 
@@ -229,12 +238,10 @@ Action = [
 **Common errors:**
 
 1. **Docker entrypoint error**
-
    - Symptom: `entrypoint requires the handler name`
    - Fixed: `--entrypoint=""` flag added
 
 2. **Permission denied on cleanup**
-
    - Symptom: `rm: cannot remove`
    - Fixed: Using `sudo rm` for Docker-created files
 
@@ -362,9 +369,43 @@ Lambda@Edge functions deployed with Sharp
 - [ ] Add layer version pinning in Terraform
 - [ ] Create layer update workflow
 
+## TroubleShooting Image Resizing (CloudFront & Lambda@Edge)
+
+When debugging `image-resize` issues, keep in mind that CloudFront uses a custom origin and passes the destination and source bucket names as custom HTTP headers (`X-Source-Bucket` and `X-Dest-Bucket`).
+
+### 1. HTTP 403 Forbidden
+
+If you receive a `403 Forbidden` from CloudFront, it typically means the Lambda@Edge function is trying to access an S3 bucket that it does not have permission to read from, or the bucket name provided in the headers is incorrect.
+
+**Common Fix:**
+Check the CloudFront distribution's Origin Custom Headers for the `image-resize` origin. If `X-Source-Bucket` is pointing to the `image-resize` bucket instead of the `storage-origin` bucket:
+
+1. The Terraform variable `storage_bucket_domain_name` is likely not being passed into the `environment-network` module.
+2. Verify that `storage_bucket_domain_name` is defined in `variables.tf` of the network stack (`dev-network`, `stage-network`, `prod-network`). If Terraform evaluates it as an empty string, it silently triggers a fallback to use the `image-resize` bucket ID instead.
+
+### 2. HTTP 404 Not Found (Image not found)
+
+If `curl` or the browser returns a `404 Not Found` with the text `"Image not found"`, this is a gracefully handled error from the `resize-image` Lambda function itself.
+
+**Root Cause:**
+It means the Lambda function successfully read the `X-Source-Bucket` header, but the actual image file does not exist at the requested path inside that S3 bucket.
+
+### 3. Fetching Lambda@Edge Logs
+
+Lambda@Edge functions execute in the AWS edge location closest to where the request was made, **not** necessarily in the default region (`eu-west-1` or `us-east-1`).
+To find the logs:
+
+1. Make a curl request from your machine.
+2. Determine which AWS region your request was routed to (e.g., `eu-west-2` for London, `us-east-1` for US East).
+3. Search for the log group in that specific region:
+
+```bash
+aws logs describe-log-groups --region <EDGE_REGION> --query "logGroups[?contains(logGroupName, 'lambda-edge-resize-image')].logGroupName"
+```
+
 ---
 
-**Last Updated:** 2026-01-13  
+**Last Updated:** 2026-03-03
 **Automation Status:** ✅ Fully Automated  
 **Build Time:** 8-35 seconds  
 **Success Rate:** 100%
