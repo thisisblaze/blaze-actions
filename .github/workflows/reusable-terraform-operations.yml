@@ -78,10 +78,6 @@ on:
         required: false
       AWS_ROLE_ARN:
         required: false
-      AWS_ACCESS_KEY_ID:
-        required: false
-      AWS_SECRET_ACCESS_KEY:
-        required: false
       CLOUDFLARE_API_TOKEN:
         required: false
       CLOUDFLARE_ACCOUNT_ID:
