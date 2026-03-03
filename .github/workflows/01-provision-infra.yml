@@ -373,10 +373,56 @@ jobs:
           chmod +x import.sh
           bash import.sh
 
+  build_sharp_layer:
+    name: Build Sharp Lambda Layer
+    needs: [configuration]
+    if: >
+      inputs.stack == 'network' &&
+      needs.configuration.result == 'success' &&
+      (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
+      inputs.enable_image_resize == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+
+      - name: Check for existing layer
+        id: existing
+        run: |
+          echo "Checking for existing sharp layer in us-east-1..."
+          LAYER_ARN=$(aws lambda list-layer-versions --layer-name sharp-image-processing --region us-east-1 --query 'LayerVersions[0].LayerVersionArn' --output text 2>/dev/null || echo "None")
+          if [[ "$LAYER_ARN" != "None" && -n "$LAYER_ARN" ]]; then
+            echo "Found existing layer: $LAYER_ARN"
+            echo "layer_arn=$LAYER_ARN" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Layer not found."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Build and Publish Sharp Layer
+        id: build
+        if: steps.existing.outputs.exists != 'true'
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@dev
+        with:
+          aws-region: 'us-east-1'
+          layer-name: 'sharp-image-processing'
+          sharp-version: '^0.33.0'
+          upload-to-s3: 'false'
+
   provision:
     name: Provision ${{ inputs.stack }}
-    needs: [configuration]
-    if: needs.configuration.result == 'success'
+    needs: [configuration, build_sharp_layer]
+    if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
     uses: ./.github/workflows/reusable-terraform.yml
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
@@ -442,6 +488,7 @@ jobs:
         kibana_ram=${{ inputs.kibana_size }}
         enable_image_resize=${{ inputs.enable_image_resize }}
         enable_ec2=${{ inputs.enable_ec2 }}
+        sharp_layer_arn=${{ needs.build_sharp_layer.outputs.layer_arn }}
         api_launch_type=${{ inputs.api_launch_type }}
         api_cpu_architecture=${{ inputs.api_cpu_architecture }}
         frontend_launch_type=${{ inputs.frontend_launch_type }}
