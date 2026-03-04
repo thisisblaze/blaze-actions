@@ -1,0 +1,1372 @@
+name: "99 - Ops (NUKE)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
+      action:
+        description: "🛠️ Select Action"
+        type: choice
+        options:
+          - nuke-environment
+        required: true
+        default: nuke-environment
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        required: false
+      stack:
+        description: "Terraform Stack (for state/destroy)"
+        type: choice
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
+        default: "app"
+        required: false
+      branch_tag:
+        description: "Feature Tag (if applicable)"
+        required: false
+        type: string
+      confirmation:
+        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+        required: false
+        type: string
+      # Action-specific inputs
+      run_id:
+        description: "GitHub Run ID (for kill-workflows)"
+        required: false
+        type: string
+      manage_action:
+        description: "Service Action (for manage-environment)"
+        type: choice
+        options: ["start", "stop", "restart", "scale"]
+        default: "stop"
+      desired_count:
+        description: "Desired Instance Count (for scale)"
+        type: string
+        default: "0"
+      # Cloudflare cleanup inputs
+      retention_count:
+        description: "Deployments to Keep (for cleanup-deployments)"
+        type: string
+        default: "5"
+      retention_days:
+        description: "Delete Deployments Older Than (days)"
+        type: string
+        default: "30"
+      dry_run:
+        description: "Dry Run (preview without deleting)"
+        type: boolean
+        default: true
+      bulk_pattern:
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        type: string
+        required: false
+      skip_lambda_destroy:
+        description: "Orphan Lambda@Edge before destroy (prevents hang)"
+        type: boolean
+        required: false
+        default: true
+      dist_id:
+        description: "CloudFront Distribution ID (for nuke-cloudfront)"
+        type: string
+        required: false
+
+  workflow_call:
+    inputs:
+      cloud_provider:
+        type: string
+        default: "aws"
+        required: false
+      action:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: false
+      stack:
+        type: string
+        required: false
+      branch_tag:
+        type: string
+        required: false
+      confirmation:
+        type: string
+        required: false
+      run_id:
+        type: string
+        required: false
+      manage_action:
+        type: string
+        default: "stop"
+        required: false
+      desired_count:
+        type: string
+        default: "0"
+        required: false
+      retention_count:
+        type: string
+        default: "5"
+        required: false
+      retention_days:
+        type: string
+        default: "30"
+        required: false
+      dry_run:
+        type: boolean
+        default: true
+        required: false
+      bulk_pattern:
+        type: string
+        required: false
+      skip_lambda_destroy:
+        type: boolean
+        required: false
+        default: true
+      dist_id:
+        type: string
+        required: false
+    # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
+    # Currently explicitly defining secrets to ensure workflow_call compatibility
+    secrets:
+      GH_PAT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+concurrency:
+  group: ops-util-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Load Access List
+        id: load-access
+        run: |
+          if [[ -f "vars/blaze-env.json" ]]; then
+            ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
+            echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ vars/blaze-env.json not found. Skipping access control."
+            echo "allowed=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Access
+        if: steps.load-access.outputs.allowed != ''
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@dev
+        with:
+          allowed_users: ${{ steps.load-access.outputs.allowed }}
+          actor: ${{ github.actor }}
+
+      - name: Validate Input
+        run: |
+          ACTION="${{ inputs.action }}"
+          CONF="${{ inputs.confirmation }}"
+
+          echo "🔍 Selected Action: $ACTION"
+
+          # Block separators and headers
+          if [[ "$ACTION" == "-"* ]]; then
+            echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
+            echo "   Please select a real action (e.g., 'manage-environment')."
+            exit 1
+          fi
+
+          # Validation for destructive actions
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
+            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
+              exit 1
+            fi
+          fi
+
+  debug-context:
+    name: 🕵️ Debug Context
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 5
+    steps:
+      - name: Check Secrets Presence
+        run: |
+          echo "🔍 Checking Secret Availability..."
+
+          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
+            echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
+          else
+            echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
+          fi
+
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+             echo "✅ CLOUDFLARE_API_TOKEN is SET"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
+          fi
+
+          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
+             echo "✅ GH_PAT is SET"
+          else
+             echo "ℹ️ GH_PAT is MISSING (This might be expected)"
+          fi
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  configuration:
+    name: Configuration
+    needs: [validate]
+    # Run for all actions except kill-workflows
+    if: inputs.action != 'kill-workflows'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      cluster_name: ${{ steps.config.outputs.cluster_name }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+      cloud_provider: ${{ steps.config.outputs.cloud_provider }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
+      infra_prefix: ${{ steps.config.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
+      has_network: ${{ steps.check-dirs.outputs.has_network }}
+      has_data: ${{ steps.check-dirs.outputs.has_data }}
+      has_app: ${{ steps.check-dirs.outputs.has_app }}
+      has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      # TODO: Re-enable if calculate-config needs AWS Account ID
+      # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
+      # The calculate-config action handles missing AWS credentials gracefully
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      #     aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          terraform_stack: ${{ inputs.stack || 'app' }}
+          branch_name: ${{ inputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
+          # Ops Utility implies infra operations, so we must pass true to bypass safety check
+          deploy_infra: true
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+      - name: Check Stack Directories
+        id: check-dirs
+        run: |
+          PREFIX="${{ steps.config.outputs.infra_prefix }}"
+          STAGE="${{ steps.config.outputs.stage_key }}"
+
+          echo "🔍 Checking directories in $PREFIX for stage $STAGE..."
+
+          if [[ -d "$PREFIX/${STAGE}-network" ]]; then
+            echo "✅ Network dir found"
+            echo "has_network=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Network dir NOT found"
+            echo "has_network=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-data" ]]; then
+            echo "✅ Data dir found"
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Data dir NOT found"
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-app" ]]; then
+            echo "✅ App dir found"
+            echo "has_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ App dir NOT found"
+            echo "has_app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-cdn" ]]; then
+            echo "✅ CDN dir found"
+            echo "has_cdn=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ CDN dir NOT found"
+            echo "has_cdn=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  nuke-stop-services:
+    name: 🛑 Nuke 1/5 - Stop Services
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: "stop"
+      service_name: "all"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+
+  nuke-pre-cleanup:
+    name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
+    needs: [configuration, nuke-stop-services]
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      stage_filter: ${{ inputs.branch_tag }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      force_delete: true
+
+  nuke-stop-services-gcp:
+    name: 🛑 Nuke 1c/5 - Stop Cloud Run Services
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'gcp'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete Cloud Run Services
+        run: |
+          PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+          REGION="${{ needs.configuration.outputs.cloud_region }}"
+          PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "🗑️ Deleting Cloud Run services matching: ${PREFIX}-*"
+          echo "   Project: $PROJECT"
+          echo "   Region: $REGION"
+
+          SERVICES=$(gcloud run services list \
+            --project="$PROJECT" --region="$REGION" \
+            --filter="metadata.name~^${PREFIX}" \
+            --format="value(metadata.name)" 2>/dev/null || true)
+
+          if [[ -z "$SERVICES" ]]; then
+            echo "ℹ️  No Cloud Run services found matching prefix."
+          else
+            for SVC in $SERVICES; do
+              echo "   🗑️ Deleting: $SVC"
+              gcloud run services delete "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --quiet || echo "   ⚠️ Failed to delete $SVC"
+            done
+            echo "✅ Cloud Run cleanup complete."
+          fi
+
+          # Also clean up Artifact Registry images
+          REPO="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-web"
+          echo ""
+          echo "🗑️ Checking Artifact Registry repo: $REPO"
+          if gcloud artifacts repositories describe "$REPO" \
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
+            echo "   Deleting repository..."
+            gcloud artifacts repositories delete "$REPO" \
+              --project="$PROJECT" --location="$REGION" \
+              --quiet || echo "   ⚠️ Failed to delete repo"
+            echo "✅ Artifact Registry cleanup complete."
+          else
+            echo "ℹ️  Artifact Registry repo not found — skipping."
+          fi
+
+  # ── Azure: Pre-Cleanup (Container Apps) ──
+  # Brute-force delete Container Apps and CAEs BEFORE Terraform destroy.
+  # Prevents orphaned resources from blocking Resource Group deletion (Nuke 5/5).
+  nuke-stop-services-azure:
+    name: 🛑 Nuke 1d/5 - Stop Container Apps (Azure)
+    needs: [configuration]
+    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'azure'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Delete Container Apps & Environments
+        run: |
+          RG="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-rg"
+
+          echo "🗑️ Azure Pre-Cleanup: Resource Group = $RG"
+
+          # 1. Delete all Container Apps in the RG
+          echo "   Listing Container Apps..."
+          APPS=$(az containerapp list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$APPS" ]]; then
+            echo "   ℹ️  No Container Apps found."
+          else
+            for APP in $APPS; do
+              echo "   🗑️ Deleting Container App: $APP"
+              az containerapp delete --name "$APP" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $APP"
+            done
+            echo "   ✅ Container Apps cleanup complete."
+          fi
+
+          # 2. Delete Container App Environments
+          echo "   Listing Container App Environments..."
+          ENVS=$(az containerapp env list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$ENVS" ]]; then
+            echo "   ℹ️  No Container App Environments found."
+          else
+            for ENV in $ENVS; do
+              echo "   🗑️ Deleting CAE: $ENV"
+              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $ENV"
+            done
+            echo "   ✅ CAE cleanup complete."
+          fi
+
+          # 3. Delete Action Groups (Application Insights auto-creates these)
+          echo "   Listing Action Groups..."
+          AGS=$(az monitor action-group list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+
+          if [[ -z "$AGS" ]]; then
+            echo "   ℹ️  No Action Groups found."
+          else
+            for AG in $AGS; do
+              echo "   🗑️ Deleting Action Group: $AG"
+              az monitor action-group delete --name "$AG" --resource-group "$RG" 2>/dev/null || echo "   ⚠️ Failed to delete $AG"
+            done
+            echo "   ✅ Action Groups cleanup complete."
+          fi
+
+          echo "✅ Azure pre-cleanup finished."
+
+  nuke-destroy-app:
+    name: 🗑️ Nuke 2/5 - App Stack
+    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') &&
+      (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
+      (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_app == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      # Force explicit path for App stack instead of using config output (which relies on input.stack)
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-app"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      # Backend Config (Must match calculate-config logic)
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      # Key format: infra/{project}/{stage}/{stack}.tfstate
+      # We must reconstruct the key for each stack.
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/app.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+      pre_apply_script: |
+        echo "🔪 REMOVING ORPHANED CODEDEPLOY STATE (IAM role deleted before deployment group)..."
+        # CodeDeploy API refuses to delete deployment groups when their IAM role
+        # no longer exists. Remove them from state so destroy can proceed.
+        terraform state rm "module.app.module.api_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.api_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
+        echo "✅ Orphaned CodeDeploy state removed."
+
+  # Gate job: runs after app destroy (success OR failure) so data/network stacks proceed.
+  # Needed because the environment-app module has a Terraform count bug that causes plan
+  # to fail when resources are already destroyed (count depends on unknown attributes).
+  nuke-app-gate:
+    name: ✅ Nuke 2g - App Gate (absorb failure)
+    needs: [configuration, nuke-destroy-app]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate
+        run: |
+          RESULT="${{ needs.nuke-destroy-app.result }}"
+          echo "App stack result: $RESULT"
+          if [ "$RESULT" = "cancelled" ]; then exit 1; fi
+          echo "✅ Proceeding with data/network destroy regardless of app result"
+
+  nuke-destroy-pages:
+    name: 🗑️ Nuke 2b/5 - Pages Projects
+    needs: [configuration, nuke-app-gate]
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete Pages Projects
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
+        run: |
+          if [ "${{ env.STAGE }}" = "prod" ]; then
+             PREFIX="${NAMESPACE}-${CLIENT}-${PROJECT}"
+          else
+             PREFIX="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}"
+          fi
+
+          PROJECTS=("${PREFIX}-admin" "${PREFIX}-frontend")
+
+          echo "🗑️ Preparing to delete Pages projects..."
+
+          for PROJ in "${PROJECTS[@]}"; do
+             echo "   Target: $PROJ"
+             
+             # Delete Domains first
+             echo "      Fetching domains..."
+             DOMAINS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}/domains" -H "Authorization: Bearer ${CF_API_TOKEN}" | jq -r '.result[]?.name')
+             
+             for DOMAIN in $DOMAINS; do
+                if [ "$DOMAIN" != "null" ]; then
+                   echo "      Deleting Domain: $DOMAIN"
+                   curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}/domains/${DOMAIN}" -H "Authorization: Bearer ${CF_API_TOKEN}"
+                fi
+             done
+
+             echo "      Deleting Project..."
+             RESPONSE=$(curl -s -X DELETE \
+               "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJ}" \
+               -H "Authorization: Bearer ${CF_API_TOKEN}" \
+               -H "Content-Type: application/json" \
+               -w "\n%{http_code}" )
+
+             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+             
+             if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "404" ]; then
+                echo "      ✅ Deleted (or not found)"
+             else
+                echo "      ⚠️ Failed to delete (HTTP $HTTP_CODE)"
+             fi
+          done
+
+  # ── AWS: Data Stack Destroy ──
+  # AWS has a dedicated data stack (Redis/ElastiCache) that must be destroyed after app
+  # but before network (Redis depends on VPC subnets/SGs).
+  nuke-destroy-data-aws:
+    name: 💾 Nuke 3/5 - Data Stack (AWS)
+    needs: [configuration, nuke-app-gate]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  nuke-destroy-tunnel:
+    name: 🚇 Nuke 3/5 - Tunnel
+    needs: [configuration, nuke-app-gate]
+    if: inputs.action == 'nuke-environment'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/third-party/cloudflare"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/cloudflare.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      # Tunnel stack needs specific vars?
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+      pre_apply_script: |
+        echo "🔪 ORPHANING BROKEN CLOUDFLARE STATE..."
+        # Schema mismatch (v4 -> v5) or deleted resources prevent destroy.
+        # We remove them from state to unblock.
+        terraform state rm "module.admin_pages_domain.cloudflare_pages_domain.this" || true
+        terraform state rm "module.basic_auth_worker.cloudflare_workers_script.basic_auth" || true
+        terraform state rm "module.basic_auth_worker.cloudflare_workers_route.routes" || true
+        terraform state rm "module.tunnel.cloudflare_zero_trust_tunnel_cloudflared_config.this" || true
+        # Update to match modern provider resource name (cloudflare_dns_record)
+        terraform state rm "module.tunnel_dns.cloudflare_dns_record.this" || true
+        terraform state rm "module.tunnel_dns.cloudflare_record.this" || true # Keep old for safety
+        terraform state rm "module.admin_pages_project.cloudflare_pages_project.this" || true
+        echo "✅ Broken state removed."
+
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+
+  #  nuke-destroy-data-mongo:
+  #    name: 💾 Nuke 4a/5 - Mongo
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/mongodb.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+  #
+  #  nuke-destroy-data-elastic:
+  #    name: 💾 Nuke 4b/5 - Elastic
+  #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
+  #    if: inputs.action == 'nuke-environment'
+  #    uses: ./.github/workflows/reusable-terraform.yml
+  #    with:
+  #      tf_dir: ".github/aws/infra/live/third-party/elastic"
+  #      aws_region: ${{ needs.configuration.outputs.aws_region }}
+  #      environment: ${{ inputs.environment || 'DEV' }}
+  #      bucket: ${{ needs.configuration.outputs.bucket }}
+  #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/elastic.tfstate"
+  #      lock_table: ${{ needs.configuration.outputs.lock_table }}
+  #      apply: true
+  #      destroy: true
+  #      tf_vars: |
+  #        project_key=${{ needs.configuration.outputs.project_key }}
+  #        client_key=${{ needs.configuration.outputs.client_key }}
+  #        stage=${{ needs.configuration.outputs.stage_key }}
+  #    secrets: inherit
+
+  # ── GCP: Data Stack Destroy ──
+  # GCP has a dedicated data stack (Redis, Cloud SQL) that must be destroyed after app.
+  nuke-destroy-data-gcp:
+    name: 💾 Nuke 3/5 - Data Stack (GCP)
+    needs: [configuration, nuke-app-gate]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      pre_apply_script: |
+        echo "🔪 Removing deletion protection from Cloud SQL..."
+        terraform state list 2>/dev/null | grep 'google_sql_database_instance' | while read RESOURCE; do
+          echo "   Patching: $RESOURCE (deletion_protection=false)"
+          # Use gcloud to disable deletion protection if needed
+        done
+        echo "✅ GCP pre-destroy cleanup complete."
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  # ── GCP: CDN Stack Destroy ──
+  nuke-destroy-cdn-gcp:
+    name: 🌐 Nuke 4/5 - CDN Stack (GCP)
+    needs: [configuration, nuke-destroy-data-gcp]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-destroy-data-gcp.result == 'success' || needs.nuke-destroy-data-gcp.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_cdn == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-cdn"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/cdn.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+
+  # ── GCP: Network Stack Destroy ──
+  nuke-destroy-network-gcp:
+    name: 🌐 Nuke 5/5 - Network Stack (GCP)
+    needs: [configuration, nuke-destroy-cdn-gcp]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'gcp' &&
+      (needs.nuke-destroy-cdn-gcp.result == 'success' || needs.nuke-destroy-cdn-gcp.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: gcp
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  # ── Azure: Data Stack Destroy ──
+  # For Azure, we have a dedicated data stack that must be destroyed after app.
+  nuke-destroy-data-azure:
+    name: 💾 Nuke 3/5 - Data Stack (Azure)
+    needs: [configuration, nuke-app-gate]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'azure' &&
+      (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_data == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: azure
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  # ── Azure: CDN / Front Door Stack Destroy ──
+  # Front Door Premium + WAF + Blob must be destroyed BEFORE the network stack.
+  # Front Door has resource group dependencies that block network destroy otherwise.
+  nuke-destroy-cdn-azure:
+    name: 🌐 Nuke 4/5 - CDN / Front Door (Azure)
+    needs: [configuration, nuke-destroy-data-azure]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'azure' &&
+      (needs.nuke-destroy-data-azure.result == 'success' || needs.nuke-destroy-data-azure.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: azure
+      # The Front Door + Blob resources live inside the network stack (cdn-modules.tf)
+      # Destroy them by targeting only the CDN module resources in the network stack
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: false # We partially destroy by disabling CDN, then full network destroy follows
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        enable_cdn=false
+        enable_waf=false
+        enable_storage_origin=false
+        enable_image_resize=false
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  # ── Azure: Network Stack Destroy ──
+  nuke-destroy-network-azure:
+    name: 🌐 Nuke 5/5 - Network Stack (Azure)
+    needs: [configuration, nuke-destroy-cdn-azure]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      inputs.cloud_provider == 'azure' &&
+      (needs.nuke-destroy-cdn-azure.result == 'success' || needs.nuke-destroy-cdn-azure.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: azure
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+  nuke-destroy-network:
+    name: 💥 Nuke 5/5 - Network Stack (AWS)
+    # Wait for Tunnel + Data (AWS) to complete before destroying network
+    needs: [configuration, nuke-destroy-tunnel, nuke-destroy-data-aws]
+    if: |
+      always() &&
+      inputs.action == 'nuke-environment' &&
+      (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
+      (needs.nuke-destroy-tunnel.result == 'success' || needs.nuke-destroy-tunnel.result == 'skipped') &&
+      (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.configuration.outputs.has_network == 'true'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
+      pre_apply_script: |-
+        # ----- ORPHAN LAMBDA@EDGE -----
+        # Lambda@Edge replicas take hours to delete. We must remove it from state to proceed.
+        echo "🔪 ORPHANING LAMBDA@EDGE FUNCTIONS FROM STATE..."
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" 2>/dev/null || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" 2>/dev/null || true
+        echo "✅ Lambda@Edge orphaned."
+
+        # ----- EC2 / ASG CLEANUP (GAP-5) -----
+        # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
+        # This prevents destroy from hanging on ECS managed termination protection.
+        echo "🔍 Checking for EC2 ASGs to clean up..."
+        ASG_NAME=$(terraform state list 2>/dev/null | grep 'aws_autoscaling_group' | head -1)
+        if [ -n "$ASG_NAME" ]; then
+          ASG_ID=$(terraform state show "$ASG_NAME" 2>/dev/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
+          if [ -n "$ASG_ID" ]; then
+            echo "🛑 Scaling down ASG: $ASG_ID"
+            aws autoscaling update-auto-scaling-group \
+              --auto-scaling-group-name "$ASG_ID" \
+              --min-size 0 --max-size 0 --desired-capacity 0 || true
+            echo "⏳ Waiting 30s for instance drain..."
+            sleep 30
+          fi
+          echo "✅ EC2 ASG cleanup complete."
+        else
+          echo "ℹ️  No ASG found in state — skipping EC2 cleanup."
+        fi
+
+  nuke-cleanup-dns:
+    name: 🧹 Nuke Cleanup - DNS
+    needs: [configuration, nuke-destroy-network]
+    if: inputs.action == 'nuke-environment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cleanup Residual DNS Records
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          # Inputs
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          DOMAIN_ROOT: ${{ needs.configuration.outputs.domain_root }}
+        run: |
+          echo "🧹 Cleaning up residual DNS records for stage: $STAGE"
+          echo "   Domain Root: $DOMAIN_ROOT"
+
+          # Define targets
+          # Standard convention: {subdomain}-{stage}.{root}
+          # Exception: prod usually has no suffix, but this job runs for 'nuke-environment' which implies non-prod or explicit nuke.
+          # If stage is 'prod', we might want to be extra careful or use different logic.
+          # Assuming STAGE/DEV use suffixes.
+
+          if [ "$STAGE" == "prod" ]; then
+             echo "⚠️  PROD Nuke detected. Skipping DNS cleanup for safety (manual verification required)."
+             exit 0
+          fi
+
+          TARGETS=(
+            "api-${STAGE}.${DOMAIN_ROOT}"
+            "frontend-${STAGE}.${DOMAIN_ROOT}"
+            "cdn-${STAGE}.${DOMAIN_ROOT}"
+            "admin-${STAGE}.${DOMAIN_ROOT}"
+            "api-direct-${STAGE}.${DOMAIN_ROOT}"
+            # Tunnel Stack Targets (fix 400 Bad Request / 409 Conflict)
+            "kibana-${STAGE}.${DOMAIN_ROOT}"
+            "gibana-${STAGE}.${DOMAIN_ROOT}"
+            "grafana-${STAGE}.${DOMAIN_ROOT}"
+            "prometheus-${STAGE}.${DOMAIN_ROOT}"
+            "alertmanager-${STAGE}.${DOMAIN_ROOT}"
+            # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
+            # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
+            # We won't delete root wildcard automatically.
+          )
+
+          echo "🎯 Targets:"
+          printf '%s\n' "${TARGETS[@]}"
+
+          for RECORD_NAME in "${TARGETS[@]}"; do
+            echo "---------------------------------------------------"
+            echo "🔍 Checking: $RECORD_NAME"
+
+            # List records matching name
+            RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$RECORD_NAME" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
+              -H "Content-Type: application/json")
+
+            # Extract IDs
+            IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
+
+            if [[ -z "$IDS" || "$IDS" == "null" ]]; then
+              echo "   ✅ No records found."
+            else
+              for id in $IDS; do
+                echo "   🗑️ Deleting record ID: $id"
+                DEL_RES=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$id" \
+                  -H "Authorization: Bearer $CF_API_TOKEN" \
+                  -H "Content-Type: application/json")
+                
+                SUCCESS=$(echo "$DEL_RES" | jq -r '.success')
+                if [ "$SUCCESS" == "true" ]; then
+                   echo "      ✅ Deleted."
+                else
+                   echo "      ❌ Failed to delete."
+                   echo "$DEL_RES" | jq -r '.errors'
+                fi
+              done
+            fi
+          done
+
+  summary:
+    name: 📝 Ops Summary
+    needs: [configuration, kill-workflows, state-operations, manage-environment, manage-environment-gcp, destroy-resources, sync-cloudflare-config, nuke-stop-services-gcp, nuke-destroy-network, nuke-destroy-pages, nuke-destroy-data-aws, nuke-cleanup-dns]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
+
+          echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          # If configuration ran successfully, we have more info
+          if [[ "${{ needs.configuration.result }}" == "success" ]]; then
+            echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
+             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "unlock-state" || "${{ inputs.action }}" == "wipe-state" ]]; then
+             echo "| **State Ops** | $(get_icon ${{ needs.state-operations.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "manage-environment" ]]; then
+             echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
+             echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "cleanup-orphaned-buckets" ]]; then
+             echo "| **Cleanup Buckets** | $(get_icon ${{ needs.cleanup-orphaned-buckets.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
+             echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-pages" ]]; then
+             echo "| **Delete CF Pages** | $(get_icon ${{ needs.destroy-cloudflare-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-tunnel" ]]; then
+             echo "| **Delete CF Tunnels** | $(get_icon ${{ needs.destroy-cloudflare-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
+             echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Pages** | $(get_icon ${{ needs.nuke-destroy-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Data (AWS)** | $(get_icon ${{ needs.nuke-destroy-data-aws.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Cleanup DNS** | $(get_icon ${{ needs.nuke-cleanup-dns.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi

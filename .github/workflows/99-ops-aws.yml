@@ -1,4 +1,4 @@
-name: "99 - Ops (General)"
+name: "99 - Ops (AWS)"
 
 on:
   workflow_dispatch:
@@ -12,9 +12,12 @@ on:
         description: "🛠️ Select Action"
         type: choice
         options:
-          - kill-workflows
+          - manage-environment
+          - cleanup-orphaned-lambdas
+          - cleanup-orphaned-buckets
+          - nuke-cloudfront
         required: true
-        default: kill-workflows
+        default: manage-environment
       environment:
         description: "Target Environment"
         type: choice
@@ -363,36 +366,241 @@ jobs:
             echo "has_cdn=false" >> "$GITHUB_OUTPUT"
           fi
 
-  kill-workflows:
-    name: 🧟‍♂️ Kill Workflows
-    needs: [validate]
-    if: inputs.action == 'kill-workflows'
+  manage-environment:
+    name: Manage Env
+    needs: [configuration]
+    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      action: ${{ inputs.manage_action }}
+      service_name: "all"
+      desired_count: ${{ inputs.desired_count }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  cleanup-orphaned-lambdas:
+    name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
+    needs: [configuration]
+    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     steps:
-      - name: Kill Zombies
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Validate Confirmation
         run: |
-          BRANCH_FILTER="${{ inputs.branch_tag }}"
-          if [[ -n "$BRANCH_FILTER" ]]; then
-            echo "🎯 Filtering by branch: $BRANCH_FILTER"
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
+          if [ "${{ inputs.confirmation }}" != "EXECUTE" ] && [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+             echo "⚠️ Confirmation not set to EXECUTE/DESTROY. Running in DRY-RUN mode."
+             echo "CONFIRM_MODE=DRY_RUN" >> $GITHUB_ENV
           else
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
+             echo "🚨 EXECUTION MODE CONFIRMED"
+             echo "CONFIRM_MODE=EXECUTE" >> $GITHUB_ENV
           fi
-          CURRENT_ID="${{ github.run_id }}"
-          TARGET_ID="${{ inputs.run_id }}"
 
-          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
-            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-            id=$(_jq '.databaseId')
-            name=$(_jq '.name')
-            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
-            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
-            echo "🔪 Killing Run $id ($name)..."
-            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          # Lambda@Edge is ALWAYS in us-east-1
+          aws-region: us-east-1
+
+      - name: Find and Destroy Zombies
+        env:
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          STAGE_KEY: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          # 1. Debug & Setup
+          set -o pipefail
+          echo "🔎 PARAMETER CHECK:"
+          echo "   - NAMESPACE: '$NAMESPACE'"
+          echo "   - STAGE_KEY: '$STAGE_KEY'"
+
+          if [[ -z "$NAMESPACE" ]]; then
+             echo "❌ CRITICAL ERROR: NAMESPACE is empty. Check configuration."
+             exit 1
+          fi
+
+          # 2. Pattern Matching
+          # Matches: blaze-stage-lambda-edge-resize-image-c533830b
+          # Pattern: [namespace]-[stage]-lambda-edge-*
+          PATTERN="${NAMESPACE}-${STAGE_KEY}-lambda-edge-.*"
+          echo "   - PATTERN:   '$PATTERN'"
+
+          echo "--------------------------------"
+          echo "📡 Connectivity Check (us-east-1)..."
+
+          # Fetch ALL function names first to verify access
+          ALL_FUNCS=$(aws lambda list-functions --region us-east-1 --query "Functions[].FunctionName" --output text | tr '\t' '\n')
+          TOTAL_COUNT=$(echo "$ALL_FUNCS" | grep -v "^$" | wc -l)
+
+          echo "✅ AWS Connectivity OK. Total Lambdas found in region: $TOTAL_COUNT"
+
+          # 3. Filter
+          echo "$ALL_FUNCS" | grep -E "$PATTERN" > found_lambdas.txt || true
+
+          if [ ! -s found_lambdas.txt ]; then
+             echo "⚠️  No orphaned Lambda functions found matching pattern: $PATTERN"
+             echo "   (This means either they are already deleted, or the pattern is wrong)"
+             exit 0
+          fi
+
+          echo "🧟 Found the following candidates:"
+          cat found_lambdas.txt
+          echo "--------------------------------"
+
+          while read func; do
+            if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                echo "🗑️ Deleting $func..."
+                aws lambda delete-function --function-name "$func" --region us-east-1 || echo "⚠️ Failed to delete $func (might be attached or already gone)"
+            else
+                echo "ℹ️ [DRY RUN] Would delete $func"
+            fi
+            FOUND_COUNT=$((FOUND_COUNT+1))
+          done < found_lambdas.txt
+
+          if [ "$CONFIRM_MODE" != "EXECUTE" ]; then
+             echo ""
+             echo "⚠️ This was a DRY RUN. To actually delete these resources, set 'Confirmation' to 'EXECUTE'."
+          else
+             echo "✅ Garbage Collection Complete."
+          fi
+
+  cleanup-orphaned-buckets:
+    name: 🧹 Cleanup Orphaned Buckets
+    needs: [configuration]
+    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "EXECUTE" ] && [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+             echo "⚠️ Confirmation not set to EXECUTE/DESTROY. Running in DRY-RUN mode."
+             echo "CONFIRM_MODE=DRY_RUN" >> $GITHUB_ENV
+          else
+             echo "🚨 EXECUTION MODE CONFIRMED"
+             echo "CONFIRM_MODE=EXECUTE" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Find and Delete Orphaned Buckets
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned buckets matching *${PREFIX}-${ENV_KEY}* (excluding tfstate)..."
+          ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
+
+          FOUND_COUNT=0
+          for bucket in $ALL_BUCKETS; do
+             if [[ "$bucket" == *"${PREFIX}-${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
+                echo "🗑️ Found orphaned bucket: $bucket"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws s3 rb "s3://$bucket" --force || echo "⚠️ Failed to delete $bucket"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $bucket"
+                fi
+                FOUND_COUNT=$((FOUND_COUNT+1))
+             fi
           done
+
+          if [ "$FOUND_COUNT" -eq 0 ]; then
+             echo "✅ No orphaned buckets found."
+          else
+             if [ "$CONFIRM_MODE" != "EXECUTE" ]; then
+                echo "⚠️ This was a DRY RUN. To actually delete these $FOUND_COUNT resources, set 'Confirmation' to 'EXECUTE'."
+             else
+                echo "✅ Successfully cleaned $FOUND_COUNT buckets."
+             fi
+          fi
+
+      - name: Find and Delete Orphaned Log Groups
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned log groups matching *${PREFIX}-${ENV_KEY}*..."
+          ALL_LOGS=$(aws logs describe-log-groups --query "logGroups[].logGroupName" --output text)
+
+          for log in $ALL_LOGS; do
+             if [[ "$log" == *"${PREFIX}-${ENV_KEY}"* ]]; then
+                echo "🗑️ Found orphaned log group: $log"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws logs delete-log-group --log-group-name "$log" || echo "⚠️ Failed to delete $log"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $log"
+                fi
+             fi
+          done
+
+      - name: Find and Delete Orphaned Target Groups
+        # Note: Target groups don't include namespace/client_key/project_key by our current terraform naming,
+        # they usually start with project name (blaze) and environment (dev).
+        # To be safe, we'll only match exact patterns for thisisblaze.
+        env:
+          PROJECT_PREFIX: "blaze" # Assuming project_key translates to blaze in tg names
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned target groups matching *${PROJECT_PREFIX}-${ENV_KEY}-*..."
+          ALL_TGS=$(aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text)
+
+          for tg_arn in $ALL_TGS; do
+             tg_name=$(aws elbv2 describe-target-groups --target-group-arns "$tg_arn" --query "TargetGroups[0].TargetGroupName" --output text)
+             if [[ "$tg_name" == *"${PROJECT_PREFIX}-${ENV_KEY}-"* ]]; then
+                echo "🗑️ Found orphaned target group: $tg_name ($tg_arn)"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   aws elbv2 delete-target-group --target-group-arn "$tg_arn" || echo "⚠️ Failed to delete $tg_name"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $tg_name"
+                fi
+             fi
+          done
+
+      - name: Find and Delete Orphaned CloudFront Functions
+        env:
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+        run: |
+          echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
+          # Deduplicate: list-functions can return duplicate entries causing describe-function
+          # to crash with NoSuchFunctionExists on the second pass of an already-deleted function.
+          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text 2>/dev/null | tr '\t' '\n' | sort -u || echo "")
+
+          for func in $ALL_FUNCS; do
+             [[ -z "$func" ]] && continue
+             if [[ "$func" == *"${PREFIX}-${ENV_KEY}"* ]]; then
+                echo "🗑️ Found orphaned function: $func"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                   # Guard: verify still exists before describe (handles duplicates / race conditions)
+                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text 2>/dev/null || echo "")
+                   if [[ -z "$ETAG" || "$ETAG" == "None" ]]; then
+                      echo "ℹ️ $func already deleted or not found — skipping"
+                      continue
+                   fi
+                   aws cloudfront delete-function --name "$func" --if-match "$ETAG" && echo "✅ Deleted $func" || echo "⚠️ Failed to delete $func"
+                else
+                   echo "ℹ️ [DRY RUN] Would delete $func"
+                fi
+             fi
+          done
+
+  nuke-cloudfront:
+    name: ☢️ Nuke CloudFront
+    needs: [configuration]
+    if: inputs.action == 'nuke-cloudfront'
+    uses: ./.github/workflows/nuke-cloudfront.yml
+    with:
+      dist_id: ${{ inputs.dist_id }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   summary:
     name: 📝 Ops Summary
