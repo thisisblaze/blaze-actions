@@ -174,10 +174,9 @@ jobs:
 
   ping-config:
     name: ⚙️ Ping Config
-    uses: ./.github/workflows/reusable-calculate-config.yml
-    with:
-      environment: ${{ inputs.environment }}
-      cloud_provider: "azure"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Alive"
 
   config:
     name: "⚙️ Config"
