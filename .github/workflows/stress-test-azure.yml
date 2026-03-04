@@ -131,7 +131,4 @@ jobs:
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
       cloud_provider: azure
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
