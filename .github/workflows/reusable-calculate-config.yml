@@ -60,7 +60,8 @@ on:
         value: ${{ jobs.calculate.outputs.allowed_infra_users }}
       gcp_docker_repo:
         value: ${{ jobs.calculate.outputs.gcp_docker_repo }}
-
+      azure_acr_name:
+        value: ${{ jobs.calculate.outputs.azure_acr_name }}
 
 jobs:
   calculate:
@@ -87,6 +88,7 @@ jobs:
       domain_root: ${{ steps.config.outputs.domain_root }}
       allowed_infra_users: ${{ steps.config.outputs.allowed_infra_users }}
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
+      azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
 
     steps:
       - name: Checkout Code
