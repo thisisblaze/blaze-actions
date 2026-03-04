@@ -170,7 +170,7 @@ jobs:
     uses: ./.github/workflows/reusable-verify-gcp.yml
     with:
       environment: ${{ inputs.environment }}
-      cloud_project_id: ${{ needs.config.outputs.gcp_project_id }}
+      gcp_project_id: ${{ needs.config.outputs.gcp_project_id }}
       cloud_region: ${{ needs.config.outputs.cloud_region }}
       namespace: ${{ needs.config.outputs.namespace }}
       target_type: ${{ inputs.target_type }}
@@ -190,9 +190,6 @@ jobs:
       target_type: ${{ inputs.target_type }}
       project_key: ${{ needs.config.outputs.project_key }}
       domain_root: ${{ needs.config.outputs.domain_root }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets: inherit
 
   verify:
