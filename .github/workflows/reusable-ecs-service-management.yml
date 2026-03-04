@@ -42,7 +42,7 @@ on:
         value: ${{ jobs.manage.outputs.status }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ecs-util-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

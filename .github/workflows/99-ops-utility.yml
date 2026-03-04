@@ -197,7 +197,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ops-util-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -799,7 +799,7 @@ jobs:
         run: |
           echo "🧹 Looking for orphaned buckets matching *${PREFIX}-${ENV_KEY}* (excluding tfstate)..."
           ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
-          
+
           FOUND_COUNT=0
           for bucket in $ALL_BUCKETS; do
              if [[ "$bucket" == *"${PREFIX}-${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
@@ -812,7 +812,7 @@ jobs:
                 FOUND_COUNT=$((FOUND_COUNT+1))
              fi
           done
-          
+
           if [ "$FOUND_COUNT" -eq 0 ]; then
              echo "✅ No orphaned buckets found."
           else
@@ -830,7 +830,7 @@ jobs:
         run: |
           echo "🧹 Looking for orphaned log groups matching *${PREFIX}-${ENV_KEY}*..."
           ALL_LOGS=$(aws logs describe-log-groups --query "logGroups[].logGroupName" --output text)
-          
+
           for log in $ALL_LOGS; do
              if [[ "$log" == *"${PREFIX}-${ENV_KEY}"* ]]; then
                 echo "🗑️ Found orphaned log group: $log"
@@ -852,7 +852,7 @@ jobs:
         run: |
           echo "🧹 Looking for orphaned target groups matching *${PROJECT_PREFIX}-${ENV_KEY}-*..."
           ALL_TGS=$(aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text)
-          
+
           for tg_arn in $ALL_TGS; do
              tg_name=$(aws elbv2 describe-target-groups --target-group-arns "$tg_arn" --query "TargetGroups[0].TargetGroupName" --output text)
              if [[ "$tg_name" == *"${PROJECT_PREFIX}-${ENV_KEY}-"* ]]; then
@@ -892,7 +892,7 @@ jobs:
                 fi
              fi
           done
-          
+
   sync-cloudflare-config:
     name: Sync Cloudflare Config
     needs: [configuration]
@@ -2579,7 +2579,7 @@ jobs:
            if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
              echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ inputs.action }}" == "cleanup-orphaned-buckets" ]]; then
              echo "| **Cleanup Buckets** | $(get_icon ${{ needs.cleanup-orphaned-buckets.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
