@@ -139,13 +139,41 @@ jobs:
   config:
     name: "⚙️ Config"
     needs: setup
-    uses: ./.github/workflows/reusable-calculate-config.yml
-    with:
-      environment: ${{ inputs.environment }}
-      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
-      branch_tag: ${{ needs.setup.outputs.branch_tag }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      stage_key: ${{ steps.calc.outputs.stage_key }}
+      bucket: ${{ steps.calc.outputs.bucket }}
+      lock_table: ${{ steps.calc.outputs.lock_table }}
+      state_key: ${{ steps.calc.outputs.state_key }}
+      tf_dir: ${{ steps.calc.outputs.tf_dir }}
+      cluster_name: ${{ steps.calc.outputs.cluster_name }}
+      env_val: ${{ steps.calc.outputs.env_val }}
+      aws_region: ${{ steps.calc.outputs.aws_region }}
+      client_key: ${{ steps.calc.outputs.client_key }}
+      project_key: ${{ steps.calc.outputs.project_key }}
+      namespace: ${{ steps.calc.outputs.namespace }}
+      platform: ${{ steps.calc.outputs.platform }}
+      cloud_provider: ${{ steps.calc.outputs.cloud_provider }}
+      cloud_region: ${{ steps.calc.outputs.cloud_region }}
+      infra_prefix: ${{ steps.calc.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.calc.outputs.gcp_project_id }}
+      domain_root: ${{ steps.calc.outputs.domain_root }}
+      allowed_infra_users: ${{ steps.calc.outputs.allowed_infra_users }}
+      gcp_docker_repo: ${{ steps.calc.outputs.gcp_docker_repo }}
+      azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Calculate Configuration
+        id: calc
+        uses: ./.github/actions/calculate-env-config
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+          branch_tag: ${{ needs.setup.outputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
 
   # --------------------------------------------------------------------------------
   # 4. PROVISION (Rebuild)

@@ -1,0 +1,110 @@
+name: Check Stack Exists
+description: "Checks if a terraform stack state exists in S3 or GCS"
+
+inputs:
+  cloud_provider:
+    description: "Cloud provider (aws or gcp)"
+    required: false
+    default: "aws"
+  bucket:
+    description: "S3/GCS bucket containing Terraform state"
+    required: true
+  state_key:
+    description: "Key for the state file"
+    required: true
+  aws_region:
+    description: "AWS region (used for AWS only)"
+    required: false
+    default: "eu-west-1"
+  wif_audience:
+    description: "WIF Audience (Optional)"
+    required: false
+    default: ""
+  aws_role_arn:
+    description: "AWS Role ARN for authentication"
+    required: false
+  gcp_workload_identity_provider:
+    description: "GCP WIF provider"
+    required: false
+  gcp_service_account:
+    description: "GCP Service Account"
+    required: false
+
+outputs:
+  exists:
+    description: "true if state file exists and has resources"
+    value: ${{ steps.check.outputs.exists }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials
+      if: inputs.cloud_provider != 'gcp'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Authenticate to GCP
+      if: inputs.cloud_provider == 'gcp'
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ inputs.gcp_workload_identity_provider }}
+        service_account: ${{ inputs.gcp_service_account }}
+        audience: ${{ inputs.wif_audience }}
+
+    - name: Check State File (AWS S3)
+      if: inputs.cloud_provider != 'gcp'
+      id: check-aws
+      shell: bash
+      run: |
+        if aws s3api head-object \
+          --bucket "${{ inputs.bucket }}" \
+          --key "${{ inputs.state_key }}" 2>/dev/null; then
+          echo "📦 State file found: s3://${{ inputs.bucket }}/${{ inputs.state_key }}"
+          aws s3 cp "s3://${{ inputs.bucket }}/${{ inputs.state_key }}" state.tfstate
+          RESOURCE_COUNT=$(jq '.resources | length' state.tfstate)
+          if [ "$RESOURCE_COUNT" -gt 0 ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ State exists with $RESOURCE_COUNT resources"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ State file exists but has no resources"
+          fi
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ State file does not exist - stack was never created"
+        fi
+
+    - name: Check State File (GCP GCS)
+      if: inputs.cloud_provider == 'gcp'
+      id: check-gcp
+      shell: bash
+      run: |
+        if gcloud storage cat "gs://${{ inputs.bucket }}/${{ inputs.state_key }}" > state.tfstate 2>/dev/null; then
+          echo "📦 State file found: gs://${{ inputs.bucket }}/${{ inputs.state_key }}"
+          RESOURCE_COUNT=$(jq '.resources | length' state.tfstate)
+          if [ "$RESOURCE_COUNT" -gt 0 ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ State exists with $RESOURCE_COUNT resources"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ State file exists but has no resources"
+          fi
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ State file does not exist - stack was never created"
+        fi
+
+    - name: Set Output
+      id: check
+      shell: bash
+      run: |
+        # Merge outputs from whichever provider ran
+        AWS_EXISTS="${{ steps.check-aws.outputs.exists }}"
+        GCP_EXISTS="${{ steps.check-gcp.outputs.exists }}"
+        if [[ "$AWS_EXISTS" == "true" || "$GCP_EXISTS" == "true" ]]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
