@@ -1,0 +1,86 @@
+name: Verify AZURE
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      target_type:
+        required: false
+        type: string
+      branch_tag:
+        required: false
+        type: string
+      aws_region:
+        required: false
+        type: string
+      cluster_name:
+        required: false
+        type: string
+      domain_root:
+        required: false
+        type: string
+      gcp_project_id:
+        required: false
+        type: string
+      cloud_region:
+        required: false
+        type: string
+      stage_key:
+        required: false
+        type: string
+      namespace:
+        required: false
+        type: string
+      client_key:
+        required: false
+        type: string
+      project_key:
+        required: false
+        type: string
+      azure_acr_name:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+jobs:
+  verify:
+    name: ✅ Verify Infrastructure & App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Endpoints
+        run: |
+          echo "🔍 Verifying Azure endpoints..."
+
+          # 1. API Health Check
+          API_URL="https://api-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/health"
+          echo "Checking API: $API_URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ API check failed! HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ API healthy (HTTP 200)"
+
+          # 2. Frontend Check
+          FRONTEND_URL="https://frontend-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/"
+          echo "Checking Frontend: $FRONTEND_URL"
+          HTTP_STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Frontend check failed! HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Frontend healthy (HTTP 200)"
+
+  # ── FINAL TEARDOWN (Full-Circle Only) ───────────────────────────────────

@@ -1,0 +1,906 @@
+name: "�� Reusable Stress Test"
+
+# ============================================================================
+# STRESS TEST WORKFLOW - EXECUTION MODES
+# ============================================================================
+#
+# This workflow provides comprehensive infrastructure lifecycle testing with
+# multiple execution modes to suit different use cases.
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: standard (Default)
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Destroy → Provision → Deploy → Verify → KEEP
+#   Use:  Manual testing, debugging, infrastructure inspection
+#   Time: ~30-35 minutes
+#   Notes:
+#     - Infrastructure remains deployed after completion
+#     - Best for manual testing and debugging
+#     - Allows inspection of deployed resources
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: full-circle
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Destroy → Provision → Deploy → Verify → DESTROY
+#   Use:  Automated validation, CI/CD gates, true stress testing
+#   Time: ~35-40 minutes
+#   Notes:
+#     - Complete lifecycle validation
+#     - Only destroys if verification succeeds (safety feature)
+#     - Ideal for automated testing and cost optimization
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: quick-test
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: Deploy → Verify (uses existing infrastructure)
+#   Use:  Fast validation after manual infrastructure changes
+#   Time: ~8-10 minutes
+#   Notes:
+#     - Skips destroy and provision phases
+#     - Requires infrastructure to already exist
+#     - Perfect for rapid iteration during development
+#
+# ────────────────────────────────────────────────────────────────────────────
+# MODE: destroy-only
+# ────────────────────────────────────────────────────────────────────────────
+#   Flow: DESTROY
+#   Use:  Manual cleanup, cost control
+#   Time: ~6-8 minutes
+#   Notes:
+#     - Removes all infrastructure
+#     - Use for cleanup when no longer needed
+#     - Destroys in proper dependency order
+#
+# ────────────────────────────────────────────────────────────────────────────
+# FEATURE: preserve_host
+# ────────────────────────────────────────────────────────────────────────────
+#   Purpose: Test feature branches without destroying host network
+#   Usage:   Set preserve_host=true when target_type=feature-branch
+#   Effect:  Skips network destroy/provision, only touches app/tunnel
+#   Benefit: Faster feature branch testing (~15-20 min vs ~30-35 min)
+#
+# ============================================================================
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      # ECS Application Runtime Secrets
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG
+  # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+  config:
+    name: "⚙️ Config"
+    needs: setup
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 1.5 PRODUCTION SAFETY CHECK
+  # --------------------------------------------------------------------------------
+  prod-safety-check:
+    if: inputs.environment == 'prod'
+    name: "⚠️ Production Safety Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: prod-stress-test-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Manual Approval Required
+        run: |
+          echo "🚨 PRODUCTION STRESS TEST"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Target: ${{ inputs.target_type }}"
+          echo "Mode: ${{ inputs.mode }}"
+          echo "Include Third-Party: ${{ inputs.include_third_party }}"
+          echo ""
+          echo "This will DESTROY and RECREATE production infrastructure."
+          echo "Ensure all pre-flight checks are complete before approving."
+
+  # --------------------------------------------------------------------------------
+  # 1.6 PRE-FLIGHT CHECKS (Verify What Exists)
+  # --------------------------------------------------------------------------------
+  check-app-exists:
+    name: "🔍 Check App State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-tunnel-exists:
+    name: "🔍 Check Tunnel State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-network-exists:
+    if: inputs.target_type == 'host'
+    name: "🔍 Check Network State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-mongodb-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check MongoDB State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-elastic-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check Elastic State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
+  # --------------------------------------------------------------------------------
+  cleanup-services:
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') }}
+    needs:
+      - config
+      - prod-safety-check
+      - check-app-exists
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      force_delete: true
+      environment: ${{ inputs.environment }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 3. TEARDOWN (Infrastructure)
+  # --------------------------------------------------------------------------------
+  destroy-app:
+    if: ${{ inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy App"
+
+    needs: [config, cleanup-services, check-app-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  destroy-third-party-mongodb:
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy MongoDB"
+    needs: [config, destroy-app, check-mongodb-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  destroy-third-party-elastic:
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Elastic"
+    needs: [config, destroy-app, check-elastic-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  destroy-tunnel:
+    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Tunnel"
+
+    needs: [config, destroy-app, check-tunnel-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  destroy-network:
+    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Network"
+
+    needs: [config, destroy-tunnel, check-network-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  # --------------------------------------------------------------------------------
+  # 4. PROVISION (Rebuild)
+  # --------------------------------------------------------------------------------
+  provision-network:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
+    needs:
+      - destroy-network
+      - check-network-exists
+    name: "🏗️ Provision Network"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "network"
+      apply: true
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-tunnel:
+    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || (inputs.target_type == 'feature-branch' && needs.destroy-tunnel.result != 'failure'))
+    needs:
+      - provision-network
+      - destroy-tunnel
+    name: "🏗️ Provision Tunnel"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "tunnel"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-app:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success' && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped')
+    needs: [provision-network, provision-tunnel]
+    name: "🏗️ Provision App"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "app"
+      apply: true
+      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      api_launch_type: ${{ inputs.environment == 'dev-mini' && 'EC2' || 'FARGATE' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-third-party-mongodb:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - check-mongodb-exists
+      - destroy-third-party-mongodb
+    name: "🏛️ Provision MongoDB"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-mongodb"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  provision-third-party-elastic:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - check-elastic-exists
+      - destroy-third-party-elastic
+    name: "🏛️ Provision Elastic"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-elastic"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  # --------------------------------------------------------------------------------
+  # 5. DEPLOY & VERIFY
+  # --------------------------------------------------------------------------------
+  deploy-app:
+    if: always() && inputs.mode != 'destroy-only' && needs.provision-app.result == 'success'
+    needs:
+      - provision-app
+      - provision-third-party-mongodb
+      - provision-third-party-elastic
+    name: "🚀 Deploy App"
+    uses: ./.github/workflows/02-deploy-app.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_services: "Blaze all"
+      # Hybrid ECS: Prod uses EC2/ARM64, Dev/Stage use FARGATE/X86_64
+      api_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      api_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
+      frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
+      skip_stability_wait: "${{ 'true' }}"
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # Pass granular secrets required for app deployment
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  # Aggregator job to signal deployment completion (needed because deploy-app is a reusable workflow)
+  deployment-complete:
+    if: always() && inputs.mode != 'destroy-only'
+    needs: deploy-app
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Signal Deployment Complete
+        run: echo "✅ Deployment phase completed"
+
+  deployment-summary:
+    if: always() && inputs.mode != 'destroy-only'
+    needs:
+      - config
+      - deployment-complete
+      - verify-aws
+      - verify-gcp
+      - verify-azure
+    name: "📋 Deployment Summary"
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.config.outputs.aws_region }}
+
+      - name: Generate Comprehensive Deployment Summary
+        run: |
+          {
+            echo "# ✅ Stress Test - Deployment Complete!"
+            echo ""
+            echo "**Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "**Status**: ${{ needs.verify.result == 'success' && '✅ SUCCESS' || '❌ FAILED' }}"
+            echo ""
+
+            # ECS Service Status
+            echo "## 🎯 ECS Service Status"
+            echo ""
+            echo "| Service | Desired | Running | Status |"
+            echo "|---------|---------|---------|--------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          CLUSTER="${{ needs.config.outputs.cluster_name }}"
+
+          # Get service ARNs first
+          SERVICE_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --region "${{ needs.config.outputs.aws_region }}" --query 'serviceArns[*]' --output text)
+
+          if [ -z "$SERVICE_ARNS" ]; then
+            echo "| - | - | - | ⚠️ No services found |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            # Get service status
+            SERVICE_STATUS=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services $SERVICE_ARNS \
+              --region "${{ needs.config.outputs.aws_region }}" \
+              --query 'services[*].[serviceName,desiredCount,runningCount]' \
+              --output text)
+
+            while IFS=$'\t' read -r service_name desired running; do
+              if [ "$desired" = "$running" ]; then
+                status="✅"
+              else
+                status="❌"
+              fi
+              # Extract short service name (e.g., "blaze-b9-thisisblaze-dev-api" -> "api")
+              short_name=${service_name##*-}
+              echo "| **$short_name** | $desired | $running | $status |"
+            done <<< "$SERVICE_STATUS" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # URL Accessibility
+          {
+            echo "## 🌐 URL Validation"
+            echo ""
+            echo "| URL | Status | Result |"
+            echo "|-----|--------|--------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Test frontend
+          FRONTEND_STATUS=$(curl -sI "$FRONTEND_URL" | head -1 | awk '{print $2}')
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| [Frontend]($FRONTEND_URL) | HTTP $FRONTEND_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Test admin
+          ADMIN_STATUS=$(curl -sI "$ADMIN_URL" | head -1 | awk '{print $2}')
+          if [ "$ADMIN_STATUS" = "200" ]; then
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| [Admin]($ADMIN_URL) | HTTP $ADMIN_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Test API (405 is expected for GET on GraphQL)
+          API_STATUS=$(curl -sI "$API_URL" | head -1 | awk '{print $2}')
+          if [ "$API_STATUS" = "405" ] || [ "$API_STATUS" = "200" ]; then
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ✅ OK |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| [API]($API_URL) | HTTP $API_STATUS | ❌ FAIL |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Deployment Details
+          {
+            echo ""
+            echo "## 📦 Deployment Details"
+            echo ""
+            echo "**Environment**: \`${{ inputs.environment }}\`"
+            echo "**Target Type**: \`${{ inputs.target_type }}\`"
+            if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+              echo "**Branch Tag**: \`${{ inputs.branch_tag }}\`"
+            fi
+            echo ""
+            echo "## 🚀 Feature Validation"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ needs.verify.result }}" = "success" ]; then
+            {
+              echo "✅ **Full lifecycle tested**: Destroy → Provision → Deploy → Verify"
+              echo "✅ **All services deployed**: API, Frontend, Admin, Tunnel"
+              echo "✅ **Tunnel fix working**: \`enable_tunnel=true\` creates ECS service"
+              echo "✅ **URL verification working**: All endpoints tested automatically"
+              echo "✅ **Infrastructure healthy**: All ECS services running 1/1 tasks"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "❌ **Verification failed** - Check the verify job for details" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          {
+            echo ""
+            echo "---"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ inputs.mode }}" = "full-circle" ]; then
+            if [ "${{ needs.verify.result }}" = "success" ]; then
+              echo "⚠️ **Note**: This deployment will be destroyed as part of the full-circle stress test." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "✅ **Deployment will persist** - Final destroy skipped due to verification failure." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          elif [ "${{ inputs.mode }}" = "standard" ]; then
+            echo "✅ **Deployment will persist** - Infrastructure remains active." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ inputs.mode }}" = "quick-test" ]; then
+            echo "✅ **Deployment tested** - No infrastructure changes made." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # --------------------------------------------------------------------------------
+  # 7. FINAL DESTROY (full-circle mode only)
+  # --------------------------------------------------------------------------------
+  cleanup-services-final:
+    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    needs:
+      - config
+      - deployment-summary
+      - verify
+
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      force_delete: true
+      environment: ${{ inputs.environment }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  destroy-app-final:
+    if: inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy App"
+
+    needs: [config, cleanup-services-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  destroy-tunnel-final:
+    if: inputs.environment == 'dev-mini' && inputs.mode == 'full-circle' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy Tunnel"
+
+    needs: [config, destroy-app-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  destroy-network-final:
+    if: inputs.mode == 'full-circle' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.verify.result == 'success'
+    name: "🧨 Final Destroy Network"
+
+    needs: [config, destroy-tunnel-final, verify]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ inputs.environment }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+  verify-aws:
+    name: ⚡ Verify (AWS)
+    if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' && (always() && inputs.mode != 'destroy-only' && needs.deployment-complete.result == 'success')
+    needs: &id001 [config, deployment-complete]
+    uses: ./.github/workflows/reusable-verify-aws.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+    secrets: inherit
+  verify-gcp:
+    name: ⚡ Verify (GCP)
+    if: inputs.cloud_provider == 'gcp' && (always() && inputs.mode != 'destroy-only' && needs.deployment-complete.result == 'success')
+    needs: *id001
+    uses: ./.github/workflows/reusable-verify-gcp.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      gcp_project_id: ${{ needs.config.outputs.gcp_project_id }}
+      cloud_region: ${{ needs.config.outputs.cloud_region }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+    secrets: inherit
+  verify-azure:
+    name: ⚡ Verify (Azure)
+    if: inputs.cloud_provider == 'azure' && (always() && inputs.mode != 'destroy-only' && needs.deployment-complete.result == 'success')
+    needs: *id001
+    uses: ./.github/workflows/reusable-verify-azure.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+    secrets: inherit

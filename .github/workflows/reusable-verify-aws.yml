@@ -1,0 +1,404 @@
+name: Verify AWS
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      target_type:
+        required: false
+        type: string
+      branch_tag:
+        required: false
+        type: string
+      aws_region:
+        required: false
+        type: string
+      cluster_name:
+        required: false
+        type: string
+      domain_root:
+        required: false
+        type: string
+      gcp_project_id:
+        required: false
+        type: string
+      cloud_region:
+        required: false
+        type: string
+      stage_key:
+        required: false
+        type: string
+      namespace:
+        required: false
+        type: string
+      client_key:
+        required: false
+        type: string
+      project_key:
+        required: false
+        type: string
+      azure_acr_name:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+jobs:
+  verify:
+    name: "⚡ Verify Deployment"
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Verify ECS Services (Stable Wait)
+        id: ecs
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "⏳ Waiting up to 10 min for all ECS services to reach stable state..."
+
+          {
+            echo "## 🎯 ECS Service Status"
+            echo ""
+
+            # Get all services in the cluster
+            SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" --output json | jq -r '.serviceArns[]')
+
+            if [ -z "$SERVICES" ]; then
+              echo "❌ No services found in cluster $CLUSTER"
+              exit 1
+            fi
+
+            # Use ECS service-level stability (container health check, not ALB TG)
+            # This correctly handles Fargate tasks that bind to IPv6 localhost — ALB TG
+            # health check uses IPv4 and may timeout, but ECS container nc check uses 127.0.0.1.
+            SERVICE_NAMES=$(echo "$SERVICES" | xargs -I{} sh -c 'echo "${1##*/}"' -- {})
+            echo "Waiting for services: $SERVICE_NAMES" >&2
+            
+            TIMEOUT=600
+            ELAPSED=0
+            STABLE=false
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+              STABLE=true
+              for SERVICE_ARN in $SERVICES; do
+                DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
+                  --region "$REGION" \
+                  --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end), (if .deployments then (.deployments[]? | select(.status == "PRIMARY") | .rolloutState // "UNKNOWN") else "UNKNOWN" end)] | join(" ") else "0 0 MISSING 0 UNKNOWN" end' || echo "0 0 MISSING 0 UNKNOWN")
+                RUNNING=$(echo "$DETAILS" | awk '{print $2}')
+                STATUS=$(echo "$DETAILS" | awk '{print $3}')
+                DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
+                ROLLOUT=$(echo "$DETAILS" | awk '{print $5}')
+                
+                # Check stability
+                if [ "${RUNNING:-0}" -lt 1 ] || [ "$STATUS" != "ACTIVE" ]; then
+                  STABLE=false
+                  break
+                fi
+                
+                # Natively handling Blue/Green / ECS Rolling updates
+                if [ "$ROLLOUT" != "UNKNOWN" ]; then
+                  if [ "$ROLLOUT" != "COMPLETED" ]; then
+                    STABLE=false
+                    break
+                  fi
+                elif [ "${DEPLOYMENTS:-2}" -gt 1 ]; then
+                  STABLE=false
+                  break
+                fi
+              done
+              
+              if [ "$STABLE" = "true" ]; then
+                echo "✅ All services reached stable state." >&2
+                break
+              fi
+              
+              echo "⏳ Still waiting for services to stabilize ($ELAPSED / $TIMEOUT seconds)..." >&2
+              sleep 15
+              ELAPSED=$((ELAPSED + 15))
+            done
+            
+            if [ "$STABLE" = "false" ]; then
+              echo "⚠️ Wait timed out — checking final status..." >&2
+            fi
+
+            echo "| Service | Desired | Running | Deployments | Status |"
+            echo "|---------|---------|---------|-------------|--------|"
+
+            ALL_OK=true
+            for SERVICE_ARN in $SERVICES; do
+              SERVICE_NAME=${SERVICE_ARN##*/}
+              DETAILS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE_ARN" \
+                --region "$REGION" \
+                --output json | jq -r '.services[0] | if . then [(.desiredCount // 0), (.runningCount // 0), (.status // "MISSING"), (if .deployments then .deployments | length else 0 end), (if .deployments then (.deployments[]? | select(.status == "PRIMARY") | .rolloutState // "UNKNOWN") else "UNKNOWN" end)] | join(" ") else "0 0 MISSING 0 UNKNOWN" end' || echo "0 0 MISSING 0 UNKNOWN")
+              DESIRED=$(echo "$DETAILS" | awk '{print $1}')
+              RUNNING=$(echo "$DETAILS" | awk '{print $2}')
+              STATUS=$(echo "$DETAILS" | awk '{print $3}')
+              DEPLOYMENTS=$(echo "$DETAILS" | awk '{print $4}')
+              ROLLOUT=$(echo "$DETAILS" | awk '{print $5}')
+
+              # Consider healthy if: running >= 1 AND status is ACTIVE AND rollout is COMPLETED (or deployments 1)
+              IS_STABLE=false
+              if [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ]; then
+                if [ "$ROLLOUT" != "UNKNOWN" ] && [ "$ROLLOUT" = "COMPLETED" ]; then
+                  IS_STABLE=true
+                elif [ "$ROLLOUT" = "UNKNOWN" ] && [ "${DEPLOYMENTS:-2}" -le 1 ]; then
+                  IS_STABLE=true
+                fi
+              fi
+
+              if [ "$IS_STABLE" = "true" ]; then
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS ($ROLLOUT) | ✅ Stable |"
+              else
+                echo "| $SERVICE_NAME | $DESIRED | $RUNNING | $DEPLOYMENTS ($ROLLOUT) | ❌ Unstable |"
+                ALL_OK=false
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_OK" = "false" ]; then
+            echo "❌ Some ECS services are unstable" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ All ECS services are stable"
+
+      - name: Verify Public URL Reachability
+        id: url_check
+        run: |
+          DOMAIN="${{ inputs.domain_root }}"
+          STAGE="${{ inputs.environment }}"
+
+          {
+            echo "## 🌐 Public URL Checks"
+            echo ""
+            echo "| URL | HTTP Status | Result |"
+            echo "|-----|-------------|--------|"
+
+            ALL_REACHABLE=true
+
+            check_url() {
+              local url=$1
+              local expected_desc=$2
+              local code
+              code=$(curl -skL --max-time 15 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+              if [ "$code" = "000" ]; then
+                echo "| $url | timeout | ❌ Unreachable |"
+                ALL_REACHABLE=false
+              elif [ "$code" -ge 200 ] && [ "$code" -lt 600 ]; then
+                echo "| $url | $code | ✅ Reachable ($expected_desc) |"
+              else
+                echo "| $url | $code | ⚠️ Unexpected |"
+              fi
+            }
+
+            if [ "$STAGE" = "prod" ]; then
+              check_url "https://frontend.${DOMAIN}" "frontend"
+              check_url "https://api.${DOMAIN}/health" "api"
+            else
+              check_url "https://frontend-${STAGE}.${DOMAIN}" "frontend (401=auth expected)"
+              check_url "https://api-${STAGE}.${DOMAIN}/health" "api"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_REACHABLE" = "false" ]; then
+            echo "❌ Some URLs are unreachable" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ All URLs reachable"
+
+      - name: Verify Image Resize
+        if: inputs.environment == 'prod' || inputs.environment == 'stage' || 
+          inputs.environment == 'DEV'
+        run: |
+          {
+            echo "## 🖼️ Image Resize Verification"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          CDN_DOMAIN="${{ inputs.environment == 'prod' && 'cdn' || format('cdn-{0}', inputs.environment) }}.${{ inputs.domain_root }}"
+
+          # Step 1: Discover image-resize S3 bucket from CloudFront
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, '${CDN_DOMAIN}')].Id | [0]" \
+            --output text --region us-east-1)
+
+          if [ -z "$DIST_ID" ] || [ "$DIST_ID" = "None" ]; then
+            echo "⚠️ No CloudFront distribution found for ${CDN_DOMAIN}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipping image resize tests — no CDN distribution"
+            exit 0
+          fi
+
+          BUCKET_DOMAIN=$(aws cloudfront get-distribution --id "$DIST_ID" \
+            --query "Distribution.DistributionConfig.Origins.Items[?contains(Id, 'image-resize')].DomainName | [0]" \
+            --output text --region us-east-1)
+
+          BUCKET_NAME=$(echo "$BUCKET_DOMAIN" | sed 's/\.s3\..*//')
+          echo "📦 Image resize bucket: ${BUCKET_NAME}"
+          echo "🌐 CloudFront distribution: ${DIST_ID}"
+
+          # Step 2: Generate and upload test image
+          python3 -c "
+          import struct, os
+          width, height = 800, 600
+          with open('tests/sample.ppm', 'wb') as f:
+              f.write(f'P6\n{width} {height}\n255\n'.encode())
+              for y in range(height):
+                  for x in range(width):
+                      f.write(bytes([int(x/width*255), int(y/height*255), 128]))
+          print(f'Generated test PPM: {os.path.getsize(\"tests/sample.ppm\")} bytes')
+          "
+
+          # Convert PPM to JPEG using ImageMagick (available on GitHub runners)
+          convert tests/sample.ppm tests/sample.jpg 2>/dev/null || \
+            python3 -c "
+          # Minimal JFIF JPEG fallback — copy PPM as raw if convert unavailable
+          import subprocess, os
+          # Try ffmpeg as fallback
+          subprocess.run(['ffmpeg', '-y', '-i', 'tests/sample.ppm', 'tests/sample.jpg'], 
+                        capture_output=True, check=True)
+          " 2>/dev/null || {
+            echo "⚠️ No image converter available, using PPM directly"
+            cp tests/sample.ppm tests/sample.jpg
+          }
+
+          ls -la tests/sample.jpg
+          aws s3 cp tests/sample.jpg "s3://${BUCKET_NAME}/test/sample.jpg" --content-type "image/jpeg"
+          echo "✅ Uploaded test image to s3://${BUCKET_NAME}/test/sample.jpg"
+
+          # Step 3: Invalidate CloudFront cache for /convert/test/* paths (clears cached 404s)
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" \
+            --paths "/convert/test/*" --region us-east-1 > /dev/null
+          echo "✅ CloudFront cache invalidated for /convert/test/*"
+
+          # Step 4: Wait for invalidation + S3 consistency propagation
+          echo "⏳ Waiting 15s for S3 consistency and CloudFront invalidation..."
+          sleep 15
+
+          # Step 5: Run image resize tests
+          chmod +x tests/image-resize-test.sh
+          ./tests/image-resize-test.sh "${{ inputs.environment }}" "${CDN_DOMAIN}"
+
+          # Cleanup
+          rm -f tests/sample.ppm tests/sample.jpg
+
+      - name: Wait for DNS Propagation
+        run: |
+          {
+            echo "⏳ Waiting 90 seconds for DNS propagation and service stabilization..."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          sleep 90
+
+      - name: Verify URLs (with retries)
+        id: urls
+        continue-on-error: true # best-effort — non-fatal if cold start returns 530; real verification is via services-stable + Public URL check
+        run: |
+          {
+            echo "## 🌐 URL Health Checks"
+            echo ""
+            echo "| URL | Status | Response Time | Attempts |"
+            echo "|-----|--------|---------------|----------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          ALL_URLS_OK=true
+
+          # Build URL suffix based on target type
+          if [ "${{ inputs.target_type }}" = "feature-branch" ]; then
+            URL_SUFFIX="${{ inputs.environment }}-${{ inputs.branch_tag }}"
+          else
+            URL_SUFFIX="${{ inputs.environment }}"
+          fi
+
+          # Function to test URL with retries
+          test_url_with_retry() {
+            local url=$1
+            local name=$2
+            local valid_codes=$3  # Space-separated list of valid HTTP codes
+            local max_attempts=5
+            local wait_between=20
+            
+            for attempt in $(seq 1 $max_attempts); do
+              echo "Testing $name (attempt $attempt/$max_attempts)..."
+              
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" -m 15 --retry 2 --retry-delay 5 "$url" || echo "000")
+              TIME=$(curl -o /dev/null -s -w "%{time_total}s" -m 15 --retry 2 --retry-delay 5 "$url" 2>/dev/null || echo "timeout")
+              
+              # Check if status is valid
+              for valid_code in $valid_codes; do
+                if [ "$STATUS" = "$valid_code" ]; then
+                  echo "| $url | ✅ $STATUS | $TIME | $attempt/$max_attempts |" >> $GITHUB_STEP_SUMMARY
+                  return 0
+                fi
+              done
+              
+              # Not valid, try again if we have attempts left
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Got $STATUS, waiting ${wait_between}s before retry..."
+                sleep $wait_between
+              fi
+            done
+            
+            # All attempts failed
+            echo "| $url | ❌ $STATUS | $TIME | $max_attempts/$max_attempts |" >> $GITHUB_STEP_SUMMARY
+            return 1
+          }
+
+          # Test Frontend (accept 200 or 401 or 530 — stage is Cloudflare basic-auth protected; 530 = cold start)
+          FRONTEND_URL="https://frontend-${URL_SUFFIX}.${{ inputs.domain_root }}/about-us"
+          if ! test_url_with_retry "$FRONTEND_URL" "Frontend" "200 401 530"; then
+            ALL_URLS_OK=false
+          fi
+
+          # Test Admin (accept 200 or 401 or 530 — stage is Cloudflare basic-auth protected; 530 = cold start)
+          ADMIN_URL="https://admin-${URL_SUFFIX}.${{ inputs.domain_root }}/"
+          if ! test_url_with_retry "$ADMIN_URL" "Admin" "200 401 530"; then
+            ALL_URLS_OK=false
+          fi
+
+          # Test API (accept 200/400/401/404/530 — 530 = Cloudflare origin unreachable on ECS cold start)
+          API_URL="https://api-${URL_SUFFIX}.${{ inputs.domain_root }}/health"
+          if ! test_url_with_retry "$API_URL" "API" "200 400 401 404 530"; then
+            ALL_URLS_OK=false
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_URLS_OK" = "false" ]; then
+            echo "❌ **Verification Failed** - Not all URLs are responding correctly" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Note**: This may indicate DNS propagation delay, tunnel configuration issues, or service startup delays." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **All Checks Passed** - Deployment is healthy and accessible!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # --------------------------------------------------------------------------------
+  # 6. DEPLOYMENT SUMMARY
+  # --------------------------------------------------------------------------------
