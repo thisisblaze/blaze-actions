@@ -175,7 +175,7 @@ jobs:
   config:
     name: ⚙️ Config
     needs: [setup]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@dev
+    uses: ./.github/workflows/reusable-calculate-config.yml
     with:
       environment: ${{ inputs.environment }}
       cloud_provider: "azure"
@@ -285,7 +285,7 @@ jobs:
     name: 💥 Destroy App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state]
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.app_exists == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
@@ -317,7 +317,7 @@ jobs:
     name: 💥 Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state, destroy-app]
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.data_exists == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-data"
@@ -349,7 +349,7 @@ jobs:
     name: 💥 Destroy MongoDB
     needs: [setup, config, check-state, destroy-data]
     if: inputs.mode != 'quick-test' && inputs.include_third_party == true && needs.check-state.outputs.mongodb_exists == 'true' && (needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-third-party-mongodb"
@@ -381,7 +381,7 @@ jobs:
     name: 💥 Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state, destroy-mongodb, destroy-data]
     if: inputs.mode != 'quick-test' && inputs.preserve_host != true && needs.check-state.outputs.network_exists == 'true' && (needs.destroy-mongodb.result == 'success' || needs.destroy-mongodb.result == 'skipped' || needs.destroy-data.result == 'success' || needs.destroy-data.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
@@ -414,7 +414,7 @@ jobs:
     name: 🌐 Prov Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, check-state, destroy-network]
     if: always() && needs.setup.result == 'success' && inputs.mode != 'destroy-only' && (needs.destroy-network.result == 'success' || needs.destroy-network.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "apply"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
@@ -446,7 +446,7 @@ jobs:
     name: 💾 Prov Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-network]
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-network.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "apply"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-data"
@@ -478,7 +478,7 @@ jobs:
     name: 🏗️ Prov App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-data]
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-data.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "apply"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
@@ -511,7 +511,7 @@ jobs:
     name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-app.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
     with:
       service_name: "api"
       image_tag: "latest"
@@ -546,7 +546,7 @@ jobs:
     name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app, deploy-api]
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-app.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
     with:
       service_name: "frontend"
       image_tag: "latest"
@@ -613,7 +613,7 @@ jobs:
     name: ♻️ Final Destroy App ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, verify]
     if: always() && inputs.mode == 'full-circle' && (needs.verify.result == 'success' || needs.verify.result == 'skipped') && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-app"
@@ -645,7 +645,7 @@ jobs:
     name: ♻️ Final Destroy Data ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, final-destroy-app]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-app.result == 'success' && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-data"
@@ -677,7 +677,7 @@ jobs:
     name: ♻️ Final Destroy Network ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, final-destroy-data]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-data.result == 'success' && inputs.preserve_host != true
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-network"
@@ -709,7 +709,7 @@ jobs:
     name: ♻️ Final Destroy MongoDB
     needs: [setup, config, final-destroy-network]
     if: always() && inputs.mode == 'full-circle' && needs.final-destroy-network.result == 'success' && inputs.preserve_host != true && inputs.include_third_party == true
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ needs.config.outputs.stage_key }}-third-party-mongodb"
