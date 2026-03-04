@@ -236,6 +236,13 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Debug Config Outputs
+        run: |
+          echo "Dump needs.config context:"
+          echo '${{ toJSON(needs.config) }}'
+          echo "Dump needs.setup.outputs.target_tag context:"
+          echo '${{ needs.setup.outputs.target_tag }}'
+
       - name: Check Terraform State files in Blob Storage
         id: state_check
         env:
@@ -243,6 +250,7 @@ jobs:
           CONTAINER: "tfstate"
           PROJECT_KEY: "${{ needs.config.outputs.project_key }}"
           STAGE: "${{ needs.config.outputs.stage_key }}"
+
           ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
