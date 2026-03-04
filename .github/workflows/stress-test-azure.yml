@@ -184,7 +184,7 @@ jobs:
     uses: ./.github/workflows/reusable-calculate-config.yml
     with:
       environment: ${{ inputs.environment }}
-      cloud_provider: "azure"
+    secrets: inherit
 
   # ── SAFETY ─────────────────────────────────────────────────────────────
   prod-safety-check:
