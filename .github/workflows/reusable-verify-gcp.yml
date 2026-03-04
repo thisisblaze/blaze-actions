@@ -41,6 +41,9 @@ on:
       azure_acr_name:
         required: false
         type: string
+      wif_audience:
+        required: false
+        type: string
     secrets:
       AWS_ROLE_ARN:
         required: false

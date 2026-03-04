@@ -515,7 +515,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Generate Summary
-        run: |
           echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -541,45 +540,3 @@ jobs:
 
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-
-          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
-             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ inputs.action }}" == "unlock-state" || "${{ inputs.action }}" == "wipe-state" ]]; then
-             echo "| **State Ops** | $(get_icon ${{ needs.state-operations.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ inputs.action }}" == "manage-environment" ]]; then
-             echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-           if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
-             echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ inputs.action }}" == "cleanup-orphaned-buckets" ]]; then
-             echo "| **Cleanup Buckets** | $(get_icon ${{ needs.cleanup-orphaned-buckets.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-           if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
-             echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-           if [[ "${{ inputs.action }}" == "destroy-cloudflare-pages" ]]; then
-             echo "| **Delete CF Pages** | $(get_icon ${{ needs.destroy-cloudflare-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-           if [[ "${{ inputs.action }}" == "destroy-cloudflare-tunnel" ]]; then
-             echo "| **Delete CF Tunnels** | $(get_icon ${{ needs.destroy-cloudflare-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
-             echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Pages** | $(get_icon ${{ needs.nuke-destroy-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Data (AWS)** | $(get_icon ${{ needs.nuke-destroy-data-aws.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
-             echo "| **Cleanup DNS** | $(get_icon ${{ needs.nuke-cleanup-dns.result }}) |" >> $GITHUB_STEP_SUMMARY
-          fi

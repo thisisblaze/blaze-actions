@@ -149,6 +149,15 @@ on:
       image_resize_enabled:
         description: "Image Resize Status"
         value: ${{ jobs.terraform.outputs.image_resize_enabled }}
+      plan_summary:
+        description: "Plan Summary"
+        value: ${{ jobs.terraform.outputs.plan_summary }}
+      vpc_id:
+        description: "VPC ID"
+        value: ${{ jobs.terraform.outputs.vpc_id }}
+      efs_id:
+        description: "EFS ID"
+        value: ${{ jobs.terraform.outputs.efs_id }}
 
 concurrency:
   group: tf-util-${{ github.workflow }}-${{ github.ref }}
