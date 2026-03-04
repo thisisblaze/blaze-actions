@@ -127,7 +127,7 @@ Include in the Ready Report under a `STRESS TESTS:` line.
 
 ### 6. Ready Report
 
-Output:
+Output (wrap in a \`\`\`text block to preserve line breaks):
 
 ```
 🟢 START-OF-DAY REPORT — <date>
