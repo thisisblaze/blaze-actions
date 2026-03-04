@@ -1,0 +1,1121 @@
+name: "99 - Ops (CLOUDFLARE)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
+      action:
+        description: "🛠️ Select Action"
+        type: choice
+        options:
+          - destroy-cloudflare-pages
+          - cleanup-cloudflare-deployments
+          - destroy-cloudflare-pages-bulk
+          - destroy-cloudflare-tunnel
+          - sync-cloudflare-config
+          - cleanup-dns
+        required: true
+        default: destroy-cloudflare-pages
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        required: false
+      stack:
+        description: "Terraform Stack (for state/destroy)"
+        type: choice
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
+        default: "app"
+        required: false
+      branch_tag:
+        description: "Feature Tag (if applicable)"
+        required: false
+        type: string
+      confirmation:
+        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+        required: false
+        type: string
+      # Action-specific inputs
+      run_id:
+        description: "GitHub Run ID (for kill-workflows)"
+        required: false
+        type: string
+      manage_action:
+        description: "Service Action (for manage-environment)"
+        type: choice
+        options: ["start", "stop", "restart", "scale"]
+        default: "stop"
+      desired_count:
+        description: "Desired Instance Count (for scale)"
+        type: string
+        default: "0"
+      # Cloudflare cleanup inputs
+      retention_count:
+        description: "Deployments to Keep (for cleanup-deployments)"
+        type: string
+        default: "5"
+      retention_days:
+        description: "Delete Deployments Older Than (days)"
+        type: string
+        default: "30"
+      dry_run:
+        description: "Dry Run (preview without deleting)"
+        type: boolean
+        default: true
+      bulk_pattern:
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        type: string
+        required: false
+      skip_lambda_destroy:
+        description: "Orphan Lambda@Edge before destroy (prevents hang)"
+        type: boolean
+        required: false
+        default: true
+      dist_id:
+        description: "CloudFront Distribution ID (for nuke-cloudfront)"
+        type: string
+        required: false
+
+  workflow_call:
+    inputs:
+      cloud_provider:
+        type: string
+        default: "aws"
+        required: false
+      action:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: false
+      stack:
+        type: string
+        required: false
+      branch_tag:
+        type: string
+        required: false
+      confirmation:
+        type: string
+        required: false
+      run_id:
+        type: string
+        required: false
+      manage_action:
+        type: string
+        default: "stop"
+        required: false
+      desired_count:
+        type: string
+        default: "0"
+        required: false
+      retention_count:
+        type: string
+        default: "5"
+        required: false
+      retention_days:
+        type: string
+        default: "30"
+        required: false
+      dry_run:
+        type: boolean
+        default: true
+        required: false
+      bulk_pattern:
+        type: string
+        required: false
+      skip_lambda_destroy:
+        type: boolean
+        required: false
+        default: true
+      dist_id:
+        type: string
+        required: false
+    # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
+    # Currently explicitly defining secrets to ensure workflow_call compatibility
+    secrets:
+      GH_PAT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+concurrency:
+  group: ops-util-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Load Access List
+        id: load-access
+        run: |
+          if [[ -f "vars/blaze-env.json" ]]; then
+            ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
+            echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ vars/blaze-env.json not found. Skipping access control."
+            echo "allowed=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Access
+        if: steps.load-access.outputs.allowed != ''
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@dev
+        with:
+          allowed_users: ${{ steps.load-access.outputs.allowed }}
+          actor: ${{ github.actor }}
+
+      - name: Validate Input
+        run: |
+          ACTION="${{ inputs.action }}"
+          CONF="${{ inputs.confirmation }}"
+
+          echo "🔍 Selected Action: $ACTION"
+
+          # Block separators and headers
+          if [[ "$ACTION" == "-"* ]]; then
+            echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
+            echo "   Please select a real action (e.g., 'manage-environment')."
+            exit 1
+          fi
+
+          # Validation for destructive actions
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
+            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
+              exit 1
+            fi
+          fi
+
+  debug-context:
+    name: 🕵️ Debug Context
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 5
+    steps:
+      - name: Check Secrets Presence
+        run: |
+          echo "🔍 Checking Secret Availability..."
+
+          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
+            echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
+          else
+            echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
+          fi
+
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+             echo "✅ CLOUDFLARE_API_TOKEN is SET"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
+          fi
+
+          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
+             echo "✅ GH_PAT is SET"
+          else
+             echo "ℹ️ GH_PAT is MISSING (This might be expected)"
+          fi
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  configuration:
+    name: Configuration
+    needs: [validate]
+    # Run for all actions except kill-workflows
+    if: inputs.action != 'kill-workflows'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 15
+    outputs:
+      env_val: ${{ steps.config.outputs.env_val }}
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      cluster_name: ${{ steps.config.outputs.cluster_name }}
+      stage_key: ${{ steps.config.outputs.stage_key }}
+      client_key: ${{ steps.config.outputs.client_key }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      namespace: ${{ steps.config.outputs.namespace }}
+      platform: ${{ steps.config.outputs.platform }}
+      domain_root: ${{ steps.config.outputs.domain_root }}
+      cloud_provider: ${{ steps.config.outputs.cloud_provider }}
+      cloud_region: ${{ steps.config.outputs.cloud_region }}
+      infra_prefix: ${{ steps.config.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
+      has_network: ${{ steps.check-dirs.outputs.has_network }}
+      has_data: ${{ steps.check-dirs.outputs.has_data }}
+      has_app: ${{ steps.check-dirs.outputs.has_app }}
+      has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+
+      # TODO: Re-enable if calculate-config needs AWS Account ID
+      # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
+      # The calculate-config action handles missing AWS credentials gracefully
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      #     aws-region: ${{ steps.load-region.outputs.aws_region }}
+
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          terraform_stack: ${{ inputs.stack || 'app' }}
+          branch_name: ${{ inputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
+          # Ops Utility implies infra operations, so we must pass true to bypass safety check
+          deploy_infra: true
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+      - name: Check Stack Directories
+        id: check-dirs
+        run: |
+          PREFIX="${{ steps.config.outputs.infra_prefix }}"
+          STAGE="${{ steps.config.outputs.stage_key }}"
+
+          echo "🔍 Checking directories in $PREFIX for stage $STAGE..."
+
+          if [[ -d "$PREFIX/${STAGE}-network" ]]; then
+            echo "✅ Network dir found"
+            echo "has_network=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Network dir NOT found"
+            echo "has_network=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-data" ]]; then
+            echo "✅ Data dir found"
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Data dir NOT found"
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-app" ]]; then
+            echo "✅ App dir found"
+            echo "has_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ App dir NOT found"
+            echo "has_app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -d "$PREFIX/${STAGE}-cdn" ]]; then
+            echo "✅ CDN dir found"
+            echo "has_cdn=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ CDN dir NOT found"
+            echo "has_cdn=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  sync-cloudflare-config:
+    name: Sync Cloudflare Config
+    needs: [configuration]
+    if: inputs.action == 'sync-cloudflare-config'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Parse blaze-env.json
+        id: parse
+        run: |
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Read and parse JSON
+          COMMON=$(jq -r '.common' vars/blaze-env.json)
+          STAGE_OVERRIDES=$(jq -r ".${STAGE} // {}" vars/blaze-env.json)
+
+          # Extract key values (PROJECT IDENTITY)
+          CLIENT_KEY=$(echo "$COMMON" | jq -r '.CLIENT_KEY')
+          PROJECT_KEY=$(echo "$COMMON" | jq -r '.PROJECT_KEY')
+          NAMESPACE=$(echo "$COMMON" | jq -r '.NAMESPACE')
+          SITE_NAME=$(echo "$COMMON" | jq -r '.BLAZE_FRONTEND_SITE_NAME')
+
+          # Extract infrastructure values
+          AWS_REGION=$(echo "$COMMON" | jq -r '.AWS_REGION')
+          CLOUD_PLATFORM=$(echo "$COMMON" | jq -r '.CLOUD_PLATFORM')
+          DOMAIN_ROOT=$(echo "$COMMON" | jq -r '.DOMAIN_ROOT')
+
+          # Extract app config
+          NODE_ENV=$(echo "$COMMON" | jq -r '.NODE_ENV')
+          DEBUG=$(echo "$COMMON" | jq -r '.DEBUG')
+
+          # Extract stage-specific overrides
+          S3_BUCKET=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_BUCKET // empty')
+          S3_PUBLIC_URL=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_FILES_S3_PUBLIC_URL // empty')
+          GRAPHQL_PLAYGROUND=$(echo "$STAGE_OVERRIDES" | jq -r '.BLAZE_GRAPHQL_PLAYGROUND_ENABLED // empty')
+
+          # Export to outputs
+          echo "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT
+          echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
+          echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
+          echo "site_name=$SITE_NAME" >> $GITHUB_OUTPUT
+          echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
+          echo "cloud_platform=$CLOUD_PLATFORM" >> $GITHUB_OUTPUT
+          echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
+          echo "node_env=$NODE_ENV" >> $GITHUB_OUTPUT
+          echo "debug=$DEBUG" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
+          echo "s3_public_url=$S3_PUBLIC_URL" >> $GITHUB_OUTPUT
+          echo "graphql_playground=$GRAPHQL_PLAYGROUND" >> $GITHUB_OUTPUT
+
+          echo "✅ Parsed blaze-env.json for $STAGE environment"
+
+      - name: Sync to Cloudflare Pages (Admin)
+        if: ${{ needs.configuration.outputs.stage_key != 'dev' }}
+        run: |
+          # Install Wrangler
+          npm install -g wrangler
+
+          # Project name
+          PROJECT_NAME="${{ needs.configuration.outputs.namespace }}-${{ steps.parse.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+
+          echo "🔄 Syncing config to Cloudflare Pages project: $PROJECT_NAME"
+
+          # Sync PROJECT IDENTITY
+          echo "${{ steps.parse.outputs.client_key }}" | wrangler pages secret put CLIENT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.project_key }}" | wrangler pages secret put PROJECT_KEY --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.namespace }}" | wrangler pages secret put NAMESPACE --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.site_name }}" | wrangler pages secret put BLAZE_FRONTEND_SITE_NAME --project-name="$PROJECT_NAME"
+
+          # Sync Infrastructure
+          echo "${{ steps.parse.outputs.aws_region }}" | wrangler pages secret put AWS_REGION --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.cloud_platform }}" | wrangler pages secret put CLOUD_PLATFORM --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.domain_root }}" | wrangler pages secret put DOMAIN_ROOT --project-name="$PROJECT_NAME"
+
+          # Sync App Config
+          echo "${{ steps.parse.outputs.node_env }}" | wrangler pages secret put NODE_ENV --project-name="$PROJECT_NAME"
+          echo "${{ steps.parse.outputs.debug }}" | wrangler pages secret put DEBUG --project-name="$PROJECT_NAME"
+
+          # Sync Stage-specific overrides (if they exist)
+          if [ -n "${{ steps.parse.outputs.s3_bucket }}" ]; then
+            echo "${{ steps.parse.outputs.s3_bucket }}" | wrangler pages secret put BLAZE_FILES_S3_BUCKET --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.s3_public_url }}" ]; then
+            echo "${{ steps.parse.outputs.s3_public_url }}" | wrangler pages secret put BLAZE_FILES_S3_PUBLIC_URL --project-name="$PROJECT_NAME"
+          fi
+
+          if [ -n "${{ steps.parse.outputs.graphql_playground }}" ]; then
+            echo "${{ steps.parse.outputs.graphql_playground }}" | wrangler pages secret put BLAZE_GRAPHQL_PLAYGROUND_ENABLED --project-name="$PROJECT_NAME"
+          fi
+
+          echo "✅ Successfully synced application config to Cloudflare Pages"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Skip DEV
+        if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
+        run: |
+          echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
+
+  # ------------------------------------------------------------------
+  # ☁️ CLOUDFLARE CLEANUP OPERATIONS
+  # ------------------------------------------------------------------
+
+  destroy-cloudflare-pages:
+    name: 🗑️ Delete Cloudflare Pages Project
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate to Cloudflare
+        run: echo "Authentication handled by secrets in step"
+
+      - name: Delete Project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Define potential project names
+          PROJECT_NAME_1="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+          PROJECT_NAME_2="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin"
+
+          PROJECTS=("$PROJECT_NAME_1" "$PROJECT_NAME_2")
+
+          for PROJ in "${PROJECTS[@]}"; do
+             if [[ -z "$PROJ" || "$PROJ" == *"-"* ]]; then # Basic sanity check, though not perfect
+                 echo "🔍 Checking Cloudflare Pages Project: $PROJ"
+                 
+                 # Check if exists
+                 EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJ" \
+                   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                   -H "Content-Type: application/json" | jq -r '.success')
+
+                 if [[ "$EXISTS" == "true" ]]; then
+                    echo "   🗑️ Deleting: $PROJ"
+                    curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJ" \
+                      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                      -H "Content-Type: application/json"
+                    echo "   ✅ Deleted."
+                 else
+                    echo "   ℹ️ Project $PROJ not found (already deleted?)"
+                 fi
+             fi
+          done
+
+  cleanup-dns:
+    name: 🧹 Cleanup DNS
+    needs: [configuration]
+    if: always() && needs.configuration.result == 'success' && inputs.action == 'cleanup-dns'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 10
+    steps:
+      - name: Delete Records
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          if [[ -z "$ZONE_ID" ]]; then
+            echo "❌ ZONE_ID secret is missing or empty."
+            exit 1
+          fi
+
+          check_and_delete() {
+            local record_name=$1
+            echo "Checking record: $record_name"
+            
+            # List records matching name
+            RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=$record_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json")
+
+            # Extract IDs
+            IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
+            
+            if [[ -z "$IDS" || "$IDS" == "null" ]]; then
+              echo "No DNS records found for $record_name"
+            else
+              for id in $IDS; do
+                echo "Deleting record ID: $id"
+                curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$id" \
+                  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                  -H "Content-Type: application/json"
+                echo "Deleted."
+              done
+            fi
+          }
+
+          check_pages_domains() {
+            local domain=$1
+            echo "Checking Pages domains for: $domain"
+            
+            if [[ -z "$ACCOUNT_ID" ]]; then
+               echo "⚠️ ACCOUNT_ID secret missing. Skipping Pages check."
+               return
+            fi
+
+            # List projects
+            PROJECTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json")
+            
+            PROJECT_NAMES=$(echo "$PROJECTS" | jq -r '.result[].name')
+
+            for proj in $PROJECT_NAMES; do
+              # Check domains for project
+              DOMAINS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$proj/domains" \
+                -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                -H "Content-Type: application/json")
+              
+              MATCH=$(echo "$DOMAINS" | jq -r --arg d "$domain" '.result[] | select(.name == $d) | .id')
+              
+              if [[ -n "$MATCH" ]]; then
+                 echo "Found domain $domain in project $proj. Deleting..."
+                 curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$proj/domains/$domain" \
+                   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                   -H "Content-Type: application/json"
+                 echo "Deleted domain from Pages project $proj."
+              fi
+            done
+          }
+
+          check_pages_project() {
+            local project_name=$1
+            echo "🔍 Checking Pages Project: $project_name"
+
+            EXISTS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$project_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json" | jq -r '.success')
+
+            if [[ "$EXISTS" == "true" ]]; then
+               echo "🗑️ Deleting Pages Project: $project_name"
+               curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$project_name" \
+                 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                 -H "Content-Type: application/json"
+               echo "   Deleted."
+            else
+               echo "✅ Project $project_name not found."
+            fi
+          }
+
+          check_worker_script() {
+            local script_name=$1
+            echo "🔍 Checking Worker Script: $script_name"
+
+            # Check if exists (by listing or getting)
+            # We can use the list endpoint with filtering or just try to delete if we are sure?
+            # Better to check.
+            # GET /accounts/{account_id}/workers/scripts/{script_name} is not documented as "check existence" easily, 
+            # usually returns script content. simpler to just iterate or try delete.
+            # But let's try to be precise.
+
+            # Simple Check:
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+               echo "🗑️ Deleting Worker Script: $script_name"
+               curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+                 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                 -H "Content-Type: application/json"
+               echo "   Deleted."
+            elif [[ "$HTTP_CODE" == "404" ]]; then
+               echo "✅ Worker Script $script_name not found."
+            else
+               echo "⚠️ Error checking worker script $script_name (HTTP $HTTP_CODE)"
+            fi
+          }
+
+          # Construct patterns based on environment/stage
+          DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+
+          # Safety check
+          if [[ "$STAGE" == "prod" && "${{ inputs.confirmation }}" != "DESTROY" ]]; then
+             echo "❌ Safety: Cannot cleanup PROD DNS without confirmation 'DESTROY'"
+             exit 1
+          fi
+
+          echo "Cleaning up DNS for stage: $STAGE, domain: $DOMAIN_ROOT"
+
+          # Example: api-stage.thisisblaze.uk
+          check_and_delete "api-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "frontend-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "cdn-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "admin-${STAGE}.${DOMAIN_ROOT}"
+          check_and_delete "kibana-${STAGE}.${DOMAIN_ROOT}"
+
+          # ------------------------------------------------------------------
+          # Feature: Worker Route Cleanup (Fix 409 Conflict)
+          # ------------------------------------------------------------------
+          check_workers_routes() {
+             echo "🔍 Checking Worker Routes for pattern: $1"
+             PATTERN=$1
+             
+             # List routes
+             ROUTES=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/workers/routes" \
+               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+               -H "Content-Type: application/json")
+             
+             echo "DEBUG: Raw Routes Response:"
+             # echo "$ROUTES" | jq . # Less verbose now
+
+             # Find matching route IDs
+             # We look for routes that contain the pattern (e.g. domain name)
+             # This is aggressive but necessary for 'tunnel' stack cleanup
+             echo "DEBUG: Filtering with jq substring match for '$PATTERN'..."
+             IDS=$(echo "$ROUTES" | jq -r --arg pat "$PATTERN" '.result[] | select(.pattern | contains($pat)) | .id')
+             
+             if [[ -z "$IDS" ]]; then
+                echo "✅ No conflicting worker routes found."
+             else
+                for id in $IDS; do
+                  echo "🗑️ Deleting worker route ID: $id"
+                  curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/workers/routes/$id" \
+                    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                    -H "Content-Type: application/json"
+                  echo "   Deleted."
+                done
+             fi
+          }
+
+          if [[ "${{ inputs.stack }}" == "tunnel" ]]; then
+             echo "🧹 Stack is 'tunnel' - checking for orphaned worker routes..."
+             # Pattern: *.{stage}.{domain}/* or similar
+             # We'll search for the stage+domain to be safe
+             echo "DEBUG: STAGE='$STAGE', DOMAIN_ROOT='$DOMAIN_ROOT'"
+             
+             if [[ -z "$STAGE" || -z "$DOMAIN_ROOT" ]]; then
+                echo "❌ Error: STAGE or DOMAIN_ROOT is empty."
+             else
+                check_workers_routes "${STAGE}.${DOMAIN_ROOT}"
+             fi
+          fi
+
+          if [[ "${{ inputs.stack }}" == "app" ]]; then
+             echo "🧹 Stack is 'app' - checking for conflicting Pages & Workers..."
+             
+             # 1. Admin Pages Project
+             # Naming: {namespace}-{client}-{project}-{stage}-admin
+             PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
+             check_pages_project "$PROJECT_NAME"
+
+             # 2. Basic Auth Worker
+             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-dev-basic-auth)
+             # Wait, usually it includes namespace?
+             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-dev-basic-auth
+             # Namespace=blaze, Project=thisisblaze, Stage=dev.
+             # So pattern is: ${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth
+             # But let's also try with client-key just in case: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth
+             # Or just check both?
+             
+             WORKER_1="${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth"
+             check_worker_script "$WORKER_1"
+
+             if [[ -n "$CLIENT" && "$CLIENT" != "thisisblaze" ]]; then
+                WORKER_2="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth"
+                check_worker_script "$WORKER_2"
+             fi
+          fi
+
+          # Wildcards if necessary (be careful)
+          # check_and_delete "*.${STAGE}.${DOMAIN_ROOT}"
+
+          # Pages domains
+          check_pages_domains "api-${STAGE}.${DOMAIN_ROOT}"
+          check_pages_domains "frontend-${STAGE}.${DOMAIN_ROOT}"
+          check_pages_domains "admin-${STAGE}.${DOMAIN_ROOT}"
+
+  cleanup-cloudflare-deployments:
+    name: 🧹 Cleanup Old Deployments
+    needs: [configuration]
+    if: inputs.action == 'cleanup-cloudflare-deployments'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Calculate Project Name
+        id: calc
+        run: |
+          NAMESPACE="${{ needs.configuration.outputs.namespace }}"
+          PROJECT="${{ needs.configuration.outputs.project_key }}"
+          STAGE="${{ needs.configuration.outputs.stage_key }}"
+          CLIENT="${{ needs.configuration.outputs.client_key }}"
+
+          if [ "$STAGE" = "prod" ]; then
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-admin"
+          else
+            PROJECT_NAME="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-admin"
+          fi
+
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Target project: $PROJECT_NAME"
+
+      - name: List and Cleanup Deployments
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT_NAME: ${{ steps.calc.outputs.project_name }}
+          RETENTION_COUNT: ${{ inputs.retention_count || '5' }}
+          RETENTION_DAYS: ${{ inputs.retention_days || '30' }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          echo "🔍 Listing deployments for: $PROJECT_NAME"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 DRY RUN MODE - No deletions will be performed"
+          fi
+
+          # Fetch all deployments
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          # Check for errors
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Failed to fetch deployments"
+            echo "$RESPONSE" | jq -r '.errors'
+            exit 1
+          fi
+
+          # Get current timestamp
+          CURRENT_TIME=$(date +%s)
+          CUTOFF_TIME=$((CURRENT_TIME - (RETENTION_DAYS * 86400)))
+
+          # Sort by created_on descending
+          DEPLOYMENTS=$(echo "$RESPONSE" | jq -r '.result | sort_by(.created_on) | reverse | .[] | "\(.id)|\(.created_on)|\(.environment)"')
+
+          TOTAL_COUNT=$(echo "$DEPLOYMENTS" | wc -l | tr -d ' ')
+          echo "📊 Total deployments: $TOTAL_COUNT"
+          echo "🎯 Retention: Keep $RETENTION_COUNT latest OR newer than $RETENTION_DAYS days"
+
+          DELETED=0
+          KEPT=0
+          INDEX=0
+
+          echo "$DEPLOYMENTS" | while IFS='|' read -r DEPLOY_ID CREATED_AT ENV; do
+            INDEX=$((INDEX + 1))
+            
+            # Calculate age
+            CREATED_TS=$(date -d "${CREATED_AT%.*}" +%s 2>/dev/null || echo 0)
+            AGE_DAYS=$(( (CURRENT_TIME - CREATED_TS) / 86400 ))
+            
+            # Decide whether to delete
+            if [ $INDEX -le $RETENTION_COUNT ] || [ $CREATED_TS -gt $CUTOFF_TIME ]; then
+              echo "✅ Keeping: $DEPLOY_ID ($ENV, ${AGE_DAYS}d old)"
+              KEPT=$((KEPT + 1))
+            else
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "🔍 [DRY RUN] Would delete: $DEPLOY_ID ($ENV, ${AGE_DAYS}d old)"
+              else
+                echo "🗑️ Deleting: $DEPLOY_ID ($ENV, ${AGE_DAYS}d old)"
+                
+                curl -s -X DELETE \
+                  "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments/${DEPLOY_ID}" \
+                  -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
+                
+                DELETED=$((DELETED + 1))
+              fi
+            fi
+          done
+
+          echo ""
+          echo "📊 Summary: Total=$TOTAL_COUNT, Kept=$KEPT, Deleted=$DELETED"
+
+      - name: Summary
+        run: |
+          DRY_RUN="${{ inputs.dry_run }}"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "### 🔍 Deployment Cleanup Preview" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Deployment Cleanup Complete" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project** | \`${{ steps.calc.outputs.project_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Retention Count** | \`${{ inputs.retention_count }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Retention Days** | \`${{ inputs.retention_days }}\` |" >> $GITHUB_STEP_SUMMARY
+
+  destroy-cloudflare-pages-bulk:
+    name: 🗑️ Bulk Delete Pages Projects
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-pages-bulk'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "BULK_DESTROY" ]; then
+            echo "❌ BULK operation requires 'BULK_DESTROY' confirmation"
+            exit 1
+          fi
+
+      - name: Validate Pattern
+        run: |
+          PATTERN="${{ inputs.bulk_pattern }}"
+          if [ -z "$PATTERN" ]; then
+            echo "❌ bulk_pattern required (e.g., 'namespace-*-dev-*')"
+            exit 1
+          fi
+          echo "📋 Pattern: $PATTERN"
+
+      - name: List and Delete Projects
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PATTERN: ${{ inputs.bulk_pattern }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          echo "🔍 Finding projects matching: $PATTERN"
+
+          # List projects
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}")
+
+          # Convert pattern to regex
+          REGEX=$(echo "$PATTERN" | sed 's/\*/.\*/g')
+          PROJECTS=$(echo "$RESPONSE" | jq -r ".result[] | select(.name | test(\"^${REGEX}$\")) | .name")
+
+          COUNT=$(echo "$PROJECTS" | wc -l | tr -d ' ')
+
+          if [ -z "$PROJECTS" ]; then
+            echo "⚠️ No projects found"
+            exit 0
+          fi
+
+          if [ $COUNT -gt 10 ]; then
+            echo  "❌ Safety limit: $COUNT projects found, max 10 allowed"
+            exit 1
+          fi
+
+          echo "📊 Found $COUNT projects"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 DRY RUN - Would delete:"
+            echo "$PROJECTS"
+          else
+            echo "$PROJECTS" | while read -r PROJECT; do
+              echo "🗑️ Deleting: $PROJECT"
+              curl -s -X DELETE \
+                "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT}" \
+                -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
+              sleep 1
+            done
+          fi
+
+      - name: Summary
+        run: |
+          echo "### ✅ Bulk Delete Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Pattern** | \`${{ inputs.bulk_pattern }}\` |" >> $GITHUB_STEP_SUMMARY
+  destroy-cloudflare-tunnel:
+    name: 🗑️ Delete Cloudflare Tunnels
+    needs: [configuration]
+    if: inputs.action == 'destroy-cloudflare-tunnel'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation required. Please type 'DESTROY' to proceed."
+            exit 1
+          fi
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Calculate Config
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: tunnel
+          branch_tag: ${{ inputs.branch_tag }}
+          deploy_infra: true
+
+      - name: List Cloudflare Tunnels
+        id: list
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          PROJECT: ${{ needs.configuration.outputs.project_key }}
+          STAGE: ${{ steps.config.outputs.stage_key }}
+          CLIENT: ${{ needs.configuration.outputs.client_key }}
+        run: |
+          # Patterns
+          P1="${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-tunnel-"
+          P2="${NAMESPACE}-${PROJECT}-${STAGE}-tunnel-"
+
+          echo "🔍 Searching for tunnels matching patterns:"
+          echo "   1. $P1*"
+          echo "   2. $P2*"
+
+          # List all tunnels
+          RESPONSE=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          # Filter tunnels by name pattern
+          TUNNEL_IDS=$(echo "$RESPONSE" | jq -r --arg p1 "$P1" --arg p2 "$P2" \
+            ".result[] | select(.name | startswith(\$p1) or startswith(\$p2)) | .id")
+
+          if [ -z "$TUNNEL_IDS" ]; then
+            echo "⚠️ No tunnels found matching pattern"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "$TUNNEL_IDS" > /tmp/tunnel_ids.txt
+            echo "📋 Found tunnels:"
+            echo "$TUNNEL_IDS"
+          fi
+
+      - name: Delete Tunnels
+        if: steps.list.outputs.found == 'true'
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          while read TUNNEL_ID; do
+            echo "🗑️ Deleting tunnel: $TUNNEL_ID"
+            
+            RESPONSE=$(curl -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -w "\n%{http_code}" \
+              -s)
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Deleted tunnel $TUNNEL_ID"
+            else
+              echo "⚠️ Failed to delete tunnel $TUNNEL_ID (HTTP $HTTP_CODE)"
+            fi
+          done < /tmp/tunnel_ids.txt
+
+      - name: Summary
+        run: |
+          echo "### ✅ Cloudflare Tunnels Cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stage** | \`${{ steps.config.outputs.stage_key }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Pattern** | \`blaze-thisisblaze-${{ steps.config.outputs.stage_key }}-tunnel-*\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.list.outputs.found }}" = "true" ]; then
+            TUNNEL_COUNT=$(wc -l < /tmp/tunnel_ids.txt)
+            echo "| **Tunnels Deleted** | $TUNNEL_COUNT |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| **Result** | No tunnels found |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ------------------------------------------------------------------
+  # ☢️ NUKE SEQUENCE (Chained Destruction)
+  # ------------------------------------------------------------------
+
+  summary:
+    name: 📝 Ops Summary
+    needs: [configuration, kill-workflows, state-operations, manage-environment, manage-environment-gcp, destroy-resources, sync-cloudflare-config, nuke-stop-services-gcp, nuke-destroy-network, nuke-destroy-pages, nuke-destroy-data-aws, nuke-cleanup-dns]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Helper function
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
+
+          echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          # If configuration ran successfully, we have more info
+          if [[ "${{ needs.configuration.result }}" == "success" ]]; then
+            echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
+             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "unlock-state" || "${{ inputs.action }}" == "wipe-state" ]]; then
+             echo "| **State Ops** | $(get_icon ${{ needs.state-operations.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "manage-environment" ]]; then
+             echo "| **Manage Env** | $(get_icon ${{ needs.manage-environment.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-resources" ]]; then
+             echo "| **Destroy** | $(get_icon ${{ needs.destroy-resources.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "cleanup-orphaned-buckets" ]]; then
+             echo "| **Cleanup Buckets** | $(get_icon ${{ needs.cleanup-orphaned-buckets.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "sync-cloudflare-config" ]]; then
+             echo "| **Sync Cloudflare** | $(get_icon ${{ needs.sync-cloudflare-config.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-pages" ]]; then
+             echo "| **Delete CF Pages** | $(get_icon ${{ needs.destroy-cloudflare-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+           if [[ "${{ inputs.action }}" == "destroy-cloudflare-tunnel" ]]; then
+             echo "| **Delete CF Tunnels** | $(get_icon ${{ needs.destroy-cloudflare-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "nuke-environment" ]]; then
+             echo "| **Stop Services** | $(get_icon ${{ needs.nuke-stop-services.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy App** | $(get_icon ${{ needs.nuke-destroy-app.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Pages** | $(get_icon ${{ needs.nuke-destroy-pages.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Tunnel** | $(get_icon ${{ needs.nuke-destroy-tunnel.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Data (AWS)** | $(get_icon ${{ needs.nuke-destroy-data-aws.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Destroy Network** | $(get_icon ${{ needs.nuke-destroy-network.result }}) |" >> $GITHUB_STEP_SUMMARY
+             echo "| **Cleanup DNS** | $(get_icon ${{ needs.nuke-cleanup-dns.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi

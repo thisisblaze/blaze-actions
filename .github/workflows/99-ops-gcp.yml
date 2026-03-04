@@ -1,4 +1,4 @@
-name: "99 - Ops (General)"
+name: "99 - Ops (GCP)"
 
 on:
   workflow_dispatch:
@@ -12,9 +12,9 @@ on:
         description: "🛠️ Select Action"
         type: choice
         options:
-          - kill-workflows
+          - manage-environment
         required: true
-        default: kill-workflows
+        default: manage-environment
       environment:
         description: "Target Environment"
         type: choice
@@ -363,35 +363,60 @@ jobs:
             echo "has_cdn=false" >> "$GITHUB_OUTPUT"
           fi
 
-  kill-workflows:
-    name: 🧟‍♂️ Kill Workflows
-    needs: [validate]
-    if: inputs.action == 'kill-workflows'
+  manage-environment-gcp:
+    name: Manage Env (GCP)
+    needs: [configuration]
+    if: inputs.action == 'manage-environment' && inputs.cloud_provider == 'gcp'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 10
     steps:
-      - name: Kill Zombies
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          BRANCH_FILTER="${{ inputs.branch_tag }}"
-          if [[ -n "$BRANCH_FILTER" ]]; then
-            echo "🎯 Filtering by branch: $BRANCH_FILTER"
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
-          else
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
-          fi
-          CURRENT_ID="${{ github.run_id }}"
-          TARGET_ID="${{ inputs.run_id }}"
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
-            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-            id=$(_jq '.databaseId')
-            name=$(_jq '.name')
-            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
-            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
-            echo "🔪 Killing Run $id ($name)..."
-            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Manage Cloud Run Services
+        run: |
+          PROJECT="${{ needs.configuration.outputs.gcp_project_id }}"
+          REGION="${{ needs.configuration.outputs.cloud_region }}"
+          ACTION="${{ inputs.manage_action }}"
+          PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
+
+          echo "⚙️ Managing Cloud Run services: $ACTION"
+          echo "   Prefix: $PREFIX"
+
+          SERVICES=$(gcloud run services list \
+            --project="$PROJECT" --region="$REGION" \
+            --filter="metadata.name~^${PREFIX}" \
+            --format="value(metadata.name)" 2>/dev/null || true)
+
+          if [[ -z "$SERVICES" ]]; then
+            echo "ℹ️ No Cloud Run services found."
+            exit 0
+          fi
+
+          for SVC in $SERVICES; do
+            if [[ "$ACTION" == "stop" ]]; then
+              echo "   🛑 Scaling down: $SVC"
+              gcloud run services update "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --max-instances=0 --quiet || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "start" || "$ACTION" == "restart" ]]; then
+              echo "   ▶️ Starting: $SVC"
+              gcloud run services update "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --max-instances=10 --quiet || echo "   ⚠️ Failed"
+            elif [[ "$ACTION" == "status" ]]; then
+              echo "   📊 Status: $SVC"
+              gcloud run services describe "$SVC" \
+                --project="$PROJECT" --region="$REGION" \
+                --format="table(status.conditions.type,status.conditions.status)" || true
+            fi
           done
 
   summary:

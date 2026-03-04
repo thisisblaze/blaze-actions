@@ -1,4 +1,4 @@
-name: "99 - Ops (General)"
+name: "99 - Ops (TERRAFORM)"
 
 on:
   workflow_dispatch:
@@ -12,9 +12,11 @@ on:
         description: "🛠️ Select Action"
         type: choice
         options:
-          - kill-workflows
+          - destroy-resources
+          - unlock-state
+          - wipe-state
         required: true
-        default: kill-workflows
+        default: destroy-resources
       environment:
         description: "Target Environment"
         type: choice
@@ -363,37 +365,148 @@ jobs:
             echo "has_cdn=false" >> "$GITHUB_OUTPUT"
           fi
 
-  kill-workflows:
-    name: 🧟‍♂️ Kill Workflows
-    needs: [validate]
-    if: inputs.action == 'kill-workflows'
+  state-operations:
+    name: State Ops
+    needs: [configuration]
+    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     steps:
-      - name: Kill Zombies
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Authenticate to GCP
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: inputs.cloud_provider == 'gcp'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Execute Ops (AWS)
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         run: |
-          BRANCH_FILTER="${{ inputs.branch_tag }}"
-          if [[ -n "$BRANCH_FILTER" ]]; then
-            echo "🎯 Filtering by branch: $BRANCH_FILTER"
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
-          else
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
+          ACTION="${{ inputs.action }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+          KEY="${{ needs.configuration.outputs.state_key }}"
+          TABLE="${{ needs.configuration.outputs.lock_table }}"
+          REGION="${{ needs.configuration.outputs.aws_region }}"
+
+          if [[ -z "$TABLE" ]]; then
+            TABLE="$BUCKET"
           fi
-          CURRENT_ID="${{ github.run_id }}"
-          TARGET_ID="${{ inputs.run_id }}"
 
-          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
-            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-            id=$(_jq '.databaseId')
-            name=$(_jq '.name')
-            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
-            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
-            echo "🔪 Killing Run $id ($name)..."
-            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
-          done
+          LOCK_ID="${BUCKET}/${KEY}"
 
+          if [[ "$ACTION" == "unlock-state" ]]; then
+            echo "🔓 Unlocking State: $LOCK_ID"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+            aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING STATE: $LOCK_ID"
+            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION"
+            aws dynamodb delete-item \
+              --table-name "$TABLE" \
+              --region "$REGION" \
+              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+          fi
+
+      - name: Execute Ops (GCP)
+        if: inputs.cloud_provider == 'gcp'
+        run: |
+          ACTION="${{ inputs.action }}"
+          BUCKET="${{ needs.configuration.outputs.bucket }}"
+          KEY="${{ needs.configuration.outputs.state_key }}"
+
+          if [[ "$ACTION" == "unlock-state" ]]; then
+            echo "🔓 Unlocking GCS State: gs://$BUCKET/$KEY"
+            # GCS backend uses a .tflock object
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
+            echo "✅ State unlocked."
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING GCS STATE: gs://$BUCKET/$KEY"
+            gsutil rm "gs://$BUCKET/$KEY" 2>/dev/null || echo "ℹ️ State file not found"
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
+            echo "✅ State wiped."
+          fi
+
+  pre-cleanup:
+    name: Pre-Cleanup
+    needs: [configuration]
+    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    with:
+      cluster_name: ${{ needs.configuration.outputs.cluster_name }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      stage_filter: ${{ inputs.branch_tag }}
+      environment: ${{ inputs.environment || 'DEV' }}
+
+  destroy-resources:
+    name: Destroy
+    needs: [configuration, pre-cleanup]
+    if: inputs.action == 'destroy-resources'
+    uses: ./.github/workflows/reusable-terraform.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # Azure
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+      EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+    with:
+      wif_audience: ${{ vars.WIF_AUDIENCE }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }}
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: true
+      destroy: true
+      orphan_lambda: ${{ inputs.skip_lambda_destroy }}
+      tf_vars: |
+        project_key=${{ needs.configuration.outputs.project_key }}
+        client_key=${{ needs.configuration.outputs.client_key }}
+        namespace=${{ needs.configuration.outputs.namespace }}
+        platform=${{ needs.configuration.outputs.platform }}
+        aws_region=${{ needs.configuration.outputs.aws_region }}
+        domain_root=${{ needs.configuration.outputs.domain_root }}
+        stage=${{ needs.configuration.outputs.stage_key }}
+        branch_name=${{ inputs.branch_tag }}
+
+        gcp_project_id=${{ needs.configuration.outputs.gcp_project_id }}
+        gcp_region=${{ needs.configuration.outputs.cloud_region }}
+        azure_region=${{ needs.configuration.outputs.cloud_region }}
   summary:
     name: 📝 Ops Summary
     needs: [configuration, kill-workflows, state-operations, manage-environment, manage-environment-gcp, destroy-resources, sync-cloudflare-config, nuke-stop-services-gcp, nuke-destroy-network, nuke-destroy-pages, nuke-destroy-data-aws, nuke-cleanup-dns]
