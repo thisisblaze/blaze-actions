@@ -70,8 +70,6 @@ jobs:
     name: Calculate Config
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
-    environment: ${{ inputs.environment }}
     outputs:
       stage_key: ${{ steps.config.outputs.stage_key }}
       bucket: ${{ steps.config.outputs.bucket }}
