@@ -936,10 +936,7 @@ jobs:
 
   summary:
     name: 📝 Deployment Summary
-    needs: [configuration, deploy-api, deploy-api-gcp, deploy-api-azure, 
-          deploy-frontend, deploy-frontend-gcp, deploy-frontend-azure, 
-          deploy-admin-ecs, deploy-admin-gcp, deploy-admin-azure, 
-          deploy-admin-pages, deploy-admin-aws, deploy-sites-multi-site-gcp]
+    needs: [configuration, deploy-api-gcp, deploy-frontend-gcp, deploy-admin-gcp, deploy-sites-multi-site-gcp]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
