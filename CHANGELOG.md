@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-03-04
+
+### Changed
+
+- **Monolith Decomposition (Phase 1-4)**: Split `02-deploy-app.yml` into `deploy-aws-site.yml`, `deploy-gcp-site.yml`, and `deploy-azure-site.yml`.
+- **Ops Utility Decomposition**: Split `99-ops-utility.yml` into explicit domain workflows (`reusable-terraform-operations.yml`, `reusable-cleanup-utilities.yml`, `reusable-security-operations.yml`, `reusable-data-operations.yml`).
+- **Stress Test Orchestration**: Refactored `stress-test.yml` into a reusable router calling `stress-test-aws.yml`, `stress-test-gcp.yml`, and `stress-test-azure.yml`.
+- fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
+
 ## [Unreleased] - 2026-03-03
 
 ### Changed
