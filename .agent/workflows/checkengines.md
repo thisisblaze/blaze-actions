@@ -2,8 +2,6 @@
 description: 🔧 Check engines — run a full diagnostic sweep across all 3 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
 ---
 
-
-
 # Check Engines — Full Diagnostic Sweep
 
 Run this mid-session or weekly. It scans all 3 repos, flags issues, and tells you which workflow to run to fix them.
@@ -184,10 +182,10 @@ For each pair:
 2. **Cross-reference**: Read `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` and check if all workflows are mentioned.
 
 3. **Orphan detection**:
-   - Flag any workflow `.md` that references a GitHub Actions file (`.github/workflows/*.yml`) that does NOT exist.
+   - Flag any workflow `.md` that references a GitHub Actions file (`.github/workflows/*.yml`) that does NOT exist (ignore placeholders with `<` or `*`).
    - Flag any workflow with a `description:` frontmatter that is empty or missing.
 
-4. **Turbo safety**: Flag any workflow with `// turbo` on a step that contains `destroy`, `delete`, `rm -rf`, `git push`, or `terraform apply`.
+4. **Turbo safety**: Flag any workflow with `// turbo` where the immediately following code block contains `destroy`, `delete`, `rm -rf`, `git push`, or `terraform apply`.
 
 **If orphans or safety issues found → Recommend: `/11-maintain-prompts-ai`**
 
