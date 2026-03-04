@@ -151,7 +151,7 @@ on:
         value: ${{ jobs.terraform.outputs.image_resize_enabled }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: tf-util-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
