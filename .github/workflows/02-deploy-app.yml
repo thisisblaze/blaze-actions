@@ -331,16 +331,20 @@ jobs:
             CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
             TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
             SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
-            echo "AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
-            echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+            {
+              echo "AZURE_CLIENT_ID=$CLIENT_ID"
+              echo "AZURE_TENANT_ID=$TENANT_ID"
+              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
+            } >> "$GITHUB_ENV"
             echo "::add-mask::$CLIENT_ID"
             echo "::add-mask::$TENANT_ID"
             echo "::add-mask::$SUBSCRIPTION_ID"
           else
-            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+            {
+              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            } >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Azure
@@ -451,16 +455,20 @@ jobs:
             CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
             TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
             SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
-            echo "AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
-            echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
+            {
+              echo "AZURE_CLIENT_ID=$CLIENT_ID"
+              echo "AZURE_TENANT_ID=$TENANT_ID"
+              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
+            } >> "$GITHUB_ENV"
             echo "::add-mask::$CLIENT_ID"
             echo "::add-mask::$TENANT_ID"
             echo "::add-mask::$SUBSCRIPTION_ID"
           else
-            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+            {
+              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            } >> "$GITHUB_ENV"
           fi
 
       - name: Authenticate to Azure (Pre-Flight)
