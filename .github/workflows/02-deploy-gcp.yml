@@ -968,21 +968,13 @@ jobs:
               if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
             }
 
-            # AWS services
-            echo "| **API (ECS)** | $(get_icon "${{ needs.deploy-api.result }}") | ECS Fargate |"
-            echo "| **Frontend (ECS)** | $(get_icon "${{ needs.deploy-frontend.result }}") | ECS Fargate |"
-            echo "| **Admin (ECS)** | $(get_icon "${{ needs.deploy-admin-ecs.result }}") | ECS Fargate |"
-            echo "| **Admin (AWS S3)** | $(get_icon "${{ needs.deploy-admin-aws.result }}") | S3 + CloudFront |"
-            echo "| **Admin (Pages)** | $(get_icon "${{ needs.deploy-admin-pages.result }}") | Cloudflare Pages |"
+
             # GCP services
             echo "| **API (Cloud Run)** | $(get_icon "${{ needs.deploy-api-gcp.result }}") | Cloud Run |"
             echo "| **Frontend (Cloud Run)** | $(get_icon "${{ needs.deploy-frontend-gcp.result }}") | Cloud Run |"
             echo "| **Admin (Cloud Run)** | $(get_icon "${{ needs.deploy-admin-gcp.result }}") | Cloud Run |"
             echo "| **Multi-Site Fleet (GCP)** | $(get_icon "${{ needs.deploy-sites-multi-site-gcp.result }}") | Cloud Run Fleet |"
-            # Azure services
-            echo "| **API (Azure)** | $(get_icon "${{ needs.deploy-api-azure.result }}") | Container App |"
-            echo "| **Frontend (Azure)** | $(get_icon "${{ needs.deploy-frontend-azure.result }}") | Container App |"
-            echo "| **Admin (Azure)** | $(get_icon "${{ needs.deploy-admin-azure.result }}") | Container App |"
+
 
             echo ""
             echo "## 🔗 Quick Links"
