@@ -330,10 +330,7 @@ jobs:
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
       environment: ${{ inputs.environment }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
@@ -568,7 +565,7 @@ jobs:
   # 5. DEPLOY & VERIFY
   # --------------------------------------------------------------------------------
   deploy-app:
-    if: always() && inputs.mode != 'destroy-only' && needs.provision-app.result == 'success'
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider != 'azure' && needs.provision-app.result == 'success'
     needs:
       - provision-app
       - provision-third-party-mongodb
@@ -593,7 +590,6 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # Pass granular secrets required for app deployment
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
@@ -606,10 +602,56 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
+  deploy-api-azure:
+    name: "🚀 Deploy API (Azure)"
+    needs: [config, provision-app, provision-third-party-mongodb, provision-third-party-elastic]
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure' && needs.provision-app.result == 'success'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "api"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_tag }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
+      target_port: 3000
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets: inherit
+
+  deploy-frontend-azure:
+    name: "🚀 Deploy Frontend (Azure)"
+    needs: [config, provision-app, provision-third-party-mongodb, provision-third-party-elastic]
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure' && needs.provision-app.result == 'success'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "frontend"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_tag }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
+      target_port: 3000
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets: inherit
+
   # Aggregator job to signal deployment completion (needed because deploy-app is a reusable workflow)
   deployment-complete:
-    if: always() && inputs.mode != 'destroy-only'
-    needs: deploy-app
+    if: always() && inputs.mode != 'destroy-only' && (needs.deploy-app.result == 'success' || (needs.deploy-api-azure.result == 'success' && needs.deploy-frontend-azure.result == 'success'))
+    needs: [deploy-app, deploy-api-azure, deploy-frontend-azure]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -621,9 +663,7 @@ jobs:
     needs:
       - config
       - deployment-complete
-      - verify-aws
-      - verify-gcp
-      - verify-azure
+      - verify
     name: "📋 Deployment Summary"
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -777,10 +817,7 @@ jobs:
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
       environment: ${{ inputs.environment }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
@@ -904,3 +941,11 @@ jobs:
       branch_tag: ${{ inputs.branch_tag }}
       domain_root: ${{ needs.config.outputs.domain_root }}
     secrets: inherit
+
+  verify:
+    name: "⚡ Verify (Aggregator)"
+    if: always() && inputs.mode != 'destroy-only' && (needs.verify-aws.result == 'success' || needs.verify-gcp.result == 'success' || needs.verify-azure.result == 'success')
+    needs: [verify-aws, verify-gcp, verify-azure]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "✅ Verification phase completed successfully"
