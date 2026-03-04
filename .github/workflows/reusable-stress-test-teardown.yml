@@ -139,13 +139,41 @@ jobs:
   config:
     name: "⚙️ Config"
     needs: setup
-    uses: ./.github/workflows/reusable-calculate-config.yml
-    with:
-      environment: ${{ inputs.environment }}
-      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
-      branch_tag: ${{ needs.setup.outputs.branch_tag }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      stage_key: ${{ steps.calc.outputs.stage_key }}
+      bucket: ${{ steps.calc.outputs.bucket }}
+      lock_table: ${{ steps.calc.outputs.lock_table }}
+      state_key: ${{ steps.calc.outputs.state_key }}
+      tf_dir: ${{ steps.calc.outputs.tf_dir }}
+      cluster_name: ${{ steps.calc.outputs.cluster_name }}
+      env_val: ${{ steps.calc.outputs.env_val }}
+      aws_region: ${{ steps.calc.outputs.aws_region }}
+      client_key: ${{ steps.calc.outputs.client_key }}
+      project_key: ${{ steps.calc.outputs.project_key }}
+      namespace: ${{ steps.calc.outputs.namespace }}
+      platform: ${{ steps.calc.outputs.platform }}
+      cloud_provider: ${{ steps.calc.outputs.cloud_provider }}
+      cloud_region: ${{ steps.calc.outputs.cloud_region }}
+      infra_prefix: ${{ steps.calc.outputs.infra_prefix }}
+      gcp_project_id: ${{ steps.calc.outputs.gcp_project_id }}
+      domain_root: ${{ steps.calc.outputs.domain_root }}
+      allowed_infra_users: ${{ steps.calc.outputs.allowed_infra_users }}
+      gcp_docker_repo: ${{ steps.calc.outputs.gcp_docker_repo }}
+      azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Calculate Configuration
+        id: calc
+        uses: ./.github/actions/calculate-env-config
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+          branch_tag: ${{ needs.setup.outputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
 
   # --------------------------------------------------------------------------------
   # 1.5 PRODUCTION SAFETY CHECK
@@ -173,83 +201,83 @@ jobs:
   # --------------------------------------------------------------------------------
   # 1.6 PRE-FLIGHT CHECKS (Verify What Exists)
   # --------------------------------------------------------------------------------
-  check-app-exists:
-    name: "🔍 Check App State"
+  check-states:
+    name: "🔍 Check Stack States"
     needs: config
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/check-stack-exists.yml
-    with:
-      environment: ${{ inputs.environment }}
-      bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
-      aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      app_exists: ${{ steps.check-app.outputs.exists }}
+      tunnel_exists: ${{ steps.check-tunnel.outputs.exists }}
+      network_exists: ${{ steps.check-network.outputs.exists }}
+      mongodb_exists: ${{ steps.check-mongodb.outputs.exists }}
+      elastic_exists: ${{ steps.check-elastic.outputs.exists }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Check App State
+        id: check-app
+        uses: ./.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  check-tunnel-exists:
-    name: "🔍 Check Tunnel State"
-    needs: config
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/check-stack-exists.yml
-    with:
-      environment: ${{ inputs.environment }}
-      bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
-      aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      - name: Check Tunnel State
+        id: check-tunnel
+        uses: ./.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  check-network-exists:
-    if: inputs.target_type == 'host'
-    name: "🔍 Check Network State"
-    needs: config
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/check-stack-exists.yml
-    with:
-      environment: ${{ inputs.environment }}
-      bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
-      aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      - name: Check Network State
+        if: inputs.target_type == 'host'
+        id: check-network
+        uses: ./.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  check-mongodb-exists:
-    if: inputs.include_third_party && inputs.target_type == 'host'
-    name: "🔍 Check MongoDB State"
-    needs: config
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/check-stack-exists.yml
-    with:
-      environment: ${{ inputs.environment }}
-      bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
-      aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      - name: Check MongoDB State
+        if: inputs.include_third_party && inputs.target_type == 'host'
+        id: check-mongodb
+        uses: ./.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  check-elastic-exists:
-    if: inputs.include_third_party && inputs.target_type == 'host'
-    name: "🔍 Check Elastic State"
-    needs: config
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/check-stack-exists.yml
-    with:
-      environment: ${{ inputs.environment }}
-      bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
-      aws_region: ${{ needs.config.outputs.aws_region }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      - name: Check Elastic State
+        if: inputs.include_third_party && inputs.target_type == 'host'
+        id: check-elastic
+        uses: ./.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   # --------------------------------------------------------------------------------
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
@@ -259,7 +287,7 @@ jobs:
     needs:
       - config
       - prod-safety-check
-      - check-app-exists
+      - check-states
     uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
     with:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
@@ -274,10 +302,10 @@ jobs:
   # 3. TEARDOWN (Infrastructure)
   # --------------------------------------------------------------------------------
   destroy-app:
-    if: ${{ inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.mode != 'quick-test' && needs.check-states.outputs.app_exists == 'true' }}
     name: "🧨 Destroy App"
 
-    needs: [config, cleanup-services, check-app-exists]
+    needs: [config, cleanup-services, check-states]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
@@ -303,9 +331,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   destroy-third-party-mongodb:
-    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.mongodb_exists == 'true' }}
     name: "🧨 Destroy MongoDB"
-    needs: [config, destroy-app, check-mongodb-exists]
+    needs: [config, destroy-app, check-states]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
@@ -327,9 +355,9 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
   destroy-third-party-elastic:
-    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.elastic_exists == 'true' }}
     name: "🧨 Destroy Elastic"
-    needs: [config, destroy-app, check-elastic-exists]
+    needs: [config, destroy-app, check-states]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
@@ -352,10 +380,10 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
-    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-states.outputs.tunnel_exists == 'true' }}
     name: "🧨 Destroy Tunnel"
 
-    needs: [config, destroy-app, check-tunnel-exists]
+    needs: [config, destroy-app, check-states]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"
@@ -378,10 +406,10 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
-    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
+    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' }}
     name: "🧨 Destroy Network"
 
-    needs: [config, destroy-tunnel, check-network-exists]
+    needs: [config, destroy-tunnel, check-states]
     uses: ./.github/workflows/reusable-terraform-operations.yml
     with:
       action: "destroy"

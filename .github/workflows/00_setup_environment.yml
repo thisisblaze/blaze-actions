@@ -129,10 +129,26 @@ concurrency:
 jobs:
   calculate-config:
     name: Calculate Configuration
-    uses: ./.github/workflows/reusable-calculate-config.yml
-    with:
-      environment: ${{ inputs.environment }}
-      terraform_stack: network # Use network stack to get base config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      aws_region: ${{ steps.calc.outputs.aws_region }}
+      client_key: ${{ steps.calc.outputs.client_key }}
+      project_key: ${{ steps.calc.outputs.project_key }}
+      namespace: ${{ steps.calc.outputs.namespace }}
+      stage_key: ${{ steps.calc.outputs.stage_key }}
+      platform: ${{ steps.calc.outputs.platform }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Calculate Configuration
+        id: calc
+        uses: ./.github/actions/calculate-env-config
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: network
+          cloud_provider: ${{ inputs.cloud_provider }}
 
   # -----------------------------------------------------------------------------------------
   # JOB 1: INIT BACKEND (S3 & DYNAMODB)
