@@ -112,7 +112,7 @@ on:
         type: string
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
       GH_PAT:
         required: false
       NPM_TOKEN:
