@@ -2,7 +2,7 @@
 description: 🖖 All stop — end-of-day governance sync across all 3 repos
 ---
 
-// turbo-all
+
 
 # End-of-Day Governance Sync
 
@@ -97,7 +97,7 @@ This is a mechanical diff — execute the commands, compare output to report tab
 
 #### A. Detect Changed Infra Files Today
 
-// turbo
+
 
 ```bash
 cd /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
@@ -108,7 +108,7 @@ If **any** `live/*/main.tf` appears in this output, the report table rows for th
 
 #### B. Mechanical Variable Check (run always — fast greps)
 
-// turbo
+
 
 ```bash
 # WAF: dev must be false, stage/prod must be true

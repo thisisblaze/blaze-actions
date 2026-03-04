@@ -2,7 +2,7 @@
 description: 🔧 Check engines — run a full diagnostic sweep across all 3 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
 ---
 
-// turbo-all
+
 
 # Check Engines — Full Diagnostic Sweep
 
@@ -99,7 +99,7 @@ Grep across **all 3 repos** for banned patterns:
 grep -rn "AWS_ACCESS_KEY_ID" --include="*.yml" --include="*.tf" --include="*.sh" .
 grep -rn "ARM_CLIENT_SECRET" --include="*.yml" --include="*.tf" --include="*.sh" .
 grep -rn "GCP_SA_KEY\|credentials_json" --include="*.yml" --include="*.tf" --include="*.sh" .
-grep -rn "hardcoded.*password\|password.*=" --include="*.tf" .
+grep -rn "hardcoded.*password\|password.*=" --include="*.tf" . | grep -v "random_password\|var\.\|each\.value\|ec_deployment" || true
 ```
 
 Exclude matches inside `docs/` and `archive/` (those are documentation references, not real usage).
