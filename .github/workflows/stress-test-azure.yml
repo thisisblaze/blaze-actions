@@ -172,9 +172,16 @@ jobs:
           echo "| **Branch Name** | \`${{ inputs.branch_name || '(none)' }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Target Identity** | \`$TARGET_TAG\` |" >> $GITHUB_STEP_SUMMARY
 
+  ping-config:
+    name: ⚙️ Ping Config
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_provider: "azure"
+
   config:
-    name: ⚙️ Config
-    needs: [setup]
+    name: "⚙️ Config"
+    needs: setup
     uses: ./.github/workflows/reusable-calculate-config.yml
     with:
       environment: ${{ inputs.environment }}
