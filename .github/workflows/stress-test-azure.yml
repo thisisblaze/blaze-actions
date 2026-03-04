@@ -174,9 +174,7 @@ jobs:
 
   ping-config:
     name: ⚙️ Ping Config
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Alive"
+    uses: ./.github/workflows/reusable-noop.yml
 
   config:
     name: "⚙️ Config"
