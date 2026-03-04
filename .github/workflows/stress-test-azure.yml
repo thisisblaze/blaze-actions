@@ -127,8 +127,6 @@ jobs:
     uses: ./.github/workflows/reusable-stress-test.yml
     with:
       environment: ${{ inputs.environment }}
-      target_type: ${{ inputs.target_type }}
-      branch_tag: ${{ inputs.branch_tag }}
       mode: ${{ inputs.mode }}
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
