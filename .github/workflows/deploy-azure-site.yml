@@ -1,0 +1,142 @@
+name: "Deploy Site (Azure Multi-Site)"
+# ─────────────────────────────────────────────────────────────────────────────
+# REUSABLE WORKFLOW — called by blaze-template-deploy or any site CI pipeline
+# Handles: Docker build → ACR push → Azure Container App update → traffic shift
+# Wraps reusable-docker-build.yml and reusable-azure-multi-site-deploy.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      # ── Site Identity ───────────────────────────────────────────────────────
+      site_key:
+        required: true
+        type: string
+        description: "Unique site slug (e.g. 'site-001', 'acme-main')"
+
+      environment:
+        required: true
+        type: string
+        description: "GitHub Environment name (DEV / STAGE / PROD)"
+
+      # ── Image Build ─────────────────────────────────────────────────────────
+      image_tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+        description: "Docker image tag to deploy. Defaults to git SHA."
+
+      dockerfile:
+        required: false
+        type: string
+        default: "Dockerfile"
+
+      context:
+        required: false
+        type: string
+        default: "."
+
+      build_args:
+        required: false
+        type: string
+        default: ""
+
+      platforms:
+        required: false
+        type: string
+        default: "linux/amd64" # Standard for Container Apps
+
+      # ── Azure Identity / Settings ───────────────────────────────────────────
+      azure_registry_server:
+        required: true
+        type: string
+        description: "ACR Login server (e.g. blaze.azurecr.io)"
+
+      image_repository:
+        required: false
+        type: string
+        default: "sites"
+        description: "ACR repository path prefix"
+
+      container_app_name:
+        required: true
+        type: string
+        description: "Container App resource name"
+
+      resource_group_name:
+        required: true
+        type: string
+        description: "Resource Group containing the Container App"
+
+      azure_region:
+        required: false
+        type: string
+        default: "westeurope"
+
+      # ── Deploy Strategy ─────────────────────────────────────────────────────
+      multi_revision:
+        required: false
+        type: boolean
+        default: false
+        description: "true = Blue/Green staged shift. false = 100% immediately."
+
+      shift_strategy:
+        required: false
+        type: string
+        default: "10-50-100"
+
+      target_port:
+        required: false
+        type: number
+        default: 3000
+
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      NPM_TOKEN:
+        required: false
+
+jobs:
+  build:
+    name: "🔨 Build [${{ inputs.site_key }}]"
+    uses: ./.github/workflows/reusable-docker-build.yml
+    with:
+      cloud_provider: "azure"
+      image_name: "${{ inputs.azure_registry_server }}/${{ inputs.image_repository }}/${{ inputs.site_key }}"
+      image_tag: ${{ inputs.image_tag }}
+      dockerfile: ${{ inputs.dockerfile }}
+      context: ${{ inputs.context }}
+      build_args: ${{ inputs.build_args }}
+      platforms: ${{ inputs.platforms }}
+      azure_registry_server: ${{ inputs.azure_registry_server }}
+      environment: ${{ inputs.environment }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  deploy:
+    name: "🚀 Deploy [${{ inputs.site_key }}]"
+    needs: [build]
+    uses: ./.github/workflows/reusable-azure-multi-site-deploy.yml
+    with:
+      site_key: ${{ inputs.site_key }}
+      container_app_name: ${{ inputs.container_app_name }}
+      resource_group_name: ${{ inputs.resource_group_name }}
+      image_tag: ${{ inputs.image_tag }}
+      azure_registry_server: ${{ inputs.azure_registry_server }}
+      image_repository: ${{ inputs.image_repository }}/${{ inputs.site_key }}
+      multi_revision: ${{ inputs.multi_revision }}
+      shift_strategy: ${{ inputs.shift_strategy }}
+      target_port: ${{ inputs.target_port }}
+      environment: ${{ inputs.environment }}
+      azure_region: ${{ inputs.azure_region }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
