@@ -507,28 +507,64 @@ jobs:
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
 
   # ── DEPLOYMENT ──────────────────────────────────────────────────────────
-  deploy-frontend:
-    name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
+  deploy-api:
+    name: 🚢 Deploy API ${{ needs.setup.outputs.target_tag }}
     needs: [setup, config, provision-app]
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-app.result == 'success'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
     with:
+      service_name: "api"
+      image_tag: "latest"
       environment: ${{ inputs.environment }}
       branch_name: ${{ needs.setup.outputs.target_tag }}
-      cloud_provider: "azure"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.project_key }}acr.azurecr.io"
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-frontend:
+    name: 🚢 Deploy Frontend ${{ needs.setup.outputs.target_tag }}
+    needs: [setup, config, provision-app, deploy-api]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && needs.provision-app.result == 'success'
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    with:
+      service_name: "frontend"
+      image_tag: "latest"
+      environment: ${{ inputs.environment }}
+      branch_name: ${{ needs.setup.outputs.target_tag }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      azure_registry_server: "${{ needs.config.outputs.namespace }}${{ needs.config.outputs.project_key }}acr.azurecr.io"
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
@@ -551,7 +587,26 @@ jobs:
       - name: Verify Endpoints
         run: |
           echo "🔍 Verifying Azure endpoints..."
-          # Verification logic here
+          
+          # 1. API Health Check
+          API_URL="https://api-azure-${{ inputs.environment }}.${{ needs.config.outputs.domain_root }}/health"
+          echo "Checking API: $API_URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ API check failed! HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ API healthy (HTTP 200)"
+          
+          # 2. Frontend Check
+          FRONTEND_URL="https://frontend-azure-${{ inputs.environment }}.${{ needs.config.outputs.domain_root }}/"
+          echo "Checking Frontend: $FRONTEND_URL"
+          HTTP_STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Frontend check failed! HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Frontend healthy (HTTP 200)"
 
   # ── FINAL TEARDOWN (Full-Circle Only) ───────────────────────────────────
   final-destroy-app:
