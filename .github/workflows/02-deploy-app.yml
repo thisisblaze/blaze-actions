@@ -1019,25 +1019,6 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-  deploy-sites-multi-site-azure:
-    name: "🌐 Deploy Multi-Site Fleet (Azure)"
-    needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'MULTI-SITE' && (inputs.deploy_services == true || inputs.deploy_services == null) }}
-    strategy:
-      matrix:
-        site_key: ["site-001"] # Test 1 site only
-    uses: ./.github/workflows/reusable-azure-multi-site-deploy.yml
-    with:
-      site_key: ${{ matrix.site_key }}
-      container_app_name: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.stage_key }}-${{ matrix.site_key }}"
-      resource_group_name: "${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-rg"
-      image_tag: ${{ github.sha }}
-      azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
-      environment: "MULTI-SITE"
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-admin-pages:
     name: Deploy Admin (Pages)
@@ -1176,8 +1157,7 @@ jobs:
         deploy-admin-azure,
         deploy-admin-pages,
         deploy-admin-aws,
-        deploy-sites-multi-site-gcp,
-        deploy-sites-multi-site-azure
+        deploy-sites-multi-site-gcp
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -1225,7 +1205,6 @@ jobs:
             echo "| **API (Azure)** | $(get_icon "${{ needs.deploy-api-azure.result }}") | Container App |"
             echo "| **Frontend (Azure)** | $(get_icon "${{ needs.deploy-frontend-azure.result }}") | Container App |"
             echo "| **Admin (Azure)** | $(get_icon "${{ needs.deploy-admin-azure.result }}") | Container App |"
-            echo "| **Multi-Site Fleet (Azure)** | $(get_icon "${{ needs.deploy-sites-multi-site-azure.result }}") | Container Apps Fleet |"
 
             echo ""
             echo "## 🔗 Quick Links"
