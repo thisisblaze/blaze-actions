@@ -1,0 +1,232 @@
+name: "🚀 Phase 3: Deploy"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+        
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+        
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG
+  # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+  config:
+    name: "⚙️ Config"
+    needs: setup
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 5. DEPLOY
+  # --------------------------------------------------------------------------------
+  deploy-app:
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider != 'azure'
+    needs: [config]
+    name: "🚀 Deploy App"
+    uses: ./.github/workflows/02-deploy-app.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_services: "Blaze all"
+      # Hybrid ECS: Prod uses EC2/ARM64, Dev/Stage use FARGATE/X86_64
+      api_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      api_cpu_architecture: ${{ contains(inputs.environment, 'prod') && 'ARM64' || 'X86_64' }}
+      frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
+      skip_stability_wait: "${{ 'true' }}"
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+      BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+      BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+      BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+      BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+      BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+      BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+
+  deploy-api-azure:
+    name: "🚀 Deploy API (Azure)"
+    needs: [config]
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "api"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_tag }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
+      target_port: 3000
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets: inherit
+
+  deploy-frontend-azure:
+    name: "🚀 Deploy Frontend (Azure)"
+    needs: [config]
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
+    uses: ./.github/workflows/reusable-container-app-deploy.yml
+    with:
+      service_name: "frontend"
+      environment: ${{ inputs.environment }}
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      branch_name: ${{ inputs.branch_tag }}
+      image_tag: ${{ github.sha }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
+      target_port: 3000
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets: inherit
