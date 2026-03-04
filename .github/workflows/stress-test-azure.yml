@@ -179,7 +179,7 @@ jobs:
   config:
     name: "⚙️ Config"
     needs: setup
-    uses: ./.github/workflows/reusable-calculate-config.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@dev
     with:
       environment: ${{ inputs.environment }}
     secrets: inherit
