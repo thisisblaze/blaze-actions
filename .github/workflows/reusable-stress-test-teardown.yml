@@ -1,0 +1,404 @@
+name: "🌪️ Phase 1: Teardown"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+        
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+        
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG
+  # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+  config:
+    name: "⚙️ Config"
+    needs: setup
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 1.5 PRODUCTION SAFETY CHECK
+  # --------------------------------------------------------------------------------
+  prod-safety-check:
+    if: inputs.environment == 'prod'
+    name: "⚠️ Production Safety Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: prod-stress-test-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Manual Approval Required
+        run: |
+          echo "🚨 PRODUCTION STRESS TEST"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Target: ${{ inputs.target_type }}"
+          echo "Mode: ${{ inputs.mode }}"
+          echo "Include Third-Party: ${{ inputs.include_third_party }}"
+          echo ""
+          echo "This will DESTROY and RECREATE production infrastructure."
+          echo "Ensure all pre-flight checks are complete before approving."
+
+  # --------------------------------------------------------------------------------
+  # 1.6 PRE-FLIGHT CHECKS (Verify What Exists)
+  # --------------------------------------------------------------------------------
+  check-app-exists:
+    name: "🔍 Check App State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-tunnel-exists:
+    name: "🔍 Check Tunnel State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-network-exists:
+    if: inputs.target_type == 'host'
+    name: "🔍 Check Network State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-mongodb-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check MongoDB State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  check-elastic-exists:
+    if: inputs.include_third_party && inputs.target_type == 'host'
+    name: "🔍 Check Elastic State"
+    needs: config
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/check-stack-exists.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
+  # --------------------------------------------------------------------------------
+  cleanup-services:
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') }}
+    needs:
+      - config
+      - prod-safety-check
+      - check-app-exists
+    uses: ./.github/workflows/reusable-pre-destroy-cleanup.yml
+    with:
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      force_delete: true
+      environment: ${{ inputs.environment }}
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 3. TEARDOWN (Infrastructure)
+  # --------------------------------------------------------------------------------
+  destroy-app:
+    if: ${{ inputs.mode != 'quick-test' && needs.check-app-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy App"
+
+    needs: [config, cleanup-services, check-app-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  destroy-third-party-mongodb:
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-mongodb-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy MongoDB"
+    needs: [config, destroy-app, check-mongodb-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  destroy-third-party-elastic:
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-elastic-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Elastic"
+    needs: [config, destroy-app, check-elastic-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  destroy-tunnel:
+    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-tunnel-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Tunnel"
+
+    needs: [config, destroy-app, check-tunnel-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  destroy-network:
+    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-network-exists.outputs.exists == 'true' }}
+    name: "🧨 Destroy Network"
+
+    needs: [config, destroy-tunnel, check-network-exists]
+    uses: ./.github/workflows/reusable-terraform-operations.yml
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-network"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}

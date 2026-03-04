@@ -1,0 +1,232 @@
+name: "🏗️ Phase 2: Provision"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+        
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+        
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG (Required for each phase orchestrator)
+  # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+  config:
+    name: "⚙️ Config"
+    needs: setup
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 4. PROVISION (Rebuild)
+  # --------------------------------------------------------------------------------
+  provision-network:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host'
+    needs: [config]
+    name: "🏗️ Provision Network"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "network"
+      apply: true
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-tunnel:
+    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
+    needs: [config, provision-network]
+    name: "🏗️ Provision Tunnel"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "tunnel"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-app:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped') && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped')
+    needs: [config, provision-network, provision-tunnel]
+    name: "🏗️ Provision App"
+
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "app"
+      apply: true
+      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
+      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      api_launch_type: ${{ inputs.environment == 'dev-mini' && 'EC2' || 'FARGATE' }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  provision-third-party-mongodb:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
+    needs: [config, provision-app]
+    name: "🏛️ Provision MongoDB"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-mongodb"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  provision-third-party-elastic:
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
+    needs: [config, provision-app]
+    name: "🏛️ Provision Elastic"
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: ${{ inputs.environment }}
+      stack: "third-party-elastic"
+      apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}

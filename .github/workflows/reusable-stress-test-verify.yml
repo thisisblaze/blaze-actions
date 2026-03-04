@@ -1,0 +1,250 @@
+name: "✅ Phase 4: Verify"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        default: "standard"
+        type: string
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+        
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+        
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  # --------------------------------------------------------------------------------
+  # 1. SETUP & CONFIG
+  # --------------------------------------------------------------------------------
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      terraform_stack: ${{ steps.calc.outputs.stack }}
+      branch_tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - id: calc
+        run: |
+          if [[ "${{ inputs.target_type }}" == "feature-branch" ]]; then
+            echo "stack=app" >> $GITHUB_OUTPUT
+            echo "tag=${{ inputs.branch_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "stack=network" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+  config:
+    name: "⚙️ Config"
+    needs: setup
+    uses: ./.github/workflows/reusable-calculate-config.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
+      branch_tag: ${{ needs.setup.outputs.branch_tag }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  # --------------------------------------------------------------------------------
+  # 6. VERIFY
+  # --------------------------------------------------------------------------------
+  verify-aws:
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'aws'
+    needs: [config]
+    name: "✅ Verify Environment (AWS)"
+    uses: ./.github/workflows/reusable-verify-aws.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cluster_name: ${{ needs.config.outputs.cluster_name }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+
+  verify-gcp:
+    name: "✅ Verify Environment (GCP)"
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'gcp'
+    needs: [config]
+    uses: ./.github/workflows/reusable-verify-gcp.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_project_id: ${{ needs.config.outputs.gcp_project_id }}
+      cloud_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      target_type: ${{ inputs.target_type }}
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+  verify-azure:
+    name: "✅ Verify Environment (Azure)"
+    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
+    needs: [config]
+    uses: ./.github/workflows/reusable-verify-azure.yml
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_region: ${{ needs.config.outputs.cloud_region }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      target_type: ${{ inputs.target_type }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+    secrets: inherit
+
+  verify:
+    if: always() && inputs.mode != 'destroy-only'
+    needs: [verify-aws, verify-gcp, verify-azure]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Combine Verification Results
+        run: |
+          # The specific cloud verification job will run (others skipped)
+          # We just need one of them to succeed, based on cloud_provider
+          CLOUD="${{ inputs.cloud_provider }}"
+          
+          AWS_RES="${{ needs.verify-aws.result }}"
+          GCP_RES="${{ needs.verify-gcp.result }}"
+          AZR_RES="${{ needs.verify-azure.result }}"
+          
+          echo "AWS Result: $AWS_RES"
+          echo "GCP Result: $GCP_RES"
+          echo "Azure Result: $AZR_RES"
+          
+          if [ "$CLOUD" == "aws" ] && [ "$AWS_RES" == "success" ]; then
+            echo "✅ Verification Succeeded"
+            exit 0
+          elif [ "$CLOUD" == "gcp" ] && [ "$GCP_RES" == "success" ]; then
+            echo "✅ Verification Succeeded"
+            exit 0
+          elif [ "$CLOUD" == "azure" ] && [ "$AZR_RES" == "success" ]; then
+            echo "✅ Verification Succeeded"
+            exit 0
+          fi
+          
+          echo "❌ Verification Failed"
+          exit 1
+
+  deployment-summary:
+    if: always() && inputs.mode != 'destroy-only'
+    needs: [config, verify]
+    name: "📋 Deployment Summary"
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Generate Minimal Summary
+        run: |
+          {
+            echo "# ✅ Stress Test - Complete!"
+            echo ""
+            echo "**Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "**Status**: ${{ needs.verify.result == 'success' && '✅ SUCCESS' || '❌ FAILED' }}"
+          } >> "$GITHUB_STEP_SUMMARY"

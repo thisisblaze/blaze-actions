@@ -229,11 +229,62 @@ concurrency:
 
 jobs:
   # --------------------------------------------------------------------------------
-  # 1. SETUP & CONFIG
+  # PHASE 1: TEARDOWN
   # --------------------------------------------------------------------------------
-  stress-test-gcp:
-    name: 🧪 Stress Test (GCP)
-    uses: ./.github/workflows/reusable-stress-test.yml
+  phase-1-teardown:
+    name: 🌪️ Teardown (GCP)
+    uses: ./.github/workflows/reusable-stress-test-teardown.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      mode: ${{ inputs.mode }}
+      include_third_party: ${{ inputs.include_third_party }}
+      preserve_host: ${{ inputs.preserve_host }}
+      cloud_provider: gcp
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # PHASE 2: PROVISION
+  # --------------------------------------------------------------------------------
+  phase-2-provision:
+    name: 🏗️ Provision (GCP)
+    needs: [phase-1-teardown]
+    uses: ./.github/workflows/reusable-stress-test-provision.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      mode: ${{ inputs.mode }}
+      include_third_party: ${{ inputs.include_third_party }}
+      preserve_host: ${{ inputs.preserve_host }}
+      cloud_provider: gcp
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # PHASE 3: DEPLOY
+  # --------------------------------------------------------------------------------
+  phase-3-deploy:
+    name: 🚀 Deploy (GCP)
+    needs: [phase-2-provision]
+    uses: ./.github/workflows/reusable-stress-test-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
+      mode: ${{ inputs.mode }}
+      include_third_party: ${{ inputs.include_third_party }}
+      preserve_host: ${{ inputs.preserve_host }}
+      cloud_provider: gcp
+    secrets: inherit
+
+  # --------------------------------------------------------------------------------
+  # PHASE 4: VERIFY
+  # --------------------------------------------------------------------------------
+  phase-4-verify:
+    name: ✅ Verify (GCP)
+    needs: [phase-3-deploy]
+    uses: ./.github/workflows/reusable-stress-test-verify.yml
     with:
       environment: ${{ inputs.environment }}
       target_type: ${{ inputs.target_type }}
