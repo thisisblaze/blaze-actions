@@ -8,6 +8,12 @@ on:
         type: choice
         options: ["dev", "stage", "prod"]
         description: "Target environment (dev/stage/prod)"
+      target_type:
+        description: "What to test"
+        required: true
+        default: "host"
+        type: choice
+        options: ["host", "feature-branch"]
       mode:
         required: true
         type: choice
@@ -21,7 +27,8 @@ on:
         required: false
         type: boolean
         default: false
-      branch_name:
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
         required: false
         type: string
   workflow_call:
@@ -30,6 +37,11 @@ on:
         required: true
         type: string
         description: "Target environment (dev/stage/prod)"
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
       mode:
         required: true
         type: string
@@ -44,10 +56,10 @@ on:
         type: boolean
         default: false
         description: "Include third-party resources (MongoDB)"
-      branch_name:
+      branch_tag:
         required: false
         type: string
-        description: "Feature tag for isolated branch testing"
+        description: "Feature branch tag (required if target_type=feature-branch)"
       # Azure Auth Pass-through (Base64 encoded to bypass output masking)
       azure_client_id_rev:
         required: false
@@ -134,7 +146,7 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       target_type: ${{ inputs.target_type || 'host' }}
-      branch_tag: ${{ inputs.branch_name }}
+      branch_tag: ${{ inputs.branch_tag }}
       mode: ${{ inputs.mode }}
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
@@ -154,7 +166,7 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       target_type: ${{ inputs.target_type || 'host' }}
-      branch_tag: ${{ inputs.branch_name }}
+      branch_tag: ${{ inputs.branch_tag }}
       mode: ${{ inputs.mode }}
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
@@ -174,7 +186,7 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       target_type: ${{ inputs.target_type || 'host' }}
-      branch_tag: ${{ inputs.branch_name }}
+      branch_tag: ${{ inputs.branch_tag }}
       mode: ${{ inputs.mode }}
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
@@ -194,7 +206,7 @@ jobs:
     with:
       environment: ${{ inputs.environment }}
       target_type: ${{ inputs.target_type || 'host' }}
-      branch_tag: ${{ inputs.branch_name }}
+      branch_tag: ${{ inputs.branch_tag }}
       mode: ${{ inputs.mode }}
       include_third_party: ${{ inputs.include_third_party }}
       preserve_host: ${{ inputs.preserve_host }}
