@@ -86,14 +86,14 @@ runs:
       shell: bash
       run: |
         # Load CLIENT config (vars/blaze-env.json)
-        CLIENT_CONFIG="${GITHUB_WORKSPACE}/vars/blaze-env.json"
+        CLIENT_CONFIG="${{ github.workspace }}/vars/blaze-env.json"
         if ! test -f "$CLIENT_CONFIG"; then
           echo "❌ ERROR: Client config file $CLIENT_CONFIG not found!"
           exit 1
         fi
 
         # Load PROJECT config (vars/thisisblaze/blaze-env.json)
-        PROJECT_CONFIG="${GITHUB_WORKSPACE}/vars/thisisblaze/blaze-env.json"
+        PROJECT_CONFIG="${{ github.workspace }}/vars/thisisblaze/blaze-env.json"
         if ! test -f "$PROJECT_CONFIG"; then
           echo "❌ ERROR: Project config file $PROJECT_CONFIG not found!"
           exit 1
