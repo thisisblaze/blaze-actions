@@ -168,7 +168,7 @@ jobs:
 
       - name: Calculate Configuration
         id: calc
-        uses: ./.github/actions/calculate-env-config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@dev
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
