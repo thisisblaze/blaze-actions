@@ -72,6 +72,7 @@ jobs:
 
     steps:
       - name: Setup AWS CLI
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -116,7 +117,7 @@ jobs:
           fi
 
       - name: Cleanup S3 Buckets
-        if: env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -153,7 +154,7 @@ jobs:
           done
 
       - name: Cleanup ACM Certificates
-        if: env.PROJECT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
         run: |
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           REGION="${{ inputs.aws_region }}"
@@ -174,7 +175,7 @@ jobs:
            fi
 
       - name: Cleanup CloudWatch Logs
-        if: env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -221,7 +222,7 @@ jobs:
           delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1" || true
 
       - name: Cleanup Service Discovery
-        if: env.PROJECT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
         run: |
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
@@ -266,7 +267,7 @@ jobs:
           fi
 
       - name: Cleanup Zombie Resources (OAC/IAM)
-        if: env.PROJECT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -392,7 +393,7 @@ jobs:
           done
 
       - name: Cleanup Lambda@Edge
-        if: env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -418,7 +419,7 @@ jobs:
           fi
 
       - name: Cleanup CodeDeploy Apps
-        if: env.STAGE_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.STAGE_KEY != ''
         run: |
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
@@ -438,7 +439,7 @@ jobs:
           fi
 
       - name: Cleanup EC2 Capacity Provider
-        if: env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -541,7 +542,7 @@ jobs:
           fi
 
       - name: Cleanup Launch Templates
-        if: env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -569,6 +570,7 @@ jobs:
           fi
 
       - name: Cleanup ECS Services
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         id: cleanup
         run: |
           set -e
