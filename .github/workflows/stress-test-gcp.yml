@@ -164,7 +164,7 @@ on:
 
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
         required: false
       GCP_SERVICE_ACCOUNT:

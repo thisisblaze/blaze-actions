@@ -101,7 +101,8 @@ on:
         type: boolean
 
       preserve_host:
-        description: "Preserve host network (skip network destroy/provision for feature
+        description:
+          "Preserve host network (skip network destroy/provision for feature
           branch testing)"
         required: false
         default: false
@@ -145,7 +146,7 @@ on:
         type: boolean
     secrets:
       AWS_ROLE_ARN:
-        required: true
+        required: false
       GH_PAT:
         required: false
       NPM_TOKEN:
