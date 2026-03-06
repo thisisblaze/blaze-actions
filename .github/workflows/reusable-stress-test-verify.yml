@@ -42,6 +42,11 @@ on:
         type: string
         default: aws
         
+      wif_audience:
+        description: "OIDC Audience"
+        required: false
+        type: string
+        
       azure_client_id_rev:
         required: false
         type: string
@@ -202,6 +207,7 @@ jobs:
       cloud_region: ${{ needs.config.outputs.cloud_region }}
       namespace: ${{ needs.config.outputs.namespace }}
       target_type: ${{ inputs.target_type }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
