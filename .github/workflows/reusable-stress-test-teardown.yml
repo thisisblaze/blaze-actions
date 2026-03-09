@@ -42,6 +42,11 @@ on:
         type: string
         default: aws
         
+      wif_audience:
+        description: "OIDC Audience"
+        required: false
+        type: string
+        
       azure_client_id_rev:
         required: false
         type: string
@@ -234,6 +239,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Check Tunnel State
         id: check-tunnel
@@ -246,6 +252,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Check Network State
         if: inputs.target_type == 'host'
@@ -259,6 +266,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Check MongoDB State
         if: inputs.include_third_party && inputs.target_type == 'host'
@@ -272,6 +280,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
       - name: Check Elastic State
         if: inputs.include_third_party && inputs.target_type == 'host'
@@ -285,6 +294,7 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
 
   # --------------------------------------------------------------------------------
   # 2. CLEANUP SERVICES (Critical for Cluster Destroy)
@@ -302,6 +312,7 @@ jobs:
       force_delete: true
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
@@ -330,6 +341,7 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -358,6 +370,7 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
 
@@ -382,6 +395,7 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -408,6 +422,7 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
