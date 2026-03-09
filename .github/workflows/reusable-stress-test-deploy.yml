@@ -42,6 +42,11 @@ on:
         type: string
         default: aws
         
+      wif_audience:
+        required: false
+        type: string
+        default: ""
+        
       azure_client_id_rev:
         required: false
         type: string
