@@ -166,9 +166,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Checkout Actions
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-actions
+          path: .blaze-actions
+          ref: dev
+
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@dev
+        uses: ./.blaze-actions/.github/actions/calculate-env-config
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: ${{ needs.setup.outputs.terraform_stack }}

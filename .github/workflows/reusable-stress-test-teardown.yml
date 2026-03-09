@@ -166,9 +166,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Checkout Actions
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-actions
+          path: .blaze-actions
+          ref: dev
+
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@dev
+        uses: ./.blaze-actions/.github/actions/calculate-env-config
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
@@ -218,7 +225,7 @@ jobs:
       
       - name: Check App State
         id: check-app
-        uses: thisisblaze/blaze-actions/.github/actions/check-stack-exists@dev
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
@@ -230,7 +237,7 @@ jobs:
 
       - name: Check Tunnel State
         id: check-tunnel
-        uses: thisisblaze/blaze-actions/.github/actions/check-stack-exists@dev
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
@@ -243,7 +250,7 @@ jobs:
       - name: Check Network State
         if: inputs.target_type == 'host'
         id: check-network
-        uses: thisisblaze/blaze-actions/.github/actions/check-stack-exists@dev
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
@@ -256,7 +263,7 @@ jobs:
       - name: Check MongoDB State
         if: inputs.include_third_party && inputs.target_type == 'host'
         id: check-mongodb
-        uses: thisisblaze/blaze-actions/.github/actions/check-stack-exists@dev
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
@@ -269,7 +276,7 @@ jobs:
       - name: Check Elastic State
         if: inputs.include_third_party && inputs.target_type == 'host'
         id: check-elastic
-        uses: thisisblaze/blaze-actions/.github/actions/check-stack-exists@dev
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
