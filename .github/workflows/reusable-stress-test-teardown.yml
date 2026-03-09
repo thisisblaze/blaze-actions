@@ -227,6 +227,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Checkout Actions
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-actions
+          path: .blaze-actions
+          ref: dev
       
       - name: Check App State
         id: check-app
