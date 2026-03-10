@@ -460,9 +460,9 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       # Azure
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID: ${{ needs.configuration.outputs.azure_client_id || secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ needs.configuration.outputs.azure_tenant_id || secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ needs.configuration.outputs.azure_subscription_id || secrets.AZURE_SUBSCRIPTION_ID }}
       DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     with:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
@@ -517,9 +517,6 @@ jobs:
       split_apply: ${{ inputs.stack == 'tunnel' }}
       split_targets: "module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this"
       sleep_seconds: 60
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
