@@ -148,8 +148,10 @@ jobs:
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
             - name: Create .npmrc (if NPM_TOKEN provided)
-              if: ${{ secrets.NPM_TOKEN != '' }}
-              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+              env:
+                NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              if: env.NPM_TOKEN != ''
+              run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 
             - name: Build and Push (ARM64)
               id: build
