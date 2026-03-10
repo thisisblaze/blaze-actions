@@ -156,7 +156,7 @@ jobs:
       - name: Setup Blaze
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
         with:
-          cloud-provider: ${{ inputs.cloud_platform || 'aws' }}
+          cloud-provider: ${{ inputs.cloud_platform }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
           azure-client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}

@@ -318,7 +318,7 @@ jobs:
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
       environment: ${{ inputs.environment }}
-      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
@@ -342,7 +342,7 @@ jobs:
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
@@ -371,7 +371,7 @@ jobs:
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
@@ -396,7 +396,7 @@ jobs:
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
@@ -423,7 +423,7 @@ jobs:
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
@@ -450,7 +450,7 @@ jobs:
       client_key: ${{ needs.config.outputs.client_key }}
       project_key: ${{ needs.config.outputs.project_key }}
       namespace: ${{ needs.config.outputs.namespace }}
-      cloud_platform: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
