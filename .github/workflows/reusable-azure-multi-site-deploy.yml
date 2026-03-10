@@ -89,6 +89,9 @@ concurrency:
   group: azure-multi-site-${{ inputs.environment }}-${{ inputs.site_key }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
     deploy-site:
         name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"

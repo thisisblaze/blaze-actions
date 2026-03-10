@@ -111,6 +111,9 @@ concurrency:
   group: ${{ github.workflow }}-docker-build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ─────────────────────────────────────────────
   # BUILD AMD64 (x86_64)

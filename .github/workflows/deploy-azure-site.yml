@@ -104,6 +104,9 @@ concurrency:
   group: deploy-site-${{ inputs.environment }}-${{ inputs.site_key }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: "🔨 Build [${{ inputs.site_key }}]"
