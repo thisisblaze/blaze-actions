@@ -702,13 +702,13 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && 
+      image_name: ${{ inputs.cloud_provider == 'gcp' && 
         format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', 
         needs.configuration.outputs.cloud_region, 
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.project_key) || (inputs.cloud_provider == 
-        'azure') && format('{0}.azurecr.io/{1}-{2}-web/{2}/admin', 
+        needs.configuration.outputs.project_key) || inputs.cloud_provider == 
+        'azure' && format('{0}.azurecr.io/{1}-{2}-web/{2}/admin', 
         needs.configuration.outputs.azure_acr_name, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) || 
