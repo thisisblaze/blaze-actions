@@ -643,25 +643,23 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.0.2
         with:
-          node-version: "20"
+          node-version: "20.x"
+          registry-url: 'https://registry.npmjs.org/'
       - name: Cache Next.js & NPM
         uses: actions/cache@v4
         with:
           path: |
             ~/.npm
-            packages/admin/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.[jt]s', '**/*.[jt]sx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      - name: Create .npmrc
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-      - run: npm install --legacy-peer-deps --ignore-scripts
+      - name: Install Dependencies
         env:
-          NPM_CONFIG_USERCONFIG: ${{ github.workspace }}/.npmrc
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm install --legacy-peer-deps --ignore-scripts
       - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin
           --include-dependencies -- --legacy-peer-deps
         env:
