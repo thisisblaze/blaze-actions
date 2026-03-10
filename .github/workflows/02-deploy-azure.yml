@@ -671,6 +671,7 @@ jobs:
         run: npm run build:admin
         working-directory: packages/admin
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
           BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && 
             (inputs.environment == 'PROD' && 
