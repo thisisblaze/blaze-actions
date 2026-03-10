@@ -269,6 +269,9 @@ jobs:
       cluster_tier: ${{ steps.config.outputs.cluster_tier }}
       cluster_name: ${{ steps.config.outputs.cluster_name }}
       gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
+      azure_client_id: ${{ steps.resolve-azure.outputs.client_id }}
+      azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
+      azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
