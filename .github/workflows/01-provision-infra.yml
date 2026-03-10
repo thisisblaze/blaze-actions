@@ -172,6 +172,15 @@ on:
         required: false
         type: string
         default: "X86_64"
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
     secrets:
       AWS_ROLE_ARN:
         required: false
@@ -328,13 +337,24 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Resolve Azure Secrets
+        if: inputs.cloud_provider == 'azure' && inputs.azure_client_id_rev != ''
+        id: resolve-azure
+        run: |
+          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
+          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
+          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure.outputs.client_id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure.outputs.tenant_id }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure.outputs.subscription_id }}
 
       - name: Calculate Configuration
         id: config
@@ -601,12 +621,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Resolve Azure Secrets (CDN)
+        if: inputs.azure_client_id_rev != ''
+        id: resolve-azure-cdn
+        run: |
+          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
+          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
+          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
+
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3 # v3 stable
@@ -659,6 +690,9 @@ jobs:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
         run: |
           NETWORK_STACK_DIR=".github/azure/infra/live/${STAGE}-network"
 
