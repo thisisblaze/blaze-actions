@@ -386,8 +386,8 @@ runs:
 
         # ── Azure ACR Name ──
         # ACR names: 5-50 chars, globally unique, alphanumeric only
-        # Terraform uses: substr(replace("${namespace}-${client_key}-${project_key}-${stage_key}", "-", ""), 0, 24)
-        RAW_ACR_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
+        # Terraform uses: substr(replace("${namespace}-${client_key}-${stage_key}-${project_key}", "-", ""), 0, 24)
+        RAW_ACR_NAME="${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-${PROJECT_KEY}"
         CLEAN_ACR_NAME=$(echo "$RAW_ACR_NAME" | tr -d '-')
         AZURE_ACR_NAME=${CLEAN_ACR_NAME:0:24}
         echo "azure_acr_name=$AZURE_ACR_NAME" >> "$GITHUB_OUTPUT"
