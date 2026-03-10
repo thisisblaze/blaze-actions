@@ -431,6 +431,3 @@ jobs:
           if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
              echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
-
-
-          fi
