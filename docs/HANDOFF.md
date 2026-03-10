@@ -1,38 +1,33 @@
 # Session Handoff State
 
-**Date/Time**: 2026-03-04T10:37:36Z
+**Date/Time**: 2026-03-10T11:00:46Z
 
 ## 1. The Exact Objective
 
-Execute the remediation steps based on the findings from the recent `checkengines` diagnostic sweep.
+Resolve Lerna npm 404 errors during Docker build steps in Azure deployments by correctly passing `NODE_AUTH_TOKEN` from GitHub actions down to Docker `build-args`.
 
 ## 2. Current Progress & Modified Files
 
-- `checkengines` was successfully executed.
-- No uncommitted files across the 3 repositories.
-- `checkengines_report.md` artifact was generated during the session.
+- `blaze-actions/.github/workflows/reusable-docker-build.yml`: Modified to pass `NODE_AUTH_TOKEN` explicitly via `build-args` for both amd64 and arm64 `docker/build-push-action` steps instead of using `--mount=type=secret,id=npmrc`.
+- `blaze-actions/.github/workflows/02-deploy-[aws/azure/gcp/pages].yml`: Restored `registry-url: 'https://registry.npmjs.org/'` in `actions/setup-node` tasks and removed manual `.npmrc` creation logic. Fixed `if:` conditional syntax errors injected during refactoring.
+- `blaze-template-deploy/packages/api/Dockerfile.api`: Replaced `secret` mount with `ARG NODE_AUTH_TOKEN` and `ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN`.
+- `blaze-template-deploy/packages/frontend/Dockerfile.frontend`: Replaced `secret` mount with `ARG NODE_AUTH_TOKEN` and `ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN`.
 
 ## 3. Important Context
 
-The `checkengines` run found the following issues to address:
+- *Context on Bug:* Lerna suppresses `NPM_CONFIG_USERCONFIG` or `~/.npmrc` files mounted during Docker builds natively. Explicitly creating an environment variable `NODE_AUTH_TOKEN` before the `lerna bootstrap` call is the only native workaround that passes NPM Auth tokens to its sub-processes.
+- *Testing Context:* The Azure pipeline is currently running **Stress Test Run 19** to test the Dockerfile fixes. `dispatch-pages` (which runs on standard GitHub runners, not Docker builds) already confirmed to work properly with just `actions/setup-node`.
+- *Wait state:* A running terminal command `gh run watch` is actively monitoring Run 19.
 
-- **Engine 1, 6**: Loose report and stale/missing `'Last Updated'` headers in `docs/plans/`.
-- **Engine 3**: 71 terraform modules are missing from `module_dependency_map.mermaid`.
-- **Engine 5**: 8 false positive password matches for DB modules.
-- **Engine 8**: Missing workflow descriptions and `// turbo` safety violations (e.g. `checkengines.md`).
-- **Engine 9**: Missing/stale stress test reports for AWS Dev/Stage and GCP multi-site.
+**ENV Comparison Report Status** (`docs/reports/ENV_COMPARISON_AWS.md`):
 
-**ENV Comparison Report Status** (`docs/reports/2026/03/ENV_COMPARISON_AWS.md`):
-
-- Open 🔴 action items: None
+- Open 🔴 action items: None checked in this session.
 - WAF policy: CloudFront-only (stage/prod). ALBs are internal.
 - NAT policy: GATEWAY when >5 services, NONE otherwise.
 - Redis: prod-only. Prod Redis must be on private subnets (not public).
 
 ## 4. The Immediate Next Steps
 
-1. Run `/09-maintain-docs` to fix stale docs and loose files.
-2. Run `/11-maintain-prompts-ai` to fix workflow frontmatter descriptions and turbo safety violations.
-3. Run `/slash-weekly-graph` to fix module dependency graph drift.
-4. Run `/08-audit` to address security pattern flags.
-5. Run `/12-stress-test-report` or trigger stress tests to restore stress test health.
+1. Wait for and review the completion of Azure Stress Test Run 19, specifically the `dispatch-azure` Docker build jobs.
+2. Ensure Docker builds for `amd64` and `arm64` succeed without Lerna 404 Auth failures.
+3. Verify that the subsequent Azure Container Apps deployments successfully complete.
