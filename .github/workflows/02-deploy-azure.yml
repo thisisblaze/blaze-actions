@@ -660,10 +660,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm install --legacy-peer-deps --ignore-scripts
-      - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin
-          --include-dependencies -- --legacy-peer-deps
+      - run: ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
         env:
-          NPM_CONFIG_USERCONFIG: ${{ github.workspace }}/.npmrc
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Build Admin
         run: npm run build:admin
