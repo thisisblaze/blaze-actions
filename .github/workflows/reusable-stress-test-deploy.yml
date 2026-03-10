@@ -204,7 +204,7 @@ jobs:
       frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
       # Stress test: skip ECS stabilisation wait — infra uses placeholder images, real images deployed in CI
       skip_stability_wait: "${{ 'true' }}"
-      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_provider: ${{ inputs.cloud_provider }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}

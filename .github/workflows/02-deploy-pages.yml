@@ -292,7 +292,7 @@ jobs:
           AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
           GCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
           GCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
-          ACTIVE_PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
+          ACTIVE_PROVIDER="${{ inputs.cloud_provider }}"
 
           case "$ACTIVE_PROVIDER" in
             gcp)
@@ -372,7 +372,7 @@ jobs:
           build_images: ${{ inputs.build_images || 'true' }}
           deploy_services: ${{ inputs.deploy_services || 'true' }}
           event_name: ${{ github.event_name }}
-          cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+          cloud_provider: ${{ inputs.cloud_provider }}
 
   pre-flight-check:
     name: 🛡️ Pre-Flight Checks
@@ -698,7 +698,7 @@ jobs:
             echo "## 🌍 Context"
             echo "| Metric | Value |"
             echo "| :--- | :--- |"
-            echo "| **Provider** | \`${{ inputs.cloud_provider || 'aws' }}\` |"
+            echo "| **Provider** | \`${{ inputs.cloud_provider }}\` |"
             echo "| **Stage** | \`${{ needs.configuration.outputs.stage_key }}\` |"
             echo "| **Region** | \`${{ needs.configuration.outputs.cloud_region || needs.configuration.outputs.aws_region }}\` |"
             echo "| **Branch** | \`${{ inputs.branch_name || 'main' }}\` |"
@@ -722,7 +722,7 @@ jobs:
 
             echo ""
             echo "## 🔗 Quick Links"
-            PROVIDER="${{ inputs.cloud_provider || 'aws' }}"
+            PROVIDER="${{ inputs.cloud_provider }}"
             REGION="${{ needs.configuration.outputs.cloud_region || needs.configuration.outputs.aws_region }}"
             CLUSTER="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-cluster"
 

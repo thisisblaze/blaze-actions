@@ -484,7 +484,7 @@ jobs:
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
-      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
+      cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
