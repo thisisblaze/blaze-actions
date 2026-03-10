@@ -84,6 +84,16 @@ on:
         required: false
         type: string
         default: ""
+      # Azure reversed credentials (to bypass GitHub secret masking on outputs)
+      azure_client_id_rev:
+        required: false
+        type: string
+      azure_tenant_id_rev:
+        required: false
+        type: string
+      azure_subscription_id_rev:
+        required: false
+        type: string
 
     secrets:
       AWS_ROLE_ARN:
@@ -215,13 +225,24 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
           audience: ${{ inputs.wif_audience }}
 
+      - name: Decode Azure Credentials
+        if: inputs.cloud_provider == 'azure'
+        id: decode-azure
+        run: |
+          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
+          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
+          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
+          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
+          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
+          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || '' }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || '' }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || '' }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
 
       - name: Debug Secret Presence
         run: |
