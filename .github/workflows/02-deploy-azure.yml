@@ -243,9 +243,7 @@ jobs:
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
-          echo "@blaze-cms:registry=https://npm.pkg.github.com/" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
       - run: npm install --legacy-peer-deps --ignore-scripts
         env: {NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}"}
       # - run: npm run lint

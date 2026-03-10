@@ -187,9 +187,7 @@ jobs:
 
       - name: Setup .npmrc
         run: |
-          echo "@blaze-cms:registry=https://npm.pkg.github.com/" > ${{ runner.temp }}/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> ${{ runner.temp }}/.npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ${{ runner.temp }}/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ${{ runner.temp }}/.npmrc
 
       - name: 🚑 Troubleshoot NPM Token
         run: |
@@ -314,9 +312,7 @@ jobs:
 
       - name: Setup .npmrc
         run: |
-          echo "@blaze-cms:registry=https://npm.pkg.github.com/" > ${{ runner.temp }}/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> ${{ runner.temp }}/.npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ${{ runner.temp }}/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ${{ runner.temp }}/.npmrc
 
       - name: 🚑 Troubleshoot NPM Token
         run: |
