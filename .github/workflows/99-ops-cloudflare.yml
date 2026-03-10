@@ -1045,12 +1045,13 @@ jobs:
 
   summary:
     name: 📝 Ops Summary
-    needs: [configuration, kill-workflows, state-operations, manage-environment, manage-environment-gcp, destroy-resources, sync-cloudflare-config, nuke-stop-services-gcp, nuke-destroy-network, nuke-destroy-pages, nuke-destroy-data-aws, nuke-cleanup-dns]
+    needs: [configuration, sync-cloudflare-config, destroy-cloudflare-pages, cleanup-dns, cleanup-cloudflare-deployments, destroy-cloudflare-pages-bulk, destroy-cloudflare-tunnel]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Generate Summary
+        run: |
           echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
