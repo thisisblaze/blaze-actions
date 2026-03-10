@@ -202,6 +202,9 @@ jobs:
       stack: "network"
       apply: true
       enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -225,6 +228,9 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "tunnel"
       apply: true
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -251,6 +257,9 @@ jobs:
       enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
       enable_ec2: ${{ inputs.environment == 'dev-mini' }}
       api_launch_type: ${{ inputs.environment == 'dev-mini' && 'EC2' || 'FARGATE' }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -273,6 +282,9 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "third-party-mongodb"
       apply: true
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -292,6 +304,9 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "third-party-elastic"
       apply: true
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
