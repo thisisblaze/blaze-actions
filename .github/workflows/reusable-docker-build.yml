@@ -188,10 +188,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - name: Create .npmrc
-        if: ${{ env.NPM_TOKEN_VAL != '' }}
-        run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
-
       - name: Build and Push (amd64)
         id: build
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
@@ -203,12 +199,12 @@ jobs:
           tags: |
             ${{ inputs.image_name }}:${{ inputs.image_tag }}-amd64
             ${{ inputs.image_name }}:latest-amd64
-          build-args: ${{ inputs.build_args }}
+          build-args: |
+            ${{ inputs.build_args }}
+            NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
           labels: |
             org.opencontainers.image.architecture=amd64
             org.opencontainers.image.compute-mode=x86
-          secret-files: |
-            npmrc=.npmrc
           cache-from: type=gha,scope=amd64
           cache-to: type=gha,mode=max,scope=amd64
 
@@ -294,10 +290,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - name: Create .npmrc
-        if: ${{ env.NPM_TOKEN_VAL != '' }}
-        run: echo "//registry.npmjs.org/:_authToken=${{ env.NPM_TOKEN_VAL }}" > .npmrc
-
       - name: Build and Push (arm64)
         id: build
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
@@ -309,12 +301,12 @@ jobs:
           tags: |
             ${{ inputs.image_name }}:${{ inputs.image_tag }}-arm64
             ${{ inputs.image_name }}:latest-arm64
-          build-args: ${{ inputs.build_args }}
+          build-args: |
+            ${{ inputs.build_args }}
+            NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
           labels: |
             org.opencontainers.image.architecture=arm64
             org.opencontainers.image.compute-mode=arm
-          secret-files: |
-            npmrc=.npmrc
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
 
