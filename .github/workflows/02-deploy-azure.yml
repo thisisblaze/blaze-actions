@@ -610,7 +610,7 @@ jobs:
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider == 'azure' && inputs.environment != 'PROD' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
