@@ -191,7 +191,7 @@ jobs:
   # 5. DEPLOY
   # --------------------------------------------------------------------------------
   deploy-app:
-    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider != 'azure'
+    if: always() && inputs.mode != 'destroy-only'
     needs: [config]
     name: "🚀 Deploy App"
     uses: ./.github/workflows/02-deploy-app.yml
@@ -224,49 +224,6 @@ jobs:
       BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
-
-  deploy-api-azure:
-    name: "🚀 Deploy API (Azure)"
-    needs: [config]
-    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
-    uses: ./.github/workflows/reusable-container-app-deploy.yml
-    with:
-      service_name: "api"
-      environment: ${{ inputs.environment }}
-      stage_key: ${{ needs.config.outputs.stage_key }}
-      branch_name: ${{ inputs.branch_tag }}
-      image_tag: ${{ github.sha }}
-      project_key: ${{ needs.config.outputs.project_key }}
-      client_key: ${{ needs.config.outputs.client_key }}
-      domain_root: ${{ needs.config.outputs.domain_root }}
-      azure_region: ${{ needs.config.outputs.cloud_region }}
-      namespace: ${{ needs.config.outputs.namespace }}
-      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
-      target_port: 3000
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
-
-  deploy-frontend-azure:
-    name: "🚀 Deploy Frontend (Azure)"
-    needs: [config]
-    if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
-    uses: ./.github/workflows/reusable-container-app-deploy.yml
-    with:
-      service_name: "frontend"
-      environment: ${{ inputs.environment }}
-      stage_key: ${{ needs.config.outputs.stage_key }}
-      branch_name: ${{ inputs.branch_tag }}
-      image_tag: ${{ github.sha }}
-      project_key: ${{ needs.config.outputs.project_key }}
-      client_key: ${{ needs.config.outputs.client_key }}
-      domain_root: ${{ needs.config.outputs.domain_root }}
-      azure_region: ${{ needs.config.outputs.cloud_region }}
-      namespace: ${{ needs.config.outputs.namespace }}
-      azure_registry_server: "${{ needs.config.outputs.azure_acr_name }}.azurecr.io"
-      target_port: 3000
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
-    secrets: inherit
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
