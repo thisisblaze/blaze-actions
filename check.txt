@@ -1,0 +1,21 @@
+🌪️ Teardown (Azure) / Initialize
+🌪️ Teardown (Azure) / ⚠️ Production Safety Check
+🌪️ Teardown (Azure) / ⚙️ Config
+🌪️ Teardown (Azure) / 🔍 Check Stack States
+🌪️ Teardown (Azure) / 🧨 Destroy App
+🌪️ Teardown (Azure) / 🧨 Destroy Elastic
+🌪️ Teardown (Azure) / cleanup-services
+🌪️ Teardown (Azure) / 🧨 Destroy Tunnel
+🌪️ Teardown (Azure) / 🧨 Destroy MongoDB
+🏗️ Provision (Azure) / Initialize
+🌪️ Teardown (Azure) / 🧨 Destroy Network
+🏗️ Provision (Azure) / ⚙️ Config
+🏗️ Provision (Azure) / 🏗️ Provision Network
+🚀 Deploy (Azure) / Initialize
+🏗️ Provision (Azure) / 🏗️ Provision Tunnel
+🏗️ Provision (Azure) / 🏛️ Provision MongoDB
+🏗️ Provision (Azure) / 🏛️ Provision Elastic
+🏗️ Provision (Azure) / 🏗️ Provision App
+🚀 Deploy (Azure) / ⚙️ Config
+🚀 Deploy (Azure) / 🚀 Deploy App
+✅ Verify (Azure)
