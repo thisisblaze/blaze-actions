@@ -197,6 +197,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       environment: ${{ inputs.environment }}
       stack: "network"
       apply: true
@@ -215,6 +216,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       environment: ${{ inputs.environment }}
       stack: "tunnel"
       apply: true
@@ -232,6 +234,7 @@ jobs:
 
     uses: ./.github/workflows/01-provision-infra.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       environment: ${{ inputs.environment }}
       stack: "app"
       apply: true
@@ -251,6 +254,7 @@ jobs:
     name: "🏛️ Provision MongoDB"
     uses: ./.github/workflows/01-provision-infra.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       environment: ${{ inputs.environment }}
       stack: "third-party-mongodb"
       apply: true
@@ -264,6 +268,7 @@ jobs:
     name: "🏛️ Provision Elastic"
     uses: ./.github/workflows/01-provision-infra.yml
     with:
+      cloud_provider: ${{ inputs.cloud_provider || 'aws' }}
       environment: ${{ inputs.environment }}
       stack: "third-party-elastic"
       apply: true
