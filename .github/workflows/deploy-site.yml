@@ -151,7 +151,10 @@ jobs:
               env:
                 NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               if: env.NPM_TOKEN != ''
-              run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+              run: |
+                echo "@blaze-cms:registry=https://npm.pkg.github.com/" > .npmrc
+                echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> .npmrc
+                echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
 
             - name: Build and Push (ARM64)
               id: build
