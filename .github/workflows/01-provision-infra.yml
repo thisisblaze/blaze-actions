@@ -245,6 +245,9 @@ concurrency:
   group: infra-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   configuration:
     name: Configuration

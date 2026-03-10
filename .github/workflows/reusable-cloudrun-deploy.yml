@@ -135,6 +135,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
     deploy:
         name: Deploy ${{ inputs.service_name }} (Cloud Run)

@@ -231,6 +231,9 @@ concurrency:
   group: deploy-${{ github.event.inputs.environment || 'DEV' }}-${{ github.event.inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   dispatch-aws:
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
