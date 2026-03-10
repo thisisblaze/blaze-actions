@@ -228,7 +228,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-${{ github.event.inputs.environment || 'DEV' }}-${{ 
+  group: deploy-gcp-${{ github.event.inputs.environment || 'DEV' }}-${{ 
     github.event.inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
