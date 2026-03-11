@@ -241,8 +241,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
@@ -280,7 +280,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -319,14 +319,14 @@ jobs:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
           inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
             }}
@@ -388,14 +388,14 @@ jobs:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
           inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
             }}
@@ -645,9 +645,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.0.2
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v4.0.2
         with:
           node-version: "20.x"
 
@@ -656,7 +656,7 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
       - name: Cache Next.js & NPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.npm
@@ -696,7 +696,7 @@ jobs:
           mkdir -p packages/admin/dist
           echo "/* /index.html 200" > packages/admin/dist/_redirects
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist

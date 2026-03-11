@@ -62,7 +62,7 @@ jobs:
             lock_table: ${{ steps.config.outputs.lock_table }}
             aws_region: ${{ steps.config.outputs.aws_region }}
         steps:
-            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
             - name: Calculate Configuration
               id: config
@@ -84,7 +84,7 @@ jobs:
         timeout-minutes: 10
         steps:
             - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
+              uses: aws-actions/configure-aws-credentials@v6
               with:
                   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
                   aws-region: ${{ needs.configuration.outputs.aws_region }}
