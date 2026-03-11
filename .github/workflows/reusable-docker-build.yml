@@ -228,7 +228,7 @@ jobs:
           build-args: |
             ${{ inputs.build_args }}
             NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
-          secrets: |
+          secret-files: |
             npmrc=${{ runner.temp }}/.npmrc
           labels: |
             org.opencontainers.image.architecture=amd64
@@ -355,7 +355,7 @@ jobs:
           build-args: |
             ${{ inputs.build_args }}
             NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
-          secrets: |
+          secret-files: |
             npmrc=${{ runner.temp }}/.npmrc
           labels: |
             org.opencontainers.image.architecture=arm64
