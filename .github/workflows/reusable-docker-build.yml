@@ -21,6 +21,11 @@ on:
         description: "Full image name (e.g., ECR URI, Artifact Registry URI, or ACR URI)"
         required: true
         type: string
+      display_name:
+        description: "Display name for the jobs (e.g., API, Frontend, Admin)"
+        required: false
+        type: string
+        default: "Image"
       image_tag:
         description: "Primary image tag (e.g., commit SHA or semver)"
         required: true
@@ -119,7 +124,7 @@ jobs:
   # BUILD AMD64 (x86_64)
   # ─────────────────────────────────────────────
   build-amd64:
-    name: "Build (amd64)"
+    name: "Build ${{ inputs.display_name }} (amd64)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/amd64')
@@ -246,7 +251,7 @@ jobs:
   # BUILD ARM64 (Graviton)
   # ─────────────────────────────────────────────
   build-arm64:
-    name: "Build (arm64)"
+    name: "Build ${{ inputs.display_name }} (arm64)"
     runs-on: ubuntu-24.04-arm # Native ARM64 runner — 13x faster than QEMU
     environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/arm64')
@@ -373,7 +378,7 @@ jobs:
   # CREATE MULTI-ARCH MANIFEST
   # ─────────────────────────────────────────────
   create-manifest:
-    name: "Create Multi-Arch Manifest"
+    name: "Create Multi-Arch Manifest (${{ inputs.display_name }})"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     needs: [build-amd64, build-arm64]

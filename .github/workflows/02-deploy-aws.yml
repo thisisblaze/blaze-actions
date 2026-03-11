@@ -545,6 +545,7 @@ jobs:
       || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
@@ -593,6 +594,7 @@ jobs:
       'frontend' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
@@ -716,6 +718,7 @@ jobs:
       inputs.target_services == 'admin' || inputs.target_services == null) }}
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin

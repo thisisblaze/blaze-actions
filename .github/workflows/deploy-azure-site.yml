@@ -112,6 +112,7 @@ jobs:
     name: "🔨 Build [${{ inputs.site_key }}]"
     uses: ./.github/workflows/reusable-docker-build.yml
     with:
+      display_name: ${{ inputs.site_key }}
       cloud_provider: "azure"
       image_name: "${{ inputs.azure_registry_server }}/${{ inputs.image_repository }}/${{ inputs.site_key }}"
       image_tag: ${{ inputs.image_tag }}
