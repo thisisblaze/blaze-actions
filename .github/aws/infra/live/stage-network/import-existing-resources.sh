@@ -7,13 +7,13 @@ set -e
 echo "🔍 Importing existing STAGE network resources..."
 
 # S3 ALB Logs Bucket
-if ! terraform state list | grep -q "module.environment_network.module.access_logs_bucket\\[0\\].aws_s3_bucket.this"; then
+if ! terraform state show 'module.environment_network.module.access_logs_bucket[0].aws_s3_bucket.this' >/dev/null 2>&1; then
   echo "📥 Importing S3 ALB logs bucket..."
   terraform import 'module.environment_network.module.access_logs_bucket[0].aws_s3_bucket.this' blaze-b9-thisisblaze-stage-alb-logs || true
 fi
 
 # S3 Log Bucket (top-level module in stage-network/main.tf)
-if ! terraform state list | grep -q "module.log_bucket.aws_s3_bucket.this"; then
+if ! terraform state show 'module.log_bucket.aws_s3_bucket.this[0]' >/dev/null 2>&1; then
   if aws s3api head-bucket --bucket blaze-b9-thisisblaze-stage-logs --region "$REGION" 2>/dev/null; then
     echo "📥 Importing S3 log bucket..."
     terraform import 'module.log_bucket.aws_s3_bucket.this[0]' blaze-b9-thisisblaze-stage-logs || true
@@ -30,7 +30,7 @@ for TG in admin-blue admin-green frontend-blue frontend-green api-blue api-green
   TG_ARN=$(aws elbv2 describe-target-groups --names "blaze-stage-${TG}-tg" --region "$REGION" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
   
   if [[ -n "$TG_ARN" && "$TG_ARN" != "None" ]]; then
-    if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
+    if ! terraform state show "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" >/dev/null 2>&1; then
       echo "📥 Importing target group: blaze-stage-${TG}-tg"
       terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" || true
     fi
@@ -47,7 +47,7 @@ for POLICY_NAME in "image-resize:module.environment_network.aws_cloudfront_cache
     --query "CachePolicyList.Items[?CachePolicy.CachePolicyConfig.Name=='${FULL_POLICY_NAME}'].CachePolicy.Id" \
     --output text 2>/dev/null || echo "")
   if [[ -n "$POLICY_ID" && "$POLICY_ID" != "None" ]]; then
-    if ! terraform state list | grep -qF "$RESOURCE"; then
+    if ! terraform state show "$RESOURCE" >/dev/null 2>&1; then
       echo "📥 Importing CF cache policy: ${FULL_POLICY_NAME} (${POLICY_ID})"
       terraform import "$RESOURCE" "$POLICY_ID" || true
     fi
@@ -59,14 +59,14 @@ SG_ID=$(aws ec2 describe-security-groups --region "$REGION" \
   --filters "Name=group-name,Values=blaze-b9-thisisblaze-stage-alb-sg" \
   --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
 if [[ -n "$SG_ID" && "$SG_ID" != "None" ]]; then
-  if ! terraform state list | grep -q "module.environment_network.module.alb_sg\|module.environment_network.aws_security_group.alb"; then
+  if ! terraform state show 'module.environment_network.module.lb[0].module.sg.aws_security_group.this[0]' >/dev/null 2>&1; then
     echo "📥 Importing ALB security group: ${SG_ID}"
     terraform import 'module.environment_network.module.lb[0].module.sg.aws_security_group.this[0]' "$SG_ID" || true
   fi
 fi
 
 # S3 Image-Resize Bucket
-if ! terraform state list | grep -q "module.environment_network.module.image_resize_bucket\[0\].aws_s3_bucket.this"; then
+if ! terraform state show 'module.environment_network.module.image_resize_bucket[0].aws_s3_bucket.this' >/dev/null 2>&1; then
   if aws s3api head-bucket --bucket blaze-b9-thisisblaze-stage-ecs-image-resize --region "$REGION" 2>/dev/null; then
     echo "📥 Importing S3 image-resize bucket..."
     terraform import 'module.environment_network.module.image_resize_bucket[0].aws_s3_bucket.this' blaze-b9-thisisblaze-stage-ecs-image-resize || true
@@ -78,7 +78,7 @@ WAF_ID=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1 \
   --query "WebACLs[?Name=='blaze-b9-thisisblaze-stage-cloudfront'].Id" --output text 2>/dev/null || echo "")
 WAF_NAME="blaze-b9-thisisblaze-stage-cloudfront"
 if [[ -n "$WAF_ID" && "$WAF_ID" != "None" ]]; then
-  if ! terraform state list | grep -q "module.environment_network.module.waf_global\[0\].aws_wafv2_web_acl.this"; then
+  if ! terraform state show 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' >/dev/null 2>&1; then
     echo "📥 Importing WAF WebACL: ${WAF_NAME} (${WAF_ID})"
     # Terraform aws_wafv2_web_acl import format: id/name/scope
     terraform import 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' "${WAF_ID}/${WAF_NAME}/CLOUDFRONT" || true
@@ -118,7 +118,7 @@ if [[ -n "$CF_TOKEN" && -n "$CF_ZONE" ]]; then
     # v5 resource name: cloudflare_dns_record (not cloudflare_record)
     if [[ -n "$REC_ID" ]]; then
        RESOURCE="module.environment_network.cloudflare_dns_record.${TYPE}[0]"
-       if ! terraform state list | grep -qF "$RESOURCE"; then
+       if ! terraform state show "$RESOURCE" >/dev/null 2>&1; then
          echo "📥 Importing Cloudflare Record: $RECORD_NAME ($REC_ID)..."
          terraform import "$RESOURCE" "${CF_ZONE}/${REC_ID}" || true
        else
@@ -132,7 +132,7 @@ if [[ -n "$CF_TOKEN" && -n "$CF_ZONE" ]]; then
   # ACM Validation CNAME record (name is dynamic: _xxx.domain_root)
   # Look up by searching for CNAME records starting with '_' for this domain
   VALIDATION_RESOURCE="module.environment_network.cloudflare_dns_record.validation[\"${DOMAIN_ROOT}\"]"
-  if ! terraform state list | grep -qF "cloudflare_dns_record.validation"; then
+  if ! terraform state show "${VALIDATION_RESOURCE}" >/dev/null 2>&1; then
     echo "📥 Looking up ACM validation CNAME for ${DOMAIN_ROOT}..."
     # Search all CNAME records containing the domain root with name starting with _
     VALIDATION_REC=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records?type=CNAME&per_page=50" \
