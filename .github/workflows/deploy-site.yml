@@ -1,4 +1,4 @@
-name: "04 - Deploy Site (Multi-Site ARM64)"
+name: "04 - Deploy Site Multi-Site (AWS ARM64)"
 # ─────────────────────────────────────────────────────────────────────────────
 # REUSABLE WORKFLOW — called by blaze-template-deploy or any site CI pipeline
 # Handles: ARM64 ECR build → ECS image update → stabilisation wait → summary

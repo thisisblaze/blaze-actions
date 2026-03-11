@@ -1,4 +1,4 @@
-name: "♻️ Reusable AWS Multi-Site Deploy"
+name: "♻️ Reusable Multi-Site Deploy (AWS)"
 
 # ─────────────────────────────────────────────────────────────
 # Deploys or updates a single site in the multi-site fleet.

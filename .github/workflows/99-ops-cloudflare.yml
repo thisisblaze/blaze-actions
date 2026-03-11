@@ -1,4 +1,4 @@
-name: "99 - Ops (CLOUDFLARE)"
+name: "99 - Ops (Cloudflare)"
 
 on:
   workflow_dispatch:
