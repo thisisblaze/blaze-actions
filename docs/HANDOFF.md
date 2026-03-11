@@ -1,23 +1,23 @@
 # Session Handoff State
 
-**Date/Time**: 2026-03-10T11:00:46Z
+**Date/Time**: 2026-03-11T11:29:43Z
 
 ## 1. The Exact Objective
 
-Resolve Lerna npm 404 errors during Docker build steps in Azure deployments by correctly passing `NODE_AUTH_TOKEN` from GitHub actions down to Docker `build-args`.
+Resolve critical `02-deploy-app.yml` pipeline failures across AWS and standard environments due to (1) Lerna workspace environments dropping NPM private registry auth (`404 Not Found`) and (2) GitHub Actions cancelling pipelines due to Node 20 runner deprecations inside internal AWS plugins.
 
 ## 2. Current Progress & Modified Files
 
-- `blaze-actions/.github/workflows/reusable-docker-build.yml`: Modified to pass `NODE_AUTH_TOKEN` explicitly via `build-args` for both amd64 and arm64 `docker/build-push-action` steps instead of using `--mount=type=secret,id=npmrc`.
-- `blaze-actions/.github/workflows/02-deploy-[aws/azure/gcp/pages].yml`: Restored `registry-url: 'https://registry.npmjs.org/'` in `actions/setup-node` tasks and removed manual `.npmrc` creation logic. Fixed `if:` conditional syntax errors injected during refactoring.
-- `blaze-template-deploy/packages/api/Dockerfile.api`: Replaced `secret` mount with `ARG NODE_AUTH_TOKEN` and `ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN`.
-- `blaze-template-deploy/packages/frontend/Dockerfile.frontend`: Replaced `secret` mount with `ARG NODE_AUTH_TOKEN` and `ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN`.
+- `blaze-actions/.github/workflows/reusable-docker-build.yml`: Refactored `docker/build-push-action` to supply `.npmrc` as a `secret-file` rather than a standard string array, guaranteeing physical file propagation.
+- `blaze-template-deploy/packages/*/Dockerfile.*`: Restored explicit `COPY --from` and `.npmrc` injection logic directly preceding `lerna bootstrap` in the `builder` blocks.
+- `blaze-template-deploy/docs/operations/development_guidelines.md`: Added standard backstop documenting why Node 24 Action enforcement is now required.
+- **Global Actions YAML Patch**: Injected `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` natively into the `env:` blocks of > 80 workflow files across `blaze-actions`, `blaze-template-deploy`, and `blaze-terraform-infra-core` to forcefully suppress the Node 20 deprecation aborts.
 
 ## 3. Important Context
 
-- *Context on Bug:* Lerna suppresses `NPM_CONFIG_USERCONFIG` or `~/.npmrc` files mounted during Docker builds natively. Explicitly creating an environment variable `NODE_AUTH_TOKEN` before the `lerna bootstrap` call is the only native workaround that passes NPM Auth tokens to its sub-processes.
-- *Testing Context:* The Azure pipeline is currently running **Stress Test Run 19** to test the Dockerfile fixes. `dispatch-pages` (which runs on standard GitHub runners, not Docker builds) already confirmed to work properly with just `actions/setup-node`.
-- *Wait state:* A running terminal command `gh run watch` is actively monitoring Run 19.
+- *Context on Bug:* The original `npm 404 Not Found` errors for `@blaze-cms` packages happened because Docker build containers lost the `.npmrc` environment. Fixing it required injecting the registry token natively. The pipeline cancel issue was traced separately to GitHub enforcing Node 20 deprecations (June 2026) early on un-patched actions like `amazon-ecr-login` and `download-artifact`.
+- *Testing Context:* The `02-deploy-app.yml` pipeline (`22949446303`) just successfully ran from end to end. The Docker images `amd64` and `arm64` successfully built via Lerna, multi-arch manifests merged, and ECS services stabilized perfectly.
+- A final `/06-finalize` execution produced a thorough `/walkthrough.md` report of the incident. The workspace temporary files have been cleaned.
 
 **ENV Comparison Report Status** (`docs/reports/ENV_COMPARISON_AWS.md`):
 
@@ -28,6 +28,5 @@ Resolve Lerna npm 404 errors during Docker build steps in Azure deployments by c
 
 ## 4. The Immediate Next Steps
 
-1. Wait for and review the completion of Azure Stress Test Run 19, specifically the `dispatch-azure` Docker build jobs.
-2. Ensure Docker builds for `amd64` and `arm64` succeed without Lerna 404 Auth failures.
-3. Verify that the subsequent Azure Container Apps deployments successfully complete.
+1. Review the successfully deployed environments (Dev ECS/Pages) from the latest `22949446303` execution.
+2. Proceed with normal infrastructure feature development or initiate `/checkengines` to verify the state of the workspace on a new day.
