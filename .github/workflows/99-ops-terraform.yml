@@ -189,7 +189,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Load Access List
         id: load-access
@@ -292,7 +292,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Load AWS Region from Config
         id: load-region
@@ -309,7 +309,7 @@ jobs:
       # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
       # The calculate-config action handles missing AWS credentials gracefully
       # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v5
+      #   uses: aws-actions/configure-aws-credentials@v4
       #   with:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -378,7 +378,7 @@ jobs:
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
