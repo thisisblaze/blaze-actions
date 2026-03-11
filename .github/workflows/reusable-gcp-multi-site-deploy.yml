@@ -1,4 +1,4 @@
-name: "Reusable GCP Multi-Site Deploy"
+name: "♻️ Reusable GCP Multi-Site Deploy"
 
 # ─────────────────────────────────────────────────────────────
 # Deploys or updates a single site in the GCP multi-site fleet.

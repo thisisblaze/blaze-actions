@@ -1,4 +1,4 @@
-name: "Deploy Site (Azure Multi-Site)"
+name: "04 - Deploy Site (Azure Multi-Site)"
 # ─────────────────────────────────────────────────────────────────────────────
 # REUSABLE WORKFLOW — called by blaze-template-deploy or any site CI pipeline
 # Handles: Docker build → ACR push → Azure Container App update → traffic shift

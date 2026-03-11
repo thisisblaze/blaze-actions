@@ -1,4 +1,4 @@
-name: "🔍 Validate Workflows"
+name: "06 - CI (Validate Workflows)"
 
 on:
     pull_request:

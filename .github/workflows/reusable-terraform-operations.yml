@@ -1,4 +1,4 @@
-name: Terraform Operations
+name: "♻️ Terraform Operations"
 
 on:
   workflow_call:

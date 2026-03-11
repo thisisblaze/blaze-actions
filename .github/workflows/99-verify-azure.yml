@@ -1,4 +1,4 @@
-name: 🔍 Azure CDN & Edge Verify
+name: "99 - Verify Azure CDN"
 
 on:
     workflow_call:

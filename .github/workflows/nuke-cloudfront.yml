@@ -1,4 +1,4 @@
-name: Nuke CloudFront Distribution
+name: "99 - Ops (Nuke CloudFront)"
 on:
   workflow_dispatch:
     inputs:

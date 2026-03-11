@@ -1,4 +1,4 @@
-name: "✅ Phase 4: Verify"
+name: "♻️ ✅ Phase 4: Verify"
 
 on:
   workflow_call:

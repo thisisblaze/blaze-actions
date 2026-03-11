@@ -1,4 +1,4 @@
-name: "Reusable Azure Container App Deploy"
+name: "♻️ Reusable Azure Container App Deploy"
 
 on:
     workflow_call:

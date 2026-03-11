@@ -1,4 +1,4 @@
-name: Fix Terraform State Integrity
+name: "99 - Ops (Fix State Integrity)"
 on:
   workflow_dispatch:
     inputs:

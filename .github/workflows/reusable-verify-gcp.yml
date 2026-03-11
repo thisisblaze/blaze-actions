@@ -1,4 +1,4 @@
-name: Verify GCP
+name: "♻️ Verify GCP"
 on:
   workflow_call:
     inputs:

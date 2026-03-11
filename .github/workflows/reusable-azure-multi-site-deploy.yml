@@ -1,4 +1,4 @@
-name: "Reusable Azure Multi-Site Deploy"
+name: "♻️ Reusable Azure Multi-Site Deploy"
 
 # ─────────────────────────────────────────────────────────────
 # Deploys or updates a single site in the multi-site fleet.
