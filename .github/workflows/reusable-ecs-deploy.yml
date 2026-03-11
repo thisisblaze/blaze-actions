@@ -146,7 +146,7 @@ jobs:
     environment: ${{ inputs.config_environment || inputs.environment }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@v5
 
       - name: Setup Blaze (Credentials)
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@dev
