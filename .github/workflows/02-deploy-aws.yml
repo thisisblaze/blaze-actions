@@ -246,7 +246,9 @@ jobs:
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
       - run: npm install --legacy-peer-deps --ignore-scripts
         env: {NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}"}
       # - run: npm run lint
@@ -653,7 +655,9 @@ jobs:
 
       - name: Setup .npmrc
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
 
       - name: Cache Next.js & NPM
         uses: actions/cache@v4
