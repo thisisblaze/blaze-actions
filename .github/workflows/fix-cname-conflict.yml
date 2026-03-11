@@ -31,7 +31,7 @@ jobs:
     environment: stage
     steps:
       - name: Checkout Code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@v5
 
       - name: Load AWS Region from Config
         id: load-config
@@ -45,7 +45,7 @@ jobs:
           echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ steps.load-config.outputs.aws_region }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
