@@ -368,7 +368,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
@@ -384,7 +384,7 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider != 'gcp'
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v5
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Ensure ECR Repositories Exist
         if: inputs.cloud_provider != 'gcp'

@@ -76,7 +76,7 @@ jobs:
     steps:
       - name: Setup AWS CLI
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions-PreDestroy

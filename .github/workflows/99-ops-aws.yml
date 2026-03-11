@@ -310,7 +310,7 @@ jobs:
       # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
       # The calculate-config action handles missing AWS credentials gracefully
       # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v5
+      #   uses: aws-actions/configure-aws-credentials@v6
       #   with:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -403,7 +403,7 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           # Lambda@Edge is ALWAYS in us-east-1
@@ -489,7 +489,7 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
