@@ -1,4 +1,4 @@
-name: Noop
+name: "♻️ Noop"
 on:
   workflow_call:
 env:

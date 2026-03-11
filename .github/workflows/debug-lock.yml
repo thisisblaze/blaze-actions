@@ -1,4 +1,4 @@
-name: "Debug Lock Table"
+name: "99 - Ops (Debug Serverless Lock)"
 
 on:
     workflow_dispatch:

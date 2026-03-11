@@ -1,4 +1,4 @@
-name: "Reusable Cloud Run Deploy"
+name: "♻️ Reusable Cloud Run Deploy"
 
 on:
     workflow_call:

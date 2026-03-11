@@ -1,4 +1,4 @@
-name: 🧪 Terraform Module Tests
+name: "06 - CI (Terraform Tests)"
 
 on:
   pull_request:

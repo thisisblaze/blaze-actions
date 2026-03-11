@@ -1,4 +1,4 @@
-name: "Smart Infrastructure Dashboard"
+name: "99 - Ops (Smart Dashboard)"
 
 on:
   pull_request:

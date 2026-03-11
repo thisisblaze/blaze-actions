@@ -1,4 +1,4 @@
-name: "🚀 Phase 3: Deploy"
+name: "♻️ 🚀 Phase 3: Deploy"
 
 on:
   workflow_call:

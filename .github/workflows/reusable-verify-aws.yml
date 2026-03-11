@@ -1,4 +1,4 @@
-name: Verify AWS
+name: "♻️ Verify AWS"
 on:
   workflow_call:
     inputs:

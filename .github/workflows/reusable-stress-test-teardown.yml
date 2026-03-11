@@ -1,4 +1,4 @@
-name: "🌪️ Phase 1: Teardown"
+name: "♻️ 🌪️ Phase 1: Teardown"
 
 on:
   workflow_call:

@@ -1,4 +1,4 @@
-name: Update CHANGELOG
+name: "🚀 Release (Update Changelog)"
 
 # Automatically updates CHANGELOG.md when creating a new release tag
 # Generates changelog entries from commit messages between tags

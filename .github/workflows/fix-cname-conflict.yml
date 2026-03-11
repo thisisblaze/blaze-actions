@@ -1,4 +1,4 @@
-name: Fix CNAME Conflict
+name: "99 - Ops (Fix CNAME Conflict)"
 on:
   workflow_dispatch:
     inputs:

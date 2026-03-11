@@ -1,4 +1,4 @@
-name: ECS Service Management
+name: "♻️ ECS Service Management"
 
 on:
   workflow_call:

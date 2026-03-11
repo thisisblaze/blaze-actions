@@ -1,4 +1,4 @@
-name: "Reusable Docker Build (Multi-Arch)"
+name: "♻️ Reusable Docker Build (Multi-Arch)"
 
 on:
   workflow_call:

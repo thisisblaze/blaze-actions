@@ -1,4 +1,4 @@
-name: "Force Unlock Terraform State"
+name: "99 - Ops (Force Unlock State)"
 
 on:
     workflow_dispatch:

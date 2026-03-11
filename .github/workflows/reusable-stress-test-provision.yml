@@ -1,4 +1,4 @@
-name: "🏗️ Phase 2: Provision"
+name: "♻️ 🏗️ Phase 2: Provision"
 
 on:
   workflow_call:
