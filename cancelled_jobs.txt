@@ -1,0 +1,3 @@
+🚀 Deploy (Azure) / 🚀 Deploy App / dispatch-azure / Build API / Build (amd64)
+🚀 Deploy (Azure) / 🚀 Deploy App / dispatch-azure / Build API / Build (arm64)
+🚀 Deploy (Azure) / 🚀 Deploy App / dispatch-azure / Build API / Create Multi-Arch Manifest
