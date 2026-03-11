@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 1 # Scan current state only (faster)
 
@@ -71,7 +71,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # Needed for diff calculation
 
@@ -170,7 +170,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
@@ -247,7 +247,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run OSSF Scorecard
         uses: ossf/scorecard-action@v2.4.3

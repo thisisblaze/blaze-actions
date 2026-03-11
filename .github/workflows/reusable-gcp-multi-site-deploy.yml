@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Google Auth (OIDC)
         uses: google-github-actions/auth@v2
