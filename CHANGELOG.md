@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - 2026-03-04
+- Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Changed
 
@@ -15,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased] - 2026-03-03
+- Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Changed
 
@@ -66,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased] - 2026-02-25
+- Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
 
@@ -101,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased] - 2026-02-23
+- Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
 
@@ -269,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+- Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
 
