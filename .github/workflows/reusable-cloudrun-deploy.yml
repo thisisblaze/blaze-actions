@@ -146,7 +146,7 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Authenticate to GCP
               uses: google-github-actions/auth@v3
@@ -156,7 +156,7 @@ jobs:
                   audience: ${{ inputs.wif_audience }}
 
             - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v2
+              uses: google-github-actions/setup-gcloud@v3
 
             - name: Compute Service Name
               id: svc
@@ -218,7 +218,7 @@ jobs:
 
             - name: Deploy to Cloud Run
               id: deploy
-              uses: google-github-actions/deploy-cloudrun@v2
+              uses: google-github-actions/deploy-cloudrun@v3
               with:
                   service: ${{ steps.svc.outputs.service_name }}
                   image: ${{ inputs.image_uri }}:${{ inputs.image_tag }}

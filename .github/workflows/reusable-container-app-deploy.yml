@@ -123,7 +123,7 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6
 
             - name: Decode Azure Credentials
               run: |
@@ -178,7 +178,7 @@ jobs:
                   echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
 
             - name: Deploy Revision
-              uses: azure/container-apps-deploy-action@v1
+              uses: azure/container-apps-deploy-action@v2
               with:
                   imageToDeploy: ${{ inputs.azure_registry_server }}/${{ inputs.namespace }}-${{ inputs.project_key }}-web/${{ inputs.project_key }}/${{ inputs.service_name }}:${{ inputs.image_tag }}
                   resourceGroup: ${{ steps.names.outputs.resource_group }}

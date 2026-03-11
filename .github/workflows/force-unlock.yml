@@ -75,7 +75,7 @@ jobs:
             lock_table: ${{ steps.config.outputs.lock_table }}
             aws_region: ${{ steps.config.outputs.aws_region }}
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - name: Load Access List
               id: load-access
@@ -116,7 +116,7 @@ jobs:
         steps:
             - name: Configure AWS Credentials
               if: inputs.cloud_provider != 'gcp'
-              uses: aws-actions/configure-aws-credentials@v5
+              uses: aws-actions/configure-aws-credentials@v6
               with:
                   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
                   aws-region: ${{ needs.configuration.outputs.aws_region }}
