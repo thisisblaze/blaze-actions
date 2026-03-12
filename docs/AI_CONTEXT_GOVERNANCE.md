@@ -163,7 +163,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **Dual ALB (DEV/STAGE/PROD)**      | Frontend ALB behind CloudFront+WAF, API ALB direct (no CloudFront) — CORS-safe                     |
 | **VPC CIDRs**                      | DEV=10.0.0.0/16, DEV-MINI=10.1.0.0/16, STAGE=10.2.0.0/16, PROD=10.3.0.0/16, MULTI-SITE=10.4.0.0/16 |
 | **Lambda@Edge / Image Resize**     | **Frontend only** — CloudFront path. Enabled on DEV, STAGE, PROD. NOT on DEV-MINI                  |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v1.52.0**                                                         |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v1.53.0**                                                         |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
 
 ---
