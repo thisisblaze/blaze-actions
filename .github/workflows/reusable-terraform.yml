@@ -453,6 +453,7 @@ jobs:
       # Lambda runs on Linux, not macOS - must use linux-x64 binaries
       # Run AFTER init to catch both local modules AND remote modules (in .terraform)
       - name: Build Sharp for Lambda@Edge (Linux x64)
+        if: ${{ inputs.destroy != true }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
           set -x
