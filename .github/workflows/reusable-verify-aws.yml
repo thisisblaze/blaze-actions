@@ -266,33 +266,28 @@ jobs:
           echo "📦 Image resize bucket: ${BUCKET_NAME}"
           echo "🌐 CloudFront distribution: ${DIST_ID}"
 
-          # Step 2: Generate and upload test image
-          python3 -c "
-          import struct, os
-          width, height = 800, 600
-          with open('tests/sample.ppm', 'wb') as f:
-              f.write(f'P6\n{width} {height}\n255\n'.encode())
-              for y in range(height):
-                  for x in range(width):
-                      f.write(bytes([int(x/width*255), int(y/height*255), 128]))
-          print(f'Generated test PPM: {os.path.getsize(\"tests/sample.ppm\")} bytes')
-          "
-
-          # Convert PPM to JPEG using ImageMagick (available on GitHub runners)
-          convert tests/sample.ppm tests/sample.jpg 2>/dev/null || \
+          # Step 2: Use checked-in fixture and upload
+          if [ ! -d "tests" ]; then mkdir -p tests; fi
+          if [ -f "tests/fixtures/sample.jpg" ]; then
+            cp tests/fixtures/sample.jpg tests/sample.jpg
+          else
+            echo "⚠️ No test fixture found, falling back to generation"
             python3 -c "
-          # Minimal JFIF JPEG fallback — copy PPM as raw if convert unavailable
-          import subprocess, os
-          # Try ffmpeg as fallback
-          subprocess.run(['ffmpeg', '-y', '-i', 'tests/sample.ppm', 'tests/sample.jpg'], 
-                        capture_output=True, check=True)
-          " 2>/dev/null || {
-            echo "⚠️ No image converter available, using PPM directly"
-            cp tests/sample.ppm tests/sample.jpg
-          }
+            import struct, os
+            width, height = 800, 600
+            with open('tests/sample.ppm', 'wb') as f:
+                f.write(f'P6\n{width} {height}\n255\n'.encode())
+                for y in range(height):
+                    for x in range(width):
+                        f.write(bytes([int(x/width*255), int(y/height*255), 128]))
+            "
+            convert tests/sample.ppm tests/sample.jpg 2>/dev/null || cp tests/sample.ppm tests/sample.jpg
+          fi
 
           ls -la tests/sample.jpg
           aws s3 cp tests/sample.jpg "s3://${BUCKET_NAME}/test/sample.jpg" --content-type "image/jpeg"
+          # Also upload to media/test.jpg for manual URL verification
+          aws s3 cp tests/sample.jpg "s3://${BUCKET_NAME}/media/test.jpg" --content-type "image/jpeg"
           echo "✅ Uploaded test image to s3://${BUCKET_NAME}/test/sample.jpg"
 
           # Step 3: Invalidate CloudFront cache for /convert/test/* paths (clears cached 404s)
