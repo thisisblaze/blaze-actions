@@ -577,6 +577,7 @@ jobs:
           done < _github_vars.env
 
       - name: Run VPC Integrity Check
+        if: ${{ inputs.destroy != true }}
         working-directory: ${{ inputs.tf_dir }}
         env:
           AWS_REGION: ${{ inputs.aws_region }}
