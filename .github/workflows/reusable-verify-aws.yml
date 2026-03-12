@@ -221,10 +221,10 @@ jobs:
 
             if [ "$STAGE" = "prod" ]; then
               check_url "https://frontend.${DOMAIN}" "frontend"
-              check_url "https://api.${DOMAIN}/health" "api"
+              check_url "https://api.${DOMAIN}/graphql" "api"
             else
               check_url "https://frontend-${STAGE}.${DOMAIN}" "frontend (401=auth expected)"
-              check_url "https://api-${STAGE}.${DOMAIN}/health" "api"
+              check_url "https://api-${STAGE}.${DOMAIN}/graphql" "api"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -381,7 +381,7 @@ jobs:
           fi
 
           # Test API (accept 200/400/401/404/530 — 530 = Cloudflare origin unreachable on ECS cold start)
-          API_URL="https://api-${URL_SUFFIX}.${{ inputs.domain_root }}/health"
+          API_URL="https://api-${URL_SUFFIX}.${{ inputs.domain_root }}/graphql"
           if ! test_url_with_retry "$API_URL" "API" "200 400 401 404 530"; then
             ALL_URLS_OK=false
           fi
