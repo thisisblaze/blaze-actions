@@ -1194,6 +1194,7 @@ jobs:
         echo "🔪 ORPHANING LAMBDA@EDGE FUNCTIONS FROM STATE..."
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" 2>/dev/null || true
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" 2>/dev/null || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].random_id.suffix" 2>/dev/null || true
         echo "✅ Lambda@Edge orphaned."
 
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
