@@ -1,4 +1,22 @@
+
 #!/bin/bash
+set -eo pipefail
+
+echo "=================================================="
+echo " 🧹 Pre-Apply Cleanup & Import"
+echo "=================================================="
+
+# 1. FORCE NEW LAMBDA@EDGE SUFFIX IF LAMBDA WAS ORPHANED
+# If the random_id suffix is in state but the function isn't (due to 99-ops-nuke orphaning),
+# we must remove the random_id from state so Terraform generates a NEW suffix and avoids 409 Conflict.
+if terraform state list | grep -q "lambda_edge_image_resize\[0\]\.random_id\.suffix"; then
+  if ! terraform state list | grep -q "lambda_edge_image_resize\[0\]\.aws_lambda_function\.origin_response"; then
+    echo "⚠️ Lambda@Edge function is missing from state but random suffix remains."
+    echo "🧹 Removing stale random_id.suffix to force generation of a new Lambda name..."
+    terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].random_id.suffix" || true
+  fi
+fi
+
 # Auto-import existing ECR repositories to prevent "already exists" errors
 # This script runs before terraform apply to gracefully handle orphaned resources
 
