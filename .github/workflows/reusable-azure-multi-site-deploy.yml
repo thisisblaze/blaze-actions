@@ -129,7 +129,7 @@ jobs:
             # For Tier 2 (multi-revision): new revision starts at 0% traffic.
 
             - name: Deploy New Revision
-              uses: azure/container-apps-deploy-action@v1
+              uses: azure/container-apps-deploy-action@v2
               with:
                   imageToDeploy: ${{ env.ACR }}/${{ env.REPO }}/${{ env.SITE_KEY }}:${{ env.TAG }}
                   resourceGroup: ${{ env.RG }}

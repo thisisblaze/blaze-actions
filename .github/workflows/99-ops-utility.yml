@@ -187,7 +187,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Load Access List
         id: load-access
@@ -290,7 +290,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Load AWS Region from Config
         id: load-region
