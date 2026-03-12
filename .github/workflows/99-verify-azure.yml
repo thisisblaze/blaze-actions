@@ -157,8 +157,8 @@ jobs:
                     CUSTOM_DOMAIN="${STAGE_LC}.${DOMAIN_ROOT}"
                   fi
 
-                  echo "🌐 Checking custom domain: https://${CUSTOM_DOMAIN}/health"
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${CUSTOM_DOMAIN}/health" || echo "000")
+                  echo "🌐 Checking custom domain: https://${CUSTOM_DOMAIN}/graphql"
+                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${CUSTOM_DOMAIN}/graphql" || echo "000")
                   echo "HTTP Status: $HTTP_STATUS"
 
                   if [[ "$HTTP_STATUS" =~ ^(200|301|302|404|503)$ ]]; then

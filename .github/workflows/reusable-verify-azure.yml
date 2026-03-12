@@ -68,7 +68,7 @@ jobs:
           echo "🔍 Verifying Azure endpoints..."
 
           # 1. API Health Check
-          API_URL="https://api-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/health"
+          API_URL="https://api-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/graphql"
           echo "Checking API: $API_URL"
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
           if [ "$HTTP_STATUS" != "200" ]; then
