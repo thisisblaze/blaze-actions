@@ -452,15 +452,7 @@ jobs:
       # Build Sharp for Linux (Lambda Runtime) - Critical for Lambda@Edge
       # Lambda runs on Linux, not macOS - must use linux-x64 binaries
       # Run AFTER init to catch both local modules AND remote modules (in .terraform)
-      - name: Cache Sharp Lambda node_modules
-        id: cache-sharp
-        uses: actions/cache@v4
-        with:
-          path: '**/functions/resize-image/node_modules'
-          key: ${{ runner.os }}-sharp-lambda-${{ hashFiles('**/functions/resize-image/package.json') }}
-
       - name: Build Sharp for Lambda@Edge (Linux x64)
-        if: steps.cache-sharp.outputs.cache-hit != 'true'
         working-directory: ${{ inputs.tf_dir }}
         run: |
           set -x
