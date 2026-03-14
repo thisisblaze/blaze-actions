@@ -222,11 +222,18 @@ jobs:
 
       - name: Authenticate to Google Cloud
         if: inputs.cloud_provider == 'gcp'
+        id: google-auth
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || '' }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
           audience: ${{ inputs.wif_audience }}
+          token_format: 'access_token'
+
+      - name: Export GCP Token for Terraform
+        if: inputs.cloud_provider == 'gcp'
+        run: echo "GOOGLE_OAUTH_ACCESS_TOKEN=${{ steps.google-auth.outputs.access_token }}" >> "$GITHUB_ENV"
+
 
       - name: Decode Azure Credentials
         if: inputs.cloud_provider == 'azure'
