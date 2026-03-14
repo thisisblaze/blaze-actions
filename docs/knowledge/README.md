@@ -25,3 +25,4 @@ When creating a new file in this directory, please use this structure:
 - [Terraform Cloudflare DNS Import](./terraform-cloudflare-dns-import.md) - Handling the Cloudflare Provider v5 missing `allow_overwrite`.
 - [AWS CloudFront SPA Routing](./aws-cloudfront-spa-routing.md) - Fixing 404/403 errors on React deep links.
 - [Terraform State Mismatches](./terraform-state-checksum-mismatch.md) - Reconciling DynamoDB lock conflicts and S3 state drift.
+- [GCP WIF Terraform Backend Auth](./gcp-wif-terraform-access-token.md) - Resolving `403` and `iam.serviceAccounts.getAccessToken` permission errors during Terraform GCS backend initialization.
