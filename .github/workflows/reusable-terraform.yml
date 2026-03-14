@@ -229,6 +229,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
           audience: ${{ inputs.wif_audience }}
           token_format: 'access_token'
+          create_credentials_file: false
 
       - name: Export GCP Token for Terraform
         if: inputs.cloud_provider == 'gcp'
