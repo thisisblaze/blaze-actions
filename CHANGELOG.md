@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-03-14
+
+### Fixed
+
+- **GCP Workload Identity Federation (WIF)**: Added `token_format: 'access_token'` to `google-github-actions/auth@v3` steps and stopped exporting the credentials file to Terraform to prevent `iam.serviceAccounts.getAccessToken` permission denied errors when initializing the GCS backend.
+- **GCP Auth Propagation**: Added and propagated `wif_audience` to auth steps in Pages deploys and stress tests. Added missing GCP secrets to `deploy-app` in the reusable deployment workflows.
+- **GCP Artifact Registry**: Updated workflows to use `docker/login-action` for Artifact Registry authentication instead of `gcloud auth configure-docker`.
+- **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
+
 ## [Unreleased] - 2026-03-12
 
 ### Fixed
