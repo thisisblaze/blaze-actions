@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-14
+**Last Updated**: 2026-03-16
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
-**REPO ROLE**: Application Implementation & Infrastructure Instantiation (Hub)
+**REPO ROLE**: Reusable GitHub Actions Workflows
 
 ## 1. The Prime Directive
 
@@ -76,12 +76,12 @@ _(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly
 
 Consult these approved workflows for specific operational tasks:
 
-- **Analysis**: `/01-analyze` → `.agent/workflows/01-analyze.md`
-- **Testing**: `/02-test` → `.agent/workflows/02-test.md`
-- **Security Audit**: `/08-audit` → `.agent/workflows/08-audit.md`
-- **Consistency Check**: `/cross-environment-consistency` → `.agent/workflows/cross-environment-consistency.md`
-- **Image Resize Deploy**: `/09-deploy-image-resize` → `.agent/workflows/09-deploy-image-resize.md` (AWS only)
-- **Troubleshooting**: `/04-troubleshoot` → `.agent/workflows/04-troubleshoot.md`
+- **Add Workflow**: `/01-add-workflow` → `.agent/workflows/01-add-workflow.md`
+- **Add Sharp Layer**: `/02-add-sharp-layer` → `.agent/workflows/02-add-sharp-layer.md`
+- **Deep CICD Maintenance**: `/13-deep-cicd-maintenance` → `.agent/workflows/13-deep-cicd-maintenance.md`
+- **Troubleshoot CloudFront**: `/troubleshoot-cloudfront` → `.agent/workflows/troubleshoot-cloudfront.md`
+- **Troubleshoot TF Locks**: `/troubleshoot-terraform-locks` → `.agent/workflows/troubleshoot-terraform-locks.md`
+- **Debug CICD Workflows**: `/debug-cicd-workflows` → `.agent/workflows/debug-cicd-workflows.md`
 - **Docs Maintenance**: `/09-maintain-docs` → `.agent/workflows/09-maintain-docs.md`
 
 ## 6. Key References
@@ -163,7 +163,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **Dual ALB (DEV/STAGE/PROD)**      | Frontend ALB behind CloudFront+WAF, API ALB direct (no CloudFront) — CORS-safe                     |
 | **VPC CIDRs**                      | DEV=10.0.0.0/16, DEV-MINI=10.1.0.0/16, STAGE=10.2.0.0/16, PROD=10.3.0.0/16, MULTI-SITE=10.4.0.0/16 |
 | **Lambda@Edge / Image Resize**     | **Frontend only** — CloudFront path. Enabled on DEV, STAGE, PROD. NOT on DEV-MINI                  |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v1.53.0**                                                         |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v1.55.1**                                                         |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
 
 ---
