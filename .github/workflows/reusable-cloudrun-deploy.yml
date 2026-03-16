@@ -114,6 +114,8 @@ on:
                 required: false
             BLAZE_ELASTICSEARCH_PASSWORD:
                 required: false
+            BLAZE_ELASTICSEARCH_ENDPOINT:
+                required: false
             BLAZE_FILES_S3_ACCESS_KEY:
                 required: false
             BLAZE_FILES_S3_SECRET_ACCESS_KEY:
@@ -180,6 +182,7 @@ jobs:
                   BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
                   BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
                   BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+                  BLAZE_ELASTICSEARCH_SECRET_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
                   BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
                   BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
                   BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
@@ -211,6 +214,8 @@ jobs:
                   ]
 
                   env_dict = {k: os.environ[k] for k in keys if k in os.environ and os.environ[k]}
+                  if "BLAZE_ELASTICSEARCH_SECRET_ENDPOINT" in os.environ and os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]:
+                      env_dict["BLAZE_ELASTICSEARCH_ENDPOINT"] = os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]
 
                   with open("gcp-env.yaml", "w") as f:
                       yaml.dump(env_dict, f, default_flow_style=False)
