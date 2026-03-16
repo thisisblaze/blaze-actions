@@ -717,7 +717,7 @@ jobs:
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) }}
       port: 3001
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
@@ -777,7 +777,7 @@ jobs:
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) }}
       port: 3000
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
