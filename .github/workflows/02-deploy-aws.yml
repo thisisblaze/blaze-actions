@@ -197,6 +197,8 @@ on:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
         required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
 
       BLAZE_FILES_S3_ACCESS_KEY:
         required: false
@@ -787,7 +789,7 @@ jobs:
         }}.amazonaws.com"
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
-      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       # Hybrid ECS
       launch_type: ${{ inputs.api_launch_type }}
@@ -836,7 +838,7 @@ jobs:
         }}.amazonaws.com"
       dfp_network_id: ${{ needs.configuration.outputs.dfp_network_id }}
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
-      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
       # Hybrid ECS — Frontend supports Hybrid
       launch_type: ${{ inputs.frontend_launch_type }}
@@ -884,7 +886,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region
         }}.amazonaws.com"
-      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
@@ -895,6 +897,7 @@ jobs:
       BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
       BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
         secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}

@@ -197,6 +197,8 @@ on:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
         required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
 
       BLAZE_FILES_S3_ACCESS_KEY:
         required: false
@@ -715,7 +717,7 @@ jobs:
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) }}
       port: 3001
-      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
@@ -741,6 +743,7 @@ jobs:
       BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
       BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
         secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
@@ -774,7 +777,7 @@ jobs:
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) }}
       port: 3000
-      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
@@ -851,6 +854,7 @@ jobs:
       BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+      BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
