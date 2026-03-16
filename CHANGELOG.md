@@ -5,6 +5,202 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.0 (2026-03-16)
+
+### Added
+
+- feat: handle orphaned target groups, log groups, and cloudfront functions in cleanup script
+- feat: add cleanup-orphaned-buckets ops action
+- feat: Add job to deploy Admin SPA to S3
+- feat: add gcp stress test workflow
+- feat: add skip_stability_wait to ECS deploy action + wire through stress-test
+- feat: add Azure to daily health check (Gap 14)
+- feat: add S3 endpoint override for GCS compatibility
+- feat: wire all env vars + secrets to GCP Cloud Run deploy
+- feat: add environment input to docker build
+- feat: Add dynamic bucket logic to 00 and pass wif_audience in reusables
+- feat: add wif_audience input to support custom WIF audience for GCP auth
+- feat: enable auto-cleanup for app stack resources (pages/workers)
+- feat: add cleanup-dns and nuke-cloudfront to ops utility
+- feat: enable split apply for tunnel stack in provision workflow
+- feat: implement split apply for tunnel stability and release v1.3.0
+- feat: add Azure auth guard to 01-provision-infra.yml
+- feat: GCP CI/CD parity — cloud_provider routing, data stack, provider-aware summaries
+- feat: multi-cloud guards for setup, state utils
+- feat: multi-cloud awareness for auxiliary workflows
+- feat: multi-cloud guards for all ops-utility jobs
+- feat: guard remaining AWS-only jobs + GCP nuke teardown
+- feat: complete multi-cloud wiring in 02-deploy-app
+- feat: GCP compute deploy + multi-cloud configuration job
+- feat: add GCP Artifact Registry auth to docker-build workflow
+- feat: wire GCP config end-to-end through calculate-config
+- feat: add GCP WIF secrets to reusable-terraform
+- feat: multi-cloud router foundation (Phase 1A+1B)
+- feat: add cloudwatch log cleanup to pre-destroy workflow
+- feat: Support resolving distribution ID from domain name in fix-cname-conflict
+- feat: enable multi-arch build and hybrid ecs for frontend
+- feat: add EC2 cleanup to pre-destroy + update NotebookLM prompts
+- feat: add account-settings stack support + hybrid ECS docs
+- feat: update deploy call chain for multi-arch and hybrid ECS
+- feat: multi-arch Docker builds and hybrid ECS deploy support
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-03-16
+- chore: align dev and dev-mini network module refs to v1.55.1
+- chore: end-of-day governance sync — 2026-03-12
+- docs: session handoff — 2026-03-12 governance updates
+- chore: end-of-day governance sync and session handoff - 2026-03-11
+- chore: end-of-day governance sync — 2026-03-11
+- docs: freeze AI session state for Node 20 / NPM 404 patches
+- chore: globally upgrade actions/checkout and actions/setup-node to v5
+- docs: generate HANDOFF.md freezing session context for Run 19
+- refactor: remove stress-test.yml and variations due to github 4-level nesting limit
+- Refactor: Decompose monolithic stress test into phase orchestrators to bypass 20-ref limit [skip ci]
+- docs: end-of-day governance sync and AI Context updates
+- docs: 09-maintain-docs monthly sweep 2026-03-04
+- chore: add reusable noop for testing parser
+- chore: fix checkengines false positives and turbo annotations
+- chore: save handoff state for next session
+- docs: handoff state frozen 2026-03-04T08:22Z
+- docs: session handoff — 2026-03-04 [Antigravity Azure]
+- chore: automate docs freshness and hygiene maintenance
+- docs: sync handoff state before 120 cf distributions architecture pivot
+- docs: add image resize troubleshooting guide for CloudFront 403 and Lambda 404 errors
+- chore: session handoff state — CloudFront deletion forensics complete
+- chore: end-of-day governance sync — 2026-03-01
+- chore: end-of-day governance sync — 2026-03-01
+- chore: integrate ENV_COMPARISON_AWS report into all governance workflows
+- chore: increase ECS service wait timeout from 5 to 10 mins
+- chore: handoff 2026-02-28 — dev-network v1.50.8 applied, stress test pending
+- chore: sync module refs to v1.50.3 and update ops utility for dev-mini
+- chore: end-of-day governance sync 2026-02-28 — Section 11 (dual-ALB facts, VPC CIDRs, v1.50.3)
+- docs: update system prompt and NotebookLM docs for separate API ALB architecture
+- docs: sync blaze-actions with 2026-02-27 architecture changes
+- docs: sync agent workflows and workflow catalog with dev-mini and dev parity changes
+- docs: generate HANDOFF state for native ECS Blue/Green stress test
+- docs: redact internal AWS profile from handoff
+- chore: add log and txt files to .gitignore
+- docs: AWS focus state update
+- docs: generate handoff state
+- chore: save end-of-month audit handoff session state
+- chore: end-of-day governance sync — 2026-02-25
+- chore: test mid workflow
+- chore: save AI session handoff state
+- chore: end-of-day governance sync — 2026-02-25
+- chore: end-of-day governance sync — 2026-02-25
+- chore: end-of-day governance sync — 2026-02-25
+- chore: end-of-day governance sync — 2026-02-25
+- chore: end-of-day governance sync — 2026-02-24
+- chore: end-of-day governance sync — 2026-02-24
+- chore: end-of-day governance sync — 2026-02-23
+- docs: add strict public repository sanitization constraints to AI rules
+- docs: create native knowledge library for smart ops fixes
+- docs: add skip_stability_wait to CHANGELOG
+- docs: refresh stale NotebookLM Last Updated dates (checkengines Engine 1) 📄
+- docs: add workflow metadata descriptions for Engine 8 parity
+- chore: end-of-day governance sync — 2026-02-21
+- chore: unified governance — one ring to rule them all
+- docs: multi-cloud updates to WORKFLOW_CATALOG (version, state backends, deploy platforms)
+- chore: remove debug steps for gcp secrets
+- chore: debug gcp secrets
+- chore: trigger workflow refresh
+- chore: test commenting out workflow_call secret
+- chore: add debug credentials step
+- chore: remove debug job
+- chore: add debug job for failure context
+- docs: standardize contributing guide and add PR template
+- docs: update README to v1.2.0-multi-cloud-foundation
+- docs: add v1.2.0-multi-cloud-foundation to CHANGELOG
+- docs: update notebooklm prompt with hybrid ecs and cleanup details
+- docs: refine reusable-pre-destroy-cleanup description
+- docs: update reusable workflows guide with multi-cloud and cleanup
+- docs: add multi-cloud secrets to cross-org guide
+- docs: add multi-cloud topology diagram
+- docs: update AI governance with multi-cloud and cleanup protocols
+- docs: update quick start audit prompt with cleanup protocols
+- docs: update daily audit prompt with cleanup workflow checks
+- docs: update system prompt with cleanup protocols
+- docs: daily audit update [2026-02-16]
+- docs: update README for multi-cloud support (AWS + GCP + Azure)
+- chore: Automate Governance Context loading and update NAT Strategy
+- chore: update version to v1.1.0-hybrid-ecs
+- docs: install maintain-docs workflow and sweep report
+- docs: update NotebookLM prompts — v1.4.0 → v1.33.2 workflow refs, ECS Fargate → Hybrid, dates → 2026-02-09
+- docs: fix duplicate Workflow Catalog link, update dates in REUSABLE_WORKFLOWS.md
+- docs: add enable_ec2, api_launch_type, cpu_architecture to WORKFLOW_CATALOG
+- docs: add v1.1.0-hybrid-ecs changelog, update README version
+- docs: monthly documentation audit — February 2026
+- chore: update CHANGELOG for v1.0.0-fargate-stable
+
+### Fixed
+
+- fix: Correct secrets indentation in reusable workflows
+- fix: pass BLAZE_ELASTICSEARCH_ENDPOINT correctly to pages deploy
+- fix: pass BLAZE_ELASTICSEARCH_ENDPOINT correctly to cloud run and azure container apps
+- fix: skip VPC Integrity Check on terraform destroy
+- fix: pass NODE_AUTH_TOKEN explicitly as a build-arg to fix Lerna NPM authentication bug in docker builds
+- fix: switch back to setup-node registry-url and pass NODE_AUTH_TOKEN to fix Lerna bug natively
+- fix: pass NODE_AUTH_TOKEN directly to build:admin to bypass lerna npmrc bug
+- fix: remove setup-node registry-url override to allow custom .npmrc for lerna
+- fix: resolve yaml syntax and job requirement errors in 99-ops-cloudflare
+- fix: resolve unrecognized named-value 'secrets' in deploy-site if conditional
+- fix: resolve yaml syntax and job requirement errors in 99-ops workflows
+- fix: correct ACR naming convention order (stage before project_key)
+- fix: add missing wif_audience to teardown and verify workflows for GCP auth
+- fix: skip AWS credential config and resources cleanup for azure/gcp runs
+- Fix: correct input parameter mismatches in verification phase and Azure caller
+- fix(nuke/network): move state rm to pre_apply_script (before plan) — fix stale plan
+- fix(pre-destroy): add CloudFront distribution and cache policy pre-destroy cleanup
+- fix: strictly scope ops cleanup script to thisisblaze project only
+- fix: match project_key in bucket cleanup
+- fix(99-ops-utility): remove empty GCP audience field causing invalid_grant on nuke
+- fix: add MULTI-SITE to stress-test workflow options
+- fix: re-index VPC CIDRs for stage, prod, and multi-site
+- fix: re-index VPC CIDRs (0=dev:10.0, 1=dev-mini:10.1, 2=stage:10.2, 3=prod:10.3, 4=multi:10.4)
+- fix: explicitly pass AWS_ROLE_ARN instead of secrets: inherit to prevent resolution failure when called from other respositories
+- fix: update stress-test stability check for native ECS blue/green
+- fix: skip Cloudflare Pages admin deployment when AWS is used
+- fix: add missing cloudflare and mongodb secrets to all azure stress test jobs
+- fix: correct azure conditional and remove always() clause from initial destroy steps
+- fix(azure): pass GH_PAT via reversed job output chain to reach reusable-terraform-operations
+- fix(azure): use infra_prefix for tf_dir instead of hardcoded 'infra/project/stage' path
+- fix(azure): switch from base64 to rev encoding for cross-env secret bridge
+- fix(azure): pass cloud-provider to setup-blaze in reusable-terraform-operations
+- fix(azure): uppercase environment name for blaze-actions env gates (startup_failure fix)
+- fix(gcp-multi-site): resolve Artifact Registry repo name mismatch
+- Fix: Add SSH deploy key fallback for private Terraform module access (GH_PAT → DEPLOY_KEY → GITHUB_TOKEN)
+- Fix: NAMESPACE default in blaze-env.json, optional jq chaining, and add default fallbacks in calculate-config
+- fix: actionlint gcp issues
+- docs(knowledge): extend OIDC guide with cross-repo vars fallback pattern
+- fix: auto-upload test image before image resize verification
+- fix: CDN domain is cdn.domain for prod, cdn-env.domain for others
+- fix: add Cloudflare secrets to destroy-app calls
+- fix: add missing stage_key to all terraform operations calls
+- fix: gate tunnel provisioning/destroy to DEV-only in stress test
+- fix: pass launch_type/cpu_architecture to deploy-app in stress test
+- fix(azure): authenticate git before TF init in post_provision_azure_cdn
+- fix: pass STACK_NAME to pre_apply_script
+- fix: update frontend gcp deploy image uri
+- fix: use env vars for secrets in cloud run deploy
+- fix: update gcp artifact registry naming and debug admin deploy
+- fix: move environment input to with block for build-api
+- fix: pass environment as input
+- fix: add environment to remaining jobs
+- fix: apply environment context to jobs
+- fix: add environment context to build jobs
+- fix: restore environment context and cleanup debug steps
+- fix: remove environment from configuration job
+- fix: add credential fallback to configuration job
+- fix: credentials fallback and environment context
+- fix: add environment context to configuration job for secrets access
+- fix: remove invalid failure() call in debug job
+- Fix: correct CP/ASG naming in cleanup script
+- fix: add GCP WIF secrets to 01-provision-infra workflow_call
+- fix: extend cloudwatch log cleanup patterns
+- fix: Add workflow_call trigger to allow reuse
+- fix: use GITHUB_WORKSPACE for pre-apply script path
+
 ## [Unreleased] - 2026-03-16
 
 ### Added
