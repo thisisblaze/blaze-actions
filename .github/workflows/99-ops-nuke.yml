@@ -1079,6 +1079,7 @@ jobs:
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: true
       destroy: false # We partially destroy by disabling CDN, then full network destroy follows
+      build_sharp: false # Skip building Sharp binaries to save 2+ mins on this run
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}

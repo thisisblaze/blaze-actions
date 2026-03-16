@@ -60,6 +60,11 @@ on:
         required: false
         type: boolean
         default: false
+      build_sharp:
+        description: "Whether to build the Sharp binaries for Lambda@Edge (Linux x64). Set to false to skip."
+        required: false
+        type: boolean
+        default: true
       orphan_lambda:
         description: "Skip Lambda@Edge destruction by removing from state (prevents 1h hang)"
         required: false
@@ -461,7 +466,7 @@ jobs:
       # Lambda runs on Linux, not macOS - must use linux-x64 binaries
       # Run AFTER init to catch both local modules AND remote modules (in .terraform)
       - name: Build Sharp for Lambda@Edge (Linux x64)
-        if: ${{ inputs.destroy != true && inputs.destroy != 'true' }}
+        if: ${{ inputs.destroy != true && inputs.destroy != 'true' && inputs.build_sharp != false && inputs.build_sharp != 'false' }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
           set -x
