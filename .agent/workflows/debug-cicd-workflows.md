@@ -84,6 +84,40 @@ jobs:
 # Check AWS_ROLE_ARN is defined for environment
 ```
 
+### 3. Secrets Not Passed to Reusable Workflows (Cross-Org)
+
+**Symptom:**
+
+```
+Login failed with Error: Using auth-type: SERVICE_PRINCIPAL. Not all values are present. Ensure 'client-id' and 'tenant-id' are supplied.
+```
+or secrets evaluate to empty strings during the workflow run.
+
+**Causes:**
+
+1. **`secrets: inherit` limitation** - When a private caller repository (e.g., `thebyte9/blaze-template-deploy`) calls a public reusable workflow in a different organization (e.g., `thisisblaze/blaze-actions`), `secrets: inherit` **fails silently**.
+
+**Fix:**
+
+You MUST use explicit secret mapping in the caller workflow.
+
+```yaml
+# ❌ WRONG (fails across orgs)
+jobs:
+  ops-azure:
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-azure.yml@dev
+    secrets: inherit
+
+# ✅ CORRECT (explicit mapping)
+jobs:
+  ops-azure:
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-azure.yml@dev
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
 ### 3. Action Path Not Found
 
 **Symptom:**
