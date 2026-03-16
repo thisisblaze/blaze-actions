@@ -109,7 +109,7 @@ Exclude matches inside `docs/` and `archive/` (those are documentation reference
 1. **Loose reports** (deploy repo):
 
    ```
-   find docs/reports/ -maxdepth 1 -type f -name "*.md" ! -name "README.md"
+   find docs/reports/ -maxdepth 1 -type f -name "*.md" ! -name "README.md" ! -name "ENV_COMPARISON_AWS.md"
    ```
 
    Flag any files found (should be in `YYYY/MM/` subdirectories).
@@ -183,6 +183,7 @@ For each pair:
 
 3. **Orphan detection**:
    - Flag any workflow `.md` that references a GitHub Actions file (`.github/workflows/*.yml`) that does NOT exist (ignore placeholders with `<` or `*`).
+     - **Exception**: Ignore `debug-cicd-workflows.md` and `02-add-sharp-layer.md` as they intentionally cross-reference workflows between repos.
    - Flag any workflow with a `description:` frontmatter that is empty or missing.
 
 4. **Turbo safety**: Flag any workflow with `// turbo` where the immediately following code block contains `destroy`, `delete`, `rm -rf`, `git push`, or `terraform apply`.
@@ -193,19 +194,17 @@ For each pair:
 
 In `blaze-template-deploy`:
 
-1. **Coverage freshness**: Read `docs/reports/stress-tests/STRESS_TEST_REPORTS.md` — parse the Coverage Matrix table.
-   - For each cell with a date: flag if **older than 7 days** from today.
-   - For each `⬚` cell on an active provider (AWS): flag as `⚠️ Never tested`.
+1. **Coverage freshness**: Read `docs/reports/stress-tests/STRESS_TEST_REPORTS.md` — parse the Trend Summary table for the latest mini runs (`~7m (mini)`).
+   - If the most recent **mini** run for AWS, GCP, or Azure is **older than 7 days** from today: flag it.
+   - Note: We intentionally exclude `(full-circle)` and `(standard)` runs from the freshness alert as they are manually triggered and less frequent.
 
 2. **Run report existence**: List files in `docs/reports/stress-tests/runs/`.
    - For each date in the Coverage Matrix, verify the corresponding run report file exists (e.g., `2026-02-21-aws-dev.md`).
    - Flag any matrix entry that links to a non-existent file.
 
 3. **Guide coverage**: Verify these files exist:
-   - `docs/guides/STRESS_TEST_AWS_GUIDE.md` ✅
-   - `docs/guides/STRESS_TEST_GCP_GUIDE.md` ✅
-   - `docs/guides/STRESS_TEST_AZURE_GUIDE.md` ✅
-     Flag any missing guide.
+   - `docs/prompts/03_manual/STRESS_TEST_GUIDE.md` ✅
+     Flag if missing.
 
 4. **Known Issues tracker**: Read the Known Issues table in the hub. Flag any issue marked `🔴` severity that has been open >30 days.
 
