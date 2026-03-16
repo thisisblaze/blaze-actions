@@ -31,7 +31,7 @@ This workflow automates building and deploying the Sharp Lambda Layer required f
 The layer is **automatically built** in GitHub Actions when provisioning the network stack:
 
 ```yaml
-# .github/workflows/01-provision-infra.yml
+# thebyte9/blaze-template-deploy/.github/workflows/01-provision-infra.yml
 jobs:
   build_sharp_layer:
     if: inputs.stack == 'network'
@@ -338,7 +338,7 @@ Lambda@Edge functions deployed with Sharp
 
 ### Workflow Integration
 
-- `.github/workflows/01-provision-infra.yml` - Main workflow
+- `thebyte9/blaze-template-deploy/.github/workflows/01-provision-infra.yml` - Main workflow
 - `.github/actions/build-sharp-layer/action.yml` - Reusable action
 
 ### Terraform Modules
