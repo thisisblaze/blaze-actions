@@ -396,7 +396,7 @@ act -j job-name \
 # Caller (wrapper)
 jobs:
   call:
-    uses: org/repo/.github/workflows/reusable-terraform.yml@branch
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     with:
       input1: value1
     secrets:
