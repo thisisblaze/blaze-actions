@@ -780,7 +780,7 @@ jobs:
       # Azure Registry Server (e.g. CACHE_REGISTRY)
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       target_port: 3000
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
@@ -823,7 +823,7 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       target_port: 3000
-      elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
+      elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
