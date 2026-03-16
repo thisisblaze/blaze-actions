@@ -60,13 +60,21 @@ In `blaze-template-deploy`:
    ```
    cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
    git tag --sort=-v:refname | head -1
+   
+   cd /Users/marek/Workspace/thisisblaze/blaze-actions
+   git tag --sort=-v:refname | head -1
    ```
-2. In `blaze-template-deploy`, grep all `main.tf` files for module `ref=` values:
+2. In `blaze-template-deploy`, test both Terraform and GitHub Actions references:
    ```
+   # Check Terraform modules
    grep -rn "ref=" .github/aws/infra/live/ .github/gcp/infra/live/ .github/azure/infra/live/ --include="*.tf"
+   
+   # Check GitHub Actions workflows
+   grep -rn "uses: thisisblaze/blaze-actions" .github/workflows/ --include="*.yml"
    ```
 3. Flag:
-   - Any stack using a `ref=` **different** from the latest tag.
+   - Any Terraform stack using a `ref=` **different** from the latest `blaze-terraform-infra-core` tag.
+   - Any GitHub Actions workflow using a `@v` tag **different** from the latest `blaze-actions` tag (or still using `@dev`).
    - Any **version inconsistency** between environments (e.g., stage on `v1.50.0` but prod on `v1.49.0`).
 
 4. **If refs were bumped** (either now or in a previous session), run dry-run validation on each affected stack:
