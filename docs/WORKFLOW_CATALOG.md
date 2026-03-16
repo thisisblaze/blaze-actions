@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-03
+**Last Updated**: 2026-03-16
 **Owner**: Infrastructure Team
 
 ---
@@ -6,13 +6,15 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 26 (19 main + 7 reusable)  
+**Total Workflows**: 52 (31 main + 19 reusable)  
 **Version**: v1.5.0  
-**Last Updated**: 2026-03-03
+**Last Updated**: 2026-03-16
 
 ---
 
-## Main Workflows (17)
+## Main Workflows (31)
+
+> Note: Several new workflows (like cloud-specific `02-deploy-*` and `99-ops-*`) have been added. They follow standard input patterns.
 
 ### Infrastructure Provisioning
 
@@ -384,7 +386,75 @@
 
 ---
 
-## Reusable Workflows (7)
+
+
+### Newly Added Main Workflows
+
+#### 02-deploy-aws.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 02-deploy-azure.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 02-deploy-gcp.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 02-deploy-pages.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-aws.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-azure.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-cloudflare.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-gcp.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-nuke.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-ops-terraform.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### 99-verify-azure.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### deploy-azure-site.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### deploy-site.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### release.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### update-changelog.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+#### validate-workflows.yml
+**Purpose**: Refer to newer cloud-specific operation
+
+---
+## Reusable Workflows (19)
 
 These are called by main workflows, not directly by users.
 
@@ -445,6 +515,62 @@ These are called by main workflows, not directly by users.
 
 ---
 
+
+
+### Newly Added Reusable Workflows
+
+#### reusable-azure-multi-site-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-cloudrun-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-container-app-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-gcp-multi-site-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-multi-site-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-noop.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-verify-aws.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-verify-azure.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-verify-gcp.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-stress-test-provision.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-stress-test-deploy.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-stress-test-teardown.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
+#### reusable-stress-test-verify.yml
+**Purpose**: Reusable component for specific cloud or test phase
+
+---
 ## Quick Reference
 
 | Workflow                | Common Use             | Typical Runtime |
@@ -481,6 +607,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-03-03  
+**Last Updated**: 2026-03-16  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

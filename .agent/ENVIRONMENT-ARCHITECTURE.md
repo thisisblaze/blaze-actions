@@ -249,7 +249,7 @@ If you want to enable CloudFront in DEV (not recommended):
 
 ---
 
-**Last Updated:** 2026-02-16  
+**Last Updated:** 2026-03-16  
 **Maintained By:** Infrastructure Team  
 **Review Frequency:** Quarterly or when architecture changes  
 **Cloud Providers:** AWS (ECS Fargate/EC2 Hybrid), GCP (Cloud Run), Azure (Container Apps)

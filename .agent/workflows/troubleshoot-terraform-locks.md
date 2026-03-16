@@ -95,16 +95,6 @@ aws dynamodb delete-item \
 echo "✅ Lock released"
 ```
 
-### Option 3: Via Ops Utility Workflow
-
-```bash
-gh workflow run "99-ops-utility.yml" \
-  --repo thebyte9/blaze-template-deploy \
-  --ref main \
-  -f action=unlock-state \
-  -f environment=STAGE \
-  -f stack=network
-```
 
 ## Prevention Checklist
 
@@ -198,6 +188,6 @@ If automation fails and manual unlock doesn't work:
 
 ---
 
-**Last Updated:** 2026-01-13  
+**Last Updated:** 2026-03-16  
 **Auto-Fix Status:** ✅ Enabled  
 **Success Rate:** 100% (tested with 11-hour-old lock)
