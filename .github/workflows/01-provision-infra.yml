@@ -215,23 +215,7 @@ on:
       ACM_CERTIFICATE_ARN:
         required: false
         description: "ACM Certificate ARN (for CloudFront/ALB)"
-      # GCP
-      GCP_WORKLOAD_IDENTITY_PROVIDER:
-        required: false
-        description: "GCP Workload Identity Provider"
-      GCP_SERVICE_ACCOUNT:
-        required: false
-        description: "GCP Service Account for WIF"
-      # Azure
-      AZURE_CLIENT_ID:
-        required: false
-        description: "Azure App Registration Client ID (for OIDC)"
-      AZURE_TENANT_ID:
-        required: false
-        description: "Azure Tenant ID"
-      AZURE_SUBSCRIPTION_ID:
-        required: false
-        description: "Azure Subscription ID"
+
       DEPLOY_KEY:
         required: false
         description: "SSH Deploy Key for private Terraform modules"
