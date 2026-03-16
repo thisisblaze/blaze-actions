@@ -164,8 +164,11 @@ jobs:
               ROLLOUT=$(echo "$DETAILS" | awk '{print $5}')
 
               # Consider healthy if: running >= 1 AND status is ACTIVE AND rollout is COMPLETED (or deployments 1)
+              # OR if desired == 0 AND running == 0 (scaled to zero)
               IS_STABLE=false
-              if [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ]; then
+              if [ "${DESIRED:-0}" -eq 0 ] && [ "${RUNNING:-0}" -eq 0 ]; then
+                IS_STABLE=true
+              elif [ "${RUNNING:-0}" -ge 1 ] && [ "$STATUS" = "ACTIVE" ]; then
                 if [ "$ROLLOUT" != "UNKNOWN" ] && [ "$ROLLOUT" = "COMPLETED" ]; then
                   IS_STABLE=true
                 elif [ "$ROLLOUT" = "UNKNOWN" ] && [ "${DEPLOYMENTS:-2}" -le 1 ]; then
