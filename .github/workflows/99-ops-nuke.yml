@@ -257,6 +257,18 @@ jobs:
           else
              echo "ℹ️ GH_PAT is MISSING (This might be expected)"
           fi
+
+          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" ]]; then
+             echo "✅ AZURE_CLIENT_ID is SET"
+          else
+             echo "❌ AZURE_CLIENT_ID is MISSING"
+          fi
+
+          if [[ -n "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]]; then
+             echo "✅ GCP_WORKLOAD_IDENTITY_PROVIDER is SET"
+          else
+             echo "❌ GCP_WORKLOAD_IDENTITY_PROVIDER is MISSING"
+          fi
         env:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
