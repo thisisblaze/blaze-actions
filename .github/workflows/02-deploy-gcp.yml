@@ -243,8 +243,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
@@ -284,7 +284,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Debug Inputs
         run: |

@@ -272,7 +272,7 @@ jobs:
       azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
       azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Load Access List
         id: load-access
@@ -337,7 +337,7 @@ jobs:
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Resolve Azure Secrets
         if: inputs.cloud_provider == 'azure' && inputs.azure_client_id_rev != ''
@@ -409,7 +409,7 @@ jobs:
       layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -532,7 +532,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Sync Connection String Secret
         env:
@@ -624,7 +624,7 @@ jobs:
       ARM_USE_OIDC: "true"
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Resolve Azure Secrets (CDN)
         if: inputs.azure_client_id_rev != ''
@@ -645,7 +645,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3 # v3 stable
+        uses: hashicorp/setup-terraform@v4 # v3 stable
         with:
           terraform_version: ${{ inputs.terraform_version || 'latest' }}
 

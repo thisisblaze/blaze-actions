@@ -243,8 +243,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
@@ -284,7 +284,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Debug Inputs
         run: |
@@ -651,9 +651,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: "20.x"
 
@@ -664,7 +664,7 @@ jobs:
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Cache Next.js & NPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.npm
@@ -704,7 +704,7 @@ jobs:
           mkdir -p packages/admin/dist
           echo "/* /index.html 200" > packages/admin/dist/_redirects
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -917,8 +917,8 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
