@@ -9,6 +9,15 @@ This is the **shared GitHub Actions repository** (`blaze-actions`). It provides 
 - `blaze-actions` (This Repo): Shared/Reusable GitHub Actions Workflows.
 - `blaze-template-deploy`: Application Implementation & Infrastructure Instantiation.
 
+## Execution Context (CRITICAL)
+
+**Status: MANDATORY**
+This repository (`blaze-actions`) is strictly a **LIBRARY** of reusable code.
+- You MUST NEVER execute `gh workflow run`, `gh secret list`, `gh run list` or any deployment commands from this repository.
+- You MUST NEVER attempt to fetch or read secrets from this repository.
+- **ALL execution, state, and secrets belong to the caller repository** (e.g., `blaze-template-deploy`). 
+- When the user asks to run a workflow or nuke an environment, you MUST execute the command from the deployment repository (`blaze-template-deploy`), NOT from `blaze-actions`.
+
 ## Public Repository Constraints (CRITICAL)
 
 **Status: MANDATORY**
