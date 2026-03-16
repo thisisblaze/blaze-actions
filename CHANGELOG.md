@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Deep CI/CD Maintenance Command (`13-deep-cicd-maintenance.md`)**: Added a new master agent workflow that actively analyzes CI/CD definitions and forces documentation, AI prompts, and agent workflows to match reality perfectly, including a deep timestamp synchronization across all 3 repositories.
 
+### Changed
+
+- **Checkengines Sweep**: Updated Engine 4 to validate GitHub Actions uses references are pinned to the latest release tag. Ignored cross-repo workflow orphans, excluded living docs from hygiene check, and focused stress test freshness exclusively on mini runs.
+- **AI Context**: Maintained agent workflows sweep 2026-03-16.
+
 ## [Unreleased] - 2026-03-14
 
 ### Fixed
