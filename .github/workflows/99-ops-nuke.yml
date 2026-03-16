@@ -155,6 +155,18 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
+      # GCP
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      # Azure
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
 
 
 permissions:
