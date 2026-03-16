@@ -249,6 +249,7 @@ DETAILS:
 RECOMMENDED ACTIONS:
   → /09-maintain-docs (Engine 1, 6)
   → /11-maintain-prompts-ai (Engine 2, 8)
+  → /13-deep-cicd-maintenance (Engine 1, 2, 8; for active deep sync of docs, prompts, and timestamps)
   → /slash-weekly-graph (Engine 3)
   → Manual ref= update (Engine 4)
   → /08-audit (Engine 5)
