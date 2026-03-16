@@ -352,7 +352,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2
+        uses: azure/login@v2.2.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure.outputs.tenant_id }}
@@ -638,7 +638,7 @@ jobs:
           echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v2.2.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}

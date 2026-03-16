@@ -189,7 +189,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2
+        uses: azure/login@v2.2.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -322,7 +322,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2
+        uses: azure/login@v2.2.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -453,7 +453,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2
+        uses: azure/login@v2.2.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
