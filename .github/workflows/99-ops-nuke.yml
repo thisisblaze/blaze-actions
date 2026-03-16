@@ -422,7 +422,6 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -569,7 +568,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-app"
@@ -714,7 +712,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -741,7 +738,6 @@ jobs:
     if: inputs.action == 'nuke-environment'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/third-party/cloudflare"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -867,7 +863,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -916,7 +911,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-cdn"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -969,7 +963,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -1021,7 +1014,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: azure
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -1067,7 +1059,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: azure
       # The Front Door + Blob resources live inside the network stack (cdn-modules.tf)
       # Destroy them by targeting only the CDN module resources in the network stack
@@ -1126,7 +1117,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: azure
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -1181,7 +1171,6 @@ jobs:
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
     with:
-      wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
