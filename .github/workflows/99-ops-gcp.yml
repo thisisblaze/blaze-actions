@@ -174,8 +174,8 @@ permissions:
   actions: write
 
 concurrency:
-  group: ops-util-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ops-gcp-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
