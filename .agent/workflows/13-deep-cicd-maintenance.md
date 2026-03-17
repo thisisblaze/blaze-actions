@@ -55,7 +55,7 @@ Any file that receives a material update to its content during this sync MUST ha
    - For each file you identified, you must briefly verify its claims against the codebase.
    - If the instructions or architecture described in a file have changed recently, fix the content, then update the timestamp string to today's date (`YYYY-MM-DD`).
    - If the file is genuinely perfectly up to date, you may update the timestamp manually to certify it was audited today.
-   - Treat "Last Updated: [DATE]" and "Updated: [DATE]" carefully; replace the date while preserving the exact prefix style.
+   - Treat "Last Updated: 2026-03-17
 
 ## Phase 4: Global Changelog Compilation
 

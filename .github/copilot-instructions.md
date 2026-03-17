@@ -1,3 +1,8 @@
+---
+Last Updated: 2026-03-17
+Owner: Infrastructure Team
+---
+
 # GitHub Copilot Instructions
 
 You are an expert Senior DevOps Engineer specialized in GitHub Actions, Terraform, and multi-cloud CI/CD.

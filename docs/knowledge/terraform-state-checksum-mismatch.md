@@ -1,3 +1,8 @@
+---
+Last Updated: 2026-03-17
+Owner: Infrastructure Team
+---
+
 # Terraform State Checksum Mismatch and Drift
 
 ## Topic

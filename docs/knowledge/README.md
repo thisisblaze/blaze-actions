@@ -1,3 +1,8 @@
+---
+Last Updated: 2026-03-17
+Owner: Infrastructure Team
+---
+
 # Blaze Smart Fixes Knowledge Library
 
 Welcome to the Blaze Knowledge Library. This directory contains quick-reference guides, architectures, and "smart fixes" for complex edge-cases encountered across our CI/CD pipelines, AWS/GCP/Azure infrastructure, and Terraform deployments.
