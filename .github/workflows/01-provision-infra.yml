@@ -228,6 +228,10 @@ on:
       AZURE_SUBSCRIPTION_ID:
         required: false
 
+      SLACK_WEBHOOK_URL:
+        required: false
+        description: "Slack Webhook URL for failure notifications"
+
       DEPLOY_KEY:
         required: false
         description: "SSH Deploy Key for private Terraform modules"
@@ -831,6 +835,12 @@ jobs:
              echo "✅ **Provisioning Complete**" >> $GITHUB_STEP_SUMMARY
           else
              echo "❌ **Provisioning Failed**" >> $GITHUB_STEP_SUMMARY
+             
+             if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+               curl -X POST -H 'Content-type: application/json' \
+                 --data '{"text":"🚨 *Infrastructure Provisioning Failed* 🚨\n*Project*: ${{ inputs.project }}\n*Environment*: ${{ inputs.environment }}\n*Stack*: ${{ inputs.stack }}\n*Provider*: '${PROVIDER}'\n*Details*: <'${GITHUB_SERVER_URL}'/'${GITHUB_REPOSITORY}'/actions/runs/'${GITHUB_RUN_ID}'|View Run Logs>"}' \
+                 ${{ secrets.SLACK_WEBHOOK_URL }}
+             fi
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY

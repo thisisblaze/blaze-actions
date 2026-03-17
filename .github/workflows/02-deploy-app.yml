@@ -213,6 +213,8 @@ on:
         required: false
       AZURE_SUBSCRIPTION_ID:
         required: false
+      SLACK_WEBHOOK_URL:
+        required: false
 
 
 
@@ -443,3 +445,27 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  summary:
+    name: 📝 Deployment Summary
+    needs: [dispatch-aws, dispatch-gcp, dispatch-azure, dispatch-pages]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🚀 Application Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.dispatch-aws.result }}" == "failure" || "${{ needs.dispatch-gcp.result }}" == "failure" || "${{ needs.dispatch-azure.result }}" == "failure" || "${{ needs.dispatch-pages.result }}" == "failure" ]]; then
+             echo "❌ **Deployment Failed**" >> $GITHUB_STEP_SUMMARY
+             
+             if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+               curl -X POST -H 'Content-type: application/json' \
+                 --data '{"text":"🚨 *Application Deployment Failed* 🚨\n*Project*: ${{ inputs.project }}\n*Environment*: ${{ inputs.environment }}\n*Provider*: '${{ inputs.cloud_provider }}'\n*Details*: <'${GITHUB_SERVER_URL}'/'${GITHUB_REPOSITORY}'/actions/runs/'${GITHUB_RUN_ID}'|View Run Logs>"}' \
+                 ${{ secrets.SLACK_WEBHOOK_URL }}
+             fi
+             exit 1
+          else
+             echo "✅ **Deployment Succeeded**" >> $GITHUB_STEP_SUMMARY
+          fi
