@@ -332,8 +332,16 @@ runs:
         fi
 
         # ---------------------------------------------------------
-        # 3. IAM ROLE WAIT LOOP
+        # 3. PRE-FLIGHT INFRA CHECK & IAM ROLE WAIT LOOP
         # ---------------------------------------------------------
+        # First, ensure the ECS cluster actually exists to avoid waiting if infra is missing
+        if ! aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+           echo "❌ 🛑 ERROR: ECS Cluster '$CLUSTER_NAME' does not exist or is inactive."
+           echo "   It appears the core infrastructure (VPC, Subnets, ECS) is missing."
+           echo "   👉 Please run the '01 🏗️ Deploy Infra (AWS)' workflow first."
+           exit 1
+        fi
+
         ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${ROLE_STAGE}-exec-role"
         echo "⏳ Verifying IAM Role: $ROLE_NAME..."
         MAX_RETRIES=15
@@ -341,6 +349,7 @@ runs:
         while ! aws iam get-role --role-name $ROLE_NAME > /dev/null 2>&1; do
           if [ $COUNT -ge $MAX_RETRIES ]; then
             echo "❌ Error: Role $ROLE_NAME not found after waiting."
+            echo "   👉 Please ensure '01 🏗️ Deploy Infra (AWS)' has completed successfully."
             exit 1
           fi
           sleep 10
