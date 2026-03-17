@@ -196,7 +196,7 @@ jobs:
   # 5. DEPLOY
   # --------------------------------------------------------------------------------
   deploy-app:
-    if: inputs.mode != 'destroy-only'
+    if: success() && inputs.mode != 'destroy-only'
     needs: [config]
     name: "🚀 Deploy App"
     uses: ./.github/workflows/02-deploy-app.yml
