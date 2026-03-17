@@ -202,6 +202,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Add workflow_call trigger to allow reuse
 - fix: use GITHUB_WORKSPACE for pre-apply script path
 
+## [Unreleased]
+
+### Added
+- Added `.agent/fixtures` to `/checkengines` sweep validations.
+- Enhanced `/.agent/scripts/run_sweep.py` with Python harnesses for deterministic validation.
+- Improved agent test execution logic to fail-fast on missing test harnesses.
+- Updated `macro_flow_checkengines.mermaid` and `macro_flow_allstop.mermaid` visualizations.
+
+### Changed
+- Hardened agent workflows by moving logic from shell scripts to Python assertions.
+- Upgraded `/checkengines` module validation output formatting.
+
 ## [Unreleased] - 2026-03-16
 
 ### Added
