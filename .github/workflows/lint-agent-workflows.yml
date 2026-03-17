@@ -1,0 +1,87 @@
+name: Lint Agent Workflows
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.agent/workflows/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint YAML Frontmatter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Setup Python
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+        with:
+          python-version: '3.11'
+
+      - name: Lint Workflow Frontmatters
+        run: |
+          cat << 'EOF' > lint.py
+          import os
+          import glob
+          import re
+          import sys
+
+          BANNED_EXPECTED = "Actionable results or artifacts matching the workflow's description."
+          BANNED_EXCLUSIONS = "Do NOT modify live/ directories directly without Terraform"
+
+          def lint():
+              workflow_dir = os.path.join(".agent", "workflows")
+              if not os.path.exists(workflow_dir):
+                  print("No .agent/workflows directory found. Skipping.")
+                  return 0
+
+              workflows = glob.glob(os.path.join(workflow_dir, "*.md"))
+              if not workflows:
+                  print("No markdown workflows found.")
+                  return 0
+
+              errors = 0
+              for wf in workflows:
+                  with open(wf, 'r') as f:
+                      content = f.read()
+                  
+                  # Check for required blocks
+                  if "expected_output:" not in content:
+                      print(f"❌ ERROR: {wf} is missing 'expected_output:' in its YAML frontmatter.")
+                      errors += 1
+                      continue
+                      
+                  if "exclusions:" not in content:
+                      print(f"❌ ERROR: {wf} is missing 'exclusions:' in its YAML frontmatter.")
+                      errors += 1
+                      continue
+
+                  # Check for banned generic strings strings
+                  if BANNED_EXPECTED in content:
+                      print(f"❌ ERROR: {wf} contains the banned generic 'expected_output'. Must provide context-specific guardrails.")
+                      errors += 1
+                      
+                  if BANNED_EXCLUSIONS in content:
+                      print(f"❌ ERROR: {wf} contains the banned generic 'exclusions'. Must provide context-specific guardrails.")
+                      errors += 1
+
+              if errors > 0:
+                  print(f"\nFailed linting! Found {errors} generic/missing frontmatters.")
+                  return 1
+              
+              print(f"✅ Successfully linted {len(workflows)} agent workflows.")
+              return 0
+
+          sys.exit(lint())
+          EOF
+          python3 lint.py

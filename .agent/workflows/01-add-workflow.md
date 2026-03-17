@@ -1,5 +1,7 @@
 ---
 description: Add a new GitHub Actions workflow to blaze-actions
+expected_output: Scaffolded and linted reusable GitHub actions YAML workflow.
+exclusions: Do NOT execute the workflow or deploy straight to production branches.
 ---
 
 # Add New Workflow
@@ -99,6 +101,8 @@ cd .github/actions/<action-name>
 ```yaml
 name: "<Action Name>"
 description: "<Description>"
+expected_output: Scaffolded and linted reusable GitHub actions YAML workflow.
+exclusions: Do NOT execute the workflow or deploy straight to production branches.
 
 inputs:
   parameter:

@@ -1,5 +1,7 @@
 ---
 description: Bootstraps the AI with targeted architectural context mapping (Token Frugal)
+expected_output: Loaded cloud context corresponding to the requested cloud provider.
+exclusions: Do NOT provision resources or read exhaustive unrelated documentation.
 ---
 
 # Targeted Context Initialization

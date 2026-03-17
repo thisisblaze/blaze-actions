@@ -1,5 +1,7 @@
 ---
 description: Add Sharp Lambda Layer automation for CloudFront image resize functionality
+expected_output: Compiled Sharp Lambda layer automation artifact.
+exclusions: Do NOT modify unrelated lambda functions or triggers.
 ---
 
 # Add Sharp Lambda Layer for Image Resize

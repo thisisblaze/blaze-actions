@@ -1,5 +1,7 @@
 ---
 description: Perform a comprehensive folder-by-folder audit of the repository's documentation.
+expected_output: Refreshed markdown files, 12-domain and killchain validations complete.
+exclusions: Do NOT alter infrastructure or source code logic while auditing docs.
 ---
 
 # Workflow: Documentation Maintenance Sweep

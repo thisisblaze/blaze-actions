@@ -1,5 +1,7 @@
 ---
 description: Troubleshoot and fix Terraform state lock issues (stale locks blocking workflows)
+expected_output: Released Terraform state locks causing blocking pipelines.
+exclusions: Do NOT force-unlock without verifying the lock is genuinely orphaned.
 ---
 
 # Terraform State Lock Troubleshooting

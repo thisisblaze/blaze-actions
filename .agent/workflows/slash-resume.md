@@ -1,5 +1,7 @@
 ---
 description: Bootstraps a brand new AI session from a frozen Handoff state.
+expected_output: A clearly established context based on the HANDOFF.md board tasks.
+exclusions: Do NOT perform any actions until the target task context is fully claimed.
 ---
 
 # Resume Session

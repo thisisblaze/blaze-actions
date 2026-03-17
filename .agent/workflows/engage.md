@@ -1,5 +1,7 @@
 ---
 description: 🖖 Engage — pulls latest, audits governance across all 3 repos, loads context
+expected_output: A verified environment comparison matrix showing zero unauthorized drift.
+exclusions: Do NOT deploy resources to Stage/Prod without explicit test completion.
 ---
 
 // turbo-all
