@@ -230,8 +230,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-pages-${{ github.event.inputs.environment || 'DEV' }}-${{ 
-    github.event.inputs.branch_name || 'host' }}
+  group: deploy-pages-${{ github.event.inputs.environment || 'DEV' }}-${{ github.event.inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
 env:
