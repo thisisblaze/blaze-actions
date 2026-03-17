@@ -422,16 +422,31 @@ jobs:
 
           # 1. Check ECS Cluster
           echo "Checking ECS Cluster: $CLUSTER_NAME"
-          if ! aws ecs describe-clusters --clusters "$CLUSTER_NAME" | grep -q "ACTIVE"; then
-             echo "::error::❌ ECS Cluster '$CLUSTER_NAME' NOT FOUND or INACTIVE."
+
+          if [ -z "$CLUSTER_NAME" ]; then
+             echo "::error::❌ ECS Cluster name is empty! (Configuration failed)"
+             exit 1
+          fi
+
+          ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null || echo "MISSING")
+          if [ "$ECS_STATUS" != "ACTIVE" ]; then
+             echo "::error::❌ ECS Cluster '$CLUSTER_NAME' NOT FOUND or INACTIVE (Status: $ECS_STATUS)."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
              exit 1
           else
-             echo "✅ ECS Cluster found."
+             echo "✅ ECS Cluster found and active."
           fi
+
+          echo ""
 
           # 2. Check ECR Repository
           echo "Checking ECR Repository: $REPO_NAME"
+          if [ -z "$REPO_NAME" ]; then
+             echo "::error::❌ ECR Repository name is empty! (Configuration failed)"
+             exit 1
+          fi
+
+          # Check if the repository exists (we don't need output, just exit code)
           if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
              echo "::error::❌ ECR Repository '$REPO_NAME' NOT FOUND."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."

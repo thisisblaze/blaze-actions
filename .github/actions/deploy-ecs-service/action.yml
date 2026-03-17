@@ -335,8 +335,14 @@ runs:
         # 3. PRE-FLIGHT INFRA CHECK & IAM ROLE WAIT LOOP
         # ---------------------------------------------------------
         # First, ensure the ECS cluster actually exists to avoid waiting if infra is missing
-        if ! aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
-           echo "❌ 🛑 ERROR: ECS Cluster '$CLUSTER_NAME' does not exist or is inactive."
+        if [ -z "$CLUSTER_NAME" ]; then
+           echo "❌ 🛑 ERROR: ECS Cluster name is empty."
+           exit 1
+        fi
+        
+        ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null || echo "MISSING")
+        if [ "$ECS_STATUS" != "ACTIVE" ]; then
+           echo "❌ 🛑 ERROR: ECS Cluster '$CLUSTER_NAME' does not exist or is inactive (Status: $ECS_STATUS)."
            echo "   It appears the core infrastructure (VPC, Subnets, ECS) is missing."
            echo "   👉 Please run the '01 🏗️ Deploy Infra (AWS)' workflow first."
            exit 1

@@ -460,7 +460,9 @@ jobs:
             --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
             echo "✅ Artifact Registry repository found."
           else
-            echo "::warning::Artifact Registry repository '$REPO' not found — will be created on first push."
+            echo "::error::❌ Artifact Registry repository '$REPO' NOT FOUND."
+            echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: network, cloud_provider: gcp)."
+            exit 1
           fi
 
           echo "-------------------------------------"
