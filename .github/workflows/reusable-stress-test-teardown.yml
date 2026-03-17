@@ -246,7 +246,7 @@ jobs:
           bucket: ${{ needs.config.outputs.bucket }}
           state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -259,7 +259,7 @@ jobs:
           bucket: ${{ needs.config.outputs.bucket }}
           state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/cloudflare.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -273,7 +273,7 @@ jobs:
           bucket: ${{ needs.config.outputs.bucket }}
           state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/network.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -287,7 +287,7 @@ jobs:
           bucket: ${{ needs.config.outputs.bucket }}
           state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/mongodb.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -301,7 +301,7 @@ jobs:
           bucket: ${{ needs.config.outputs.bucket }}
           state_key: "infra/${{ needs.config.outputs.project_key }}/third-party/elastic.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -324,7 +324,7 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   # --------------------------------------------------------------------------------
   # 3. TEARDOWN (Infrastructure)
@@ -353,7 +353,7 @@ jobs:
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -382,7 +382,7 @@ jobs:
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   destroy-third-party-elastic:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.elastic_exists == 'true' }}
@@ -407,7 +407,7 @@ jobs:
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
@@ -434,7 +434,7 @@ jobs:
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
@@ -460,5 +460,5 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}

@@ -206,7 +206,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       aws_region: ${{ needs.config.outputs.aws_region }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   verify-gcp:
     name: "✅ Verify Environment (GCP)"
@@ -221,8 +221,8 @@ jobs:
       target_type: ${{ inputs.target_type }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   verify-azure:
     name: "✅ Verify Environment (Azure)"

@@ -313,7 +313,7 @@ jobs:
       # - name: Configure AWS Credentials
       #   uses: aws-actions/configure-aws-credentials@v6
       #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
 
       - name: Calculate Configuration
@@ -383,7 +383,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   cleanup-orphaned-lambdas:
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
@@ -406,7 +406,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           # Lambda@Edge is ALWAYS in us-east-1
           aws-region: us-east-1
 
@@ -492,7 +492,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
       - name: Find and Delete Orphaned Buckets
@@ -604,7 +604,7 @@ jobs:
     with:
       dist_id: ${{ inputs.dist_id }}
     secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   summary:
     name: 📝 Ops Summary
