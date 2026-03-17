@@ -153,22 +153,11 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: false
-        description: "AWS Role ARN for deployment"
-      GCP_WORKLOAD_IDENTITY_PROVIDER:
-        required: false
-      GCP_SERVICE_ACCOUNT:
-        required: false
       GH_PAT:
         required: false
-        description: "GitHub PAT for private modules"
       NPM_TOKEN:
         required: false
-        description: "NPM Token"
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
+      DEPLOY_KEY:
         required: false
       MONGODB_ATLAS_PUBLIC_KEY:
         required: false
@@ -178,12 +167,19 @@ on:
         required: false
       MONGODB_ATLAS_ORG_ID:
         required: false
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
       BLAZE_SENTRY_AUTH_TOKEN:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
-      # ECS Application Runtime Secrets (Explicitly defined for workflow_call)
-      MONGO_INITDB_ROOT_PASSWORD:
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      EC_API_KEY:
         required: false
       BLAZE_AUTH_JWT_PRIVATE_KEY:
         required: false
@@ -199,21 +195,23 @@ on:
         required: false
       BLAZE_ELASTICSEARCH_ENDPOINT:
         required: false
-
       BLAZE_FILES_S3_ACCESS_KEY:
         required: false
-      BLAZE_FILES_S3_SECRET_KEY:
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
         required: false
-      # Azure
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
       AZURE_CLIENT_ID:
         required: false
       AZURE_TENANT_ID:
         required: false
       AZURE_SUBSCRIPTION_ID:
-        required: false
-      BLAZE_GRAPHQL_CACHE_SETTINGS:
-        required: false
-      BLAZE_CLIENT_HEADER:
         required: false
 
 
