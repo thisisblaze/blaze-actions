@@ -13,6 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- chore: update CHANGELOG for v1.4.9
+- chore: update CHANGELOG for v1.4.8
+- chore: update CHANGELOG for v1.4.8
+- docs: add findings on GitHub Actions cross-org relative path resolution bug
+- chore: update CHANGELOG for v1.4.7
+
+### Fixed
+
+
+## v1.4.9 (2026-03-18)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v1.4.8
 - chore: update CHANGELOG for v1.4.8
 - docs: add findings on GitHub Actions cross-org relative path resolution bug
