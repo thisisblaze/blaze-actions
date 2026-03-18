@@ -99,8 +99,6 @@ on:
         description: "Set to 'true' to skip ECS stabilisation wait (stress tests, placeholder images)"
 
     secrets:
-      MONGO_INITDB_ROOT_PASSWORD:
-        required: false
       AWS_ROLE_ARN:
         required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
@@ -156,11 +154,6 @@ on:
       BLAZE_SENTRY_AUTH_TOKEN:
         required: false
       BLAZE_SENTRY_DSN:
-      BLAZE_ELASTICSEARCH_USERNAME:
-        required: false
-      BLAZE_ELASTICSEARCH_PASSWORD:
-        required: false
-      BLAZE_ELASTICSEARCH_ENDPOINT:
         required: false
       SLACK_WEBHOOK_URL:
         required: false
