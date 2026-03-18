@@ -916,13 +916,13 @@ jobs:
   deploy-admin-aws:
     name: Deploy Admin (AWS S3/CF)
     needs: [configuration, build-admin, pre-flight-check]
-    # Run for Host Environments (Prod, Stage) on AWS - Dev host uses ECS or doesn't have an S3 SPA bucket yet
+    # Run for Host Environments (Dev, Stage, Prod) on AWS
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
       inputs.cloud_provider == null) && (inputs.branch_name == '' || 
       inputs.branch_name == null) && (inputs.deploy_services == true || 
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
       || inputs.target_services == 'admin' || inputs.target_services == null) && 
-      (inputs.environment == 'STAGE' || inputs.environment == 'PROD' || inputs.environment == 'MULTI-SITE') }}
+      (inputs.environment == 'DEV' || inputs.environment == 'STAGE' || inputs.environment == 'PROD' || inputs.environment == 'MULTI-SITE') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
