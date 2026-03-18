@@ -135,7 +135,7 @@ jobs:
       NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
@@ -161,7 +161,7 @@ jobs:
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ inputs.gcp_region }}-docker.pkg.dev
           username: oauth2accesstoken
@@ -189,7 +189,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -223,11 +223,11 @@ jobs:
           echo "✅ NPM Token is valid and has read access to private packages."
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Build and Push (amd64)
         id: build
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
@@ -268,7 +268,7 @@ jobs:
       NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
@@ -294,7 +294,7 @@ jobs:
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ inputs.gcp_region }}-docker.pkg.dev
           username: oauth2accesstoken
@@ -322,7 +322,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -356,11 +356,11 @@ jobs:
           echo "✅ NPM Token is valid and has read access to private packages."
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Build and Push (arm64)
         id: build
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
@@ -425,7 +425,7 @@ jobs:
 
       - name: Login to GCP Artifact Registry
         if: inputs.cloud_provider == 'gcp'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ inputs.gcp_region }}-docker.pkg.dev
           username: oauth2accesstoken
@@ -453,7 +453,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
           tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
