@@ -188,7 +188,7 @@ jobs:
           actor: ${{ github.actor }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        uses: hashicorp/setup-terraform@v4 # v3.1.2
         with:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
@@ -368,7 +368,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}

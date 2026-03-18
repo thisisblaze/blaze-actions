@@ -74,7 +74,7 @@ jobs:
       # --- 3. TERRAFORM & VISUALIZATION ---
       - name: Configure AWS Credentials (OIDC)
         if: env.CLOUD_PROVIDER == 'aws'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -86,7 +86,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      - uses: hashicorp/setup-terraform@v4 # v3.1.2
         with:
           terraform_version: "1.5.0"
 

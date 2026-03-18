@@ -213,14 +213,14 @@ jobs:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2 # Fixes Node 20 & url.parse() deprecation warnings
+        uses: hashicorp/setup-terraform@v4 # Fixes Node 20 & url.parse() deprecation warnings
         with:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}

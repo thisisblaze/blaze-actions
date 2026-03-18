@@ -310,7 +310,7 @@ jobs:
       # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
       # The calculate-config action handles missing AWS credentials gracefully
       # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
+      #   uses: aws-actions/configure-aws-credentials@v6
       #   with:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -379,7 +379,7 @@ jobs:
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}

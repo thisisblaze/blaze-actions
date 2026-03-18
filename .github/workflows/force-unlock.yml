@@ -116,7 +116,7 @@ jobs:
         steps:
             - name: Configure AWS Credentials
               if: inputs.cloud_provider != 'gcp'
-              uses: aws-actions/configure-aws-credentials@v4
+              uses: aws-actions/configure-aws-credentials@v6
               with:
                   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
                   aws-region: ${{ needs.configuration.outputs.aws_region }}

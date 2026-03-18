@@ -323,7 +323,7 @@ jobs:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
           inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -392,7 +392,7 @@ jobs:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
           inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
@@ -679,7 +679,7 @@ jobs:
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Cache Next.js & NPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.npm
@@ -719,7 +719,7 @@ jobs:
           mkdir -p packages/admin/dist
           echo "/* /index.html 200" > packages/admin/dist/_redirects
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -934,13 +934,13 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}

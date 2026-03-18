@@ -326,7 +326,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.stack == 'network' || inputs.stack == 'acm')
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -416,7 +416,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: "us-east-1"
@@ -649,7 +649,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3 # v3 stable
+        uses: hashicorp/setup-terraform@v4 # v3 stable
         with:
           terraform_version: ${{ inputs.terraform_version || 'latest' }}
 
