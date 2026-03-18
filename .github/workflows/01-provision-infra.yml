@@ -505,6 +505,7 @@ jobs:
         if [[ -f "$SCRIPT" ]]; then
           export TF_DIR="$(pwd)"
           export STACK_NAME="${{ inputs.stack }}"
+          export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
           bash "$SCRIPT"
         fi
 
