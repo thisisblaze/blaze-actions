@@ -875,8 +875,7 @@ jobs:
             JSON_KEY=$2
             VAL=$(jq -r ".$JSON_KEY.value // empty" tf_outputs.json)
             if [[ -n "$VAL" ]]; then
-               echo "::add-mask::$VAL" # Mask sensitive values if any, safe for others
-               echo "$KEY=$VAL" >> $GITHUB_OUTPUT
+               echo "$KEY=$VAL" >> "$GITHUB_OUTPUT"
             fi
           }
 
