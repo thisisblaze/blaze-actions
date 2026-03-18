@@ -257,7 +257,7 @@ jobs:
         working-directory: ${{ inputs.tf_dir }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
@@ -303,7 +303,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}

@@ -182,7 +182,7 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v5
+              uses: actions/checkout@v6.0.2
 
             - name: Authenticate to GCP
               uses: google-github-actions/auth@v3

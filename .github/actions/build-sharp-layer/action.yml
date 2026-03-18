@@ -49,7 +49,7 @@ runs:
         echo "Sharp version: ${{ inputs.sharp-version }}"
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6.3.0
       with:
         node-version: "20"
 
