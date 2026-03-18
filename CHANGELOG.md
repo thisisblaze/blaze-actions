@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.1 (2026-03-18)
+
+### Added
+
+- feat: Add fast-fail check for missing ECS clusters
+
+### Changed
+
+- docs: agent workflow tech debt resolution and hygiene sweep 2026-03-17
+- chore: end-of-day governance sync — 2026-03-17
+- chore: repository-wide documentation and timestamp synchronization — March 17, 2026
+- docs: session handoff — 2026-03-16 [Mac — GCP CDN Destroy Bugfix & Check Engines]
+- chore: update CHANGELOG for v1.4.0
+
+### Fixed
+
+
 ## v1.4.0 (2026-03-16)
 
 ### Added
