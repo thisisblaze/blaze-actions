@@ -160,6 +160,8 @@ on:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
         required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
