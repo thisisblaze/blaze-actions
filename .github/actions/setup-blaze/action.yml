@@ -67,6 +67,10 @@ runs:
     # ══════════════════════════════════════════════════════════
     # AWS Authentication
     # ══════════════════════════════════════════════════════════
+    - name: Suppress Node 20 warnings
+      shell: bash
+      run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> "$GITHUB_ENV"
+
     - name: Configure AWS Credentials
       if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       uses: aws-actions/configure-aws-credentials@v4
