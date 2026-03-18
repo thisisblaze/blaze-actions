@@ -151,6 +151,7 @@ on:
         type: string
 
     secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN:
         required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
