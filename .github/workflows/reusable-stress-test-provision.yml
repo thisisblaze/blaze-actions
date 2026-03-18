@@ -258,8 +258,9 @@ jobs:
       stack: "app"
       apply: true
       enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
-      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
-      api_launch_type: ${{ inputs.environment == 'dev-mini' && 'EC2' || 'FARGATE' }}
+      enable_ec2: ${{ contains(inputs.environment, 'prod') }}
+      api_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
+      frontend_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
