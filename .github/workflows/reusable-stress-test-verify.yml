@@ -101,6 +101,8 @@ on:
         required: false
       BLAZE_FILES_S3_SECRET_ACCESS_KEY:
         required: false
+      SLACK_WEBHOOK_URL:
+        required: false
       BLAZE_GRAPHQL_CACHE_SETTINGS:
         required: false
       BLAZE_CLIENT_HEADER:
