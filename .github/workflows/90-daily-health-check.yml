@@ -181,7 +181,7 @@ jobs:
   drift-check-network:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -223,7 +223,7 @@ jobs:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
       aws_region: ${{ needs.configuration.outputs.aws_region }}

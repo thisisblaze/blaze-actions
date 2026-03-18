@@ -161,7 +161,7 @@ env:
 jobs:
   build:
     name: "🔨 Build [${{ inputs.site_key }}]"
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: ${{ inputs.site_key }}
       cloud_provider: "azure"
@@ -182,7 +182,7 @@ jobs:
   deploy:
     name: "🚀 Deploy [${{ inputs.site_key }}]"
     needs: [build]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-azure-multi-site-deploy.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-azure-multi-site-deploy.yml@dev
     with:
       site_key: ${{ inputs.site_key }}
       container_app_name: ${{ inputs.container_app_name }}

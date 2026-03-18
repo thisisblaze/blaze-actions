@@ -472,7 +472,7 @@ jobs:
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@dev
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -489,7 +489,7 @@ jobs:
     name: Destroy
     needs: [configuration, pre-cleanup]
     if: inputs.action == 'destroy-resources'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.7
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
