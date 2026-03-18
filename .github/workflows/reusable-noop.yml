@@ -58,6 +58,10 @@ on:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 

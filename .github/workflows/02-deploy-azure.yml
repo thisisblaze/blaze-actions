@@ -153,37 +153,29 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: false
-        description: "AWS Role ARN for deployment"
       GCP_WORKLOAD_IDENTITY_PROVIDER:
         required: false
       GCP_SERVICE_ACCOUNT:
         required: false
-      GH_PAT:
+      AZURE_CLIENT_ID:
         required: false
-        description: "GitHub PAT for private modules"
-      NPM_TOKEN:
+      AZURE_TENANT_ID:
         required: false
-        description: "NPM Token"
+      AZURE_SUBSCRIPTION_ID:
+        required: false
       CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ZONE_ID:
         required: false
       CLOUDFLARE_ACCOUNT_ID:
         required: false
-      MONGODB_ATLAS_PUBLIC_KEY:
+      CLOUDFLARE_ZONE_ID:
         required: false
-      MONGODB_ATLAS_PRIVATE_KEY:
+      GH_PAT:
         required: false
-      MONGODB_ATLAS_PROJECT_ID:
+      NPM_TOKEN:
         required: false
-      MONGODB_ATLAS_ORG_ID:
+      INFRACOST_API_KEY:
         required: false
-      BLAZE_SENTRY_AUTH_TOKEN:
-        required: false
-      BLAZE_SENTRY_DSN:
-        required: false
-      # ECS Application Runtime Secrets (Explicitly defined for workflow_call)
-      MONGO_INITDB_ROOT_PASSWORD:
+      BLAZE_CONNECTION_STRING:
         required: false
       BLAZE_AUTH_JWT_PRIVATE_KEY:
         required: false
@@ -191,15 +183,6 @@ on:
         required: false
       BLAZE_AUTH_ADMIN_PASSWORD:
         required: false
-      BLAZE_CONNECTION_STRING:
-        required: false
-      BLAZE_ELASTICSEARCH_USERNAME:
-        required: false
-      BLAZE_ELASTICSEARCH_PASSWORD:
-        required: false
-      BLAZE_ELASTICSEARCH_ENDPOINT:
-        required: false
-
       BLAZE_FILES_S3_ACCESS_KEY:
         required: false
       BLAZE_FILES_S3_SECRET_ACCESS_KEY:
@@ -208,23 +191,26 @@ on:
         required: false
       BLAZE_CLIENT_HEADER:
         required: false
-
-      # Azure
-      AZURE_CLIENT_ID:
+      EC_API_KEY:
         required: false
-      AZURE_TENANT_ID:
+      MONGODB_ATLAS_PUBLIC_KEY:
         required: false
-      AZURE_SUBSCRIPTION_ID:
+      MONGODB_ATLAS_PRIVATE_KEY:
         required: false
-
-#   push:
-#     branches:
-#       - dev
-#     paths-ignore:
-#       - "docs/**"
-#       - ".github/aws/**"
-#       - "**.md"
-
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
 permissions:
   id-token: write
   contents: read

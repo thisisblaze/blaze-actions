@@ -64,6 +64,10 @@ on:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
     inputs:
       dist_id:
         description: "Distribution ID (or Domain Name) to strip aliases from"
