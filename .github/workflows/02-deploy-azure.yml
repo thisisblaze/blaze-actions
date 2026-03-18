@@ -229,8 +229,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-node@v6
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
@@ -270,7 +270,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -348,7 +348,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -477,7 +477,7 @@ jobs:
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2.2.0
+        uses: azure/login@v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -637,9 +637,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.2
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: "20.x"
       - name: Setup .npmrc

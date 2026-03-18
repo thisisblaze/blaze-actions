@@ -110,7 +110,7 @@ jobs:
       live_summary: ${{ steps.script_run.outputs.live_summary }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Setup Blaze
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.9
@@ -130,7 +130,7 @@ jobs:
 
       # We need Node for the "Code Hygiene" checks (grep .ts files) and maybe npm tests later
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
 
@@ -161,7 +161,7 @@ jobs:
       aws_region: ${{ steps.config.outputs.aws_region }}
       domain_root: ${{ steps.config.outputs.domain_root }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.2
 
       - name: Calculate Configuration
         id: config
@@ -270,11 +270,11 @@ jobs:
       vuln_count: ${{ steps.trivy.outputs.vuln_count }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Run Trivy (IAC Mode)
         id: trivy
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "config"
           scan-ref: "."

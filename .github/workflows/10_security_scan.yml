@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 1 # Scan current state only (faster)
 
@@ -71,7 +71,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0 # Needed for diff calculation
 
@@ -170,7 +170,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Cache Trivy DB
         uses: actions/cache@v5
@@ -181,7 +181,7 @@ jobs:
             ${{ runner.os }}-trivy-db-
 
       - name: Run Trivy (Console Log)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -193,7 +193,7 @@ jobs:
           hide-progress: true
 
       - name: Run Trivy (Filesystem)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -247,7 +247,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6.0.2
 
       - name: Run OSSF Scorecard
         uses: ossf/scorecard-action@v2.4.3
