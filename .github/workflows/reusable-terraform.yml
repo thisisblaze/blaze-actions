@@ -195,6 +195,21 @@ on:
       efs_id:
         description: "EFS ID"
         value: ${{ jobs.terraform.outputs.efs_id }}
+      service_discovery_id:
+        description: "Service Discovery ID"
+        value: ${{ jobs.terraform.outputs.service_discovery_id }}
+      front_door_custom_domain_hostname:
+        description: "Azure Front Door Custom Domain"
+        value: ${{ jobs.terraform.outputs.front_door_custom_domain_hostname }}
+      front_door_endpoint_hostname:
+        description: "Azure Front Door Endpoint"
+        value: ${{ jobs.terraform.outputs.front_door_endpoint_hostname }}
+      image_resize_function_hostname:
+        description: "GCP Image Resize Function Hostname"
+        value: ${{ jobs.terraform.outputs.image_resize_function_hostname }}
+      storage_account_name:
+        description: "Azure Storage Account Name"
+        value: ${{ jobs.terraform.outputs.storage_account_name }}
 
 concurrency:
   group: tf-util-${{ github.workflow }}-${{ github.ref }}
@@ -224,6 +239,10 @@ jobs:
       efs_id: ${{ steps.tf_outputs.outputs.efs_id }}
       service_discovery_id: ${{ steps.tf_outputs.outputs.service_discovery_id }}
       image_resize_enabled: ${{ steps.tf_outputs.outputs.image_resize_enabled }}
+      front_door_custom_domain_hostname: ${{ steps.tf_outputs.outputs.front_door_custom_domain_hostname }}
+      front_door_endpoint_hostname: ${{ steps.tf_outputs.outputs.front_door_endpoint_hostname }}
+      image_resize_function_hostname: ${{ steps.tf_outputs.outputs.image_resize_function_hostname }}
+      storage_account_name: ${{ steps.tf_outputs.outputs.storage_account_name }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -856,7 +875,14 @@ jobs:
           # Extract Additional Infra Details
           extract_output "alb_dns_name" "alb_dns_name"
           extract_output "ecs_cluster_name" "ecs_cluster_name"
-          extract_output "iam_role_name" "execution_role_name" # TF output is execution_role_name
+          extract_output "iam_role_name" "execution_role_name"
           extract_output "service_discovery_namespace" "service_discovery_namespace"
+          extract_output "service_discovery_id" "service_discovery_id"
+          extract_output "vpc_id" "vpc_id"
+          extract_output "efs_id" "efs_id"
           extract_output "log_group_name" "log_group_name"
           extract_output "image_resize_enabled" "image_resize_enabled"
+          extract_output "front_door_custom_domain_hostname" "front_door_custom_domain_hostname"
+          extract_output "front_door_endpoint_hostname" "front_door_endpoint_hostname"
+          extract_output "image_resize_function_hostname" "image_resize_function_hostname"
+          extract_output "storage_account_name" "storage_account_name"
