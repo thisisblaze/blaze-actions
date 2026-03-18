@@ -151,7 +151,6 @@ on:
         type: string
 
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN:
         required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
@@ -566,7 +565,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -618,7 +616,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -736,7 +733,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -775,7 +771,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -819,7 +814,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -859,7 +853,6 @@ jobs:
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       target_port: 80
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

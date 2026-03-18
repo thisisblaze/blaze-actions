@@ -151,7 +151,6 @@ on:
         type: string
 
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN:
         required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
@@ -568,7 +567,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -620,7 +618,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -671,7 +668,6 @@ jobs:
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
@@ -726,7 +722,6 @@ jobs:
         needs.configuration.outputs.stage_key, 
         needs.configuration.outputs.domain_root)) }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
         }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -787,7 +782,6 @@ jobs:
         needs.configuration.outputs.stage_key, 
         needs.configuration.outputs.domain_root)) }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
         }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -839,7 +833,6 @@ jobs:
         needs.configuration.outputs.stage_key, 
         needs.configuration.outputs.domain_root)) }}
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
         }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -879,7 +872,6 @@ jobs:
       image_repository: "frontend"
       environment: "MULTI-SITE"
     secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:n        required: falsen      BLAZE_ELASTICSEARCH_PASSWORD:n        required: falsen      BLAZE_ELASTICSEARCH_ENDPOINT:n        required: falsen      MONGO_INITDB_ROOT_PASSWORD:n        required: falsen
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
         }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
