@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.10 (2026-03-18)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- docs: session handoff — 2026-03-18 [Antigravity]
+- docs: session handoff — 2026-03-18 [MacBook Pro]
+- docs: generate session handoff state
+- chore: update CHANGELOG for v1.4.9
+
+### Fixed
+
+
 ## v1.4.9 (2026-03-18)
 
 ### Added
