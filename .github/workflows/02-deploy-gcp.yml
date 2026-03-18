@@ -533,7 +533,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: ./.github/workflows/reusable-docker-build.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.7
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -582,7 +582,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: ./.github/workflows/reusable-docker-build.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.7
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -636,7 +636,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true || 
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: ./.github/workflows/reusable-docker-build.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.7
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -686,7 +686,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v1.4.7
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -746,7 +746,7 @@ jobs:
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
       || inputs.target_services == 'frontend' || inputs.target_services == null)
       }}
-    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v1.4.7
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -801,7 +801,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: ./.github/workflows/reusable-cloudrun-deploy.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v1.4.7
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -854,7 +854,7 @@ jobs:
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
-    uses: ./.github/workflows/reusable-gcp-multi-site-deploy.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v1.4.7
     with:
       site_key: ${{ matrix.site_key }}
       # Service name must match TF naming: the network module uses project_key="multi-site"
