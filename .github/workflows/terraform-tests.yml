@@ -22,6 +22,14 @@ on:
         default: false
   workflow_call:
     secrets:
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
       AWS_ROLE_ARN:
         required: false
       GCP_WORKLOAD_IDENTITY_PROVIDER:
