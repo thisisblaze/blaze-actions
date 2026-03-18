@@ -201,7 +201,7 @@ jobs:
     needs: [config]
     name: "🏗️ Provision Network"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -228,7 +228,7 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -254,7 +254,7 @@ jobs:
     needs: [config, provision-network, provision-tunnel]
     name: "🏗️ Provision App"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -283,7 +283,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
     needs: [config, provision-app]
     name: "🏛️ Provision MongoDB"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -305,7 +305,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
     needs: [config, provision-app]
     name: "🏛️ Provision Elastic"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}

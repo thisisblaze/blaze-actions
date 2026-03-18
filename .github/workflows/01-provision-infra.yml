@@ -297,7 +297,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v1.4.8
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v1.4.9
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -370,7 +370,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.8
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.9
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -444,7 +444,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v1.4.8
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v1.4.9
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -455,7 +455,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.9
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -595,7 +595,7 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v1.4.8
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v1.4.9
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
