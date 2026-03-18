@@ -40,7 +40,7 @@ runs:
   steps:
     - name: Configure AWS Credentials
       if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6.0.0
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.aws_region }}

@@ -73,7 +73,7 @@ runs:
 
     - name: Configure AWS Credentials
       if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6.0.0
       with:
         role-to-assume: ${{ inputs.aws-role-arn || env.AWS_ROLE_ARN }}
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
