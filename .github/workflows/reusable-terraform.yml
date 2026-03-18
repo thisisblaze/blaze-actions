@@ -153,12 +153,6 @@ on:
         required: false
       ACM_CERTIFICATE_ARN:
         required: false
-      BLAZE_SENTRY_AUTH_TOKEN:
-        required: false
-      BLAZE_SENTRY_DSN:
-        required: false
-      SLACK_WEBHOOK_URL:
-        required: false
       DEPLOY_KEY:
         required: false
     outputs:
