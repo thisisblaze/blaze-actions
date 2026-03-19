@@ -1,0 +1,229 @@
+name: "Reusable Provision Database Users"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Environment to deploy to (e.g., DEV, STAGE, PROD)"
+      project:
+        required: true
+        type: string
+        description: "Project Identity (e.g., thisisblaze)"
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+      stage_key:
+        required: true
+        type: string
+        description: "Stage key (e.g., dev, stage, prod)"
+      namespace:
+        required: true
+        type: string
+        description: "Namespace (e.g., blaze)"
+      client_key:
+        required: true
+        type: string
+        description: "Client key (e.g., b9)"
+      cloud_platform:
+        required: true
+        type: string
+        description: "Cloud platform type (e.g., ecs)"
+
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: true
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: true
+      MONGODB_ATLAS_PROJECT_ID:
+        required: true
+      EC_API_KEY:
+        required: true
+      GH_PAT:
+        required: true
+jobs:
+  provision-db-users:
+    name: Provision App Users (Atlas & Elastic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: "us-east-1" # Assuming global/default region for SSM or dynamically adjust if needed
+
+      - name: Set Variables
+        id: vars
+        run: |
+          echo "SSM_BASE_PATH=/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}" >> $GITHUB_ENV
+          APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
+          echo "APP_USER=$APP_USER" >> $GITHUB_ENV
+
+      - name: Generate Secure Passwords
+        id: generate-passwords
+        run: |
+          MONGO_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
+          ELASTIC_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
+          
+          echo "::add-mask::$MONGO_PASS"
+          echo "::add-mask::$ELASTIC_PASS"
+          
+          echo "MONGO_PASS=$MONGO_PASS" >> $GITHUB_ENV
+          echo "ELASTIC_PASS=$ELASTIC_PASS" >> $GITHUB_ENV
+
+      - name: Fetch Cluster Info from SSM
+        id: fetch-ssm
+        run: |
+          echo "Fetching Elastic Cloud cluster information..."
+          ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text || echo "")
+          ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text || echo "")
+          ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text || echo "")
+          MONGO_SRV=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/connection_string" --with-decryption --query "Parameter.Value" --output text || echo "")
+          
+          echo "::add-mask::$ELASTIC_ADMIN_PASS"
+          echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
+          echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
+          echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
+          
+          if [[ -n "$MONGO_SRV" ]]; then
+            MONGO_HOST=$(echo "$MONGO_SRV" | sed -n 's/.*mongodb+srv:\/\/\([^/?]*\).*/\1/p')
+            echo "MONGO_HOST=$MONGO_HOST" >> $GITHUB_ENV
+          else
+            echo "Warning: MongoDB connection string not found in SSM at $SSM_BASE_PATH/mongodb/connection_string"
+            echo "MONGO_HOST=" >> $GITHUB_ENV
+          fi
+
+      - name: Provision MongoDB Atlas App User
+        env:
+          ATLAS_PUBLIC: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          ATLAS_PRIVATE: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          ATLAS_PROJECT: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+        run: |
+          DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
+          ROLE_NAME="${DB_NAME}-role"
+          
+          echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
+          # Find, Insert, Update, Remove
+          PAYLOAD=$(jq -n \
+            --arg role "$ROLE_NAME" \
+            --arg db "$DB_NAME" \
+            '{
+              "actions": [
+                {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
+              ],
+              "roleName": $role
+            }')
+          
+          curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+            -H "Content-Type: application/json" -X POST \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
+            -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
+            
+          echo "2. Creating Database User: $APP_USER"
+          USER_PAYLOAD=$(jq -n \
+            --arg user "$APP_USER" \
+            --arg pass "$MONGO_PASS" \
+            --arg role "$ROLE_NAME" \
+            '{
+              "databaseName": "admin",
+              "password": $pass,
+              "roles": [{"databaseName": "admin", "roleName": $role}],
+              "username": $user
+            }')
+            
+          curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+            -H "Content-Type: application/json" -X POST \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers" \
+            -d "$USER_PAYLOAD" || curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+            -H "Content-Type: application/json" -X PATCH \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers/admin/$APP_USER" \
+            -d "$USER_PAYLOAD"
+            
+      - name: Provision Elastic Cloud App User
+        if: env.ELASTIC_ENDPOINT != '' && env.ELASTIC_ADMIN_USER != ''
+        run: |
+          ROLE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.stage_key }}-role"
+          
+          echo "1. Creating Elastic Role: $ROLE_NAME"
+          ROLE_PAYLOAD=$(jq -n \
+            '{
+              "indices": [
+                {
+                  "names": ["${{ inputs.namespace }}-*", "logs-*", "metrics-*"],
+                  "privileges": ["read", "write", "create_index", "manage", "all"]
+                }
+              ]
+            }')
+            
+          curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
+            -H "Content-Type: application/json" -X POST \
+            "$ELASTIC_ENDPOINT/_security/role/$ROLE_NAME" \
+            -d "$ROLE_PAYLOAD"
+            
+          echo "2. Creating Elastic User: $APP_USER"
+          USER_PAYLOAD=$(jq -n \
+            --arg pass "$ELASTIC_PASS" \
+            --arg role "$ROLE_NAME" \
+            '{
+              "password": $pass,
+              "roles": [$role]
+            }')
+            
+          curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
+            -H "Content-Type: application/json" -X POST \
+            "$ELASTIC_ENDPOINT/_security/user/$APP_USER" \
+            -d "$USER_PAYLOAD"
+
+      - name: Push to AWS SSM Parameter Store
+        run: |
+          aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_username" --value "$APP_USER" --type "String" --overwrite
+          aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
+          
+          if [[ -n "$MONGO_HOST" ]]; then
+            # Construct standard connection string pattern
+            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
+            aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
+            echo "MONGO_URI=$MONGO_URI" >> $GITHUB_ENV
+          fi
+          
+          if [[ -n "$ELASTIC_ENDPOINT" ]]; then
+            aws ssm put-parameter --name "$SSM_BASE_PATH/elastic/app_username" --value "$APP_USER" --type "String" --overwrite
+            aws ssm put-parameter --name "$SSM_BASE_PATH/elastic/app_password" --value "$ELASTIC_PASS" --type "SecureString" --overwrite
+          fi
+
+      - name: Sync to GitHub Environment Secrets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # Map stage name to actual environment name (if it differs)
+          ENV_TARGET="${{ inputs.environment }}"
+          
+          echo "Syncing GitHub Secrets for environment: $ENV_TARGET"
+          
+          if [[ -n "$ELASTIC_ENDPOINT" ]]; then
+            gh secret set "BLAZE_ELASTICSEARCH_USERNAME" --env "$ENV_TARGET" --body "$APP_USER" --repo "${{ github.repository }}"
+            gh secret set "BLAZE_ELASTICSEARCH_PASSWORD" --env "$ENV_TARGET" --body "$ELASTIC_PASS" --repo "${{ github.repository }}"
+            gh secret set "BLAZE_ELASTICSEARCH_ENDPOINT" --env "$ENV_TARGET" --body "$ELASTIC_ENDPOINT" --repo "${{ github.repository }}"
+          fi
+
+      - name: Sync to GitHub Repository Secrets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          STAGE_UPPER=$(echo "${{ inputs.stage_key }}" | tr '[:lower:]' '[:upper:]')
+          
+          if [[ -n "$MONGO_URI" ]]; then
+            gh secret set "${STAGE_UPPER}_BLAZE_CONNECTION_STRING" --body "$MONGO_URI" --repo "${{ github.repository }}"
+          fi
