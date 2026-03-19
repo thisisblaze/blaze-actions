@@ -127,7 +127,7 @@ jobs:
             lock_table: ${{ steps.config.outputs.lock_table }}
             aws_region: ${{ steps.config.outputs.aws_region }}
         steps:
-            - uses: actions/checkout@v6.0.2
+            - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
             - name: Calculate Configuration
               id: config

@@ -7,87 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.4.14 (2026-03-18)
 
-### Added
-
-- No new features in this release
-
 ### Changed
 
-- chore: update CHANGELOG for v1.4.13
-
-### Fixed
-
+- chore: sync all internal blaze-actions pointers to v1.4.14 to inherit native Node 24 Docker actions
 
 ## v1.4.13 (2026-03-18)
 
-### Added
-
-- No new features in this release
-
 ### Changed
 
-- chore: update CHANGELOG for v1.4.12
-
-### Fixed
-
+- chore: bump docker/build-push-action to v7 and setup-buildx to v4 for Node 24 support
 
 ## v1.4.12 (2026-03-18)
 
-### Added
-
-- No new features in this release
-
 ### Changed
 
-- chore: update CHANGELOG for v1.4.11
-- chore: update CHANGELOG for v1.4.11
-- chore: update CHANGELOG for v1.4.10
-
-### Fixed
-
+- chore: bump aws-actions/configure-aws-credentials in composite actions to v6.0.0 for Node 24 support
 
 ## v1.4.11 (2026-03-18)
 
-### Added
-
-- No new features in this release
-
 ### Changed
 
-- chore: update CHANGELOG for v1.4.11
-- chore: update CHANGELOG for v1.4.10
+- chore: inject FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 in setup-blaze and point workflows to dev to suppress node 20 deprecation
+- chore: explicitly export CLOUD_PROVIDER in reusable workflows to prevent false heuristics
 
 ### Fixed
 
-
-## v1.4.11 (2026-03-18)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v1.4.10
-
-### Fixed
-
+- fix(ci): remove overly aggressive add-mask that breaks terraform output wrapper
 
 ## v1.4.10 (2026-03-18)
 
-### Added
-
-- No new features in this release
-
 ### Changed
 
-- docs: session handoff — 2026-03-18 [Antigravity]
-- docs: session handoff — 2026-03-18 [MacBook Pro]
-- docs: generate session handoff state
-- chore: update CHANGELOG for v1.4.9
-
-### Fixed
-
+- docs: session handoff — 2026-03-18
+- chore: end-of-day governance sync — 2026-03-18
 
 ## v1.4.9 (2026-03-18)
 

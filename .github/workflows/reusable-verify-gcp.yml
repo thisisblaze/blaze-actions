@@ -121,16 +121,17 @@ jobs:
     name: "⚡ Verify Deployment"
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     permissions:
       id-token: write
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
             }}

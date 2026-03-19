@@ -219,7 +219,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Load Access List
         id: load-access
@@ -334,7 +334,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Load AWS Region from Config
         id: load-region
@@ -449,14 +449,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200
 
       - name: Delete Cloud Run Services
         run: |
@@ -648,6 +648,7 @@ jobs:
       inputs.action == 'nuke-environment' &&
       !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Gate
         run: |

@@ -1,0 +1,200 @@
+name: "04 - Deploy Site Multi-Site (GCP)"
+# ─────────────────────────────────────────────────────────────────────────────
+# REUSABLE WORKFLOW — called by blaze-template-deploy or any site CI pipeline
+# Handles: Docker build → AR push → Cloud Run update → traffic shift
+# Wraps reusable-docker-build.yml and reusable-gcp-multi-site-deploy.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      # ── Site Identity ───────────────────────────────────────────────────────
+      site_key:
+        required: true
+        type: string
+        description: "Unique site slug (e.g. 'site-001', 'acme-main')"
+
+      environment:
+        required: true
+        type: string
+        description: "GitHub Environment name (DEV / STAGE / PROD)"
+
+      # ── Image Build ─────────────────────────────────────────────────────────
+      image_tag:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+        description: "Docker image tag to deploy. Defaults to git SHA."
+
+      dockerfile:
+        required: false
+        type: string
+        default: "Dockerfile"
+
+      context:
+        required: false
+        type: string
+        default: "."
+
+      build_args:
+        required: false
+        type: string
+        default: ""
+
+      platforms:
+        required: false
+        type: string
+        default: "linux/amd64" # Standard for Cloud Run
+
+      # ── GCP Identity / Settings ───────────────────────────────────────────
+      artifact_registry_url:
+        required: true
+        type: string
+        description: "Artifact Registry URL (region-docker.pkg.dev/project/repo)"
+
+      image_repository:
+        required: false
+        type: string
+        default: "sites"
+        description: "Image repository path prefix"
+
+      service_name:
+        required: true
+        type: string
+        description: "Cloud Run service name"
+
+      gcp_project_id:
+        required: true
+        type: string
+        description: "GCP Project ID"
+
+      gcp_region:
+        required: false
+        type: string
+        default: "europe-west1"
+
+      # ── Deploy Strategy ─────────────────────────────────────────────────────
+      multi_revision:
+        required: false
+        type: boolean
+        default: false
+        description: "true = Blue/Green staged shift. false = 100% immediately."
+
+      shift_strategy:
+        required: false
+        type: string
+        default: "10-50-100"
+
+    secrets:
+      MONGO_INITDB_ROOT_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+concurrency:
+  group: deploy-site-${{ inputs.environment }}-${{ inputs.site_key }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    name: "🔨 Build [${{ inputs.site_key }}]"
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.14
+    with:
+      display_name: ${{ inputs.site_key }}
+      cloud_provider: "gcp"
+      image_name: "${{ inputs.artifact_registry_url }}/${{ inputs.image_repository }}/${{ inputs.site_key }}"
+      image_tag: ${{ inputs.image_tag }}
+      dockerfile: ${{ inputs.dockerfile }}
+      context: ${{ inputs.context }}
+      build_args: ${{ inputs.build_args }}
+      platforms: ${{ inputs.platforms }}
+      environment: ${{ inputs.environment }}
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  deploy:
+    name: "🚀 Deploy [${{ inputs.site_key }}]"
+    needs: [build]
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v1.4.14
+    with:
+      site_key: ${{ inputs.site_key }}
+      service_name: ${{ inputs.service_name }}
+      gcp_project_id: ${{ inputs.gcp_project_id }}
+      gcp_region: ${{ inputs.gcp_region }}
+      image_tag: ${{ inputs.image_tag }}
+      artifact_registry_url: ${{ inputs.artifact_registry_url }}
+      image_repository: ${{ inputs.image_repository }}/${{ inputs.site_key }}
+      multi_revision: ${{ inputs.multi_revision }}
+      shift_strategy: ${{ inputs.shift_strategy }}
+      environment: ${{ inputs.environment }}
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}

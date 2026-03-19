@@ -183,10 +183,10 @@ jobs:
       azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Checkout Actions
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
@@ -315,6 +315,7 @@ jobs:
     name: "📋 Deployment Summary"
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     permissions:
       id-token: write

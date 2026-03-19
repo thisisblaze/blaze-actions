@@ -162,16 +162,16 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Google Auth (OIDC)
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200
 
       # ── Tier 1: Instant Deploy (100% traffic) ──────────────────────────
       - name: Deploy (Tier 1)
@@ -257,3 +257,13 @@ jobs:
           echo "| Cloud Run Service | \`${{ inputs.service_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tier | \`${{ inputs.multi_revision && 'Tier 2 (Dedicated, Blue/Green)' || 'Tier 1 (Consumption, Scale-to-Zero)' }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Traffic Strategy | \`${{ inputs.shift_strategy }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+      # ── Notify ─────────────────────────────────────────────────────────
+      - name: "🚨 Slack Notification on Failure"
+        if: failure()
+        run: |
+          if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"🚨 *GCP Multi-Site Deploy Failed* 🚨\n*Site*: ${{ inputs.site_key }}\n*Environment*: ${{ inputs.environment }}\n*Provider*: gcp\n*Details*: <'${GITHUB_SERVER_URL}'/'${GITHUB_REPOSITORY}'/actions/runs/'${GITHUB_RUN_ID}'|View Run Logs>"}' \
+              ${{ secrets.SLACK_WEBHOOK_URL }}
+          fi
