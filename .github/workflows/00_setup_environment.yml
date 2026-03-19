@@ -436,7 +436,7 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider != 'gcp'
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2.1.0
 
       - name: Ensure ECR Repositories Exist
         if: inputs.cloud_provider != 'gcp'

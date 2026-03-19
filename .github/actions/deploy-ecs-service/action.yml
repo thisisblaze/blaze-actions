@@ -628,7 +628,7 @@ runs:
 
     - name: Deploy to Amazon ECS
 
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.0
       with:
         task-definition: task-def.json
         service: ${{ steps.prep.outputs.service_name }}

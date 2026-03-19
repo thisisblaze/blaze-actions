@@ -149,7 +149,7 @@ runs:
     - name: Login to Amazon ECR
       if: inputs.ecr == 'true' && (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@v2.1.0
 
     - name: Login to GCP Artifact Registry
       if: inputs.ecr == 'true' && inputs.cloud-provider == 'gcp'
