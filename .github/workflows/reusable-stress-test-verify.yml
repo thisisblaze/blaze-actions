@@ -214,6 +214,9 @@ jobs:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       namespace: ${{ needs.config.outputs.namespace }}
       aws_region: ${{ needs.config.outputs.aws_region }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      target_type: ${{ inputs.target_type }}
+      branch_tag: ${{ inputs.branch_tag }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -229,6 +232,7 @@ jobs:
       namespace: ${{ needs.config.outputs.namespace }}
       target_type: ${{ inputs.target_type }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -313,7 +317,6 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [config, verify]
     name: "📋 Deployment Summary"
-    timeout-minutes: 30
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: ${{ inputs.environment }}
