@@ -103,7 +103,7 @@ runs:
     - name: Authenticate to Google Cloud
       if: inputs.cloud-provider == 'gcp'
       id: gcp-auth
-      uses: google-github-actions/auth@v2
+      uses: google-github-actions/auth@v3
       with:
         workload_identity_provider: ${{ inputs.gcp-workload-identity-provider }}
         service_account: ${{ inputs.gcp-service-account }}
@@ -130,7 +130,7 @@ runs:
     # ══════════════════════════════════════════════════════════
     - name: Cache Terraform Providers
       if: inputs.terraform == 'true'
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         path: |
           .terraform
@@ -141,7 +141,7 @@ runs:
 
     - name: Setup Terraform
       if: inputs.terraform == 'true'
-      uses: hashicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v4
 
     # ══════════════════════════════════════════════════════════
     # Container Registry Login (Provider-specific)
