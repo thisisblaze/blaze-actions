@@ -86,7 +86,7 @@ on:
         description: "API CPU Architecture (X86_64/ARM64)"
         type: choice
         options: ["X86_64", "ARM64"]
-        default: "X86_64"
+        default: "ARM64"
       frontend_launch_type:
         description: "Frontend Launch Type (FARGATE/EC2)"
         type: choice
@@ -96,7 +96,7 @@ on:
         description: "Frontend CPU Architecture (X86_64/ARM64)"
         type: choice
         options: ["X86_64", "ARM64"]
-        default: "X86_64"
+        default: "ARM64"
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -163,7 +163,7 @@ on:
       api_cpu_architecture:
         required: false
         type: string
-        default: "X86_64"
+        default: "ARM64"
       frontend_launch_type:
         required: false
         type: string
@@ -171,7 +171,7 @@ on:
       frontend_cpu_architecture:
         required: false
         type: string
-        default: "X86_64"
+        default: "ARM64"
       azure_client_id_rev:
         required: false
         type: string

@@ -64,7 +64,7 @@ on:
         description: "API CPU arch: X86_64 or ARM64"
         type: choice
         options: ["X86_64", "ARM64"]
-        default: "X86_64"
+        default: "ARM64"
 
       # Base64 Secrets Bridge (Azure)
       azure_client_id_rev:
@@ -125,7 +125,7 @@ on:
       api_cpu_architecture:
         required: false
         type: string
-        default: "X86_64"
+        default: "ARM64"
       frontend_launch_type:
         required: false
         type: string
@@ -133,7 +133,7 @@ on:
       frontend_cpu_architecture:
         required: false
         type: string
-        default: "X86_64"
+        default: "ARM64"
       skip_stability_wait:
         required: false
         type: string
