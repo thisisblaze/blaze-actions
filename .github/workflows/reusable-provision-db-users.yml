@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: "us-east-1" # Assuming global/default region for SSM or dynamically adjust if needed
