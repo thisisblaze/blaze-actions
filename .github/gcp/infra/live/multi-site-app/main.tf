@@ -32,7 +32,7 @@ data "terraform_remote_state" "network" {
 # ── Cloud Run Multi-Site Fleet ──
 
 module "app_fleet" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/multi-site-app?ref=v1.47.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/multi-site-app?ref=v2.1.1"
 
   context        = data.terraform_remote_state.network.outputs.label_context
   gcp_project_id = var.gcp_project_id
@@ -48,7 +48,7 @@ module "app_fleet" {
 # ── DNS Automation (Cloudflare) ──
 
 module "cloudflare_records" {
-  source   = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-records?ref=v1.47.1"
+  source   = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-records?ref=v2.1.1"
   for_each = { for k, v in var.sites : k => v if v.domain != "" }
 
   # Wait, wait... for multi-site, many domains might be in DIFFERENT zones.

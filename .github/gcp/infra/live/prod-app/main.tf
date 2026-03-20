@@ -47,7 +47,7 @@ data "terraform_remote_state" "network" {
 
 # ── Environment App Module ──
 module "environment_app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/environment-app?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/environment-app?ref=v2.1.1"
 
   gcp_project_id = var.gcp_project_id
   gcp_region     = var.gcp_region
@@ -111,7 +111,7 @@ locals {
 # ── Cloudflare Pages Project (Admin) ──
 module "pages_project_admin" {
   count  = var.enable_custom_domains ? 1 : 0
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.1.1"
 
   account_id        = var.cloudflare_account_id
   project_name      = "${var.namespace}-${var.client_key}-${var.project_key}-gcp-${var.stage}-admin"

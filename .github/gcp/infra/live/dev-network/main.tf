@@ -75,7 +75,7 @@ resource "google_project_service" "container" {
 
 # ── Environment Network Module ──
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/networking/environment-network?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/networking/environment-network?ref=v2.1.1"
 
   gcp_project_id = var.gcp_project_id
   gcp_region     = var.gcp_region

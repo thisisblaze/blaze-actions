@@ -60,7 +60,7 @@ data "terraform_remote_state" "app" {
 
 # ── Label ──
 module "label" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.1.1"
 
   namespace  = var.namespace
   stage      = var.stage
@@ -102,7 +102,7 @@ resource "google_project_service" "run" {
 # ─────────────────────────────────────────────────────────────
 
 module "cloud_armor" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/security/cloud-armor?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/security/cloud-armor?ref=v2.1.1"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
@@ -119,7 +119,7 @@ module "cloud_armor" {
 # ─────────────────────────────────────────────────────────────
 
 module "image_resize" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/image-resize?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/image-resize?ref=v2.1.1"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
@@ -141,7 +141,7 @@ module "image_resize" {
 # ─────────────────────────────────────────────────────────────
 
 module "global_lb" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v1.46.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v2.1.1"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
