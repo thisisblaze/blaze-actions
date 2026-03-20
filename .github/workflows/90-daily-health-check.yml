@@ -142,7 +142,7 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Run System Monitor
         id: script_run
@@ -284,7 +284,7 @@ jobs:
 
       - name: Run Trivy (IAC Mode)
         id: trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: "config"
           scan-ref: "."
@@ -327,6 +327,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Generate Summary
+        env:
+          HEALTH: ${{ needs.health-check-script.result }}
+          DRIFT_NET: ${{ needs.drift-check-network.result }}
+          DRIFT_APP: ${{ needs.drift-check-app.result }}
+          AUDIT: ${{ needs.infra-audit.result }}
+          NET_SUMMARY: ${{ needs.drift-check-network.outputs.plan_summary }}
+          APP_SUMMARY: ${{ needs.drift-check-app.outputs.plan_summary }}
+          VULN_COUNT: ${{ needs.infra-audit.outputs.vuln_count }}
+          LIVE_METRICS: ${{ needs.health-check-script.outputs.live_summary }}
         run: |
           echo "# 🏥 Daily Health Check Report" >> $GITHUB_STEP_SUMMARY
           echo "📅 **Date:** $(date +'%Y-%m-%d')" >> $GITHUB_STEP_SUMMARY
@@ -336,17 +345,10 @@ jobs:
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
 
-          HEALTH="${{ needs.health-check-script.result }}"
-          DRIFT_NET="${{ needs.drift-check-network.result }}"
-          DRIFT_APP="${{ needs.drift-check-app.result }}"
-          AUDIT="${{ needs.infra-audit.result }}"
-
-
-          # Fetch Details
-          NET_SUMMARY="${{ needs.drift-check-network.outputs.plan_summary }}"
-          APP_SUMMARY="${{ needs.drift-check-app.outputs.plan_summary }}"
-          VULN_COUNT="${{ needs.infra-audit.outputs.vuln_count }}"
-          LIVE_METRICS="${{ needs.health-check-script.outputs.live_summary }}"
+          # Check if undefined to prevent bash operand errors
+          if [[ -z "$VULN_COUNT" || "$VULN_COUNT" == "None" ]]; then
+             VULN_COUNT=0
+          fi
 
           # 1. Hygiene Section
           echo "### 🛡️ Code Hygiene" >> $GITHUB_STEP_SUMMARY
