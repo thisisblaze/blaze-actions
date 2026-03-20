@@ -239,6 +239,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |

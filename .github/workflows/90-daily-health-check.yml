@@ -139,6 +139,8 @@ jobs:
       # We need Node for the "Code Hygiene" checks (grep .ts files) and maybe npm tests later
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
           node-version: "20"
 

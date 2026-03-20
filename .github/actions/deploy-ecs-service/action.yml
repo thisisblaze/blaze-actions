@@ -629,6 +629,8 @@ runs:
     - name: Deploy to Amazon ECS
 
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.0
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         task-definition: task-def.json
         service: ${{ steps.prep.outputs.service_name }}
