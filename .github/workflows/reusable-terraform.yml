@@ -165,6 +165,8 @@ on:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
@@ -619,6 +621,14 @@ jobs:
              fi
           else
              echo "✅ No existing lock found"
+          fi
+
+      - name: Export Basic Auth Secret
+        env:
+          BASIC_AUTH_CRED: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+        run: |
+          if [ -n "$BASIC_AUTH_CRED" ]; then
+            echo "TF_VAR_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
           fi
 
       - name: Load TF Vars

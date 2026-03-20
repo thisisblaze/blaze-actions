@@ -246,6 +246,8 @@ on:
         required: false
       BLAZE_SENTRY_DSN:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
@@ -476,6 +478,7 @@ jobs:
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
       EC_API_KEY: ${{ secrets.EC_API_KEY }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       # GCP
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
