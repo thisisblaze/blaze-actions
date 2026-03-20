@@ -88,7 +88,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v4 # v3.1.2
         with:
-          terraform_version: "1.5.0"
+          terraform_version: "1.14.7"
 
       - name: Terraform Init & Plan
         id: plan
