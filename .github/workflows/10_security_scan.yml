@@ -181,7 +181,7 @@ jobs:
             ${{ runner.os }}-trivy-db-
 
       - name: Run Trivy (Console Log)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -193,7 +193,7 @@ jobs:
           hide-progress: true
 
       - name: Run Trivy (Filesystem)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: "fs"
           scan-ref: "."
