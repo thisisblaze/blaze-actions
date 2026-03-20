@@ -27,7 +27,7 @@ jobs:
 
         steps:
             - name: Checkout Repository
-              uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0 # Fetch all history for changelog generation
                   ref: dev # Update changelog on dev branch

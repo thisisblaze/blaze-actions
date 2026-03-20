@@ -195,7 +195,7 @@ jobs:
       platform: ${{ steps.calc.outputs.platform }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v4
       
       - name: Calculate Configuration
         id: calc
@@ -219,7 +219,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v4
 
       - name: Load Access List
         id: load-access
@@ -256,7 +256,7 @@ jobs:
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -416,7 +416,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'
@@ -427,7 +427,7 @@ jobs:
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}

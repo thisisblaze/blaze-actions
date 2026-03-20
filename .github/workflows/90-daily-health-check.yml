@@ -118,7 +118,7 @@ jobs:
       live_summary: ${{ steps.script_run.outputs.live_summary }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v4
 
       - name: Setup Blaze
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.14
@@ -169,7 +169,7 @@ jobs:
       aws_region: ${{ steps.config.outputs.aws_region }}
       domain_root: ${{ steps.config.outputs.domain_root }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
       - name: Calculate Configuration
         id: config
@@ -278,7 +278,7 @@ jobs:
       vuln_count: ${{ steps.trivy.outputs.vuln_count }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v4
 
       - name: Run Trivy (IAC Mode)
         id: trivy

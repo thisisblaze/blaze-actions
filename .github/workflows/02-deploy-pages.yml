@@ -236,7 +236,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@b39b52d1213e9600959d8cece19f7e7f8b4aebfd
         with: {node-version: "20"}
       - name: Setup .npmrc
@@ -277,7 +277,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
       - name: Debug Inputs
         run: |
@@ -323,7 +323,7 @@ jobs:
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
             }}
@@ -392,7 +392,7 @@ jobs:
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/auth@62ea5bcaf734b5c6e61ba9a208f7ce14643ceab7
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -543,7 +543,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@b39b52d1213e9600959d8cece19f7e7f8b4aebfd
         with:
@@ -618,7 +618,7 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
