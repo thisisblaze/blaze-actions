@@ -164,7 +164,7 @@ env:
 jobs:
   build:
     name: "🔨 Build [${{ inputs.site_key }}]"
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.19
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.20
     with:
       display_name: ${{ inputs.site_key }}
       cloud_provider: "gcp"
