@@ -199,7 +199,7 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      terraform_version: "1.14.7"
+      terraform_version: "1.9.0"
       apply: false
       detect_drift: true # 👈 Activates Detailed Exitcode
       # Env Vars
@@ -241,7 +241,7 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: ${{ needs.configuration.outputs.state_key }} # Config resolves correct state key
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      terraform_version: "1.14.7"
+      terraform_version: "1.9.0"
       apply: false
       detect_drift: true
       tf_vars: |

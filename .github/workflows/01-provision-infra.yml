@@ -55,7 +55,7 @@ on:
       terraform_version:
         description: "Terraform Version"
         type: string
-        default: "1.14.7"
+        default: "1.9.0"
 
       # Third-Party Options
       cluster_tier:
@@ -142,7 +142,7 @@ on:
       terraform_version:
         required: false
         type: string
-        default: "1.14.7"
+        default: "1.9.0"
 
       enable_tunnel:
         required: false

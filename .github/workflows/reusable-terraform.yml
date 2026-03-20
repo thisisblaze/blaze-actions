@@ -36,7 +36,7 @@ on:
         description: "Terraform Version"
         required: false
         type: string
-        default: "1.14.7"
+        default: "1.9.0"
       apply:
         description: "Whether to run terraform apply"
         required: false
