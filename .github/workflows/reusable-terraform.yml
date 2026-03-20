@@ -259,7 +259,7 @@ jobs:
         working-directory: ${{ inputs.tf_dir }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 

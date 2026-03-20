@@ -136,7 +136,7 @@ jobs:
             lock_table: ${{ steps.config.outputs.lock_table }}
             aws_region: ${{ steps.config.outputs.aws_region }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6.0.2
 
             - name: Load Access List
               id: load-access

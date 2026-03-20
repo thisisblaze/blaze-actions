@@ -224,7 +224,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Load Access List
         id: load-access
@@ -327,7 +327,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Load AWS Region from Config
         id: load-region
@@ -410,7 +410,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Parse blaze-env.json
         id: parse
@@ -984,7 +984,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Calculate Config
         id: config

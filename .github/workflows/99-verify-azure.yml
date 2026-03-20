@@ -125,7 +125,7 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6.0.2
 
             - name: Azure Login
               uses: azure/login@v3.0.0

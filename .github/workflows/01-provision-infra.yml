@@ -292,7 +292,7 @@ jobs:
       azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
       azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Load Access List
         id: load-access
@@ -429,7 +429,7 @@ jobs:
       layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -554,7 +554,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Sync Connection String Secret
         env:
@@ -646,7 +646,7 @@ jobs:
       ARM_USE_OIDC: "true"
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Resolve Azure Secrets (CDN)
         if: inputs.azure_client_id_rev != ''

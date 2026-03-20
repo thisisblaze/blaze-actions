@@ -183,10 +183,10 @@ jobs:
       azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
@@ -240,10 +240,10 @@ jobs:
       elastic_exists: ${{ steps.check-elastic.outputs.exists }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
