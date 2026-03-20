@@ -57,7 +57,7 @@ on:
       terraform_version:
         description: "Terraform Version"
         required: false
-        default: "1.9.0"
+        default: "1.14.7"
         type: string
 
   workflow_call:
@@ -96,7 +96,7 @@ on:
       terraform_version:
         required: false
         type: string
-        default: "1.9.0"
+        default: "1.14.7"
       wif_audience:
         required: false
         type: string
