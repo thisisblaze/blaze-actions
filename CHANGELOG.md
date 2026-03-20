@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.15 (2026-03-20)
+
+### Added
+
+- feat: migrate third-party DB users to GitHub Actions CLI
+
+### Changed
+
+- chore: bump blazecore environment network dependencies to v2.0.0 for v6 upgrade testing
+- refactor: pipe basic_auth_credentials via GitHub secrets
+- chore: end-of-day governance sync — 2026-03-20 [MacBook Pro]
+- chore: bump aws-actions for Node 24 support
+- chore: end-of-day governance sync — 2026-03-18
+- chore: update CHANGELOG for v1.4.14
+
+### Fixed
+
+- fix: bump trivy-action to v0.28.0 to support Node 20+
+- fix: pass missing domain_root to verification workflows
+- fix: inject timeout-minutes and pin github action shas globally
+
 ## [Unreleased] - 2026-03-20
 
 ### Changed
