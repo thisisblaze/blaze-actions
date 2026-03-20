@@ -208,7 +208,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.19
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"

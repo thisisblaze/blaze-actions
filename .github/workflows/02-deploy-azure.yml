@@ -238,7 +238,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@b39b52d1213e9600959d8cece19f7e7f8b4aebfd
+      - uses: actions/setup-node@v4
         with: {node-version: "20"}
       - name: Setup .npmrc
         run: |
@@ -364,7 +364,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.18
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.19
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -539,7 +539,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.19
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -588,7 +588,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.19
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -647,7 +647,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Setup Node
-        uses: actions/setup-node@b39b52d1213e9600959d8cece19f7e7f8b4aebfd
+        uses: actions/setup-node@v4
         with:
           node-version: "20.x"
       - name: Setup .npmrc
@@ -709,7 +709,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true || 
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.19
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -759,7 +759,7 @@ jobs:
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.19
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -803,7 +803,7 @@ jobs:
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.19
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -846,7 +846,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.18
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.19
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
