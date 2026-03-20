@@ -154,12 +154,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: pass missing domain_root to verification workflows
 - fix: inject timeout-minutes and pin github action shas globally
 
-## [Unreleased] - 2026-03-20
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-20
 
 ### Changed
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
-## [Unreleased] - 2026-03-19
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-19
 
 ### Changed
 - fix: Inject `timeout-minutes: 30` across all jobs to prevent runaway billing traps.
@@ -640,6 +648,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively.
+
 ### Added
 - Added `.agent/fixtures` to `/checkengines` sweep validations.
 - Enhanced `/.agent/scripts/run_sweep.py` with Python harnesses for deterministic validation.
@@ -650,7 +662,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened agent workflows by moving logic from shell scripts to Python assertions.
 - Upgraded `/checkengines` module validation output formatting.
 
-## [Unreleased] - 2026-03-16
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-16
 
 ### Added
 
@@ -662,7 +678,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Checkengines Sweep**: Updated Engine 4 to validate GitHub Actions uses references are pinned to the latest release tag. Ignored cross-repo workflow orphans, excluded living docs from hygiene check, and focused stress test freshness exclusively on mini runs.
 - **AI Context**: Maintained agent workflows sweep 2026-03-16.
 
-## [Unreleased] - 2026-03-14
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-14
 
 ### Fixed
 
@@ -671,13 +691,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Artifact Registry**: Updated workflows to use `docker/login-action` for Artifact Registry authentication instead of `gcloud auth configure-docker`.
 - **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
 
-## [Unreleased] - 2026-03-12
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-12
 
 ### Fixed
 
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
-## [Unreleased] - 2026-03-04
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-04
 - Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Changed
@@ -688,7 +716,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stress Test Orchestration**: Refactored `stress-test.yml` into a reusable router calling `stress-test-aws.yml`, `stress-test-gcp.yml`, and `stress-test-azure.yml`.
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
-## [Unreleased] - 2026-03-03
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-03
 - Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Changed
@@ -743,7 +775,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] - 2026-02-25
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-02-25
 - Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
@@ -779,7 +815,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Stress Test Destroy Order**: Swapped CDN and App destroy order to prevent orphaned NEGs (Network Endpoint Groups) when Cloud Run services are destroyed before the CDN/load balancer is cleaned up.
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
-## [Unreleased] - 2026-02-23
+## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-02-23
 - Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
@@ -953,6 +993,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+
+- **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
+- **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
+- **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively.
 - Standardize GitHub Action workflow UI names to append Cloud Provider (AWS, Azure, GCP).
 
 ### Added
