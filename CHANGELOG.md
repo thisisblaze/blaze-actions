@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- chore: update CHANGELOG for v1.4.19
+- chore: update CHANGELOG for v1.4.18
+
+### Fixed
+
+
+## v1.4.19 (2026-03-20)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v1.4.18
 
 ### Fixed
