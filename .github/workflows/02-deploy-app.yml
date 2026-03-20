@@ -233,7 +233,7 @@ env:
 jobs:
   dispatch-aws:
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v1.4.14
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v1.4.18
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -285,7 +285,7 @@ jobs:
 
   dispatch-gcp:
     if: inputs.cloud_provider == 'gcp'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v1.4.14
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v1.4.18
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -337,7 +337,7 @@ jobs:
 
   dispatch-azure:
     if: inputs.cloud_provider == 'azure'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v1.4.14
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v1.4.18
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -389,7 +389,7 @@ jobs:
 
   dispatch-pages:
     if: inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && (inputs.branch_name == '' || inputs.branch_name == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE')
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@v1.4.14
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@v1.4.18
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
