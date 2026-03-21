@@ -31,10 +31,7 @@ on:
         type: choice
         options:
           - "network"
-          - "data"
-          - "cdn"
           - "acm"
-          - "tunnel"
           - "app"
           - "third-party-mongodb"
           - "third-party-elastic"
