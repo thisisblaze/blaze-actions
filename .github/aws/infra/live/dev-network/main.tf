@@ -1,10 +1,22 @@
 terraform {
   backend "s3" {}
   required_providers {
-    aws        = { source = "hashicorp/aws", version = "~> 5.0" }
-    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.0" }
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
   }
 }
+
+# -------------------------------------------------------------------------
+# NETWORK INFRASTRUCTURE (DEV)
+# -------------------------------------------------------------------------
+# Purpose:
+#   - Standardized usage of environment-network module (Tunnel Mode)
+#   - Creates VPC, subnets, ECS Cluster, EFS
+#   - Defines Tunnel SG rules via variable
+# -------------------------------------------------------------------------
 
 provider "aws" {
   region = var.aws_region
@@ -20,19 +32,8 @@ provider "aws" {
       State        = var.tag_state
     }
   }
-}
 
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
 }
-
-# -------------------------------------------------------------------------
-# NETWORK INFRASTRUCTURE (STAGE) - Refactored to use Module
-# -------------------------------------------------------------------------
-# Purpose:
-#   - Standardized usage of environment-network module (matching Prod)
-#   - Creates VPC, subnets, ECS Cluster, ALB/EFS/DNS resources
-# -------------------------------------------------------------------------
 
 provider "aws" {
   alias  = "us_east_1"
@@ -44,74 +45,71 @@ provider "aws" {
       Project      = var.project_key
       Stage        = var.stage
       "Managed by" = var.tag_managed_by
-      Support      = var.tag_support
-      State        = var.tag_state
     }
   }
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.1.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.44.1"
 
-  # Override Frontend Subdomain to be 'frontend-dev'
-  frontend_subdomain_override = "frontend-dev"
-  # extra_cloudfront_aliases removed as we only want one domain
-
-  # Add suffixes to avoid naming collision with Beanstalk
-  cloudfront_function_name_suffix = "-ecs"
-  access_logs_bucket_suffix       = "-ecs"
-
-  # New Feature: Separate CDN Distribution (For WAF Isolation)
-  separate_cdn_distribution = true # Matching Prod for parity
   providers = {
     aws           = aws
     aws.us_east_1 = aws.us_east_1
   }
 
-  listener_default_action_target = "fixed-response"
-  stage                          = "dev" # Explicitly dev
-  client_key                     = var.client_key
-  project_key                    = var.project_key
+  stage       = var.stage
+  client_key  = var.client_key
+  project_key = var.project_key
+  namespace   = var.namespace
+  aws_region  = var.aws_region
 
-  # Disable Cloudflare Access for Stage (Granular)
-  enable_frontend_access = false
-  enable_admin_access    = false
-  namespace              = var.namespace
-  aws_region             = var.aws_region
-
-  # Stage-Specific CIDR (Preserved from original)
+  # Dev-Specific CIDR (Preserved)
   vpc_cidr              = "10.0.0.0/16"
   private_subnets_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
   public_subnets_cidrs  = ["10.0.101.0/24", "10.0.102.0/24"]
-  # Stage: Use NAT Gateway (Standard) - Fixed connectivity issue
-  nat_strategy            = "GATEWAY"
-  container_insights_mode = "disabled"
 
-  # Health Check: Use /health for API backwards compatibility
-  health_check_path    = "/health"
-  health_check_matcher = "200-499"
+  # Cost Optimization: Use Public Subnets (No NAT Gateway)
+  nat_strategy = "NONE"
 
-  # Wrapper Logic: Pass bucket for internal ACM lookup
+  # Common Inputs
   tf_state_bucket = "${var.client_key}-${var.stage}-blaze-tfstate"
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_zone_id   = var.cloudflare_zone_id
   domain_root          = var.domain_root
 
-  # Enable Admin SPA via CloudFront + S3
-  enable_admin_cloudfront = true
+  # ⚠️ DEV MODE: Disable ALB (Uses Cloudflare Tunnel)
+  enable_alb = false
 
-  # Enable Beta URLs for initial testing (optional, usually false for stage)
-  is_beta = var.is_beta
-
-  # ⚠️ Disabling EFS Globally as per request
+  # ⚠️ DEV MODE: Enable EFS (Persistent Storage)
   enable_efs = false
 
-  # Original Prod had `create_ecr_repos = true`. Stage usually reads or creates if separate.
-  create_ecr_repos = false
+  # ⚠️ DEV MODE: Custom Ingress Rules for Cloudflare Tunnel
+  extra_ecs_sg_ingress_rules = [
+    {
+      description = "Allow Cloudflare Tunnel - API"
+      from_port   = 3001
+      to_port     = 3001
+      protocol    = "tcp"
+      self        = true
+    },
+    {
+      description = "Allow Cloudflare Tunnel - Frontend"
+      from_port   = 3000
+      to_port     = 3000
+      protocol    = "tcp"
+      self        = true
+    },
+    {
+      description = "Allow Cloudflare Tunnel - Admin"
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      self        = true
+    }
+  ]
 
-  # WAF disabled on dev — only enabled on stage and prod (cost policy: <5 services use public IP / no WAF)
-  enable_waf = false
+  enable_access_control = false
 
   # EC2 Capacity Providers (Hybrid ECS — Feb 2026)
   capacity_providers = var.enable_ec2 ? [{
@@ -119,126 +117,13 @@ module "environment_network" {
     weight = 1
     base   = 0
   }] : []
-
-  # --- CLOUDFRONT ENABLEMENT ---
-  enable_cloudfront             = true
-  create_cloudfront_certificate = true
-  # Also create ALB certificate
-  create_acm_certificate = true
-  # Route53 Zone ID required for automated cert validation
-  route53_parent_zone_id = var.route53_parent_zone_id
-
-  # Explicitly use AllViewer Policy to forward Host header to ALB
-  # This fixes the issue where ALB receives the backend DNS name instead of the Host
-  cloudfront_origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-
-
-  # --- IMAGE RESIZE (Matching Prod) ---
-  enable_image_resize    = true
-  sharp_layer_arn        = var.sharp_layer_arn
-  basic_auth_credentials = var.basic_auth_credentials
-
-  # The storage S3 bucket is created by the app stack (dev-app). Adding this origin
-  # before the bucket exists causes CloudFront NoSuchOrigin errors.
-  # Re-run 01-provision-infra (stack=network) after dev-app is provisioned to wire it in.
-  storage_bucket_domain_name = "${var.namespace}-${var.client_key}-${var.platform}-${var.project_key}-${var.stage}-storage-origin.s3.${var.aws_region}.amazonaws.com"
-  storage_bucket_origin_id   = "storage-origin"
-
-  # Custom Behaviors (API goes to ALB, everything else Default)
-  # This relies on the default behavior pointing to ALB as well.
-  # If we need specific paths (e.g. /api/*) to have different caching:
-  cloudfront_ordered_cache_behaviors = [
-    # GraphQL API (Proxied to ALB) - NO AUTH
-    {
-      path_pattern           = "graphql"
-      target_origin_id       = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy = "redirect-to-https"
-      allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-      cached_methods         = ["GET", "HEAD", "OPTIONS"]
-
-      # NOTE: These UUIDs are AWS Managed Policies, guaranteed never to change by AWS.
-      # Hardcoding these IDs is standard practice and preferable to dynamic lookups.
-      # 4135ea2d... = Managed-CachingDisabled
-      # 216adef6... = Managed-AllViewer
-      cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
-      origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3" # AllViewer
-      compress                 = true
-      function_association     = [] # Explicitly Disable Basic Auth
-    },
-    # Health Check - NO AUTH
-    {
-      path_pattern             = "/health"
-      target_origin_id         = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy   = "redirect-to-https"
-      allowed_methods          = ["GET", "HEAD", "OPTIONS"]
-      cached_methods           = ["GET", "HEAD"]
-      cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
-      origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3" # AllViewer
-      compress                 = true
-      function_association     = [] # Explicitly Disable Basic Auth
-    },
-    # Static Assets (JS) -> Frontend
-    {
-      path_pattern           = "*.js"
-      target_origin_id       = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy = "redirect-to-https"
-      allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-      cached_methods         = ["GET", "HEAD"]
-      cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
-      compress               = true
-    },
-    # Static Assets (CSS) -> Frontend
-    {
-      path_pattern           = "*.css"
-      target_origin_id       = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy = "redirect-to-https"
-      allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-      cached_methods         = ["GET", "HEAD"]
-      cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
-      compress               = true
-    },
-    # API Path Pattern (Legacy/Redundant but safe to keep) - NO AUTH
-    {
-      path_pattern             = "/api/*"
-      target_origin_id         = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy   = "redirect-to-https"
-      allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-      cached_methods           = ["GET", "HEAD"]
-      compress                 = true
-      cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-      origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-      function_association     = [] # Explicitly Disable Basic Auth
-    },
-    # Next.js Static Assets (/_next/*) - NO BASIC AUTH
-    {
-      path_pattern             = "/_next/*"
-      target_origin_id         = "ALB-${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-ecs"
-      viewer_protocol_policy   = "redirect-to-https"
-      allowed_methods          = ["GET", "HEAD", "OPTIONS"]
-      cached_methods           = ["GET", "HEAD"]
-      cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
-      origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewer
-      compress                 = true
-    }
-  ]
-
-  separate_api_alb = true
 }
-
-
 
 # --------------------------------------------------------------------------------
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
 # --------------------------------------------------------------------------------
-
-# Import orphaned IAM role — exists in AWS but was lost from state during a
-# previous nuke/re-provision cycle. This block reconciles it so Terraform can
-# manage it without hitting EntityAlreadyExists on the next apply.
-# Safe to leave in place; Terraform ignores import blocks after first apply.
-
-
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.1.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.44.1"
   count  = var.enable_ec2 ? 1 : 0
 
   # Identity (context provides label defaults, but these are required)
@@ -252,13 +137,13 @@ module "ec2_capacity_provider" {
   cluster_name    = module.environment_network.cluster_name
   vpc_id          = module.environment_network.vpc_id
   subnet_ids      = module.environment_network.app_subnets
-  vpc_cidr_blocks = [try(module.environment_network.config.vpc_cidr_block, "10.0.0.0/16")]
+  vpc_cidr_blocks = [var.vpc_cidr]
 
   # Instance config
   instance_types   = var.ec2_instance_types
   cpu_architecture = var.ec2_cpu_architecture
 
-  # STAGE: Spot only for cost savings (Demo Mode)
+  # DEV: Spot only for cost savings
   on_demand_base_capacity         = 0
   on_demand_percentage_above_base = 0
 
@@ -269,7 +154,97 @@ module "ec2_capacity_provider" {
 }
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.1.1"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.44.1"
   name    = "logs"
   context = module.environment_network.context
+}
+
+# Unified Output Removed (Duplicate)
+# output "config" { value = module.environment_network.config }
+
+
+# -------------------------------------------------------------------------
+# STATE MIGRATION (Refactor 2025-12-19)
+# -------------------------------------------------------------------------
+
+# 1. Networking Module
+moved {
+  from = module.networking
+  to   = module.environment_network.module.networking
+}
+
+# 2. ECS Cluster Module
+moved {
+  from = module.cluster
+  to   = module.environment_network.module.cluster
+}
+
+# 3. Security Group (Module -> Resource)
+# dev-network used module "security_group", inside it "aws_security_group.this"
+# new module uses resource "aws_security_group.ecs_sg"
+moved {
+  from = module.security_group.aws_security_group.this
+  to   = module.environment_network.aws_security_group.ecs_sg
+}
+
+# 4. EFS (Module -> Resource)
+# dev-network used module "efs", inside it "aws_efs_file_system.main"
+# new module uses resource "aws_efs_file_system.main"
+moved {
+  from = module.efs.aws_efs_file_system.main
+  to   = module.environment_network.aws_efs_file_system.main
+}
+
+moved {
+  from = module.efs.aws_efs_mount_target.targets
+  to   = module.environment_network.aws_efs_mount_target.targets
+}
+
+# Access Points
+moved {
+  from = module.efs.aws_efs_access_point.aps["api"]
+  to   = module.environment_network.aws_efs_access_point.api
+}
+
+moved {
+  from = module.efs.aws_efs_access_point.aps["mongo"]
+  to   = module.environment_network.aws_efs_access_point.mongo
+}
+
+moved {
+  from = module.efs.aws_efs_access_point.aps["es"]
+  to   = module.environment_network.aws_efs_access_point.es
+}
+
+# Note: Previous "moved" blocks from legacy manual resources can be removed or kept.
+# Since we are moving FROM the state that resulted from those moves, we just need to target the CURRENT state.
+
+
+# -------------------------------------------------------------------------
+# RESOURCE MIGRATION (Cloudflare v5 — Feb 2026)
+# -------------------------------------------------------------------------
+# In Cloudflare provider v5, access policies are inline within
+# the application resource. The standalone policy resources no
+# longer exist, so we use 'removed' to drop them from state.
+
+# Applications: moved into module (resource type unchanged in v5)
+moved {
+  from = cloudflare_zero_trust_access_application.frontend_dev
+  to   = module.environment_network.cloudflare_zero_trust_access_application.frontend[0]
+}
+
+moved {
+  from = cloudflare_zero_trust_access_application.admin_dev
+  to   = module.environment_network.cloudflare_zero_trust_access_application.admin[0]
+}
+
+# Policies: removed from state (now inline in application resource)
+removed {
+  from = cloudflare_zero_trust_access_policy.frontend_dev_allow
+  lifecycle { destroy = false }
+}
+
+removed {
+  from = cloudflare_zero_trust_access_policy.admin_dev_allow
+  lifecycle { destroy = false }
 }
