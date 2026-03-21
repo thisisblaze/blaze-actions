@@ -405,7 +405,7 @@ jobs:
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v1.4.19
+    uses: ./.github/workflows/reusable-ecs-service-management.yml
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -631,7 +631,7 @@ jobs:
     name: ☢️ Nuke CloudFront
     needs: [configuration]
     if: inputs.action == 'nuke-cloudfront'
-    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v1.4.19
+    uses: ./.github/workflows/nuke-cloudfront.yml
     with:
       dist_id: ${{ inputs.dist_id }}
     secrets:
