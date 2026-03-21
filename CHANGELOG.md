@@ -1,3 +1,6 @@
+## v1.4.30 (2026-03-21)
+
+- chore: bump internal workflow references to v1.4.30 (5fc7676)
 ## v1.4.29 (2026-03-21)
 
 - fix(deploy): remove aws iam get-role polling loop due to OIDC Access Denied constraints (1d18f1b)
