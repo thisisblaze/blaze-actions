@@ -16,10 +16,10 @@ variable "project_key" {
   default     = "thisisblaze"
 }
 
-variable "stage" {
+variable "dev" {
   description = "Environment stage (stage)"
   type        = string
-  default     = "stage"
+  default     = "dev"
 }
 
 variable "namespace" {

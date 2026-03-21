@@ -151,7 +151,7 @@ module "app" {
   domain_root         = var.domain_root
   enable_cloudfront   = false # Network stack manages CloudFront with image resize
   enable_frontend_cdn = false # Delegated to stage-network (CloudFront Upfront)
-  enable_assets_cdn   = false # DISABLED - Network stack manages cdn-stage with image resize
+  enable_assets_cdn   = false # DISABLED - Network stack manages cdn-dev with image resize
 
   cloudfront_acm_certificate_arn = local.cloudfront_certificate_arn != "" ? local.cloudfront_certificate_arn : var.cloudfront_acm_certificate_arn
 

@@ -53,8 +53,8 @@ provider "aws" {
 module "environment_network" {
   source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.44.1"
 
-  # Override Frontend Subdomain to be 'frontend-stage'
-  frontend_subdomain_override = "frontend-stage"
+  # Override Frontend Subdomain to be 'frontend-dev'
+  frontend_subdomain_override = "frontend-dev"
   # extra_cloudfront_aliases removed as we only want one domain
 
   # New Feature: Separate CDN Distribution (For WAF Isolation)
@@ -65,7 +65,7 @@ module "environment_network" {
   }
 
   listener_default_action_target = "fixed-response"
-  stage                          = "stage" # Explicitly stage
+  stage                          = "dev" # Explicitly stage
   client_key                     = var.client_key
   project_key                    = var.project_key
 
