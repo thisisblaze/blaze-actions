@@ -349,29 +349,14 @@ runs:
         fi
 
         ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${ROLE_STAGE}-exec-role"
-        echo "⏳ Verifying IAM Role: $ROLE_NAME..."
-        MAX_RETRIES=15
-        COUNT=0
-        while ! aws iam get-role --role-name $ROLE_NAME > /dev/null 2>&1; do
-          if [ $COUNT -ge $MAX_RETRIES ]; then
-            echo "❌ Error: Role $ROLE_NAME not found after waiting."
-            echo "   👉 Please ensure '01 🏗️ Deploy Infra (AWS)' has completed successfully."
-            exit 1
-          fi
-          sleep 10
-          COUNT=$((COUNT+1))
-        done
+        echo "⏳ Expected IAM Role: $ROLE_NAME"
 
         # Optional: Service-specific task role (DEV-V2 API uses dedicated role for S3 access)
         TASK_ROLE_NAME="$ROLE_NAME"
         if [[ "$SERVICE_NAME" == "api" ]]; then
           CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-api-task-role"
-          if aws iam get-role --role-name "$CANDIDATE_TASK_ROLE" > /dev/null 2>&1; then
-            echo "✅ Found API task role: $CANDIDATE_TASK_ROLE"
-            TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
-          else
-            echo "ℹ️ API task role not found ($CANDIDATE_TASK_ROLE); falling back to execution role."
-          fi
+          echo "ℹ️ Using API task role: $CANDIDATE_TASK_ROLE (OIDC GetRole check skipped due to IAM constraints)"
+          TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
         fi
 
         # ---------------------------------------------------------
