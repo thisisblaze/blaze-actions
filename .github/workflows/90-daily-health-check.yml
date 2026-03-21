@@ -121,7 +121,7 @@ jobs:
         uses: actions/checkout@v6.0.2
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.27
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.30
         with:
           terraform: "true"
           skip-aws-setup: "false" # Needed for Live Checks
@@ -175,7 +175,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.27
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.30
         with:
           environment: "${{ inputs.environment || 'DEV' }}" # Default to DEV for cron
           terraform_stack: "app" # We just need general config
@@ -191,7 +191,7 @@ jobs:
   drift-check-network:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.30
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -233,7 +233,7 @@ jobs:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.30
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
       aws_region: ${{ needs.configuration.outputs.aws_region }}
