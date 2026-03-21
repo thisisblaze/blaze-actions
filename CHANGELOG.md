@@ -1,3 +1,14 @@
+## v1.4.29 (2026-03-21)
+
+- fix(deploy): remove aws iam get-role polling loop due to OIDC Access Denied constraints (1d18f1b)
+- chore: end-of-day governance sync — 2026-03-21 (f1f7994)
+- feat(ci): remove unused data, cdn, and tunnel options from infra dropdown (c17f280)
+- fix(infra): resolve undefined variables missed during manual dev clone (0a87e17)
+- fix(infra): scrub residual stage strings from dev clone (ff18360)
+- fix(infra): remove hardcoded stage paths from remote state lookups (13c251c)
+- feat(infra): clone stage architecture to dev while disabling WAF and NAT (29a50b6)
+- fix(infra): restore all live terraform environments wiped in a44b330 (a7f2461)
+- chore: update CHANGELOG for v1.4.28 (f573204)
 # Changelog
 
 All notable changes to this project will be documented in this file.
