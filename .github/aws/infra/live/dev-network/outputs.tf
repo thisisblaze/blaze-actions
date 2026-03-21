@@ -8,7 +8,7 @@ output "vpc_id" {
 
 output "vpc_cidr" {
   description = "VPC CIDR"
-  value       = var.vpc_cidr
+  value       = "10.0.0.0/16"
 }
 
 output "public_subnets" {

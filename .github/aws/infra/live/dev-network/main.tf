@@ -234,19 +234,6 @@ output "alb_listener_arn" { value = module.environment_network.config.alb_listen
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
 # --------------------------------------------------------------------------------
 
-# Import orphaned IAM role — exists in AWS but was lost from state during a
-# previous nuke/re-provision cycle. This block reconciles it so Terraform can
-# manage it without hitting EntityAlreadyExists on the next apply.
-# Safe to leave in place; Terraform ignores import blocks after first apply.
-import {
-  to = module.ec2_capacity_provider[0].aws_iam_role.ec2_instance[0]
-  id = "blaze-b9-thisisblaze-stage-ecs-ec2-cp-instance-role"
-}
-
-import {
-  to = module.ec2_capacity_provider[0].aws_iam_instance_profile.ec2[0]
-  id = "blaze-b9-thisisblaze-stage-ecs-ec2-cp-instance-profile"
-}
 
 module "ec2_capacity_provider" {
   source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.44.1"

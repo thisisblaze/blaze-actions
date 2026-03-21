@@ -14,7 +14,7 @@ variable "namespace" {
   default     = "blaze"
 }
 
-variable "dev" {
+variable "stage" {
   description = "The deployment stage (dev, prod, etc.)"
   type        = string
 }
