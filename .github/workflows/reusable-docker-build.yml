@@ -166,7 +166,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ github.ref }}
+  group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ inputs.environment }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
