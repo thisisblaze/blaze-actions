@@ -1,6 +1,6 @@
-# Development Data Layer Stack
+# Stage Data Layer Stack
 
-This stack manages data services for the development environment.
+This stack manages data services for the stage environment.
 
 ## Resources
 
@@ -23,10 +23,10 @@ This stack manages data services for the development environment.
 
 ### Initialize
 ```bash
-cd .github/aws/infra/live/dev-data
+cd .github/aws/infra/live/stage-data
 terraform init \
-  -backend-config="bucket=b9-dev-blaze-tfstate" \
-  -backend-config="key=infra/thisisblaze/dev/data.tfstate" \
+  -backend-config="bucket=b9-stage-blaze-tfstate" \
+  -backend-config="key=infra/thisisblaze/stage/data.tfstate" \
   -backend-config="region=eu-west-1"
 ```
 

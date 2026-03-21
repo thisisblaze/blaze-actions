@@ -1,37 +1,11 @@
 variable "project_key" {
   description = "The project key (e.g. thisisblaze)"
   type        = string
-  default     = "thisisblaze"
 }
 
 variable "client_key" {
   description = "The short client identifier (e.g., b9)."
   type        = string
-  default     = "b9"
-}
-
-variable "platform" {
-  description = "The platform identifier (e.g. ecs)"
-  type        = string
-  default     = "ecs"
-}
-
-variable "tag_managed_by" {
-  type        = string
-  description = "Managed by tag"
-  default     = "terraform"
-}
-
-variable "tag_support" {
-  type        = string
-  description = "Support email tag"
-  default     = "support@byte9.io"
-}
-
-variable "tag_state" {
-  type        = string
-  description = "State tag (e.g. active, archived)"
-  default     = "active"
 }
 
 variable "namespace" {
@@ -40,41 +14,21 @@ variable "namespace" {
   default     = "blaze"
 }
 
-variable "aws_region" {
-  description = "The AWS region to deploy resources into."
-  type        = string
-  default     = "eu-west-1"
-}
-
 variable "stage" {
   description = "The deployment stage (dev, prod, etc.)"
   type        = string
 }
 
-variable "acm_certificate_arn" {
-  description = "The ARN of the ACM certificate for HTTPS listener"
-  type        = string
-  default     = ""
-}
-
-# Added for compatibility with stage/prod structure, though unused if not using ALB
-variable "vpc_cidr" {
-  description = "VPC CIDR block"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "enable_alb" {
-  description = "Enable Application Load Balancer (ALB) for Dev environment. If false, uses Cloudflare Tunnel."
-  type        = bool
-  default     = false
-}
-
-# Added Cloudflare Variables (Audit 2025-12-19)
 variable "cloudflare_api_token" {
   description = "Cloudflare API Token"
   type        = string
   sensitive   = true
+}
+
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare Account ID"
+  type        = string
 }
 
 variable "cloudflare_zone_id" {
@@ -86,6 +40,64 @@ variable "domain_root" {
   description = "Root domain (e.g. thisisblaze.uk)"
   type        = string
 }
+
+variable "basic_auth_credentials" {
+  description = "List of base64-encoded username:password credentials for Basic Auth"
+  type        = list(string)
+  sensitive   = true
+  default     = ["Ynl0ZTk6c3RhZ2luZw=="] # byte9:staging (default for DEV)
+}
+
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "eu-west-1"
+}
+
+variable "platform" {
+  description = "Platform identifier (e.g. ecs)"
+  type        = string
+  default     = "ecs"
+}
+
+variable "tag_managed_by" {
+  description = "Managed by tag"
+  type        = string
+  default     = "terraform"
+}
+
+variable "tag_support" {
+  description = "Support email tag"
+  type        = string
+  default     = "support@byte9.io"
+}
+
+variable "tag_state" {
+  description = "State tag (active/archived)"
+  type        = string
+  default     = "active"
+}
+
+variable "is_beta" {
+  description = "Is this a beta environment?"
+  type        = bool
+  default     = false
+}
+
+variable "route53_parent_zone_id" {
+  description = "Route53 parent zone ID"
+  type        = string
+  default     = ""
+}
+
+variable "sharp_layer_arn" {
+  description = "Lambda Layer ARN for Sharp image processing"
+  type        = string
+  default     = ""
+}
+
+
+
 
 # --------------------------------------------------------------------------------
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
@@ -117,7 +129,7 @@ variable "ec2_min_size" {
 variable "ec2_max_size" {
   description = "Maximum number of EC2 instances"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "ec2_desired_size" {
@@ -125,3 +137,4 @@ variable "ec2_desired_size" {
   type        = number
   default     = 1
 }
+

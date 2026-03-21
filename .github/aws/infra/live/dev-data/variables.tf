@@ -17,9 +17,9 @@ variable "project_key" {
 }
 
 variable "stage" {
-  description = "Environment stage (dev)"
+  description = "Environment stage (stage)"
   type        = string
-  default     = "dev"
+  default     = "stage"
 }
 
 variable "namespace" {
