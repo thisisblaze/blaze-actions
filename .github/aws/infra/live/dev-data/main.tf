@@ -26,7 +26,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "${var.client_key}-${var.stage}-${var.namespace}-tfstate"
-    key    = "infra/${var.project_key}/stage/network.tfstate"
+    key    = "infra/${var.project_key}/${var.stage}/network.tfstate"
     region = var.aws_region
   }
 }

@@ -31,7 +31,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "${var.client_key}-${var.stage}-${var.namespace}-tfstate"
-    key    = "infra/${var.project_key}/stage/network.tfstate"
+    key    = "infra/${var.project_key}/${var.stage}/network.tfstate"
     region = var.aws_region
   }
 }
@@ -65,7 +65,7 @@ locals {
   alb_name_from_arn = local.alb_listener_arn != "" ? regex("app/([^/]+)/", local.alb_listener_arn)[0] : ""
 
   # Use extracted name, or fallback to dns name logic if needed (but without the data source)
-  alb_dns_name = coalesce(try(local.net_outputs.alb_dns_name, ""), try(local.net_config.alb_dns_name, ""), "stage-alb-placeholder.com")
+  alb_dns_name = coalesce(try(local.net_outputs.alb_dns_name, ""), try(local.net_config.alb_dns_name, ""), "${var.stage}-alb-placeholder.com")
 
 
   # CloudFront Cert
