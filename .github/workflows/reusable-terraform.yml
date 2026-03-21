@@ -222,8 +222,8 @@ on:
         value: ${{ jobs.terraform.outputs.storage_account_name }}
 
 concurrency:
-  group: tf-util-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: tf-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.tf_dir }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
