@@ -114,8 +114,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: cleanup-util-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: cleanup-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.cloud_provider }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

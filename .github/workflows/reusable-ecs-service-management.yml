@@ -108,8 +108,8 @@ on:
         value: ${{ jobs.manage.outputs.status }}
 
 concurrency:
-  group: ecs-util-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ecs-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.cluster_name || inputs.service_name }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
