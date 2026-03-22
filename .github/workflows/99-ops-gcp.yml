@@ -414,7 +414,7 @@ jobs:
           audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Manage Cloud Run Services
         run: |

@@ -424,7 +424,7 @@ jobs:
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
-        uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Execute Ops (AWS)
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
