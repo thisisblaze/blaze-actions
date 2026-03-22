@@ -59,7 +59,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: "us-east-1" # Assuming global/default region for SSM or dynamically adjust if needed
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
 
       - name: Set Variables
         id: vars
