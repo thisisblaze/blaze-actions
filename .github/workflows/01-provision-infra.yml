@@ -499,6 +499,7 @@ jobs:
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 'network' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
