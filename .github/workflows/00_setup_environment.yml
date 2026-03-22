@@ -21,6 +21,7 @@ on:
           - "🟢 Bootstrap All (Recommended)"
           - "⚙️ Init Backend"
           - "🪞 Mirror Images Only"
+        default: "⚙️ Init Backend"
 
       wif_audience:
         description: "WIF Audience (Optional)"
@@ -68,7 +69,7 @@ on:
       task:
         required: false
         type: string
-        default: "🟢 Bootstrap All (Recommended)"
+        default: "⚙️ Init Backend"
       cloud_provider:
         required: false
         type: string
