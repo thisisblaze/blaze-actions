@@ -1,14 +1,14 @@
 ## v1.4.31 (2026-03-22)
 
-### Added
-
-- No new features in this release
+## [Unreleased]
 
 ### Changed
+- feat(ci): Simplified the `01-provision-infra.yml` workflow dropdown by removing unused `data`, `cdn`, and `tunnel` options to streamline provisioning.
 
+## v1.4.31 (2026-03-22)
 
 ### Fixed
-
+- **Teardown**: Removed standard execution roles from force-deletion paths during `reusable-pre-destroy-cleanup` to resolve ECS PENDING locks on preserved networks.
 
 ## v1.4.30 (2026-03-21)
 
