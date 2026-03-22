@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- chore: bump internal workflow module references to v2.2.0 to consume new database user CLI logic.
 - feat(ci): Simplified the `01-provision-infra.yml` workflow dropdown by removing unused `data`, `cdn`, and `tunnel` options to streamline provisioning.
 
 ## v1.4.31 (2026-03-22)
