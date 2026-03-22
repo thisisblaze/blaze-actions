@@ -359,9 +359,6 @@ jobs:
           # ---------------------------------------------------------
           # Expanded list to include Lambda@Edge roles which often stick around
           ROLES=(
-            "${RESOURCE_NAMESPACE}-exec-role" 
-            "${RESOURCE_NAMESPACE}-codedeploy-role" 
-            "${RESOURCE_NAMESPACE}-task-role"
             "${NAMESPACE}-${STAGE_KEY}-lambda-edge-role"
           )
 
