@@ -24,7 +24,7 @@ provider "aws" {
 # ELASTIC CLOUD DEPLOYMENT MODULE
 # ---------------------------------------------------------
 module "elastic_deployment" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.1.2"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.2.0"
 
   # Required variables
   namespace   = var.namespace

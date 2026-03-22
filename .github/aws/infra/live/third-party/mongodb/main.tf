@@ -25,7 +25,7 @@ provider "aws" {
 # MONGODB ATLAS CLUSTER MODULE
 # ---------------------------------------------------------
 module "mongodb_cluster" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.1.2"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.2.0"
 
   # Required variables
   namespace   = var.namespace
