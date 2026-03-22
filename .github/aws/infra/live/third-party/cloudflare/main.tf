@@ -42,7 +42,7 @@ locals {
 }
 
 module "tunnel" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/tunnel?ref=v1.44.1"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/tunnel?ref=v2.1.2"
 
   account_id = var.cloudflare_account_id
   name       = "${var.namespace}-${var.project_key}-${var.stage}-tunnel-${substr(random_id.tunnel_secret.hex, 0, 6)}"
@@ -52,7 +52,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 }
 
 module "tunnel_dns" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-record?ref=v1.44.1"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-record?ref=v2.1.2"
 
   zone_id = var.cloudflare_zone_id
 
@@ -73,7 +73,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # ---------------------------------------------------------
 
 module "admin_pages_project" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v1.44.1"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.1.2"
 
   account_id   = var.cloudflare_account_id
   project_name = "${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-admin"
@@ -85,7 +85,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 
 
 module "admin_pages_domain" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-domain?ref=v1.44.1"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-domain?ref=v2.1.2"
 
   account_id   = var.cloudflare_account_id
   project_name = module.admin_pages_project.name
@@ -101,7 +101,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # API and Kibana remain public for development/testing
 # ---------------------------------------------------------
 module "basic_auth_worker" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/worker-basic-auth?ref=v1.44.1"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/worker-basic-auth?ref=v2.1.2"
 
   account_id = var.cloudflare_account_id
   zone_id    = var.cloudflare_zone_id

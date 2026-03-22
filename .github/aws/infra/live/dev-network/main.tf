@@ -51,7 +51,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.1.2"
 
   # Override Frontend Subdomain to be 'frontend-dev'
   frontend_subdomain_override = "frontend-dev"
@@ -236,7 +236,7 @@ output "alb_listener_arn" { value = module.environment_network.config.alb_listen
 
 
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.1.2"
   count  = var.enable_ec2 ? 1 : 0
 
   # Identity (context provides label defaults, but these are required)
@@ -267,7 +267,7 @@ module "ec2_capacity_provider" {
 }
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.44.1"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.1.2"
   name    = "logs"
   context = module.environment_network.context
 }

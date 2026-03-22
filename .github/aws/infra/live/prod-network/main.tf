@@ -64,7 +64,7 @@ provider "cloudflare" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.1.2"
 
   # New Feature: Separate CDN Distribution (For WAF Isolation)
   # Must remain true — cloudfront_cdn[0] path exists in Terraform state from prior applies.
@@ -212,7 +212,7 @@ output "config" { value = module.environment_network.config }
 # EC2 CAPACITY PROVIDER (Hybrid ECS - Prod)
 # --------------------------------------------------------------------------------
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v1.44.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.1.2"
 
   # Identity
   client_key  = var.client_key
@@ -264,7 +264,7 @@ resource "aws_ecs_cluster_capacity_providers" "prod" {
 # LOGGING BUCKET (Matches Stage)
 # --------------------------------------------------------------------------------
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v1.44.1"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.1.2"
   name    = "logs"
   context = module.environment_network.context
 }
