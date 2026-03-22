@@ -134,11 +134,12 @@ jobs:
               "roleName": $role
             }')
           
-          curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+          curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
             -H "Content-Type: application/json" -X POST \
             "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
             -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
             
+          echo ""
           echo "2. Creating Database User: $APP_USER"
           USER_PAYLOAD=$(jq -n \
             --arg user "$APP_USER" \
@@ -151,13 +152,21 @@ jobs:
               "username": $user
             }')
             
-          curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+          # Try to create, if fails (e.g. user exists), try to patch
+          RES=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
             -H "Content-Type: application/json" -X POST \
             "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers" \
-            -d "$USER_PAYLOAD" || curl --fail --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-            -H "Content-Type: application/json" -X PATCH \
-            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers/admin/$APP_USER" \
-            -d "$USER_PAYLOAD"
+            -d "$USER_PAYLOAD")
+          
+          echo "$RES"
+          
+          if echo "$RES" | grep -q 'HTTP_CODE:4[0-9][0-9]'; then
+            echo "POST failed, trying PATCH..."
+            curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+              -H "Content-Type: application/json" -X PATCH \
+              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers/admin/$APP_USER" \
+              -d "$USER_PAYLOAD"
+          fi
             
       - name: Provision Elastic Cloud App User
         if: env.ELASTIC_ENDPOINT != '' && env.ELASTIC_ADMIN_USER != ''
