@@ -87,18 +87,19 @@ jobs:
           ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text || echo "")
           ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text || echo "")
           ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text || echo "")
-          MONGO_SRV=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/connection_string" --with-decryption --query "Parameter.Value" --output text || echo "")
+          MONGO_HOST=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text || echo "")
+          ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text || echo "")
           
           echo "::add-mask::$ELASTIC_ADMIN_PASS"
           echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
+          echo "ATLAS_PROJECT_SSM=$ATLAS_PROJECT_SSM" >> $GITHUB_ENV
           
-          if [[ -n "$MONGO_SRV" ]]; then
-            MONGO_HOST=$(echo "$MONGO_SRV" | sed -n 's/.*mongodb+srv:\/\/\([^/?]*\).*/\1/p')
+          if [[ -n "$MONGO_HOST" ]]; then
             echo "MONGO_HOST=$MONGO_HOST" >> $GITHUB_ENV
           else
-            echo "Warning: MongoDB connection string not found in SSM at $SSM_BASE_PATH/mongodb/connection_string"
+            echo "Warning: MongoDB host not found in SSM at $SSM_BASE_PATH/mongodb/host"
             echo "MONGO_HOST=" >> $GITHUB_ENV
           fi
 
@@ -106,8 +107,15 @@ jobs:
         env:
           ATLAS_PUBLIC: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           ATLAS_PRIVATE: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          ATLAS_PROJECT: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          ATLAS_PROJECT_SECRET: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
         run: |
+          ATLAS_PROJECT="${ATLAS_PROJECT_SSM:-$ATLAS_PROJECT_SECRET}"
+          
+          if [[ -z "$ATLAS_PROJECT" ]]; then
+             echo "❌ ERROR: ATLAS_PROJECT is empty. Make sure SSM parameter exists or secret is set."
+             exit 1
+          fi
+
           DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
           ROLE_NAME="${DB_NAME}-role"
           
