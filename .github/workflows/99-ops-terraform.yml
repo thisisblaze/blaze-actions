@@ -479,7 +479,7 @@ jobs:
   pre-cleanup:
     name: Pre-Cleanup
     needs: [configuration]
-    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@dev
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
