@@ -3,16 +3,16 @@ name: "00 🛠️ Setup Environment"
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Target Environment"
-        type: choice
-        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
-        required: true
       cloud_provider:
         description: "Cloud Provider"
         type: choice
         options: ["aws", "gcp", "azure"]
         default: "aws"
+        required: true
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: true
       task:
         description: "Setup Task"
