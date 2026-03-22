@@ -111,6 +111,9 @@ outputs:
   cluster_name:
     description: "ECS Cluster Name"
     value: ${{ steps.config.outputs.cluster_name }}
+  cluster_tier:
+    description: "MongoDB Cluster Tier"
+    value: ${{ steps.config.outputs.cluster_tier }}
 
 runs:
   using: "composite"
