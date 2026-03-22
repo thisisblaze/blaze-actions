@@ -1,3 +1,15 @@
+## v1.4.31 (2026-03-22)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+
 ## v1.4.30 (2026-03-21)
 
 - chore: bump internal workflow references to v1.4.30 (5fc7676)
