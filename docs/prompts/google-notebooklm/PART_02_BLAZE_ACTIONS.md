@@ -371,8 +371,8 @@ jobs:
 
 | Environment     | Version Strategy | Example            | Reason                       |
 | --------------- | ---------------- | ------------------ | ---------------------------- |
-| **Production**  | Specific version | `@v1.4.0`          | Stability, predictability    |
-| **Staging**     | Minor version    | `@v1` or `@v1.4.0` | Balance stability & features |
+| **Production**  | Specific version | `@v1.4.31`          | Stability, predictability    |
+| **Staging**     | Minor version    | `@v1` or `@v1.4.31` | Balance stability & features |
 | **Development** | Latest dev       | `@dev`             | Test new features            |
 | **Testing**     | Specific commit  | `@abc123f`         | Exact reproducibility        |
 
@@ -394,7 +394,7 @@ jobs:
 1. Fix workflow in blaze-actions
 2. Tag new version (v1.4.1)
 3. Projects using `@v1` get it automatically
-4. Projects using `@v1.4.0` update when ready
+4. Projects using `@v1.4.31` update when ready
 5. Time: 15 minutes
 6. Risk: Zero (everyone gets same fix)
 

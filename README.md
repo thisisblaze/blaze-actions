@@ -79,7 +79,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.0
+      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.31
         with:
           project_key: myproject
 ```
