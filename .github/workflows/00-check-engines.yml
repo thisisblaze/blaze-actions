@@ -1,0 +1,45 @@
+name: "00 - Check Engines (Diagnostics)"
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday at midnight
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry Run (currently read-only anyway)"
+        type: boolean
+        default: true
+
+jobs:
+  run-sweep:
+    name: 10-Engine Diagnostic Sweep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout blaze-actions
+        uses: actions/checkout@v4
+        with:
+          path: 'blaze-actions'
+      
+      - name: Checkout blaze-template-deploy
+        uses: actions/checkout@v4
+        with:
+          repository: 'thisisblaze/blaze-template-deploy'
+          token: ${{ secrets.GH_PAT }}
+          path: 'blaze-template-deploy'
+          
+      - name: Checkout blaze-terraform-infra-core
+        uses: actions/checkout@v4
+        with:
+          repository: 'thisisblaze/blaze-terraform-infra-core'
+          token: ${{ secrets.GH_PAT }}
+          path: 'blaze-terraform-infra-core'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Execute Sweep Integrations
+        run: |
+          cd $GITHUB_WORKSPACE
+          python3 blaze-actions/.github/scripts/checkengines/run_sweep.py
