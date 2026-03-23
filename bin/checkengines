@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/checkengines/run_sweep.py "$@"
