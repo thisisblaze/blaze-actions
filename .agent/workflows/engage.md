@@ -1,7 +1,8 @@
 ---
 description: 🖖 Engage — pulls latest, audits governance across all 3 repos, loads context
-expected_output: A verified environment comparison matrix showing zero unauthorized drift.
-exclusions: Do NOT deploy resources to Stage/Prod without explicit test completion.
+expected_output: A printed "START-OF-DAY REPORT" containing status, overnight changes, and stress test freshness.
+exclusions: Do NOT automatically load the massive architecture graphs or AI_CONTEXT_GOVERNANCE.md. Token frugality is required. Do NOT perform any code changes.
+
 ---
 
 // turbo-all
@@ -86,14 +87,23 @@ For each repo, verify the 14 standard governance files exist:
 
 Report any missing files immediately.
 
+### 2.5. Sprint Board Summary
+
+Read the **Sprint Board** section from `docs/HANDOFF.md` in `blaze-template-deploy`. Display a one-line summary:
+
+> "📋 Sprint Board: [N] TODO, [M] paused, [K] in progress, [J] done this sprint."
+
+Highlight any `🔴 BLOCKED` or `⏸️ PAUSED` tasks — these may need immediate attention.
+If there are `⏸️ PAUSED` tasks from a previous session, suggest:
+
+> "There are [N] paused task(s) from a previous session. Run `/slash-resume` to claim and continue, or pick new work."
+
 ### 3. Module Ref Consistency Check
 
 Run this quick sanity check across both repos to catch any split-brain on module versions:
 
 ```bash
-echo "=== blaze-template-deploy ===" && grep "ref=" /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.github/aws/infra/live/dev-network/main.tf | head -3
-echo "=== blaze-actions ===" && grep "ref=" /Users/marek/Workspace/thisisblaze/blaze-actions/.github/aws/infra/live/dev-network/main.tf | head -3
-echo "=== infra-core latest tag ===" && git -C /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core tag | sort -V | tail -3
+python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/utils/print_env_versions.py
 ```
 
 Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the module `?ref=`.
@@ -101,8 +111,6 @@ Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the 
 ### 4. Load Context (Hub Repo)
 
 Read `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` from `blaze-template-deploy`.
-
-Also check `docs/reports/ENV_COMPARISON_AWS.md` **Action Items** table — scan for any 🔴 items that are not marked ✅ DONE and surface them in the Ready Report.
 
 **CRITICAL TOKEN FRUGALITY RULE:**
 Do **NOT** automatically read `AI_CONTEXT_GOVERNANCE.md`, architecture graphs, or the knowledge library on startup.
@@ -129,7 +137,7 @@ Include in the Ready Report under a `STRESS TESTS:` line.
 
 ### 6. Ready Report
 
-Output (wrap in a \`\`\`text block to preserve line breaks):
+Output:
 
 ```
 🟢 START-OF-DAY REPORT — <date>
@@ -144,10 +152,6 @@ MODULE REF CHECK:
   actions/dev-network: ?ref=<version>
   infra-core head tag: <latest tag>
   ✅ In sync | ⚠️ SPLIT BRAIN DETECTED
-
-ENV COMPARISON REPORT (docs/reports/ENV_COMPARISON_AWS.md):
-  🔴 Open action items: <count> | ✅ All clear
-  Key flags: <list any unresolved 🔴 items>
 
 CONTEXT: Loaded (Multi-Cloud AWS/GCP/Azure)
 RECENT ACTIVITY: <summary of last commits>

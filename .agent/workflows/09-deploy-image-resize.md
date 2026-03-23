@@ -35,7 +35,7 @@ git branch
 # Should be on: dev (with latest fixes)
 
 # 2. Verify Lambda code has callback pattern
-grep -A 5 "exports.handler" modules/aws/lambda/edge-functions/functions/resize-image/index.js
+Use the `view_file` AI tool on `modules/aws/lambda/edge-functions/functions/resize-image/index.js` to read the `exports.handler` configuration.
 # Should see: (event, context, callback) =>
 ```
 
