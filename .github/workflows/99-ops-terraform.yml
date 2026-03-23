@@ -498,7 +498,11 @@ jobs:
   destroy-resources:
     name: Destroy
     needs: [configuration, pre-cleanup]
-    if: inputs.action == 'destroy-resources'
+    if: |
+      always() &&
+      inputs.action == 'destroy-resources' &&
+      needs.configuration.result == 'success' &&
+      (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
