@@ -119,36 +119,59 @@ jobs:
           DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
           ROLE_NAME="${DB_NAME}-role"
           
-          echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
-          # Find, Insert, Update, Remove
-          PAYLOAD=$(jq -n \
-            --arg role "$ROLE_NAME" \
-            --arg db "$DB_NAME" \
-            '{
-              "actions": [
-                {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
-                {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
-                {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
-                {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
-              ],
-              "roleName": $role
-            }')
+          CLUSTER_TIER="${{ vars.CLUSTER_TIER }}"
+          if [[ -z "$CLUSTER_TIER" || "$CLUSTER_TIER" == "auto" ]]; then
+            if [[ "${{ inputs.environment }}" == "dev"* ]]; then
+              CLUSTER_TIER="flex"
+            else
+              CLUSTER_TIER="M10"
+            fi
+          fi
           
-          curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-            -H "Content-Type: application/json" -X POST \
-            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
-            -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
+          echo "Cluster tier evaluated to: $CLUSTER_TIER"
+          
+          if [[ "$CLUSTER_TIER" == "flex" ]]; then
+            echo "1. Flex cluster detected. Skipping Custom DB Role creation (forbidden on serverless)."
+            # For flex, we use built-in roles assigned to the target database
+            ASSIGN_ROLE="readWrite"
+            ASSIGN_DB="$DB_NAME"
+          else
+            echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
+            # Find, Insert, Update, Remove
+            PAYLOAD=$(jq -n \
+              --arg role "$ROLE_NAME" \
+              --arg db "$DB_NAME" \
+              '{
+                "actions": [
+                  {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
+                  {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
+                  {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
+                  {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
+                ],
+                "roleName": $role
+              }')
+            
+            curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+              -H "Content-Type: application/json" -X POST \
+              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
+              -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
+              
+            # For Advanced clusters, custom roles live on the admin database
+            ASSIGN_ROLE="$ROLE_NAME"
+            ASSIGN_DB="admin"
+          fi
             
           echo ""
           echo "2. Creating Database User: $APP_USER"
           USER_PAYLOAD=$(jq -n \
             --arg user "$APP_USER" \
             --arg pass "$MONGO_PASS" \
-            --arg role "$ROLE_NAME" \
+            --arg role "$ASSIGN_ROLE" \
+            --arg db "$ASSIGN_DB" \
             '{
               "databaseName": "admin",
               "password": $pass,
-              "roles": [{"databaseName": "admin", "roleName": $role}],
+              "roles": [{"databaseName": $db, "roleName": $role}],
               "username": $user
             }')
             
