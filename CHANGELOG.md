@@ -1,3 +1,20 @@
+## v2.1.1 (2026-03-23)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-03-22
+- chore: bump terraform modules to v2.2.0
+- chore: align module references to v2.1.2 (fix split brain)
+- chore: end-of-day governance sync — 2026-03-22
+- chore: update CHANGELOG for v1.4.31
+
+### Fixed
+
+
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
