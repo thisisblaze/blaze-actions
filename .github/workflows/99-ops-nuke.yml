@@ -438,7 +438,8 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
-      force_delete: true
+      target_stack: 'all'
+      dry_run: ${{ inputs.dry_run }}
 
   nuke-stop-services-gcp:
     name: 🛑 Nuke 1c/5 - Stop Cloud Run Services

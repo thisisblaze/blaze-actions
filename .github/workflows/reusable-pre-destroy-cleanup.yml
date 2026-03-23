@@ -32,6 +32,16 @@ on:
         required: false
         type: string
         default: ""
+      target_stack:
+        description: "Target stack (app, cdn, network, data, all)"
+        required: false
+        type: string
+        default: "app"
+      dry_run:
+        description: "Dry run (list what would be deleted without deleting)"
+        required: false
+        type: boolean
+        default: true
     secrets:
       MONGO_INITDB_ROOT_PASSWORD:
         required: false
@@ -196,6 +206,10 @@ jobs:
              echo "Checking bucket: $BUCKET_NAME"
              if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
                 echo "   Found bucket. Emptying..."
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "   [DRY RUN] Would empty bucket $BUCKET_NAME"
+                   continue
+                fi
                 pip install boto3 >/dev/null 2>&1 || true
                 
                 cat <<EOF > empty_bucket.py
@@ -232,7 +246,11 @@ jobs:
           if [[ -n "$TARGET_ARNS" ]]; then
              for ARN in $TARGET_ARNS; do
                echo "   🗑️ Deleting UNUSED cert: $ARN"
-               aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
+               if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                  echo "      [DRY RUN] Would delete certificate $ARN"
+               else
+                  aws acm delete-certificate --certificate-arn "$ARN" --region "$REGION" || echo "      ⚠️ Failed"
+               fi
              done
            fi
 
@@ -262,7 +280,11 @@ jobs:
 
               for GROUP in $GROUPS; do
                   echo "      🗑️ Deleting $GROUP..."
-                  aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
+                  if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                     echo "         [DRY RUN] Would delete log group $GROUP"
+                  else
+                     aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
+                  fi
               done
           }
 
@@ -313,13 +335,21 @@ jobs:
                               if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
                                   for INSTANCE_ID in $INSTANCE_IDS; do
                                       echo "      🔪 Deregistering instance: $INSTANCE_ID"
-                                      aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
+                                      if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                                         echo "         [DRY RUN] Would deregister instance"
+                                      else
+                                         aws servicediscovery deregister-instance --service-id "$SERVICE_ID" --instance-id "$INSTANCE_ID" --region "$REGION" || true
+                                      fi
                                   done
                               fi
                               
                               # Delete Service
                               echo "   🗑️ Deleting Service: $SERVICE_ID"
-                              aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
+                              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                                 echo "      [DRY RUN] Would delete service"
+                              else
+                                 aws servicediscovery delete-service --id "$SERVICE_ID" --region "$REGION" || echo "      ⚠️ Failed to delete service"
+                              fi
                           done
                       else
                           echo "   ℹ️  No services found in namespace $NAMESPACE_ID."
@@ -349,7 +379,11 @@ jobs:
 
           if [[ -n "$OAC_ID" && "$OAC_ID" != "None" ]]; then
              echo "      🗑️ Deleting OAC: $OAC_ID"
-             aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "         [DRY RUN] Would delete OAC"
+             else
+                aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)" || echo "      ⚠️ Failed to delete OAC (Check dependencies)"
+             fi
           else
              echo "      ✅ OAC not found"
           fi
@@ -372,7 +406,11 @@ jobs:
              echo "   🔍 Checking Policy: $POLICY_NAME"
              if aws iam get-policy --policy-arn "$POLICY_ARN" >/dev/null 2>&1; then
                 echo "      🗑️ Deleting Policy: $POLICY_ARN"
-                aws iam delete-policy --policy-arn "$POLICY_ARN" || echo "      ⚠️ Failed (might be attached?)"
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "         [DRY RUN] Would delete Policy"
+                else
+                   aws iam delete-policy --policy-arn "$POLICY_ARN" || echo "      ⚠️ Failed (might be attached?)"
+                fi
              else
                 echo "      ✅ Policy not found"
              fi
@@ -383,6 +421,10 @@ jobs:
              echo "   🔍 Checking Role: $ROLE"
              if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
                 echo "      🗑️ Deleting Role: $ROLE"
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "         [DRY RUN] Would delete Role and detach policies"
+                   continue
+                fi
                 # Detach all policies first
                 POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text)
                 for POLICY in $POLICIES; do
@@ -444,15 +486,19 @@ jobs:
                
              if [[ -n "$REC_ID" ]]; then
                 echo "      🗑️ Deleting $REC_NAME ($REC_ID)"
-                curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
-                   -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "         [DRY RUN] Would delete Cloudflare record"
+                else
+                   curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
+                      -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
+                fi
              else
                 echo "      ✅ Not found"
              fi
           done
 
       - name: Cleanup Lambda@Edge
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -467,7 +513,9 @@ jobs:
           if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
              for FUNC_NAME in $FUNCTIONS; do
                 echo "   🔄 Checking function: $FUNC_NAME"
-                if aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "   [DRY RUN] Would delete function $FUNC_NAME"
+                elif aws lambda delete-function --function-name "$FUNC_NAME" --region us-east-1 2>&1; then
                    echo "   ✅ Deleted $FUNC_NAME"
                 else
                    echo "   ⚠️ Delete failed (likely Replicated). Skipping."
@@ -478,7 +526,7 @@ jobs:
           fi
 
       - name: Cleanup CodeDeploy Apps
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.STAGE_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.STAGE_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
         run: |
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
@@ -491,14 +539,18 @@ jobs:
           if [[ -n "$APPS" && "$APPS" != "None" ]]; then
              for APP in $APPS; do
                 echo "      🗑️ Deleting CodeDeploy App: $APP"
-                aws deploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "         [DRY RUN] Would delete App"
+                else
+                   aws deploy delete-application --application-name "$APP" --region "$REGION" || echo "      ⚠️ Failed to delete CodeDeploy App"
+                fi
              done
           else
              echo "      ✅ No CodeDeploy Apps found"
           fi
 
       - name: Cleanup EC2 Capacity Provider
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -522,30 +574,34 @@ jobs:
             --output text 2>/dev/null || echo "None")
 
           if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
-             echo "      📉 Scaling ASG to 0..."
-             aws autoscaling update-auto-scaling-group \
-               --auto-scaling-group-name "$ASG_NAME" \
-               --min-size 0 --max-size 0 --desired-capacity 0 \
-               --region "$REGION" || echo "      ⚠️ Failed to scale ASG"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "      [DRY RUN] Would scale ASG $ASG_NAME to 0 and wait"
+             else
+                echo "      📉 Scaling ASG to 0..."
+                aws autoscaling update-auto-scaling-group \
+                  --auto-scaling-group-name "$ASG_NAME" \
+                  --min-size 0 --max-size 0 --desired-capacity 0 \
+                  --region "$REGION" || echo "      ⚠️ Failed to scale ASG"
 
-             # Wait for instances to drain (max 3 minutes)
-             echo "      ⏳ Waiting for instances to drain..."
-             timeout=180
-             elapsed=0
-             while [ $elapsed -lt $timeout ]; do
-                INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
-                  --auto-scaling-group-names "$ASG_NAME" \
-                  --region "$REGION" \
-                  --query "AutoScalingGroups[0].Instances | length(@)" \
-                  --output text 2>/dev/null || echo "0")
-                if [[ "$INSTANCE_COUNT" == "0" ]]; then
-                   echo "      ✅ All instances drained"
-                   break
-                fi
-                echo "      ... $INSTANCE_COUNT instances remaining"
-                sleep 15
-                elapsed=$((elapsed+15))
-             done
+                # Wait for instances to drain (max 3 minutes)
+                echo "      ⏳ Waiting for instances to drain..."
+                timeout=180
+                elapsed=0
+                while [ $elapsed -lt $timeout ]; do
+                   INSTANCE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+                     --auto-scaling-group-names "$ASG_NAME" \
+                     --region "$REGION" \
+                     --query "AutoScalingGroups[0].Instances | length(@)" \
+                     --output text 2>/dev/null || echo "0")
+                   if [[ "$INSTANCE_COUNT" == "0" ]]; then
+                      echo "      ✅ All instances drained"
+                      break
+                   fi
+                   echo "      ... $INSTANCE_COUNT instances remaining"
+                   sleep 15
+                   elapsed=$((elapsed+15))
+                done
+             fi
           else
              echo "      ✅ ASG not found (no EC2 capacity provider)"
           fi
@@ -562,46 +618,49 @@ jobs:
             --output text 2>/dev/null || echo "None")
 
           if [[ -n "$CP_EXISTS" && "$CP_EXISTS" != "None" && "$CP_EXISTS" != "FARGATE" ]]; then
-             echo "      🔄 Removing capacity provider from cluster strategy..."
-             # Get current providers minus the EC2 one
-             CURRENT_CPS=$(aws ecs describe-clusters \
-               --clusters "$CLUSTER" \
-               --region "$REGION" \
-               --query "clusters[0].capacityProviders" \
-               --output json 2>/dev/null || echo "[]")
-
-             FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
-             
-             # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
-             # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
-             if [[ "$FILTERED_CPS" == "[]" ]]; then
-                echo "      ⚠️ No other providers left. Defaulting to FARGATE/FARGATE_SPOT to detach EC2 CP."
-                aws ecs put-cluster-capacity-providers \
-                  --cluster "$CLUSTER" \
-                  --capacity-providers FARGATE FARGATE_SPOT \
-                  --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-                  --region "$REGION" || echo "      ⚠️ Failed to reset cluster strategy"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "      [DRY RUN] Would detach capacity provider $CP_NAME and explicitly delete it"
              else
-                 aws ecs put-cluster-capacity-providers \
-                   --cluster "$CLUSTER" \
-                   --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
-                   --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-                   --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
+                echo "      🔄 Removing capacity provider from cluster strategy..."
+                # Get current providers minus the EC2 one
+                CURRENT_CPS=$(aws ecs describe-clusters \
+                  --clusters "$CLUSTER" \
+                  --region "$REGION" \
+                  --query "clusters[0].capacityProviders" \
+                  --output json 2>/dev/null || echo "[]")
+
+                FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
+                
+                # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
+                # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
+                if [[ "$FILTERED_CPS" == "[]" ]]; then
+                   echo "      ⚠️ No other providers left. Defaulting to FARGATE/FARGATE_SPOT to detach EC2 CP."
+                   aws ecs put-cluster-capacity-providers \
+                     --cluster "$CLUSTER" \
+                     --capacity-providers FARGATE FARGATE_SPOT \
+                     --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                     --region "$REGION" || echo "      ⚠️ Failed to reset cluster strategy"
+                else
+                    aws ecs put-cluster-capacity-providers \
+                      --cluster "$CLUSTER" \
+                      --capacity-providers $(echo "$FILTERED_CPS" | jq -r '.[]') \
+                      --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+                      --region "$REGION" || echo "      ⚠️ Failed to update cluster strategy"
+                fi
+                
+                echo "      ✅ Capacity provider detached from cluster."
+                
+                # EXPLICITLY DELETE THE CAPACITY PROVIDER
+                # Terraform hangs if it exists but is not in state, or if it's just disassociated but still "active"
+                echo "      🗑️ Explicitly deleting Capacity Provider: $CP_NAME"
+                aws ecs delete-capacity-provider --capacity-provider "$CP_NAME" --region "$REGION" || echo "      ⚠️ Failed to delete capacity provider resource"
              fi
-             
-             echo "      ✅ Capacity provider detached from cluster."
-             
-             # EXPLICITLY DELETE THE CAPACITY PROVIDER
-             # Terraform hangs if it exists but is not in state, or if it's just disassociated but still "active"
-             echo "      🗑️ Explicitly deleting Capacity Provider: $CP_NAME"
-             aws ecs delete-capacity-provider --capacity-provider "$CP_NAME" --region "$REGION" || echo "      ⚠️ Failed to delete capacity provider resource"
-             
           else
              echo "      ✅ Capacity provider not found"
           fi
 
       - name: Cleanup Launch Templates
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -623,13 +682,17 @@ jobs:
 
           if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
              echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
-             aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" || echo "      ⚠️ Failed to delete Launch Template"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "         [DRY RUN] Would delete Launch Template"
+             else
+                aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" || echo "      ⚠️ Failed to delete Launch Template"
+             fi
           else
              echo "      ✅ Launch Template not found"
           fi
 
       - name: Cleanup ECS Services
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
         id: cleanup
         run: |
           set -e
@@ -667,6 +730,12 @@ jobs:
              [[ -z "$SVC_ARN" ]] && continue
              SVC_NAME=$(echo "$SVC_ARN" | sed 's|.*/||')
              echo "🔄 Processing service: $SVC_NAME"
+             
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "   [DRY RUN] Would stop tasks and delete service $SVC_NAME"
+                DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
+                continue
+             fi
              
              aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
              
@@ -713,10 +782,14 @@ jobs:
                 TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
                 if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
                    echo "      Cleaning task defs for $FAMILY..."
-                   for ARN in $TASK_DEF_ARNS; do
-                      aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
-                      aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
-                   done
+                   if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                      echo "         [DRY RUN] Would deregister task definitions"
+                   else
+                      for ARN in $TASK_DEF_ARNS; do
+                         aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
+                         aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
+                      done
+                   fi
                 fi
              done
           fi

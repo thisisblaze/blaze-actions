@@ -492,6 +492,8 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       stage_filter: ${{ inputs.branch_tag }}
       environment: ${{ inputs.environment || 'DEV' }}
+      target_stack: ${{ inputs.stack }}
+      dry_run: ${{ inputs.dry_run }}
 
   destroy-resources:
     name: Destroy
