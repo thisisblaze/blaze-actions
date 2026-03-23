@@ -19,9 +19,21 @@
 
 ## [Unreleased]
 
+### Added
+- feat(ops): Implement 10-engine checkengines workflow routing via pure python.
+- feat(ai): Restored `/checkengines` slash command natively.
+
 ### Changed
+- docs: Agent workflow optimizations — eradicated bash `grep` loops across orchestrators in favor of native Python and generic JSON parsers.
+- build(deps): Upgrade checkengines tracking and lock all terraform templates to `v1.51.0` semantic release.
+- build(deps): Bumped `actions/checkout` and `actions/setup-python` from v4/v5 to v6.
 - chore: bump internal workflow module references to v2.2.0 to consume new database user CLI logic.
 - feat(ci): Simplified the `01-provision-infra.yml` workflow dropdown by removing unused `data`, `cdn`, and `tunnel` options to streamline provisioning.
+- chore: Move checkengines to 9X maintenance namespace.
+
+### Fixed
+- fix(ops): Run destroy safely when pre-cleanup skips.
+- fix(ci): Sync 90-daily-health-check.yml globally after semantic version updates.
 
 ## v1.4.31 (2026-03-22)
 
