@@ -88,12 +88,12 @@ jobs:
 
 ## Version Pinning Recommendations
 
-> [!IMPORTANT] > **Production environments** should always pin to specific versions (e.g., `@v1.4.0`) for stability and predictability. **Development environments** can use `@dev` for latest features.
+> [!IMPORTANT] > **Production environments** should always pin to specific versions (e.g., `@v1.4.31`) for stability and predictability. **Development environments** can use `@dev` for latest features.
 
 | Use Case                 | Recommended Version              | Example            |
 | :----------------------- | :------------------------------- | :----------------- |
-| **Production**           | Specific version                 | `@v1.4.0`          |
-| **Staging**              | Specific version or latest minor | `@v1.4.0` or `@v1` |
+| **Production**           | Specific version                 | `@v1.4.31`          |
+| **Staging**              | Specific version or latest minor | `@v1.4.31` or `@v1` |
 | **Development**          | Latest dev branch                | `@dev`             |
 | **Testing new features** | Specific commit SHA              | `@abc123f`         |
 
@@ -503,7 +503,7 @@ Follow semantic versioning:
 | :--------------------- | :----------------------- | :------------------------------------------------- |
 | **01-provision-infra** | Provision infrastructure | env, stack, cloud_provider, api_launch_type |
 | **02-deploy-app**      | Deploy App + Admin SPA   | env, cloud_provider, api_launch_type, target_services |
-| **stress-test**        | Full environment test    | environment, mode                           |
+| **reusable-stress-test-*** | Full environment test suite    | environment, mode                           |
 | **99-ops-utility**     | Operations utility       | action, confirmation (cleanup integrated)   |
 
 > Environments: `dev-mini` | `dev` | `stage` | `prod`
