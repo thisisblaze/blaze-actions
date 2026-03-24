@@ -532,7 +532,7 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: true
+      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
       orphan_lambda: ${{ inputs.skip_lambda_destroy }}
       tf_vars: |
