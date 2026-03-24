@@ -157,7 +157,7 @@ jobs:
           CLUSTER="${{ inputs.cluster_name }}"
           echo "Parsing context from Cluster: $CLUSTER"
 
-          if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+          if [[ "$CLUSTER" =~ ^([^-]+)-([^-]+)-([^-]+)-(.+)-cluster$ ]]; then
              NAMESPACE="${BASH_REMATCH[1]}"
              CLIENT_KEY="${BASH_REMATCH[2]}"
              PROJECT_KEY="${BASH_REMATCH[3]}"
@@ -167,7 +167,7 @@ jobs:
              echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
              echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
              echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
-          elif [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
+          elif [[ "$CLUSTER" =~ ^([^-]+)-([^-]+)-(.+)-cluster$ ]]; then
              # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
              # Assuming: namespace-project-stage (where client might be same as project or omitted)
              NAMESPACE="${BASH_REMATCH[1]}"
