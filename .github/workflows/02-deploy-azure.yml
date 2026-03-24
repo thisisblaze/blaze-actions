@@ -365,7 +365,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.30
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -540,7 +540,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.30
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -589,7 +589,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.30
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -712,7 +712,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true || 
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.30
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -762,7 +762,7 @@ jobs:
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.30
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -806,7 +806,7 @@ jobs:
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.30
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -849,7 +849,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v1.4.30
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
