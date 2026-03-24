@@ -34,6 +34,7 @@
 ### Fixed
 - fix(ops): Run destroy safely when pre-cleanup skips.
 - fix(ci): Sync 90-daily-health-check.yml globally after semantic version updates.
+- fix(infra): Add `admin-spa` and `frontend-spa` buckets to the pre-destroy cleanup script to avoid `BucketNotEmpty` S3 errors.
 
 ## v1.4.31 (2026-03-22)
 
