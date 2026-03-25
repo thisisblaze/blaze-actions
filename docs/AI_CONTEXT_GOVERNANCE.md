@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-03-25
 **Owner**: Infrastructure Team
 
 ---
@@ -150,20 +150,19 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | `blaze-template-deploy` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
 
-## 11. Deployment Architecture Facts (2026-03-20)
+## 11. Deployment Architecture Facts (2026-03-25)
 
 **Status: MANDATORY — agents must not assume older patterns**
 
 | Fact                               | Detail                                                                                             |
 | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
+| **Core Architecture Paradigm**     | **Multi-Site V2 (The Two-Pillar Strategy)**: Day 0 Shared Foundation, Day 1 Data Pods, Day 2 Tenants|
 | **ECS API Deployment**             | **Native ECS Blue/Green** — no CodeDeploy, no `appspec.yml`, no deployment group                   |
-| **Admin Hosting (DEV/STAGE/PROD)** | CloudFront + S3 (OAC). Separate distribution from app CDN                                          |
-| **Admin Hosting (DEV-MINI)**       | Cloudflare Pages — no S3 sync step runs                                                            |
-| **Dev Environment**                | `dev` is full AWS stack (CloudFront + WAF + **Dual ALB** + Image Resize)                           |
-| **Dual ALB (DEV/STAGE/PROD)**      | Frontend ALB behind CloudFront+WAF, API ALB direct (no CloudFront) — CORS-safe                     |
-| **VPC CIDRs**                      | DEV=10.0.0.0/16, DEV-MINI=10.1.0.0/16, STAGE=10.2.0.0/16, PROD=10.3.0.0/16, MULTI-SITE=10.4.0.0/16 |
-| **Lambda@Edge / Image Resize**     | **Frontend only** — CloudFront path. Enabled on DEV, STAGE, PROD. NOT on DEV-MINI                  |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v1.55.2**                                                         |
+| **CloudFront Topologies**          | **3 Distributions per Tenant** (Admin, API, Frontend). Allows extreme Blue/Green isolation         |
+| **Database Strategy**              | **Shared Pods** (e.g. `db-pod-alpha`) utilizing native MongoDB Atlas Autoscaling (M10-M30)         |
+| **Dev Environment (Foundation)**   | `dev-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
+| **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **Multi-Site V2 Default**                                           |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
 
 ---

@@ -1,3 +1,10 @@
+## [Unreleased] - 2026-03-25
+
+### Changed
+- chore: end-of-day governance sync — 2026-03-25
+- docs: Complete Multi-Site V2 architecture documentation rewrite (Two-Pillar strategy).
+- infra: Decoupled CloudFront API distribution from Frontend.
+
 ## v2.1.1 (2026-03-23)
 
 ### Added
