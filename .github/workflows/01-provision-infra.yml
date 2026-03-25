@@ -31,8 +31,12 @@ on:
         type: choice
         options:
           - "network"
-          - "acm"
+          - "db-pod-alpha"
+          - "tenant-app"
+          - "single-network"
+          - "single-app"
           - "app"
+          - "acm"
           - "third-party-mongodb"
           - "third-party-elastic"
         required: true

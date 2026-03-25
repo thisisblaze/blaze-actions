@@ -281,13 +281,25 @@ runs:
 
         # Map Descriptive Dropdown -> Internal Logic Code
         case "$INPUT_STACK" in
-          "3. Network Infrastructure (All Environments: VPC, Subnets, NAT Gateway, ECS Cluster, ALB/EFS/DNS)"|"network")
+          "network")
             STACK="network"
             ;;
-          "2. Third Party (DEV ONLY: Cloudflare Tunnel)"|"tunnel")
+          "tenant-app")
+            STACK="tenant-app"
+            ;;
+          "db-pod-alpha")
+            STACK="db-pod-alpha"
+            ;;
+          "single-network")
+            STACK="single-network"
+            ;;
+          "single-app")
+            STACK="single-app"
+            ;;
+          "tunnel")
             STACK="third-party-cloudflare"
             ;;
-          "1. Third Party (STAGE/PROD: ACM SSL Certificates)"|"acm")
+          "acm")
             STACK="third-party-acm"
             ;;
           "third-party-mongodb"|"mongodb")
@@ -296,7 +308,7 @@ runs:
           "third-party-elastic"|"elastic")
             STACK="third-party-elastic"
             ;;
-          "4. Application (API/Frontend) - All Environments"|"app")
+          "app")
             STACK="app"
             ;;
           "data")
@@ -305,23 +317,19 @@ runs:
           "cdn")
             STACK="cdn"
             ;;
-          "5. Account Settings (ENI Trunking, Container Insights)"|"account-settings")
+          "account-settings")
             STACK="account-settings"
             ;;
           *)
-            # Default or direct "app" match
-            if [[ -z "$INPUT_STACK" ]]; then 
-               STACK="app"
-            else
-               STACK="app"
-            fi
+            # Default
+            STACK="app"
             ;;
         esac
 
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -397,39 +405,27 @@ runs:
                fi
             fi
             
-        elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
-            if [[ "$STACK" == "network" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
-            elif [[ "$STACK" == "data" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"
-            elif [[ "$STACK" == "cdn" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-cdn"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/cdn.tfstate"
-            else
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
-            fi
-            
         else
-            # DEV & DEV-MINI (V2 Architecture with Feature Branches)
-            if [[ "$STACK" == "network" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
-            elif [[ "$STACK" == "data" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-data"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/data.tfstate"
-            elif [[ "$STACK" == "cdn" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-cdn"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/cdn.tfstate"
+            # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
+            if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "data" || "$STACK" == "cdn" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
+               
+            # Tenant Multi-Site Applications (e.g., client-001)
+            elif [[ "$STACK" == "tenant-app" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${INPUT_PROJECT}"
+               if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+                  STATE_KEY="infra/${PROJECT_KEY}/features/${INPUT_PROJECT}-${{ inputs.branch_name }}.tfstate"
+               else
+                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
+               fi
+               
+            # Legacy Single-Site Fallback
             else
-               # App stack
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
-               if [[ -n "${{ inputs.branch_name }}" ]]; then
+               if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
                   STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
                else
-                  # Host app state
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
                fi
             fi
