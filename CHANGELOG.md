@@ -5,6 +5,9 @@
 - docs: Complete Multi-Site V2 architecture documentation rewrite (Two-Pillar strategy).
 - infra: Decoupled CloudFront API distribution from Frontend.
 
+### Fixed
+- fix: Parameterized SSM target path in reusable-provision-db-users for Multi-Site V2 tenant decoupling.
+
 ## v2.1.1 (2026-03-23)
 
 ### Added

@@ -84,6 +84,7 @@ ${{ inputs.count != '' && inputs.count != null && inputs.count || 0 }}
 ## Multi-Cloud Support
 
 - Workflows MUST accept `cloud_provider` input (aws, gcp, azure) where applicable
+- Architecture utilizes the **Multi-Site V2 Two-Pillar Strategy** for Day 0 Foundation and Day 2 Tenant isolation.
 - Use `actions/calculate-config` for state backend routing
 - Provider-specific logic should be in conditional steps, not separate workflows
 
