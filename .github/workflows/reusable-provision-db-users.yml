@@ -31,6 +31,10 @@ on:
         required: true
         type: string
         description: "Cloud platform type (e.g., ecs)"
+      ssm_target_path_override:
+        required: false
+        type: string
+        description: "Override the default destination SSM path (using V2 Tenant-Isolation pattern if provided)."
 
     secrets:
       AWS_ROLE_ARN:
@@ -64,7 +68,11 @@ jobs:
       - name: Set Variables
         id: vars
         run: |
-          echo "SSM_BASE_PATH=/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}" >> $GITHUB_ENV
+          if [[ -n "${{ inputs.ssm_base_path_override }}" ]]; then
+            echo "SSM_BASE_PATH=${{ inputs.ssm_base_path_override }}" >> $GITHUB_ENV
+          else
+            echo "SSM_BASE_PATH=/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}" >> $GITHUB_ENV
+          fi
           APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
           echo "APP_USER=$APP_USER" >> $GITHUB_ENV
 
@@ -228,19 +236,30 @@ jobs:
 
       - name: Push to AWS SSM Parameter Store
         run: |
-          aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_username" --value "$APP_USER" --type "String" --overwrite
-          aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
+          # Use SSM_TARGET_PATH if defined, otherwise fallback to the reading SSM_BASE_PATH
+          TARGET="${SSM_TARGET_PATH:-$SSM_BASE_PATH}"
+          
+          aws ssm put-parameter --name "$TARGET/mongodb/app_username" --value "$APP_USER" --type "String" --overwrite
+          aws ssm put-parameter --name "$TARGET/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
           
           if [[ -n "$MONGO_HOST" ]]; then
             # Construct standard connection string pattern
             MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
-            aws ssm put-parameter --name "$SSM_BASE_PATH/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
+            aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
+            # Duplicate specific key required by V2 multi-site-tenant-app
+            aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite
             echo "MONGO_URI=$MONGO_URI" >> $GITHUB_ENV
           fi
           
           if [[ -n "$ELASTIC_ENDPOINT" ]]; then
-            aws ssm put-parameter --name "$SSM_BASE_PATH/elastic/app_username" --value "$APP_USER" --type "String" --overwrite
-            aws ssm put-parameter --name "$SSM_BASE_PATH/elastic/app_password" --value "$ELASTIC_PASS" --type "SecureString" --overwrite
+            aws ssm put-parameter --name "$TARGET/elastic/app_username" --value "$APP_USER" --type "String" --overwrite
+            aws ssm put-parameter --name "$TARGET/elastic/app_password" --value "$ELASTIC_PASS" --type "SecureString" --overwrite
+            
+            # Construct standard authenticated URL pattern for V2 multi-site-tenant-app: https://user:pass@host:port
+            # We strip the https:// prefix from the endpoint, prepend the basic auth, and add https:// back.
+            CLEAN_HOST=$(echo "$ELASTIC_ENDPOINT" | sed 's|^https://||' | sed 's|^http://||')
+            ELASTIC_URL="https://$APP_USER:$ELASTIC_PASS@$CLEAN_HOST"
+            aws ssm put-parameter --name "$TARGET/elastic/url" --value "$ELASTIC_URL" --type "SecureString" --overwrite
           fi
 
       - name: Sync to GitHub Environment Secrets

@@ -205,33 +205,33 @@ jobs:
 
         steps:
             - name: Checkout
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               uses: actions/checkout@v6.0.2
 
             - name: Configure AWS Credentials
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               uses: aws-actions/configure-aws-credentials@v6
               with:
                   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
                   aws-region: ${{ inputs.aws_region }}
 
             - name: Login to Amazon ECR
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               uses: aws-actions/amazon-ecr-login@v2.1.0
 
             - name: Set up Docker Buildx
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               uses: docker/setup-buildx-action@v4.0.0
 
             - name: Create .npmrc (if NPM_TOKEN provided)
-              if: inputs.skip_build != 'true' && env.NPM_TOKEN != ''
+              if: inputs.skip_build != 'true' && inputs.skip_build != true && env.NPM_TOKEN != ''
               env:
                 NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
                 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 
             - name: Build and Push (ARM64)
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               id: build
               uses: docker/build-push-action@v7.0.0
               with:
@@ -260,7 +260,7 @@ jobs:
                   echo "✅ Built: ${IMAGE_URI}"
 
             - name: Build Summary
-              if: inputs.skip_build != 'true'
+              if: inputs.skip_build != 'true' && inputs.skip_build != true
               run: |
                   echo "### 🔨 ARM64 Build Complete" >> $GITHUB_STEP_SUMMARY
                   echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
