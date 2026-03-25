@@ -110,9 +110,9 @@ elif [[ "$STACK" == "network" ]]; then
   # Import existing S3 ALB Logs Bucket
   S3_ALB_LOGS="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-alb-logs"
   if aws s3api head-bucket --bucket "$S3_ALB_LOGS" 2>/dev/null; then
-    if ! terraform state list | grep -q "module.environment_network.module.access_logs_bucket\[0\].aws_s3_bucket.this"; then
+    if ! terraform state list | grep -q "module.environment_network.module.access_logs_bucket\[0\].aws_s3_bucket.this\[0\]"; then
       echo "📥 Importing S3 ALB logs bucket: $S3_ALB_LOGS"
-      terraform import 'module.environment_network.module.access_logs_bucket[0].aws_s3_bucket.this' "$S3_ALB_LOGS" || true
+      terraform import 'module.environment_network.module.access_logs_bucket[0].aws_s3_bucket.this[0]' "$S3_ALB_LOGS" || true
     fi
   fi
   
