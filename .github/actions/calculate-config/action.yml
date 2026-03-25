@@ -413,7 +413,7 @@ runs:
                
             # Tenant Multi-Site Applications (e.g., client-001)
             elif [[ "$STACK" == "tenant-app" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${INPUT_PROJECT}"
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
                if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
                   STATE_KEY="infra/${PROJECT_KEY}/features/${INPUT_PROJECT}-${{ inputs.branch_name }}.tfstate"
                else
