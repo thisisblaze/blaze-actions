@@ -948,7 +948,7 @@ jobs:
           echo "Target Domain: $ADMIN_DOMAIN"
 
           # Find Bucket
-          EXPECTED_BUCKET="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin-spa"
+          EXPECTED_BUCKET="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.platform }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-admin-origin"
           echo "Expected Bucket: $EXPECTED_BUCKET"
 
           # Sync to S3
