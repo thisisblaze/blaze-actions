@@ -1,6 +1,12 @@
-## [Unreleased] - 2026-03-25
+## [Unreleased] - 2026-03-26
 
 ### Changed
+- chore: end-of-day governance sync — 2026-03-26
+
+### Fixed
+- fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
+
+## [Unreleased] - 2026-03-25### Changed
 - chore: end-of-day governance sync — 2026-03-25
 - docs: Complete Multi-Site V2 architecture documentation rewrite (Two-Pillar strategy).
 - infra: Decoupled CloudFront API distribution from Frontend.
