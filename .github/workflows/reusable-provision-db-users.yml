@@ -68,11 +68,12 @@ jobs:
       - name: Set Variables
         id: vars
         run: |
-          if [[ -n "${{ inputs.ssm_base_path_override }}" ]]; then
-            echo "SSM_BASE_PATH=${{ inputs.ssm_base_path_override }}" >> $GITHUB_ENV
-          else
-            echo "SSM_BASE_PATH=/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}" >> $GITHUB_ENV
+          echo "SSM_BASE_PATH=/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}" >> $GITHUB_ENV
+          
+          if [[ -n "${{ inputs.ssm_target_path_override }}" ]]; then
+            echo "SSM_TARGET_PATH=${{ inputs.ssm_target_path_override }}" >> $GITHUB_ENV
           fi
+          
           APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
           echo "APP_USER=$APP_USER" >> $GITHUB_ENV
 
