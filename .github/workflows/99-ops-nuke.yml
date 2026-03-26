@@ -1250,7 +1250,19 @@ jobs:
         # acm outputs during destroy, causing a terraform plan failure.
         echo "🔪 REMOVING DNS VALIDATION RECORDS FROM STATE..."
         terraform state rm 'module.environment_network.cloudflare_dns_record.validation' 2>/dev/null || true
+        terraform state rm 'module.environment_network.aws_route53_record.validation' 2>/dev/null || true
         echo "✅ DNS Validation records removed from state."
+
+        echo "🔪 PATCHING MODULE SOURCE TO BYPASS FOR_EACH EVALUATION ERROR..."
+        TF_FILE=".terraform/modules/environment_network/modules/aws/networking/multi-site-network/main.tf"
+        if [ -f "$TF_FILE" ]; then
+          # We use sed to comment out the entire resource blocks so Terraform doesn't evaluate their for_each
+          sed -i -e '/resource "cloudflare_dns_record" "validation"/,/^}/ s/^/#/' "$TF_FILE"
+          sed -i -e '/resource "aws_route53_record" "validation"/,/^}/ s/^/#/' "$TF_FILE"
+          echo "✅ Module patched successfully."
+        else
+          echo "⚠️ Module file not found at $TF_FILE, unable to patch."
+        fi
 
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
         # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
