@@ -654,9 +654,9 @@ jobs:
         run: |
            if [[ -z "${{ secrets.ACM_CERTIFICATE_ARN }}" ]]; then
               echo "🔍 ACM_CERTIFICATE_ARN secret is empty. Resolving dynamically..."
-              export DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT' vars/blaze-env.json)
-              if [[ -f "vars/${{ env.TF_VAR_project_key }}/blaze-env.json" ]]; then
-                 PROJ_DOMAIN=$(jq -r '.common.DOMAIN_ROOT // empty' vars/${{ env.TF_VAR_project_key }}/blaze-env.json)
+              export DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT' "$GITHUB_WORKSPACE/vars/blaze-env.json")
+              if [[ -f "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json" ]]; then
+                 PROJ_DOMAIN=$(jq -r '.common.DOMAIN_ROOT // empty' "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json")
                  if [[ -n "$PROJ_DOMAIN" ]]; then DOMAIN_ROOT=$PROJ_DOMAIN; fi
               fi
               echo "🎯 Target Domain Root: $DOMAIN_ROOT"
