@@ -756,13 +756,10 @@ jobs:
             DESTROY_FLAG="-destroy"
           fi
 
-          DETAILED_EXITCODE=""
-          if [[ "${{ inputs.detect_drift }}" == "true" ]]; then
-             DETAILED_EXITCODE="-detailed-exitcode"
-          fi
-
+          # Always use -detailed-exitcode because we rely on Exit Code 2 
+          # to determine if 'has_changes' is true for the Terraform Apply step downstream.
           set +e
-          terraform plan $DESTROY_FLAG $DETAILED_EXITCODE -out=tfplan -input=false | tee plan.log
+          terraform plan $DESTROY_FLAG -detailed-exitcode -out=tfplan -input=false | tee plan.log
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
