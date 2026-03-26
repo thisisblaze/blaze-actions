@@ -308,7 +308,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v1.4.30
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@dev
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -455,7 +455,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v1.4.30
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@dev
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -609,7 +609,7 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v1.4.30
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@dev
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
