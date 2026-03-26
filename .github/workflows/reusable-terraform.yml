@@ -648,6 +648,35 @@ jobs:
             fi
           done < _github_vars.env
 
+      - name: Resolve ACM Certificate ARN dynamically (if needed)
+        id: resolve-acm
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        run: |
+           if [[ -z "${{ secrets.ACM_CERTIFICATE_ARN }}" ]]; then
+              echo "🔍 ACM_CERTIFICATE_ARN secret is empty. Resolving dynamically..."
+              export DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT' vars/blaze-env.json)
+              if [[ -f "vars/${{ env.TF_VAR_project_key }}/blaze-env.json" ]]; then
+                 PROJ_DOMAIN=$(jq -r '.common.DOMAIN_ROOT // empty' vars/${{ env.TF_VAR_project_key }}/blaze-env.json)
+                 if [[ -n "$PROJ_DOMAIN" ]]; then DOMAIN_ROOT=$PROJ_DOMAIN; fi
+              fi
+              echo "🎯 Target Domain Root: $DOMAIN_ROOT"
+              
+              if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
+                 echo "Searching certificates for *.$DOMAIN_ROOT in us-east-1..."
+                 ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='*.${DOMAIN_ROOT}'].CertificateArn" --output text | head -n 1)
+                 
+                 if [[ -n "$ARN" && "$ARN" != "None" ]]; then
+                    echo "✅ Resolved ACM ARN: $ARN"
+                    echo "TF_VAR_cloudfront_acm_certificate_arn=$ARN" >> "$GITHUB_ENV"
+                 else
+                    echo "⚠️ No matching ACM certificate found in us-east-1 for *.$DOMAIN_ROOT"
+                 fi
+              fi
+           else
+              echo "✅ Using provided ACM_CERTIFICATE_ARN secret."
+              echo "TF_VAR_cloudfront_acm_certificate_arn=${{ secrets.ACM_CERTIFICATE_ARN }}" >> "$GITHUB_ENV"
+           fi
+
       - name: Run VPC Integrity Check
         if: ${{ inputs.destroy != true }}
         working-directory: ${{ inputs.tf_dir }}
@@ -670,7 +699,6 @@ jobs:
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          TF_VAR_cloudfront_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
           MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
           MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
@@ -712,7 +740,6 @@ jobs:
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          TF_VAR_cloudfront_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
           TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
@@ -815,7 +842,6 @@ jobs:
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          TF_VAR_cloudfront_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
           TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
