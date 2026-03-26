@@ -788,8 +788,10 @@ jobs:
              if [[ $EXIT_CODE -eq 0 || $EXIT_CODE -eq 2 ]]; then
                 if [[ $EXIT_CODE -eq 2 ]]; then
                    echo "✅ Terraform Plan Successful - Changes Detected"
+                   echo "has_changes=true" >> $GITHUB_ENV
                 else
                    echo "✅ Terraform Plan Successful - No Changes"
+                   echo "has_changes=false" >> $GITHUB_ENV
                 fi
              else
                 echo "❌ Terraform Plan Failed (Exit Code: $EXIT_CODE)"
