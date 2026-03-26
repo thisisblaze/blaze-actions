@@ -1245,6 +1245,13 @@ jobs:
         terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].random_id.suffix" 2>/dev/null || true
         echo "✅ Lambda@Edge orphaned."
 
+        # ----- DNS VALIDATION CLEANUP (FIX DESTROY BUG) -----
+        # The for_each loop over cloudflare_dns_record.validation depends on unknown 
+        # acm outputs during destroy, causing a terraform plan failure.
+        echo "🔪 REMOVING DNS VALIDATION RECORDS FROM STATE..."
+        terraform state rm 'module.environment_network.cloudflare_dns_record.validation' 2>/dev/null || true
+        echo "✅ DNS Validation records removed from state."
+
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
         # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
         # This prevents destroy from hanging on ECS managed termination protection.
