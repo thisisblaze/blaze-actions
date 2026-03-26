@@ -798,9 +798,10 @@ jobs:
           fi
 
       # Smart Pre-Destroy Hook for MongoDB
+      # Smart Pre-Destroy Hook for MongoDB
       # Automatically disables termination protection before cluster destruction
       - name: Run Pre-Destroy Hook
-        if: ${{ inputs.destroy == true && inputs.apply == true }}
+        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.apply == true || inputs.apply == 'true') && env.has_changes == 'true' }}
         working-directory: ${{ inputs.tf_dir }}
         env:
           # MongoDB Atlas credentials - use direct env var names
@@ -833,7 +834,7 @@ jobs:
           fi
 
       - name: Terraform Apply
-        if: ${{ inputs.apply == true }}
+        if: ${{ (inputs.apply == true || inputs.apply == 'true') && env.has_changes == 'true' }}
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
