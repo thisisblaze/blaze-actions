@@ -682,14 +682,14 @@ jobs:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-app"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-tenant-app"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       # Backend Config (Must match calculate-config logic)
       bucket: ${{ needs.configuration.outputs.bucket }}
       # Key format: infra/{project}/{stage}/{stack}.tfstate
       # We must reconstruct the key for each stack.
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/tenant-app.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/thisisblaze.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
