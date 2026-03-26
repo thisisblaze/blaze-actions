@@ -199,7 +199,13 @@ jobs:
           CANDIDATES=(
             "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
             "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-frontend-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-frontend-origin"
+            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-image-resize"
             "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
+            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-image-resize"
             "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin-spa"
             "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-frontend-spa"
           )
