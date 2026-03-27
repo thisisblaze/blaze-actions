@@ -543,7 +543,7 @@ jobs:
           else
             for APP in $APPS; do
               echo "   🗑️ Deleting Container App: $APP"
-              az containerapp delete --name "$APP" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $APP"
+              az containerapp delete --name "$APP" --resource-group "$RG" --yes --no-wait 2>/dev/null || echo "   ⚠️ Failed to delete $APP"
             done
             echo "   ✅ Container Apps cleanup complete."
           fi
@@ -557,7 +557,7 @@ jobs:
           else
             for ENV in $ENVS; do
               echo "   🗑️ Deleting CAE: $ENV"
-              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes 2>/dev/null || echo "   ⚠️ Failed to delete $ENV"
+              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes --no-wait 2>/dev/null || echo "   ⚠️ Failed to delete $ENV"
             done
             echo "   ✅ CAE cleanup complete."
           fi
