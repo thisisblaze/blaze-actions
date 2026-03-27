@@ -610,14 +610,13 @@ jobs:
     name: Deploy Admin (Pages)
     needs: [configuration, build-admin, pre-flight-check]
 
-    # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP MULTI-SITE where Admin Pages are not deployed
+    # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && 
+    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && 
       inputs.cloud_provider != null && (inputs.branch_name == '' || 
       inputs.branch_name == null) && (inputs.deploy_services == true || 
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
-      || inputs.target_services == 'admin' || inputs.target_services == null) &&
-      !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE') }}
+      || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
