@@ -217,7 +217,7 @@ jobs:
 
             - name: Login to Amazon ECR
               if: inputs.skip_build != 'true' && inputs.skip_build != true
-              uses: aws-actions/amazon-ecr-login@v2.1.0
+              uses: aws-actions/amazon-ecr-login@v2.1.1
 
             - name: Set up Docker Buildx
               if: inputs.skip_build != 'true' && inputs.skip_build != true
