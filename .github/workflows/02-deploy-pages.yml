@@ -646,11 +646,11 @@ jobs:
 
           echo "Setting production branch to: $BRANCH for project: $PROJECT_NAME"
 
-          # Get project details to find project ID
+          # Get project details to find project ID (with fallback to prevent jq parse errors on 404/WAF responses)
           PROJECT_ID=$(curl -s -X GET \
             "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            | jq -r '.result.name')
+            | jq -r '.result.name' 2>/dev/null || echo "")
 
           if [ "$PROJECT_ID" != "$PROJECT_NAME" ]; then
             echo "⚠️  Project ($PROJECT_NAME) not found. Typically it should be created via Terraform first."
