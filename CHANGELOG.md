@@ -1,3 +1,10 @@
+## [Unreleased] - 2026-03-27
+
+### Fixed
+- **Azure Deployments:** Excised orphaned `build-admin` job from `02-deploy-azure.yml` to resolve `409 Conflict` artifact collisions.
+- **Pages Deployments:** Silenced `jq` JSON parse crashes on `02-deploy-pages.yml` by introducing native bash fallback processing during 404 project lookups.
+- **Azure Orchestration:** Injected `--no-wait` flags into the `99-ops-nuke.yml` Container Apps deletion scripts to bypass 15-minute Github Action pipeline timeouts.
+
 ## [Unreleased] - 2026-03-26
 
 ### Changed
