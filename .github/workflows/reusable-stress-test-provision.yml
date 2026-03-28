@@ -209,7 +209,7 @@ jobs:
     needs: [config]
     name: "🏗️ Provision Network"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -236,7 +236,7 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -262,7 +262,7 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Data Pod (V2)"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -287,11 +287,11 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-app:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped') && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped') && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
-    needs: [config, provision-network, provision-tunnel, provision-data-pod]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped') && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped') && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped') && (needs.provision-third-party-mongodb.result == 'success' || needs.provision-third-party-mongodb.result == 'skipped') && (needs.provision-third-party-elastic.result == 'success' || needs.provision-third-party-elastic.result == 'skipped')
+    needs: [config, provision-network, provision-tunnel, provision-data-pod, provision-third-party-mongodb, provision-third-party-elastic]
     name: "🏗️ Provision App"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -317,10 +317,10 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-third-party-mongodb:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
-    needs: [config, provision-app]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
+    needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -339,10 +339,10 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-third-party-elastic:
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-app.result == 'success' || needs.provision-app.result == 'skipped')
-    needs: [config, provision-app]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
+    needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.4.30
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}

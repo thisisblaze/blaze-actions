@@ -2,8 +2,12 @@
 
 ### Fixed
 - fix(orchestrator): Rerouted `app` deployments to `tenant-app` and injected the `db-pod-alpha` data layer to align CI/CD stress tests with the Multi-Site V2 Two-Pillar architecture.
+- fix(ci): Resolved Terraform state split-brain by permanently replacing `@dev` action references with `@v1.4.30` across all deployment pipelines.
+- fix(ci): Reordered Terraform dependency graph in `reusable-stress-test-provision.yml` to ensure data pods natively provision BEFORE application modules.
 
 ### Changed
+- chore: Synced `90-daily-health-check.yml` structural parity natively across all 3 repos.
+- chore: Purged orphaned `scratch/` directories to pass `/checkengines` hygiene protocols.
 - chore: end-of-day governance sync — 2026-03-28
 
 ## [Unreleased] - 2026-03-27
