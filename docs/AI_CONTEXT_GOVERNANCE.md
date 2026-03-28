@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-25
+**Last Updated**: 2026-03-28
 **Owner**: Infrastructure Team
 
 ---
@@ -24,6 +24,15 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 - NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations) in shared workflows or documentation.
 - NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
 - ALWAYS use sanitized placeholders (e.g., `app.example.com`, `123456789012`) when producing examples in the Knowledge Library or AI workflows.
+
+### 1.6. The Signature Tag Rule
+
+**CRITICAL POLICY**: Generic tags like `Stage`, `Client`, and `Project` are heavily overloaded by legacy tools and other CI/CDs. 
+When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags:
+- `Blaze:Architecture=two-pillar-v2`
+- `Blaze:Provisioner=blaze-actions`
+
+"Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking these exact tags or Terraform State is strictly forbidden.
 
 ## 2. The Golden Rule of Context
 
