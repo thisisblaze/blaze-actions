@@ -1,3 +1,11 @@
+## [Unreleased] - 2026-03-28
+
+### Fixed
+- fix(orchestrator): Rerouted `app` deployments to `tenant-app` and injected the `db-pod-alpha` data layer to align CI/CD stress tests with the Multi-Site V2 Two-Pillar architecture.
+
+### Changed
+- chore: end-of-day governance sync — 2026-03-28
+
 ## [Unreleased] - 2026-03-27
 
 ### Fixed
