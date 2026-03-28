@@ -543,8 +543,8 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
       orphan_lambda: false
-      split_apply: ${{ inputs.stack == 'tunnel' || inputs.stack == 'network' }}
-      split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || 'module.environment_network.module.networking module.environment_network.module.acm[0]' }}
+      split_apply: ${{ inputs.stack == 'tunnel' }}
+      split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
 
   post_provision:
