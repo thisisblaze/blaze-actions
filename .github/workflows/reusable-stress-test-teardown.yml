@@ -234,6 +234,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       app_exists: ${{ steps.check-app.outputs.exists }}
+      db_pod_exists: ${{ steps.check-db-pod.outputs.exists }}
       tunnel_exists: ${{ steps.check-tunnel.outputs.exists }}
       network_exists: ${{ steps.check-network.outputs.exists }}
       mongodb_exists: ${{ steps.check-mongodb.outputs.exists }}
@@ -255,7 +256,21 @@ jobs:
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
-          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate' }}"
+          aws_region: ${{ needs.config.outputs.aws_region }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+
+      - name: Check Data Pod State
+        if: inputs.include_third_party && inputs.target_type == 'host'
+        id: check-db-pod
+        uses: ./.blaze-actions/.github/actions/check-stack-exists
+        with:
+          cloud_provider: ${{ inputs.cloud_provider }}
+          bucket: ${{ needs.config.outputs.bucket }}
+          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/db-pod-alpha.tfstate"
           aws_region: ${{ needs.config.outputs.aws_region }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -348,9 +363,9 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-app"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app' }}"
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/app.tfstate"
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate' }}"
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -369,6 +384,36 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  destroy-data-pod:
+    if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.db_pod_exists == 'true' }}
+    name: "🧨 Destroy Data Pod"
+
+    needs: [config, destroy-app, check-states]
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
+    with:
+      action: "destroy"
+      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-db-pod-alpha"
+      bucket: ${{ needs.config.outputs.bucket }}
+      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/db-pod-alpha.tfstate"
+      stage_key: ${{ needs.config.outputs.stage_key }}
+      aws_region: ${{ needs.config.outputs.aws_region }}
+      client_key: ${{ needs.config.outputs.client_key }}
+      project_key: ${{ needs.config.outputs.project_key }}
+      namespace: ${{ needs.config.outputs.namespace }}
+      cloud_platform: ${{ inputs.cloud_provider }}
+      domain_root: ${{ needs.config.outputs.domain_root }}
+      environment: ${{ inputs.environment }}
+      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
+      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
+      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
+      wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
 
   destroy-third-party-mongodb:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.mongodb_exists == 'true' }}
@@ -452,7 +497,7 @@ jobs:
     if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' }}
     name: "🧨 Destroy Network"
 
-    needs: [config, destroy-tunnel, check-states]
+    needs: [config, destroy-tunnel, destroy-data-pod, check-states]
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@dev
     with:
       action: "destroy"

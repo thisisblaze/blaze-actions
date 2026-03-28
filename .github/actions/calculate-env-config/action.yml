@@ -245,18 +245,37 @@ runs:
               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
             fi
             ;;
+          "db-pod-alpha")
+            TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-db-pod-alpha"
+            STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/db-pod-alpha.tfstate"
+            ;;
+          "tenant-app")
+            TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
+            if [[ -n "$BRANCH_TAG" ]]; then
+              STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}-tenant.tfstate"
+            else
+              STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/tenant-app.tfstate"
+            fi
+            ;;
           "app" | "application-layer")
-            if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
+            if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
+              # Auto-upgrade DEV and STAGE to Multi-Site V2 Tenant App
+              TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
+              if [[ -n "$BRANCH_TAG" ]]; then
+                STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}-tenant.tfstate"
+              else
+                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/tenant-app.tfstate"
+              fi
+            elif [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
+              # Prod is still legacy architecture
               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
             else
-              # Dev and Dev-Mini now uses split stack (like stage/prod)
+              # Dev-Mini and others
               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
               if [[ -n "$BRANCH_TAG" ]]; then
-                # Feature branches have their own app state
                 STATE_KEY="infra/${PROJECT_KEY}/features/${BRANCH_TAG}.tfstate"
               else
-                # Host app state
                 STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
               fi
             fi
