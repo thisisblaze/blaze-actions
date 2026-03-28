@@ -422,11 +422,21 @@ runs:
                
             # Legacy Single-Site Fallback
             else
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
-               if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
-                  STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
+                  # Auto-upgrade DEV and STAGE to Multi-Site V2 Tenant App
+                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
+                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+                     STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}-tenant.tfstate"
+                  else
+                     STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/tenant-app.tfstate"
+                  fi
                else
-                  STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
+                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
+                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+                     STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
+                  else
+                     STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
+                  fi
                fi
             fi
         fi
