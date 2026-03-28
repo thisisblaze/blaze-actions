@@ -756,10 +756,18 @@ jobs:
             DESTROY_FLAG="-destroy"
           fi
 
+          TARGET_FLAGS=""
+          if [[ "${{ inputs.split_apply }}" == "true" && "${{ inputs.destroy }}" != "true" ]]; then
+             TARGETS="${{ inputs.split_targets }}"
+             for target in $TARGETS; do
+               TARGET_FLAGS="$TARGET_FLAGS -target=$target"
+             done
+          fi
+
           # Always use -detailed-exitcode because we rely on Exit Code 2 
           # to determine if 'has_changes' is true for the Terraform Apply step downstream.
           set +e
-          terraform plan $DESTROY_FLAG -detailed-exitcode -out=tfplan -input=false | tee plan.log
+          terraform plan $DESTROY_FLAG $TARGET_FLAGS -detailed-exitcode -out=tfplan -input=false | tee plan.log
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
