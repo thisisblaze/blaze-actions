@@ -1,3 +1,13 @@
+## [v1.4.34] - 2026-03-29
+
+### Fixed
+
+- Lowercase environment option values (DEV→dev, STAGE→stage, PROD→prod) in `02-deploy-aws.yml`
+- All string comparisons updated to match lowercase convention
+- Fixes NPM_TOKEN being empty in build jobs: GitHub named environments are case-sensitive;
+  passing 'STAGE' created a blank environment with no secrets instead of resolving to
+  the 'stage' environment that has NPM_TOKEN configured
+
 ## v1.4.33 (2026-03-29)
 
 ### Added
