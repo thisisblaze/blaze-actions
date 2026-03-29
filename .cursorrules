@@ -151,3 +151,8 @@ When workflows pass Terraform variables:
 2. Verify package is actively maintained and NOT deprecated
 3. Avoid packages not updated in >1 year if alternatives exist
 4. Prioritize libraries recommended by official service documentation
+
+## GitHub Environment Case Sensitivity
+**CRITICAL**: GitHub environments are strictly **case-sensitive** (e.g., `stage`, `prod`). 
+- ALWAYS use LOWERCASE environment names in workflow `environment:` keys or when matching branches.
+- DONT use uppercase `STAGE`, `PROD` as it will create a blank GitHub environment and secrets (like `NPM_TOKEN`) will fail to resolve.

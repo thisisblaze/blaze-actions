@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-28
+**Last Updated**: 2026-03-29
 **Owner**: Infrastructure Team
 
 ---
@@ -173,6 +173,25 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
 | **Module Version**                 | `blaze-terraform-infra-core` @ **Multi-Site V2 Default**                                           |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
+
+## 12. CI/CD Gotchas & Known Failure Patterns (2026-03-29)
+
+> [!CAUTION]
+> These are **confirmed production failure patterns**. Agents must check for these before modifying any workflow.
+
+| Pattern | Symptom | Root Cause | Fix |
+| :------ | :------- | :--------- | :-- |
+| **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `multi-site` in all `environment:` keys and `workflow_dispatch` options |
+| **ECS EC2 capacity provider bootstrap** | Terraform planning hangs on `data "aws_ecs_capacity_provider"` lookup | SSM parameter `blaze-b9-thisisblaze-stage-ecs-ec2-cp` missing or wrong; dead-code SSM data sources block plan | Fix SSM parameter value; remove dead-code data sources from `multi-site-tenant-app` module |
+| **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
+
+## 13. Current Version Pins (2026-03-29)
+
+| Component | Current Pin | Notes |
+| :-------- | :---------- | :---- |
+| `blaze-actions` | **v1.4.34** | All 3 repos synced. Lowercase env options fix. |
+| `blaze-terraform-infra-core` | **v2.2.2** (stage/prod Multi-Site V2) | Stage uses `stage-tenant-app` (two-pillar stack) |
+| Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
 ---
 
