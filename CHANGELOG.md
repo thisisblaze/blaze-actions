@@ -1,3 +1,17 @@
+## v1.4.34 (2026-03-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: prepare v1.4.34 release — lowercase env options, fixes NPM_TOKEN in stage builds
+- chore: update CHANGELOG for v1.4.33
+
+### Fixed
+
+
 ## [v1.4.34] - 2026-03-29
 
 ### Fixed
