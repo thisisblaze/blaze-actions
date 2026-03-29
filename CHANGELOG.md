@@ -1,5 +1,36 @@
 ## v1.4.32 (2026-03-29)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: prepare v1.4.32 release — fix calculate-env-config app→tenant-app routing for STAGE
+- chore: end-of-day governance sync — 2026-03-28
+- chore: end-of-day governance sync — 2026-03-28
+- chore: end-of-day governance sync — 2026-03-28
+- chore: end-of-day governance sync — 2026-03-27
+- docs: end-of-day changelog update — 2026-03-27
+- chore: end-of-day governance sync — 2026-03-26
+- chore: end-of-day governance sync — 2026-03-25
+- docs: Multi-Site V2 governance sync 2026-03-25
+- chore: end-of-day governance sync — 2026-03-24
+- docs: modernization update ecosystem action pin mapping to @v1.4.31
+- docs: modernization sweep replacing @v1.4.0 execution pins with standard @v1.4.31 baseline
+- chore: end-of-day governance sync — 2026-03-23
+- docs: agent workflow optimizations — bash grep eradication & python port
+- docs: agent workflow sync to remove hardcoded templates
+- chore: remove frontend Check Engines trigger (moved to deploy repo)
+- chore: move checkengines to 9X maintenance namespace
+- chore: update CHANGELOG for v2.1.1
+
+### Fixed
+
+- fix: skip admin pages deployment on GCP to align with Two-Pillar architecture
+
+## v1.4.32 (2026-03-29)
+
 ### Fixed
 - fix(calculate-env-config): Auto-route `app` stack to `stage-tenant-app` for STAGE environment, resolving persistent `data.aws_lb_target_group.frontend_blue` / `api_blue` "couldn't find resource" errors in the Multi-Site V2 stress test provisioning pipeline.
 - fix(orchestrator): Rerouted `app` deployments to `tenant-app` and injected the `db-pod-alpha` data layer to align CI/CD stress tests with the Multi-Site V2 Two-Pillar architecture.
