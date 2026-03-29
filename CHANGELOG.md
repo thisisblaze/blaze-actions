@@ -1,5 +1,19 @@
 ## v1.4.33 (2026-03-29)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: bump internal refs to v1.4.33 — EC2 launch type for STAGE stress test
+- chore: update CHANGELOG for v1.4.32
+
+### Fixed
+
+
+## v1.4.33 (2026-03-29)
+
 ### Fixed
 - fix(stress-test): Use EC2 launch type for STAGE environment in `reusable-stress-test-provision.yml`.
   STAGE uses the same ARM64 EC2 cluster architecture as PROD. The previous condition only mapped
