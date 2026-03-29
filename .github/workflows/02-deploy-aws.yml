@@ -17,11 +17,11 @@ on:
         description: "Environment to deploy to"
         type: choice
         options:
-          - DEV
-          - DEV-MINI
-          - STAGE
-          - PROD
-          - MULTI-SITE
+          - dev
+          - dev-mini
+          - stage
+          - prod
+          - multi-site
         required: true
       project:
         description: "Project (App Identity) - e.g. thisisblaze"
@@ -224,7 +224,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-aws-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
+  group: deploy-aws-${{ inputs.environment || 'dev' }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
 env:
@@ -256,7 +256,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [quality-check]
-    environment: ${{ inputs.environment || 'DEV' }}
+    environment: ${{ inputs.environment || 'dev' }}
     if: always() && (needs.quality-check.result == 'success' || 
       needs.quality-check.result == 'skipped')
     outputs:
@@ -367,7 +367,7 @@ jobs:
         id: config
         uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1.4.33
         with:
-          environment: ${{ inputs.environment || 'DEV' }}
+          environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
           terraform_stack: "app"
           branch_name: ${{ inputs.branch_name }}
@@ -380,7 +380,7 @@ jobs:
   pre-flight-check:
     name: 🛡️ Pre-Flight Checks
     needs: [configuration]
-    environment: ${{ inputs.environment || 'DEV' }}
+    environment: ${{ inputs.environment || 'dev' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -630,7 +630,7 @@ jobs:
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-azure-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-azure-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
@@ -698,21 +698,21 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
-          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && 
-            (inputs.environment == 'PROD' && 
-            format('https://api-azure-{0}.{1}/graphql', 
-            needs.configuration.outputs.client_key, 
-            needs.configuration.outputs.domain_root) || 
-            format('https://api-azure-{0}-{1}.{2}/graphql', 
-            needs.configuration.outputs.client_key, 
-            needs.configuration.outputs.stage_key, 
-            needs.configuration.outputs.domain_root)) || (inputs.environment == 
-            'PROD' && format('https://api-{0}.{1}/graphql', 
-            needs.configuration.outputs.client_key, 
-            needs.configuration.outputs.domain_root) || 
-            format('https://api-{0}-{1}.{2}/graphql', 
-            needs.configuration.outputs.client_key, 
-            needs.configuration.outputs.stage_key, 
+          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' &&
+            (inputs.environment == 'prod' &&
+            format('https://api-azure-{0}.{1}/graphql',
+            needs.configuration.outputs.client_key,
+            needs.configuration.outputs.domain_root) ||
+            format('https://api-azure-{0}-{1}.{2}/graphql',
+            needs.configuration.outputs.client_key,
+            needs.configuration.outputs.stage_key,
+            needs.configuration.outputs.domain_root)) || (inputs.environment ==
+            'prod' && format('https://api-{0}.{1}/graphql',
+            needs.configuration.outputs.client_key,
+            needs.configuration.outputs.domain_root) ||
+            format('https://api-{0}-{1}.{2}/graphql',
+            needs.configuration.outputs.client_key,
+            needs.configuration.outputs.stage_key,
             needs.configuration.outputs.domain_root)) }}
 
       - name: Create Cloudflare _redirects
@@ -730,14 +730,14 @@ jobs:
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
-    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && 
-      inputs.branch_name != null && (inputs.build_images == true || 
-      inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
+    if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' &&
+      inputs.branch_name != null && (inputs.build_images == true ||
+      inputs.build_images == null) && (inputs.target_services == 'Blaze all' ||
       inputs.target_services == 'admin' || inputs.target_services == null) }}
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.33
     with:
       display_name: "Admin"
-      environment: ${{ inputs.environment || 'DEV' }}
+      environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
@@ -790,7 +790,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
-      environment: ${{ inputs.environment || 'DEV' }}
+      environment: ${{ inputs.environment || 'dev' }}
       # Pass forced uppercase env to prevent duplicates
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
@@ -840,7 +840,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
-      environment: ${{ inputs.environment || 'DEV' }}
+      environment: ${{ inputs.environment || 'dev' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
@@ -881,7 +881,7 @@ jobs:
 
     # Run for Feature Branches ONLY
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-      inputs.cloud_provider == null) && inputs.environment == 'DEV' && 
+      inputs.cloud_provider == null) && inputs.environment == 'dev' && 
       inputs.branch_name != '' && inputs.branch_name != null && 
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
@@ -890,7 +890,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
-      environment: ${{ inputs.environment || 'DEV' }}
+      environment: ${{ inputs.environment || 'dev' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
@@ -929,7 +929,7 @@ jobs:
       inputs.branch_name == null) && (inputs.deploy_services == true || 
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
       || inputs.target_services == 'admin' || inputs.target_services == null) && 
-      (inputs.environment == 'DEV' || inputs.environment == 'STAGE' || inputs.environment == 'PROD' || inputs.environment == 'MULTI-SITE') }}
+      (inputs.environment == 'dev' || inputs.environment == 'stage' || inputs.environment == 'prod' || inputs.environment == 'multi-site') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
