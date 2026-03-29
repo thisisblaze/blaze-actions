@@ -1,4 +1,11 @@
-## v1.4.32 (2026-03-29)
+## v1.4.33 (2026-03-29)
+
+### Fixed
+- fix(stress-test): Use EC2 launch type for STAGE environment in `reusable-stress-test-provision.yml`.
+  STAGE uses the same ARM64 EC2 cluster architecture as PROD. The previous condition only mapped
+  `prod` to EC2, causing STAGE to attempt FARGATE deployments on an EC2-only ECS cluster.
+
+
 
 ### Added
 
