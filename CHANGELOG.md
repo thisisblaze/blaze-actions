@@ -1,14 +1,17 @@
-## [Unreleased] - 2026-03-28
+## v1.4.32 (2026-03-29)
 
 ### Fixed
+- fix(calculate-env-config): Auto-route `app` stack to `stage-tenant-app` for STAGE environment, resolving persistent `data.aws_lb_target_group.frontend_blue` / `api_blue` "couldn't find resource" errors in the Multi-Site V2 stress test provisioning pipeline.
 - fix(orchestrator): Rerouted `app` deployments to `tenant-app` and injected the `db-pod-alpha` data layer to align CI/CD stress tests with the Multi-Site V2 Two-Pillar architecture.
 - fix(ci): Resolved Terraform state split-brain by permanently replacing `@dev` action references with `@v1.4.30` across all deployment pipelines.
 - fix(ci): Reordered Terraform dependency graph in `reusable-stress-test-provision.yml` to ensure data pods natively provision BEFORE application modules.
+- fix(aws/network): Disabled `split_apply` for network stack now that Terraform module-level cyclic dependencies are patched, bypassing empty diff apply skips.
+- fix(orchestration): Support targeted Terraform plan for split applies to bypass TF dependency graph errors.
 
 ### Changed
 - chore: Synced `90-daily-health-check.yml` structural parity natively across all 3 repos.
 - chore: Purged orphaned `scratch/` directories to pass `/checkengines` hygiene protocols.
-- chore: end-of-day governance sync — 2026-03-28
+- chore: end-of-day governance sync — 2026-03-29
 
 ## [Unreleased] - 2026-03-27
 

@@ -3,7 +3,7 @@
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.5.0-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v1.4.32-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 > [!CAUTION]
 > ### 🚨 THIS REPO IS A WORKFLOW LIBRARY — NOT FOR DIRECT RUNS 🚨
