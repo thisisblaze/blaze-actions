@@ -1,3 +1,17 @@
+## v1.4.36 (2026-03-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.35
+
+### Fixed
+
+- fix: remove invalid required: false under secrets
+
 ## v1.4.35 (2026-03-30)
 
 ### Added
