@@ -77,7 +77,6 @@ on:
                 type: string
 
         secrets:
-          MONGO_INITDB_ROOT_PASSWORD:
             required: false
           BLAZE_ELASTICSEARCH_USERNAME:
             required: false
@@ -236,7 +235,6 @@ jobs:
                       BLAZE_PROJECT_KEY=${{ inputs.project_key }}
                       BLAZE_STAGE=${{ inputs.stage_key }}
                       BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
-                      MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
                       BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
                       BLAZE_AUTH_ADMIN_EMAIL=${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
                       BLAZE_AUTH_ADMIN_PASSWORD=${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}

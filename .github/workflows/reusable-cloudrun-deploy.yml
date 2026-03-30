@@ -95,7 +95,6 @@ on:
                 type: string
 
         secrets:
-          MONGO_INITDB_ROOT_PASSWORD:
             required: false
           BLAZE_ELASTICSEARCH_USERNAME:
             required: false

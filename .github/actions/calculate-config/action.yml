@@ -277,7 +277,8 @@ runs:
         fi
 
         # 2. Dynamic Directory & State Key Selection
-        INPUT_STACK="${{ inputs.terraform_stack }}"
+        # Strip descriptive suffixes from Stack selection (e.g., "tenant-app (High-Traffic Website)" -> "tenant-app")
+        INPUT_STACK=$(echo "${{ inputs.terraform_stack }}" | awk '{print $1}')
 
         # Map Descriptive Dropdown -> Internal Logic Code
         case "$INPUT_STACK" in

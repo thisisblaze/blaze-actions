@@ -99,7 +99,6 @@ on:
         description: "Set to 'true' to skip ECS stabilisation wait (stress tests, placeholder images)"
 
     secrets:
-      MONGO_INITDB_ROOT_PASSWORD:
         required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -219,7 +218,6 @@ jobs:
           registry: ${{ inputs.registry }}
 
           # Secrets
-          mongo_password: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
           jwt_private_key: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
           s3_bucket: ${{ inputs.s3_bucket }}
           admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}

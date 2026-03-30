@@ -202,7 +202,8 @@ runs:
         esac
 
         # Determine Terraform directory and state key based on stack type
-        STACK="${{ inputs.terraform_stack }}"
+        # Strip descriptive suffixes from Stack selection (e.g., "tenant-app (High-Traffic Website)" -> "tenant-app")
+        STACK=$(echo "${{ inputs.terraform_stack }}" | awk '{print $1}')
         BRANCH_TAG="${{ inputs.branch_tag }}"
 
         TF_DIR=""

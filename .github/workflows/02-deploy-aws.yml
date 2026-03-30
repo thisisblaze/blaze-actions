@@ -151,7 +151,6 @@ on:
         type: string
 
     secrets:
-      MONGO_INITDB_ROOT_PASSWORD:
         required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -813,7 +812,6 @@ jobs:
       skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
       BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
@@ -862,7 +860,6 @@ jobs:
       skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
       BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
@@ -906,7 +903,6 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
       BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
       BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
       BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}

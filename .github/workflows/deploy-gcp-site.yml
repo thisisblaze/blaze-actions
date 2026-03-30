@@ -86,7 +86,6 @@ on:
         default: "10-50-100"
 
     secrets:
-      MONGO_INITDB_ROOT_PASSWORD:
         required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false

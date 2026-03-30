@@ -204,11 +204,11 @@ on:
 ### 3. Wrong Secret for Service Type
 
 ```yaml
-# ❌ Using self-hosted MongoDB secrets with managed Atlas
+# ❌ Using environment-prefixed Repository Secrets (Legacy V1 pattern)
 secrets:
-  MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+  DEV_BLAZE_CONNECTION_STRING: ${{ secrets.DEV_BLAZE_CONNECTION_STRING }}
 
-# ✅ Use Atlas connection string instead
+# ✅ Use Environment Secrets mapped directly via Job GitHub environments
 secrets:
   BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
 ```
