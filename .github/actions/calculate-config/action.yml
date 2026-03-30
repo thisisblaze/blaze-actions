@@ -391,30 +391,6 @@ runs:
             TF_DIR="${INFRA_PREFIX}/third-party/elastic"
             STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
             
-        elif [[ "$STAGE_KEY" == "multi-site" ]]; then
-            if [[ "$STACK" == "network" ]]; then
-               TF_DIR="${INFRA_PREFIX}/multi-site-network"
-               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-                  STATE_KEY="gcp/multi-site/multi-site-network"
-               else
-                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
-               fi
-            elif [[ "$STACK" == "cdn" ]]; then
-               TF_DIR="${INFRA_PREFIX}/multi-site-cdn"
-               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-                  STATE_KEY="gcp/multi-site/multi-site-cdn"
-               else
-                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
-               fi
-            else
-               TF_DIR="${INFRA_PREFIX}/multi-site-app"
-               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-                  STATE_KEY="gcp/multi-site/multi-site-app"
-               else
-                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
-               fi
-            fi
-            
         else
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
             if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "data" || "$STACK" == "cdn" ]]; then
@@ -429,7 +405,20 @@ runs:
                else
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
                fi
-               
+
+            # V2 Multi-Site App
+            elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
+                  TF_DIR="${INFRA_PREFIX}/${STACK}"
+               else
+                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
+               fi
+               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+                  STATE_KEY="gcp/multi-site/${STACK}"
+               else
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STACK#multi-site-}.tfstate"
+               fi
+
             # Legacy Single-Site Fallback
             else
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then

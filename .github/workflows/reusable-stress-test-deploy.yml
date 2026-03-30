@@ -57,7 +57,6 @@ on:
         required: false
         type: string
     secrets:
-        required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
@@ -207,7 +206,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.34
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.37
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"

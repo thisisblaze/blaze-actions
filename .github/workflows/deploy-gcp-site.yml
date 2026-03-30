@@ -86,7 +86,6 @@ on:
         default: "10-50-100"
 
     secrets:
-        required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
@@ -163,7 +162,7 @@ env:
 jobs:
   build:
     name: "🔨 Build [${{ inputs.site_key }}]"
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.34
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v1.4.37
     with:
       display_name: ${{ inputs.site_key }}
       cloud_provider: "gcp"
@@ -182,7 +181,7 @@ jobs:
   deploy:
     name: "🚀 Deploy [${{ inputs.site_key }}]"
     needs: [build]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v1.4.34
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v1.4.37
     with:
       site_key: ${{ inputs.site_key }}
       service_name: ${{ inputs.service_name }}
