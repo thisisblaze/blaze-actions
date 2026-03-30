@@ -6,6 +6,22 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v1.4.37
+- chore: update CHANGELOG for v1.4.36
+
+### Fixed
+
+- fix: auto-upgrade generic network and app stacks to multi-site-v2
+- fix: route multi-site stacks to proper environment scopes
+
+## v1.4.37 (2026-03-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v1.4.36
 
 ### Fixed
