@@ -288,6 +288,15 @@ runs:
           "tenant-app")
             STACK="tenant-app"
             ;;
+          "multi-site-network")
+            STACK="multi-site-network"
+            ;;
+          "multi-site-app")
+            STACK="multi-site-app"
+            ;;
+          "multi-site-cdn")
+            STACK="multi-site-cdn"
+            ;;
           "db-pod-alpha")
             STACK="db-pod-alpha"
             ;;
