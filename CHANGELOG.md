@@ -1,3 +1,21 @@
+## v1.4.35 (2026-03-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: V2 architecture UX visibility refactor (tenant vs multi-site)
+- chore: end-of-day governance sync — 2026-03-29
+- chore: bump internal refs to v1.4.34
+- chore: update CHANGELOG for v1.4.34
+
+### Fixed
+
+- fix: explicit mappings for multi-site stacks in calculate-config
+- fix: resolve split-brain by syncing infra-core refs to v2.2.2
+
 ## v1.4.34 (2026-03-29)
 
 ### Added
