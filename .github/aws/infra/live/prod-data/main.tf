@@ -32,7 +32,7 @@ data "terraform_remote_state" "network" {
 }
 
 module "label" {
-  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.2.0"
+  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.2.2"
   client    = var.client_key
   project   = var.project_key
   stage     = var.stage
@@ -43,7 +43,7 @@ module "label" {
 # ELASTICACHE REDIS
 # --------------------------------------------------------------------------------
 module "redis" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/data/redis?ref=v2.2.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/data/redis?ref=v2.2.2"
 
   context = module.label.context
   name    = "cache"
