@@ -392,8 +392,17 @@ runs:
             STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
             
         else
+            # Auto-upgrade standard generic network/app/cdn stacks to Multi-Site V2
+            if [[ "$STACK" == "network" ]]; then
+               STACK="multi-site-network"
+            elif [[ "$STACK" == "app" ]]; then
+               STACK="multi-site-app"
+            elif [[ "$STACK" == "cdn" ]]; then
+               STACK="multi-site-cdn"
+            fi
+
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
-            if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "data" || "$STACK" == "cdn" ]]; then
+            if [[ "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
                
@@ -422,7 +431,7 @@ runs:
             # Legacy Single-Site Fallback
             else
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
-                  # Auto-upgrade DEV and STAGE to Multi-Site V2 Tenant App
+                  # We should no longer auto-upgrade here since it happens above, but keep for safety of other unknown stacks
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
                   if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
                      STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}-tenant.tfstate"
