@@ -332,7 +332,7 @@ runs:
             ;;
           *)
             # Default
-            STACK="app"
+            STACK="multi-site-app"
             ;;
         esac
 

@@ -183,7 +183,6 @@ on:
         required: false
         type: string
     secrets:
-        required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
