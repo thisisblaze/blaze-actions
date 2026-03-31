@@ -130,15 +130,24 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
   
   # Import Target Groups (Blue/Green for Admin, Frontend, API)
   # Note: frontend is abbreviated as 'fe' in target group names
+  # Strategy: try to import first; if import fails (e.g. config count=0 or address mismatch),
+  # delete the orphan from AWS so terraform apply can recreate it cleanly.
   for TG in admin-blue admin-green fe-blue fe-green api-blue api-green; do
     RESOURCE_NAME=$(echo "$TG" | sed 's/fe-/frontend_/' | tr '-' '_')
     TG_NAME="blaze-${STAGE_KEY}-${TG}-tg"
     TG_ARN=$(aws elbv2 describe-target-groups --names "$TG_NAME" --region "$REGION" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
-    
+
     if [[ -n "$TG_ARN" && "$TG_ARN" != "None" ]]; then
       if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
         echo "📥 Importing target group: $TG_NAME"
-        terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" || true
+        terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" 2>/dev/null || true
+        # If still not in state after import attempt, delete the orphan so apply can recreate it
+        if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
+          echo "   ⚠️  Import failed — deleting orphan TG from AWS: $TG_NAME"
+          aws elbv2 delete-target-group --target-group-arn "$TG_ARN" --region "$REGION" && \
+            echo "   ✅ Deleted orphan TG: $TG_NAME" || \
+            echo "   ⚠️  Could not delete $TG_NAME (may have active dependencies)"
+        fi
       fi
     fi
   done
@@ -184,6 +193,46 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
       aws iam delete-role --role-name "$ROLE" || true
     fi
   done
+
+  # Orphan ECS Cluster Cleanup
+  # When pre-destroy.sh state-rm's the cluster, terraform destroy skips it but AWS retains it.
+  # On reprovision, PutClusterCapacityProviders fails with ResourceInUseException.
+  # Fix: detach all CPs first, then force-delete the cluster.
+  CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+  CLUSTER_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" \
+    --query 'clusters[0].status' --output text 2>/dev/null || echo "")
+  if [[ "$CLUSTER_STATUS" == "ACTIVE" ]]; then
+    if ! terraform state list | grep -q "module.environment_network.module.cluster.aws_ecs_cluster.main"; then
+      echo "   🧹 Deleting orphan ECS cluster: $CLUSTER_NAME"
+      # Detach all capacity providers first (required before delete)
+      aws ecs put-cluster-capacity-providers \
+        --cluster "$CLUSTER_NAME" \
+        --capacity-providers '[]' \
+        --default-capacity-provider-strategy '[]' \
+        --region "$REGION" 2>/dev/null || true
+      sleep 3
+      aws ecs delete-cluster --cluster "$CLUSTER_NAME" --region "$REGION" && \
+        echo "   ✅ Deleted orphan ECS cluster: $CLUSTER_NAME" || \
+        echo "   ⚠️  Could not delete ECS cluster $CLUSTER_NAME"
+    fi
+  fi
+
+  # Orphan EC2 Launch Template Cleanup
+  # pre-destroy.sh state-rm's the LT; AWS retains it; reprovision fails with AlreadyExistsException.
+  LT_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
+  LT_ID=$(aws ec2 describe-launch-templates \
+    --filters "Name=launch-template-name,Values=${LT_NAME}" \
+    --region "$REGION" \
+    --query 'LaunchTemplates[0].LaunchTemplateId' \
+    --output text 2>/dev/null || echo "")
+  if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
+    if ! terraform state list | grep -q "module.ec2_capacity_provider\[0\].aws_launch_template.ecs"; then
+      echo "   🧹 Deleting orphan Launch Template: $LT_NAME ($LT_ID)"
+      aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" && \
+        echo "   ✅ Deleted orphan Launch Template: $LT_NAME" || \
+        echo "   ⚠️  Could not delete LT $LT_NAME"
+    fi
+  fi
 
 
 elif [[ "$STACK" == "tunnel" || "$STACK" == "third-party-cloudflare" ]]; then
