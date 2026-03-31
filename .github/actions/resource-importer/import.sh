@@ -100,7 +100,7 @@ elif [[ "$STACK" == "third-party-elastic" ]]; then
     echo "ℹ️ Deployment $DEPLOYMENT_NAME not found. Terraform will create it."
   fi
 
-elif [[ "$STACK" == "network" ]]; then
+elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
   echo "🔍 Running Network Smart Import & Cleanup Logic..."
   
   CLIENT_KEY="${INPUT_CLIENT_KEY}"
@@ -166,6 +166,25 @@ elif [[ "$STACK" == "network" ]]; then
   else
     echo "   ⚠️ Cloudflare credentials missing. Skipping cleanup."
   fi
+
+  echo "   🧹 Culling orphaned IAM roles to unblock terraform entity creation..."
+  for ROLE in "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-instance-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-execution-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-codedeploy-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-task-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-task-execution-role"; do
+    if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
+      echo "      🗑️ Detaching and deleting role: ${ROLE}"
+      for policy_arn in $(aws iam list-attached-role-policies --role-name "$ROLE" --query 'AttachedPolicies[*].PolicyArn' --output text 2>/dev/null || echo ""); do
+        [[ -n "$policy_arn" ]] && aws iam detach-role-policy --role-name "$ROLE" --policy-arn "$policy_arn" || true
+      done
+      for policy_name in $(aws iam list-role-policies --role-name "$ROLE" --query 'PolicyNames[*]' --output text 2>/dev/null || echo ""); do
+        [[ -n "$policy_name" ]] && aws iam delete-role-policy --role-name "$ROLE" --policy-name "$policy_name" || true
+      done
+      for profile_name in $(aws iam list-instance-profiles-for-role --role-name "$ROLE" --query 'InstanceProfiles[*].InstanceProfileName' --output text 2>/dev/null || echo ""); do
+        [[ -n "$profile_name" ]] && aws iam remove-role-from-instance-profile --instance-profile-name "$profile_name" --role-name "$ROLE" || true
+        [[ -n "$profile_name" ]] && aws iam delete-instance-profile --instance-profile-name "$profile_name" || true
+      done
+      aws iam delete-role --role-name "$ROLE" || true
+    fi
+  done
+
 
 elif [[ "$STACK" == "tunnel" || "$STACK" == "third-party-cloudflare" ]]; then
   echo "🔍 Running Tunnel/Cloudflare Smart Import Logic..."
