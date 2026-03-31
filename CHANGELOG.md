@@ -8,6 +8,14 @@
 - fix(import): expand LT cleanup to cover graviton-cp-lt
 - fix(01-provision-infra): correct stale .ec2[0] → .ecs[0] module paths in zombie state-rm block
 
+## v1.4.44 (2026-03-31)
+
+### Fixed
+
+- fix(import): add orphan ASG force-delete (both ec2-cp and graviton-cp) for post-nuke reprovision
+- fix(import): expand LT cleanup to cover graviton-cp-lt
+- fix(01-provision-infra): correct stale .ec2[0] → .ecs[0] module paths in zombie state-rm block
+
 ## v1.4.43 (2026-03-31)
 
 ### Fixed
