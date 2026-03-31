@@ -1,3 +1,17 @@
+## v1.4.42 (2026-03-31)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.41
+- chore: update CHANGELOG for v1.4.40
+
+### Fixed
+
+
 ## v1.4.41 (2026-03-31)
 
 ### Added
