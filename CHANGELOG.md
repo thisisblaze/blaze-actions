@@ -1,3 +1,16 @@
+## v1.4.38 (2026-03-31)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.37
+
+### Fixed
+
+
 ## v1.4.37 (2026-03-30)
 
 ### Added
