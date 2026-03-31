@@ -1,4 +1,10 @@
-## v1.4.42 (2026-03-31)
+# Changelog
+
+## v1.4.43 (2026-03-31)
+
+### Fixed
+
+- fix(import): orphan ECS cluster, Launch Template + TG delete-fallback for post-nuke reprovision — prevents AlreadyExists/ResourceInUseException on next provision
 
 ### Added
 
