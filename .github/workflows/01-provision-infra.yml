@@ -519,6 +519,70 @@ jobs:
           ./pre_apply.sh
         fi
 
+        # ── Network Stack: Orphan zombie AWS resources that block apply ──
+        if [[ "${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "multi-site-network" ]]; then
+          echo "🧹 Removing zombie AWS state entries that would block apply..."
+
+          # ECS Capacity Provider (old module path) — hangs for 20min during destroy
+          terraform state rm 'module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]' || true
+          terraform state rm 'module.ec2_capacity_provider[0].aws_autoscaling_group.ec2[0]'     || true
+          terraform state rm 'module.ec2_capacity_provider[0].aws_launch_template.ec2[0]'        || true
+
+          # Lambda@Edge replicas — cannot delete while replicated to CloudFront
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]'  || true
+          terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     || true
+
+          # CloudFront resources still associated with distributions — would fail on delete
+          # (WAF, cache policies) — Terraform will re-create/update them correctly
+          terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' || true
+
+          echo "✅ Zombie state cleanup complete"
+
+          # ── Cloudflare: Import existing resources instead of trying to create them ──
+          if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$TF_VAR_cloudflare_account_id" ]]; then
+            STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+            DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+            CF_ACCOUNT="$TF_VAR_cloudflare_account_id"
+            CF_ZONE="$TF_VAR_cloudflare_zone_id"
+            CF_TOKEN="$TF_VAR_cloudflare_api_token"
+
+            echo "🔵 Importing Cloudflare Zero Trust Access Applications into state..."
+            # Fetch all access apps for account
+            APPS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/access/apps" \
+              -H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
+
+            for ROLE in "frontend" "admin" "api"; do
+              TARGET_DOMAIN="${ROLE}-${STAGE_KEY}.${DOMAIN_ROOT}"
+              APP_UUID=$(echo "$APPS" | jq -r ".result[]? | select(.domain == \"$TARGET_DOMAIN\") | .id // empty")
+              if [[ -n "$APP_UUID" ]]; then
+                TF_ADDR="module.environment_network.cloudflare_zero_trust_access_application.${ROLE}[0]"
+                if ! terraform state list | grep -qF "${TF_ADDR}"; then
+                  echo "  📥 Importing ZT App ${TARGET_DOMAIN} (${APP_UUID}) → ${TF_ADDR}"
+                  terraform import "${TF_ADDR}" "${CF_ACCOUNT}/${APP_UUID}" || echo "  ⚠️ Import failed for ${ROLE} (will retry next run)"
+                else
+                  echo "  ✅ ${ROLE} already in state"
+                fi
+              fi
+            done
+
+            echo "🔵 Importing Cloudflare DNS validation record into state..."
+            # Find the TXT/CNAME validation record for the domain root
+            for DOMAIN_KEY in "$DOMAIN_ROOT" "*.${DOMAIN_ROOT}"; do
+              REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${DOMAIN_KEY}&type=CNAME" \
+                -H "Authorization: Bearer ${CF_TOKEN}" | jq -r '.result[0].id // empty')
+              if [[ -n "$REC_ID" ]]; then
+                TF_ADDR="module.environment_network.cloudflare_dns_record.validation[\"${DOMAIN_ROOT}\"]"
+                if ! terraform state list | grep -qF "cloudflare_dns_record.validation"; then
+                  echo "  📥 Importing DNS validation record ${DOMAIN_KEY} (${REC_ID})"
+                  terraform import "${TF_ADDR}" "${CF_ZONE}/${REC_ID}" || echo "  ⚠️ DNS import failed"
+                fi
+              fi
+            done
+          else
+            echo "  ⚠️ Cloudflare credentials not set — skipping CF imports (available in terraform job only)"
+          fi
+        fi
+
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -540,7 +604,7 @@ jobs:
         api_cpu_architecture=${{ inputs.api_cpu_architecture }}
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
-      orphan_lambda: false
+      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
