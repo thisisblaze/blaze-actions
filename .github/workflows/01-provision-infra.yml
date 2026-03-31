@@ -523,24 +523,76 @@ jobs:
         # ── Network Stack: Orphan zombie AWS resources that block apply ──
         # SKIP during destroy — pre-destroy.sh handles state cleanup for destroy runs
         if [[ ("${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "multi-site-network") && "${{ inputs.destroy }}" != "true" ]]; then
-          echo "🧹 Removing zombie AWS state entries that would block apply..."
+          echo "🔵 Importing ECS cluster + CPs into state (idempotent, replaces prior state-rm approach)..."
+          STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+          CLIENT_KEY_VAL="${{ needs.configuration.outputs.client_key }}"
+          PROJECT_KEY_VAL="${{ needs.configuration.outputs.project_key }}"
+          CLUSTER_NAME_VAL="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-cluster"
+          REGION_VAL="${{ needs.configuration.outputs.aws_region }}"
 
-          # ECS Capacity Provider — hangs for 20min during destroy (suffix: ecs not ec2)
-          terraform state rm 'module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]' || true
-          terraform state rm 'module.ec2_capacity_provider[0].aws_autoscaling_group.ecs[0]'     || true
-          terraform state rm 'module.ec2_capacity_provider[0].aws_launch_template.ecs[0]'       || true
-          terraform state rm 'module.graviton_cp.aws_autoscaling_group.ecs[0]'                  || true
-          terraform state rm 'module.graviton_cp.aws_launch_template.ecs[0]'                    || true
-          terraform state rm 'module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]' || true
+          # Get cluster ARN
+          CLUSTER_ARN=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
+            --query 'clusters[0].clusterArn' --output text 2>/dev/null || echo "")
 
-          # Lambda@Edge replicas — cannot delete while replicated to CloudFront
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]'  || true
-          terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     || true
+          if [[ -n "$CLUSTER_ARN" && "$CLUSTER_ARN" != "None" ]]; then
+            echo "  🔵 ECS cluster exists: $CLUSTER_NAME_VAL"
 
-          # CloudFront WAF — would fail on delete if still associated
-          terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' || true
+            # Import cluster if not in state
+            if ! terraform state list 2>/dev/null | grep -qF 'aws_ecs_cluster.main'; then
+              echo "  📥 Importing ECS cluster..."
+              terraform import 'module.environment_network.module.cluster.aws_ecs_cluster.main[0]' "$CLUSTER_ARN" 2>/dev/null && \
+                echo "  ✅ Imported cluster" || echo "  ⚠️  Cluster import failed (continuing)"
+            else
+              echo "  ✅ ECS cluster already in state"
+            fi
 
-          echo "✅ Zombie state cleanup complete"
+            # Import ACTIVE capacity providers
+            for CP_SUFFIX_VAL in "ec2-cp" "graviton-cp"; do
+              CP_NAME_VAL="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-${CP_SUFFIX_VAL}"
+              if [[ "$CP_SUFFIX_VAL" == "ec2-cp" ]]; then
+                CP_TF_ADDR_VAL="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
+              else
+                CP_TF_ADDR_VAL="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
+              fi
+              CP_STATUS_VAL=$(aws ecs describe-capacity-providers \
+                --capacity-providers "$CP_NAME_VAL" --region "$REGION_VAL" \
+                --query 'capacityProviders[0].status' --output text 2>/dev/null || echo "")
+              if [[ "$CP_STATUS_VAL" == "ACTIVE" ]]; then
+                if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR_VAL"; then
+                  echo "  📥 Importing CP: $CP_NAME_VAL"
+                  terraform import "$CP_TF_ADDR_VAL" "$CP_NAME_VAL" 2>/dev/null && \
+                    echo "  ✅ Imported CP: $CP_NAME_VAL" || echo "  ⚠️  CP import failed: $CP_NAME_VAL"
+                else
+                  echo "  ✅ CP already in state: $CP_NAME_VAL"
+                fi
+              elif [[ "$CP_STATUS_VAL" == "INACTIVE" ]]; then
+                echo "  🧹 State-rm INACTIVE CP: $CP_NAME_VAL"
+                terraform state rm "$CP_TF_ADDR_VAL" 2>/dev/null || true
+              fi
+            done
+
+            # Import cluster_capacity_providers if not in state
+            CP_ASSOC="module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]"
+            if ! terraform state list 2>/dev/null | grep -qF 'aws_ecs_cluster_capacity_providers'; then
+              echo "  📥 Importing cluster CP association..."
+              terraform import "$CP_ASSOC" "$CLUSTER_NAME_VAL" 2>/dev/null && \
+                echo "  ✅ Imported cluster CP association" || echo "  ℹ️  CP association import failed"
+            fi
+
+            # State-rm Lambda@Edge + WAF (still need to be removed to avoid delete timeout)
+            terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
+            terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
+            terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
+            echo "  ✅ Lambda@Edge + WAF state entries removed (orphan prevention)"
+          else
+            echo "  ℹ️  No ECS cluster found — Terraform will create fresh"
+            # Still remove Lambda/WAF state entries that can block re-creation
+            terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
+            terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
+            terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
+          fi
+
+          echo "✅ ECS import/state prep complete"
 
           # ── Cloudflare: Import existing resources instead of trying to create them ──
           if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$TF_VAR_cloudflare_account_id" ]]; then
