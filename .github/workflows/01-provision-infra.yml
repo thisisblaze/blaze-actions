@@ -615,9 +615,32 @@ jobs:
             echo "  🔍 Custom CPs attached to cluster: ${CUSTOM_CPS[*]:-none}"
 
             if [[ ${#CUSTOM_CPS[@]} -gt 0 ]]; then
-              # Retry detach up to 5 times — tasks may still be DEPROVISIONING
-              # even though list-tasks --desired-status RUNNING shows 0.
-              # DEPROVISIONING tasks are not RUNNING but still hold the CP in use.
+              # ── ROOT CAUSE: EC2 container instances hold the CP in use ──
+              # PutClusterCapacityProviders: ResourceInUseException even with 0 tasks.
+              # EC2 instances registered to the cluster are ATTACHED to the CP regardless
+              # of task count. Must deregister all container instances first.
+              echo "  🖥️  Deregistering all container instances from cluster..."
+              CI_ARNS=$(aws ecs list-container-instances --cluster "$CLUSTER_NAME_VAL" \
+                --region "$REGION_VAL" --query 'containerInstanceArns' --output text 2>/dev/null || echo "")
+              if [[ -n "$CI_ARNS" && "$CI_ARNS" != "None" ]]; then
+                for CI_ARN in $CI_ARNS; do
+                  CI_ID=$(echo "$CI_ARN" | awk -F'/' '{print $NF}')
+                  echo "    🔻 Deregistering container instance: $CI_ID"
+                  aws ecs deregister-container-instance \
+                    --cluster "$CLUSTER_NAME_VAL" \
+                    --container-instance "$CI_ARN" \
+                    --force \
+                    --region "$REGION_VAL" >/dev/null 2>&1 && \
+                    echo "    ✅ Deregistered: $CI_ID" || \
+                    echo "    ⚠️  Could not deregister $CI_ID (continuing)"
+                done
+                echo "  ⏳ Waiting 10s for deregistration to propagate..."
+                sleep 10
+              else
+                echo "  ℹ️  No container instances registered on cluster"
+              fi
+
+              # Now attempt detach — should succeed with no instances holding the CP
               DETACH_OK=false
               for DETACH_ATTEMPT in 1 2 3 4 5; do
                 echo "  🔌 Detach attempt $DETACH_ATTEMPT/5 — setting cluster to FARGATE+FARGATE_SPOT only..."
