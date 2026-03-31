@@ -537,6 +537,36 @@ jobs:
           if [[ -n "$CLUSTER_ARN" && "$CLUSTER_ARN" != "None" ]]; then
             echo "  🔵 ECS cluster exists: $CLUSTER_NAME_VAL"
 
+            # ── CRITICAL: drain tasks before updating cluster CP association ──
+            # AWS PutClusterCapacityProviders fails with ResourceInUseException
+            # if any tasks (running or pending) are using the capacity providers.
+            # Stop all services (scale to 0) and stop standalone tasks first.
+            echo "  🧹 Draining running tasks from cluster to unblock PutClusterCapacityProviders..."
+            ACTIVE_SERVICES=$(aws ecs list-services --cluster "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
+              --query 'serviceArns' --output text 2>/dev/null || echo "")
+            if [[ -n "$ACTIVE_SERVICES" && "$ACTIVE_SERVICES" != "None" ]]; then
+              for SVC_ARN in $ACTIVE_SERVICES; do
+                SVC_NAME=$(echo "$SVC_ARN" | awk -F'/' '{print $NF}')
+                echo "    ⬇️  Scaling down service: $SVC_NAME"
+                aws ecs update-service --cluster "$CLUSTER_NAME_VAL" --service "$SVC_ARN" \
+                  --desired-count 0 --region "$REGION_VAL" >/dev/null 2>&1 || true
+              done
+            fi
+            # Stop standalone tasks (not managed by services)
+            TASKS=$(aws ecs list-tasks --cluster "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
+              --query 'taskArns' --output text 2>/dev/null || echo "")
+            if [[ -n "$TASKS" && "$TASKS" != "None" ]]; then
+              for TASK_ARN in $TASKS; do
+                echo "    🛑 Stopping task: $(echo "$TASK_ARN" | awk -F'/' '{print $NF}')"
+                aws ecs stop-task --cluster "$CLUSTER_NAME_VAL" --task "$TASK_ARN" \
+                  --region "$REGION_VAL" >/dev/null 2>&1 || true
+              done
+              echo "    ⏳ Waiting 15s for tasks to stop..."
+              sleep 15
+            else
+              echo "    ✅ No running tasks found"
+            fi
+
             # Import cluster if not in state
             if ! terraform state list 2>/dev/null | grep -qF 'aws_ecs_cluster.main'; then
               echo "  📥 Importing ECS cluster..."
