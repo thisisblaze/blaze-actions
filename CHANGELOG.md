@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.4.51 (2026-03-31)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.50
+- chore: update CHANGELOG for v1.4.49
+- chore: update CHANGELOG for v1.4.48
+- chore: update CHANGELOG for v1.4.47
+- chore: update CHANGELOG for v1.4.46
+- chore: update CHANGELOG for v1.4.45
+- chore: update CHANGELOG for v1.4.44
+- chore: update CHANGELOG for v1.4.44
+- chore: update CHANGELOG for v1.4.43
+
+### Fixed
+
+- fix(ecs-cp): pivot to detach+delete orphan CPs instead of import
+- fix(ecs-import): dynamic CP name discovery instead of hardcoded suffix
+- fix(01-provision-infra): drain ECS tasks before PutClusterCapacityProviders update
+- fix(01-provision-infra): replace ECS state-rm with import strategy in pre_apply_script
+
 ## v1.4.50 (2026-03-31)
 
 ### Added
