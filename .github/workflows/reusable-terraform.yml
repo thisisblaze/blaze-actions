@@ -731,6 +731,30 @@ jobs:
 
           echo "✅ Lambda resources removed from state"
 
+      # ── Pre-Destroy Hook — runs BEFORE plan so state changes don't stale the plan ──
+      - name: Run Pre-Destroy Hook
+        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.apply == true || inputs.apply == 'true') }}
+        working-directory: ${{ inputs.tf_dir }}
+        env:
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          TF_VARS: ${{ inputs.tf_vars }}
+        run: |
+          if [ -f "pre-destroy.sh" ]; then
+            echo "🔧 Found pre-destroy.sh — running BEFORE plan to avoid stale plan errors"
+            if [ -n "$TF_VARS" ]; then
+              while IFS='=' read -r key value; do
+                [ -z "$key" ] && continue
+                eval "export TF_VAR_${key}='${value}'"
+              done <<< "$TF_VARS"
+            fi
+            chmod +x pre-destroy.sh
+            ./pre-destroy.sh
+          else
+            echo "ℹ️  No pre-destroy.sh found — skipping"
+          fi
+
       - name: Terraform Plan
         id: plan
         env:
@@ -805,41 +829,8 @@ jobs:
              fi
           fi
 
-      # Smart Pre-Destroy Hook for MongoDB
-      # Smart Pre-Destroy Hook for MongoDB
-      # Automatically disables termination protection before cluster destruction
-      - name: Run Pre-Destroy Hook
-        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.apply == true || inputs.apply == 'true') && env.has_changes == 'true' }}
-        working-directory: ${{ inputs.tf_dir }}
-        env:
-          # MongoDB Atlas credentials - use direct env var names
-          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          # TF variables for cluster name calculation (passed from parent)
-          TF_VARS: ${{ inputs.tf_vars }}
-        run: |
-          # Check if pre-destroy.sh exists in current directory
-          if [ -f "pre-destroy.sh" ]; then
-            echo "🔧 Found pre-destroy.sh - executing smart pre-destroy hooks..."
-            
-            # Parse tf_vars and export as environment variables
-            if [ -n "$TF_VARS" ]; then
-              echo "📝 Parsing TF variables..."
-              while IFS='=' read -r key value; do
-                # Skip empty lines
-                [ -z "$key" ] && continue
-                # Export as TF_VAR_ prefixed
-                eval "export TF_VAR_${key}='${value}'"
-                echo "   Exported: TF_VAR_${key}"
-              done <<< "$TF_VARS"
-            fi
-            
-            chmod +x pre-destroy.sh
-            ./pre-destroy.sh
-          else
-            echo "ℹ️  No pre-destroy.sh found - skipping pre-destroy hooks"
-          fi
+      # NOTE: Pre-Destroy Hook was moved BEFORE Terraform Plan (see above).
+      # It must run before plan so that terraform state rm calls don't invalidate the saved plan.
 
       - name: Terraform Apply
         if: ${{ (inputs.apply == true || inputs.apply == 'true') && env.has_changes == 'true' }}
