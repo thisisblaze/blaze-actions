@@ -576,20 +576,26 @@ jobs:
               echo "  ✅ ECS cluster already in state"
             fi
 
-            # Import ACTIVE capacity providers
-            for CP_SUFFIX_VAL in "ec2-cp" "graviton-cp"; do
-              CP_NAME_VAL="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-${CP_SUFFIX_VAL}"
-              if [[ "$CP_SUFFIX_VAL" == "ec2-cp" ]]; then
-                CP_TF_ADDR_VAL="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
-              else
-                CP_TF_ADDR_VAL="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
-              fi
+            # Import ACTIVE capacity providers — discover names dynamically from AWS
+            # (the TF module uses -ecs-ec2-cp suffix, not -ec2-cp — discover to be safe)
+            ALL_CP_NAMES=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
+              --include CONFIGURATIONS \
+              --query 'clusters[0].capacityProviders' --output text 2>/dev/null || echo "")
+            echo "  🔍 CPs attached to cluster: ${ALL_CP_NAMES:-none}"
+            for CP_NAME_VAL in $ALL_CP_NAMES; do
+              [[ "$CP_NAME_VAL" == "FARGATE" || "$CP_NAME_VAL" == "FARGATE_SPOT" ]] && continue
               CP_STATUS_VAL=$(aws ecs describe-capacity-providers \
                 --capacity-providers "$CP_NAME_VAL" --region "$REGION_VAL" \
                 --query 'capacityProviders[0].status' --output text 2>/dev/null || echo "")
+              # Map name to TF address heuristically
+              if echo "$CP_NAME_VAL" | grep -qi "graviton"; then
+                CP_TF_ADDR_VAL="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
+              else
+                CP_TF_ADDR_VAL="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
+              fi
               if [[ "$CP_STATUS_VAL" == "ACTIVE" ]]; then
                 if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR_VAL"; then
-                  echo "  📥 Importing CP: $CP_NAME_VAL"
+                  echo "  📥 Importing CP: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
                   terraform import "$CP_TF_ADDR_VAL" "$CP_NAME_VAL" 2>/dev/null && \
                     echo "  ✅ Imported CP: $CP_NAME_VAL" || echo "  ⚠️  CP import failed: $CP_NAME_VAL"
                 else

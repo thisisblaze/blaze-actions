@@ -237,24 +237,26 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
       echo "   ✅ ECS cluster already in state"
     fi
 
-    # Import or cleanup ECS Capacity Providers
-    # cp_ec2 = blaze-*-ec2-cp → module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]
-    # cp_grav = blaze-*-graviton-cp → module.graviton_cp.aws_ecs_capacity_provider.ec2[0]
-    declare -A CP_TF_MAP
-    CP_TF_MAP["blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ec2-cp"]="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
-    CP_TF_MAP["blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-graviton-cp"]="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
-
-    for CP_NAME in "${!CP_TF_MAP[@]}"; do
-      CP_TF_ADDR="${CP_TF_MAP[$CP_NAME]}"
+    # Import or cleanup ECS Capacity Providers — dynamically discover from cluster
+    ALL_CP_NAMES=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" \
+      --include CONFIGURATIONS \
+      --query 'clusters[0].capacityProviders' --output text 2>/dev/null || echo "")
+    echo "   🔍 CPs attached to cluster: ${ALL_CP_NAMES:-none}"
+    for CP_NAME in $ALL_CP_NAMES; do
+      [[ "$CP_NAME" == "FARGATE" || "$CP_NAME" == "FARGATE_SPOT" ]] && continue
+      if echo "$CP_NAME" | grep -qi "graviton"; then
+        CP_TF_ADDR="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
+      else
+        CP_TF_ADDR="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
+      fi
       CP_STATUS=$(aws ecs describe-capacity-providers \
         --capacity-providers "$CP_NAME" \
         --region "$REGION" \
         --query 'capacityProviders[0].status' \
         --output text 2>/dev/null || echo "")
-
       if [[ "$CP_STATUS" == "ACTIVE" ]]; then
         if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR"; then
-          echo "   📥 Importing ECS CP into state: $CP_NAME"
+          echo "   📥 Importing ECS CP into state: $CP_NAME → $CP_TF_ADDR"
           terraform import "$CP_TF_ADDR" "$CP_NAME" 2>/dev/null && \
             echo "   ✅ Imported CP: $CP_NAME" || \
             echo "   ⚠️  CP import failed for $CP_NAME"
