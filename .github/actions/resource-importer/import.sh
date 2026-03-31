@@ -213,50 +213,71 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
     fi
   done
 
-  # Orphan ECS Cluster + Capacity Provider Cleanup
-  # When pre-destroy.sh state-rm's the cluster, terraform destroy skips it but AWS retains it.
-  # The associated ECS Capacity Provider objects also survive — they must be deleted FIRST
-  # (before the cluster) because AWS won't let you delete a CP still attached to a cluster,
-  # and PutClusterCapacityProviders fails with ResourceInUseException on the new cluster.
+  # ECS Cluster + Capacity Provider — Import Strategy
+  # Problem: partial previous runs may leave cluster/CPs in BOTH state AND AWS.
+  # The state-guard (! terraform state list | grep cluster) skips cleanup when
+  # a prior run partially applied, leaving stale CPs blocking PutClusterCapacityProviders.
+  # Solution: unconditionally import existing cluster+CPs into state so Terraform
+  # manages them in-place (no conflict), then let apply update them cleanly.
   CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
-  CLUSTER_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" \
-    --query 'clusters[0].status' --output text 2>/dev/null || echo "")
-  if [[ "$CLUSTER_STATUS" == "ACTIVE" ]]; then
-    if ! terraform state list 2>/dev/null | grep -q "module.environment_network.module.cluster.aws_ecs_cluster.main"; then
-      echo "   🧹 Orphan ECS cluster found: $CLUSTER_NAME — clearing CPs and deleting"
+  CLUSTER_ARN=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" \
+    --query 'clusters[0].clusterArn' --output text 2>/dev/null || echo "")
 
-      # Step 1: detach all CPs from the cluster (required before CP delete is possible)
-      aws ecs put-cluster-capacity-providers \
-        --cluster "$CLUSTER_NAME" \
-        --capacity-providers '[]' \
-        --default-capacity-provider-strategy '[]' \
-        --region "$REGION" 2>/dev/null && echo "   ✅ Detached CPs from cluster" || echo "   ⚠️  CP detach failed (may already be empty)"
-      sleep 5
+  if [[ -n "$CLUSTER_ARN" && "$CLUSTER_ARN" != "None" ]]; then
+    echo "   🔵 ECS cluster exists in AWS: $CLUSTER_NAME"
 
-      # Step 2: delete orphan ECS Capacity Provider objects by name pattern
-      for CP_SUFFIX in "ec2-cp" "graviton-cp"; do
-        CP_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${CP_SUFFIX}"
-        CP_STATUS=$(aws ecs describe-capacity-providers \
-          --capacity-providers "$CP_NAME" \
-          --region "$REGION" \
-          --query 'capacityProviders[0].status' \
-          --output text 2>/dev/null || echo "")
-        if [[ "$CP_STATUS" == "ACTIVE" ]]; then
-          echo "   🧹 Deleting orphan ECS Capacity Provider: $CP_NAME"
-          aws ecs delete-capacity-provider \
-            --capacity-provider "$CP_NAME" \
-            --region "$REGION" && \
-            echo "   ✅ Deleted orphan CP: $CP_NAME" || \
-            echo "   ⚠️  Could not delete CP $CP_NAME"
-          sleep 3
-        fi
-      done
-
-      # Step 3: delete the orphan cluster itself
-      aws ecs delete-cluster --cluster "$CLUSTER_NAME" --region "$REGION" && \
-        echo "   ✅ Deleted orphan ECS cluster: $CLUSTER_NAME" || \
-        echo "   ⚠️  Could not delete ECS cluster $CLUSTER_NAME"
+    # Import the cluster if not already in state
+    CLUSTER_TF_ADDR="module.environment_network.module.cluster.aws_ecs_cluster.main[0]"
+    if ! terraform state list 2>/dev/null | grep -qF "aws_ecs_cluster.main"; then
+      echo "   📥 Importing ECS cluster into state..."
+      terraform import "$CLUSTER_TF_ADDR" "$CLUSTER_ARN" 2>/dev/null && \
+        echo "   ✅ Imported ECS cluster" || \
+        echo "   ⚠️  Cluster import failed — will attempt cleanup instead"
+    else
+      echo "   ✅ ECS cluster already in state"
     fi
+
+    # Import or cleanup ECS Capacity Providers
+    # cp_ec2 = blaze-*-ec2-cp → module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]
+    # cp_grav = blaze-*-graviton-cp → module.graviton_cp.aws_ecs_capacity_provider.ec2[0]
+    declare -A CP_TF_MAP
+    CP_TF_MAP["blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ec2-cp"]="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
+    CP_TF_MAP["blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-graviton-cp"]="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
+
+    for CP_NAME in "${!CP_TF_MAP[@]}"; do
+      CP_TF_ADDR="${CP_TF_MAP[$CP_NAME]}"
+      CP_STATUS=$(aws ecs describe-capacity-providers \
+        --capacity-providers "$CP_NAME" \
+        --region "$REGION" \
+        --query 'capacityProviders[0].status' \
+        --output text 2>/dev/null || echo "")
+
+      if [[ "$CP_STATUS" == "ACTIVE" ]]; then
+        if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR"; then
+          echo "   📥 Importing ECS CP into state: $CP_NAME"
+          terraform import "$CP_TF_ADDR" "$CP_NAME" 2>/dev/null && \
+            echo "   ✅ Imported CP: $CP_NAME" || \
+            echo "   ⚠️  CP import failed for $CP_NAME"
+        else
+          echo "   ✅ CP already in state: $CP_NAME"
+        fi
+      elif [[ "$CP_STATUS" == "INACTIVE" ]]; then
+        # INACTIVE CPs still block PutClusterCapacityProviders — state-rm them
+        echo "   🧹 Removing INACTIVE CP from state if present: $CP_NAME"
+        terraform state rm "$CP_TF_ADDR" 2>/dev/null || true
+      fi
+    done
+
+    # Import cluster capacity providers association if not in state
+    CP_ASSOC_TF="module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]"
+    if ! terraform state list 2>/dev/null | grep -qF "aws_ecs_cluster_capacity_providers"; then
+      echo "   📥 Importing ECS cluster capacity providers association..."
+      terraform import "$CP_ASSOC_TF" "$CLUSTER_NAME" 2>/dev/null && \
+        echo "   ✅ Imported cluster CP association" || \
+        echo "   ℹ️  CP association import failed (may not exist yet)"
+    fi
+  else
+    echo "   ℹ️  No existing ECS cluster found — Terraform will create fresh"
   fi
 
   # Orphan EC2 Launch Template Cleanup
