@@ -283,3 +283,47 @@ elif [[ "$STACK" == "app" || "$STACK" == "cdn" ]]; then
 else
   echo "ℹ️ No smart import logic defined for stack: $STACK"
 fi
+# Cloudflare Zero Trust Access Application Cleanup
+if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$TF_VAR_cloudflare_account_id" ]]; then
+  echo "   🧹 Culling conflicting Cloudflare Access Applications..."
+  # Fetch all access apps for the account
+  APPS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$TF_VAR_cloudflare_account_id/access/apps" \
+    -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+    -H "Content-Type: application/json")
+
+  # We strictly cull apps in this environment (admin, frontend, api)
+  # Name usually looks like project-env-role, or we can just check 'domain' containing "stage.domain.com"
+  STAGE_KEY="${INPUT_STAGE_KEY}"
+  DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
+
+  for APP_ROLE in "admin" "frontend" "api" "grafana" "kibana"; do
+    TARGET_DOMAIN="${APP_ROLE}-${STAGE_KEY}.${DOMAIN_ROOT}"
+    # Sometimes it's admin-stage.domain.com, api-stage.domain.com
+    APP_ID=$(echo "$APPS" | jq -r ".result[]? | select(.domain == \"$TARGET_DOMAIN\") | .id // empty")
+    
+    if [[ -n "$APP_ID" ]]; then
+      echo "      🗑️ Deleting Zero Trust App: $TARGET_DOMAIN ($APP_ID)"
+      curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/$TF_VAR_cloudflare_account_id/access/apps/$APP_ID" \
+        -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+        -H "Content-Type: application/json" > /dev/null
+    fi
+  done
+  
+  # Also cull the root CNAME or CNAME validations just in case it clashes
+  echo "   🧹 Doing aggressive DNS collision cleanup for ${STAGE_KEY}.${DOMAIN_ROOT}..."
+  for TYPE in A AAAA CNAME TXT; do
+    ALL_RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records?type=$TYPE&per_page=100" \
+      -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+      -H "Content-Type: application/json")
+    
+    # We selectively delete any record that STARTS with an underscore (validation records)
+    # OR exactly matches our main domains
+    BAD_REC_IDS=$(echo "$ALL_RECORDS" | jq -r ".result[]? | select(.name | startswith(\"_\")) | .id // empty")
+    for ID in $BAD_REC_IDS; do
+      NAME=$(echo "$ALL_RECORDS" | jq -r ".result[] | select(.id==\"$ID\") | .name")
+      echo "      🗑️ Deleting validation record: $NAME ($TYPE) ($ID)"
+      curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records/$ID" \
+        -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" > /dev/null
+    done
+  done
+fi
