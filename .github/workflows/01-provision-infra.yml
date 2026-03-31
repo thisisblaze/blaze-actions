@@ -509,6 +509,7 @@ jobs:
           export TF_DIR="$(pwd)"
           export STACK_NAME="${{ inputs.stack }}"
           export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
+          export TF_DESTROY="${{ inputs.destroy }}"
           bash "$SCRIPT"
         fi
 
