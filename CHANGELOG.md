@@ -2,6 +2,20 @@
 
 ## v1.4.44 (2026-03-31)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.44
+- chore: update CHANGELOG for v1.4.43
+
+### Fixed
+
+
+## v1.4.44 (2026-03-31)
+
 ### Fixed
 
 - fix(import): add orphan ASG force-delete (both ec2-cp and graviton-cp) for post-nuke reprovision
