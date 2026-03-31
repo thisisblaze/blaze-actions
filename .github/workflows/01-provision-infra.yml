@@ -576,56 +576,53 @@ jobs:
               echo "  ✅ ECS cluster already in state"
             fi
 
-            # Import ACTIVE capacity providers — discover names dynamically from AWS
-            # (the TF module uses -ecs-ec2-cp suffix, not -ec2-cp — discover to be safe)
-            ALL_CP_NAMES=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
-              --include CONFIGURATIONS \
+            # ── ECS CP Strategy: Detach + Delete orphan CPs rather than importing ──
+            # PROBLEM: Importing a CP that TF wants to replace (due to name/config change)
+            # causes "waiting for CP delete: timeout" because TF cannot delete an attached CP.
+            # SOLUTION: Manually detach CPs from cluster via AWS CLI, delete them,
+            # then state-rm so TF can create fresh with correct config.
+
+            # Step 1: Detach all custom CPs from cluster (set to FARGATE+FARGATE_SPOT only)
+            ALL_CP_NAMES=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME_VAL" \
+              --region "$REGION_VAL" --include CONFIGURATIONS \
               --query 'clusters[0].capacityProviders' --output text 2>/dev/null || echo "")
-            echo "  🔍 CPs attached to cluster: ${ALL_CP_NAMES:-none}"
+            CUSTOM_CPS=()
             for CP_NAME_VAL in $ALL_CP_NAMES; do
               [[ "$CP_NAME_VAL" == "FARGATE" || "$CP_NAME_VAL" == "FARGATE_SPOT" ]] && continue
-              CP_STATUS_VAL=$(aws ecs describe-capacity-providers \
-                --capacity-providers "$CP_NAME_VAL" --region "$REGION_VAL" \
-                --query 'capacityProviders[0].status' --output text 2>/dev/null || echo "")
-              if [[ "$CP_STATUS_VAL" == "ACTIVE" ]]; then
-                # Try all possible addresses — TF plan will reveal which is correct
-                # (observed: module.graviton_cp creates the -ecs-ec2-cp resource)
-                IMPORTED_CP=false
-                for CP_TF_ADDR_VAL in \
-                  "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" \
-                  "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"; do
-                  if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR_VAL"; then
-                    echo "  📥 Trying import: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
-                    if terraform import "$CP_TF_ADDR_VAL" "$CP_NAME_VAL" 2>/dev/null; then
-                      echo "  ✅ Imported CP: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
-                      IMPORTED_CP=true
-                      break
-                    fi
-                  else
-                    echo "  ✅ CP already in state: $CP_TF_ADDR_VAL"
-                    IMPORTED_CP=true
-                    break
-                  fi
-                done
-                if [[ "$IMPORTED_CP" != "true" ]]; then
-                  echo "  ⚠️  Could not import CP: $CP_NAME_VAL into any known address"
-                fi
-              elif [[ "$CP_STATUS_VAL" == "INACTIVE" ]]; then
-                echo "  🧹 State-rm INACTIVE CP: $CP_NAME_VAL"
-                terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-                terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-              fi
+              CUSTOM_CPS+=("$CP_NAME_VAL")
             done
+            echo "  🔍 Custom CPs attached to cluster: ${CUSTOM_CPS[*]:-none}"
 
-            # Import cluster_capacity_providers if not in state
-            CP_ASSOC="module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]"
-            if ! terraform state list 2>/dev/null | grep -qF 'aws_ecs_cluster_capacity_providers'; then
-              echo "  📥 Importing cluster CP association..."
-              terraform import "$CP_ASSOC" "$CLUSTER_NAME_VAL" 2>/dev/null && \
-                echo "  ✅ Imported cluster CP association" || echo "  ℹ️  CP association import failed"
+            if [[ ${#CUSTOM_CPS[@]} -gt 0 ]]; then
+              echo "  🔌 Detaching custom CPs from cluster (set to FARGATE+FARGATE_SPOT only)..."
+              aws ecs put-cluster-capacity-providers \
+                --cluster "$CLUSTER_NAME_VAL" \
+                --capacity-providers FARGATE FARGATE_SPOT \
+                --default-capacity-provider-strategy \
+                  capacityProvider=FARGATE,weight=1,base=1 \
+                --region "$REGION_VAL" >/dev/null 2>&1 && \
+                echo "  ✅ Cluster CPs detached" || \
+                echo "  ⚠️  Detach failed (cluster may have running tasks, continuing)"
+              echo "  ⏳ Waiting 30s for CP detach to propagate..."
+              sleep 30
             fi
 
-            # State-rm Lambda@Edge + WAF (still need to be removed to avoid delete timeout)
+            # Step 2: Delete orphan CPs from AWS
+            for CP_NAME_VAL in "${CUSTOM_CPS[@]}"; do
+              echo "  🗑️  Deleting orphan CP from AWS: $CP_NAME_VAL"
+              aws ecs delete-capacity-provider --capacity-provider "$CP_NAME_VAL" \
+                --region "$REGION_VAL" >/dev/null 2>&1 && \
+                echo "  ✅ Deleted CP: $CP_NAME_VAL" || \
+                echo "  ⚠️  Could not delete CP: $CP_NAME_VAL (may already be deleting)"
+            done
+
+            # Step 3: State-rm CPs and CP association so TF creates them fresh
+            terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
+            terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
+            terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/dev/null || true
+            echo "  ✅ CP state entries removed — TF will create fresh CPs"
+
+            # State-rm Lambda@Edge + WAF (still need removal to avoid delete timeout)
             terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
             terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
             terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
