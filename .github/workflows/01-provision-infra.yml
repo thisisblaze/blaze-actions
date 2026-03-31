@@ -551,6 +551,27 @@ jobs:
                 aws ecs update-service --cluster "$CLUSTER_NAME_VAL" --service "$SVC_ARN" \
                   --desired-count 0 --region "$REGION_VAL" >/dev/null 2>&1 || true
               done
+              # Wait for service tasks to actually drain (not just for scale request to land)
+              # ECS tasks take 30-60s to stop after desired-count=0 (SIGTERM grace period).
+              # PutClusterCapacityProviders will fail if ANY task is still running on a custom CP.
+              echo "    ⏳ Polling for all service tasks to drain (max 3 min)..."
+              DRAIN_WAIT=0
+              until [[ $DRAIN_WAIT -ge 36 ]]; do
+                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER_NAME_VAL" \
+                  --region "$REGION_VAL" --desired-status RUNNING \
+                  --query 'taskArns' --output text 2>/dev/null | grep -v "^$" | wc -l || echo 0)
+                RUNNING_TASKS=$(echo "$RUNNING_TASKS" | tr -d ' ')
+                if [[ "$RUNNING_TASKS" -eq 0 ]]; then
+                  echo "    ✅ All tasks stopped (after $((DRAIN_WAIT * 5))s)"
+                  break
+                fi
+                echo "    ⌛ $RUNNING_TASKS task(s) still running after $((DRAIN_WAIT * 5))s — waiting..."
+                sleep 5
+                DRAIN_WAIT=$((DRAIN_WAIT + 1))
+              done
+              if [[ $DRAIN_WAIT -ge 36 ]]; then
+                echo "    ⚠️  Tasks still running after 3min — detach may fail; proceeding anyway"
+              fi
             fi
             # Stop standalone tasks (not managed by services)
             TASKS=$(aws ecs list-tasks --cluster "$CLUSTER_NAME_VAL" --region "$REGION_VAL" \
@@ -607,13 +628,38 @@ jobs:
               sleep 30
             fi
 
-            # Step 2: Delete orphan CPs from AWS
+            # Step 2: Delete orphan CPs from AWS and wait for actual deletion
+            # NOTE: delete-capacity-provider is ASYNCHRONOUS — the CP stays ACTIVE
+            # in AWS for up to ~10 minutes after the API call returns success.
+            # If we proceed immediately, Terraform will hit AlreadyExists.
+            # We MUST poll until the CP is actually gone before allowing TF to proceed.
             for CP_NAME_VAL in "${CUSTOM_CPS[@]}"; do
               echo "  🗑️  Deleting orphan CP from AWS: $CP_NAME_VAL"
               aws ecs delete-capacity-provider --capacity-provider "$CP_NAME_VAL" \
                 --region "$REGION_VAL" >/dev/null 2>&1 && \
-                echo "  ✅ Deleted CP: $CP_NAME_VAL" || \
-                echo "  ⚠️  Could not delete CP: $CP_NAME_VAL (may already be deleting)"
+                echo "  ✅ Delete API call succeeded: $CP_NAME_VAL (async — polling for completion)" || \
+                echo "  ⚠️  Could not delete CP: $CP_NAME_VAL (may already be deleting — will still poll)"
+
+              # Poll until CP disappears (max 8 min, 5s intervals = 96 attempts)
+              echo "  ⏳ Polling for CP deletion: $CP_NAME_VAL (max 8 min)..."
+              CP_WAIT=0
+              until [[ $CP_WAIT -ge 96 ]]; do
+                CP_STATUS=$(aws ecs describe-capacity-providers \
+                  --capacity-providers "$CP_NAME_VAL" \
+                  --region "$REGION_VAL" \
+                  --query 'capacityProviders[0].status' \
+                  --output text 2>/dev/null || echo "NONE")
+                if [[ "$CP_STATUS" == "NONE" || "$CP_STATUS" == "None" || -z "$CP_STATUS" || "$CP_STATUS" == "null" ]]; then
+                  echo "  ✅ CP gone from AWS: $CP_NAME_VAL (waited $((CP_WAIT * 5))s)"
+                  break
+                fi
+                echo "  ⌛ CP still $CP_STATUS after $((CP_WAIT * 5))s — waiting..."
+                sleep 5
+                CP_WAIT=$((CP_WAIT + 1))
+              done
+              if [[ $CP_WAIT -ge 96 ]]; then
+                echo "  ⚠️  CP $CP_NAME_VAL still present after 8min — proceeding anyway (TF may conflict)"
+              fi
             done
 
             # Step 3: State-rm CPs and CP association so TF creates them fresh
