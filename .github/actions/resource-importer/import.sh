@@ -152,28 +152,47 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
     fi
   done
   
-  # Cloudflare ACM Validation Cleanup
+  # Cloudflare ACM Validation — Import into state instead of deleting
+  # Background: ACM validation CNAMEs are long-lived records. Deleting them
+  # causes ACM to regenerate them mid-apply, creating duplicate conflicts.
+  # Correct fix: import any existing validation records into Terraform state
+  # so Terraform treats them as managed (no-op) rather than trying to create.
   if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" ]]; then
-    echo "   🧹 Checking for clashing validation records in Cloudflare..."
-    
-    # Validation records typically start with _
-    # We look for ANY CNAME records in the zone that might be validation records
-    RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records?type=CNAME" \
-      -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-      -H "Content-Type: application/json")
-    
-    # Find records that look like ACM validation (starting with _)
-    BAD_IDS=$(echo "$RECORDS" | jq -r '.result[] | select(.name | startswith("_")) | .id')
-    
-    for ID in $BAD_IDS; do
-      NAME=$(echo "$RECORDS" | jq -r ".result[] | select(.id==\"$ID\") | .name")
-      echo "   🗑️ Deleting conflicting record: $NAME ($ID)"
-      curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records/$ID" \
+    echo "   🔵 Checking Cloudflare ACM validation records to import into state..."
+    DOMAIN_ROOT="${TF_VAR_domain:-}"
+    if [[ -z "$DOMAIN_ROOT" ]]; then
+      DOMAIN_ROOT=$(terraform output -raw domain_root 2>/dev/null || echo "")
+    fi
+
+    if [[ -n "$DOMAIN_ROOT" ]]; then
+      CF_ZONE="$TF_VAR_cloudflare_zone_id"
+      # Look for the ACM validation CNAME (starts with _ under the domain)
+      VALIDATION_RECORDS=$(curl -s -X GET \
+        "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?type=CNAME" \
         -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-        -H "Content-Type: application/json" > /dev/null
-    done
+        -H "Content-Type: application/json")
+
+      # Find records starting with _ (ACM validation pattern)
+      VAL_ID=$(echo "$VALIDATION_RECORDS" | jq -r \
+        --arg domain "$DOMAIN_ROOT" \
+        '.result[] | select(.name | startswith("_")) | select(.name | endswith($domain)) | .id' | head -1)
+
+      TF_ADDR="module.environment_network.cloudflare_dns_record.validation[\"${DOMAIN_ROOT}\"]"
+      if [[ -n "$VAL_ID" ]] && ! terraform state list 2>/dev/null | grep -qF "cloudflare_dns_record.validation"; then
+        echo "   📥 Importing CF validation record for ${DOMAIN_ROOT} (${VAL_ID})"
+        terraform import "$TF_ADDR" "${CF_ZONE}/${VAL_ID}" 2>/dev/null && \
+          echo "   ✅ Imported CF validation record" || \
+          echo "   ⚠️  Could not import CF validation record (will proceed, Terraform may handle it)"
+      elif [[ -z "$VAL_ID" ]]; then
+        echo "   ℹ️  No existing CF validation record found — Terraform will create it"
+      else
+        echo "   ✅ CF validation record already in state"
+      fi
+    else
+      echo "   ⚠️  DOMAIN_ROOT not resolvable, skipping CF validation import"
+    fi
   else
-    echo "   ⚠️ Cloudflare credentials missing. Skipping cleanup."
+    echo "   ⚠️ Cloudflare credentials missing. Skipping CF validation import."
   fi
 
   echo "   🧹 Culling orphaned IAM roles to unblock terraform entity creation..."
@@ -194,23 +213,46 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
     fi
   done
 
-  # Orphan ECS Cluster Cleanup
+  # Orphan ECS Cluster + Capacity Provider Cleanup
   # When pre-destroy.sh state-rm's the cluster, terraform destroy skips it but AWS retains it.
-  # On reprovision, PutClusterCapacityProviders fails with ResourceInUseException.
-  # Fix: detach all CPs first, then force-delete the cluster.
+  # The associated ECS Capacity Provider objects also survive — they must be deleted FIRST
+  # (before the cluster) because AWS won't let you delete a CP still attached to a cluster,
+  # and PutClusterCapacityProviders fails with ResourceInUseException on the new cluster.
   CLUSTER_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
   CLUSTER_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$REGION" \
     --query 'clusters[0].status' --output text 2>/dev/null || echo "")
   if [[ "$CLUSTER_STATUS" == "ACTIVE" ]]; then
-    if ! terraform state list | grep -q "module.environment_network.module.cluster.aws_ecs_cluster.main"; then
-      echo "   🧹 Deleting orphan ECS cluster: $CLUSTER_NAME"
-      # Detach all capacity providers first (required before delete)
+    if ! terraform state list 2>/dev/null | grep -q "module.environment_network.module.cluster.aws_ecs_cluster.main"; then
+      echo "   🧹 Orphan ECS cluster found: $CLUSTER_NAME — clearing CPs and deleting"
+
+      # Step 1: detach all CPs from the cluster (required before CP delete is possible)
       aws ecs put-cluster-capacity-providers \
         --cluster "$CLUSTER_NAME" \
         --capacity-providers '[]' \
         --default-capacity-provider-strategy '[]' \
-        --region "$REGION" 2>/dev/null || true
-      sleep 3
+        --region "$REGION" 2>/dev/null && echo "   ✅ Detached CPs from cluster" || echo "   ⚠️  CP detach failed (may already be empty)"
+      sleep 5
+
+      # Step 2: delete orphan ECS Capacity Provider objects by name pattern
+      for CP_SUFFIX in "ec2-cp" "graviton-cp"; do
+        CP_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${CP_SUFFIX}"
+        CP_STATUS=$(aws ecs describe-capacity-providers \
+          --capacity-providers "$CP_NAME" \
+          --region "$REGION" \
+          --query 'capacityProviders[0].status' \
+          --output text 2>/dev/null || echo "")
+        if [[ "$CP_STATUS" == "ACTIVE" ]]; then
+          echo "   🧹 Deleting orphan ECS Capacity Provider: $CP_NAME"
+          aws ecs delete-capacity-provider \
+            --capacity-provider "$CP_NAME" \
+            --region "$REGION" && \
+            echo "   ✅ Deleted orphan CP: $CP_NAME" || \
+            echo "   ⚠️  Could not delete CP $CP_NAME"
+          sleep 3
+        fi
+      done
+
+      # Step 3: delete the orphan cluster itself
       aws ecs delete-cluster --cluster "$CLUSTER_NAME" --region "$REGION" && \
         echo "   ✅ Deleted orphan ECS cluster: $CLUSTER_NAME" || \
         echo "   ⚠️  Could not delete ECS cluster $CLUSTER_NAME"
