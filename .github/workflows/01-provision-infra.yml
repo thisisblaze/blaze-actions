@@ -587,23 +587,33 @@ jobs:
               CP_STATUS_VAL=$(aws ecs describe-capacity-providers \
                 --capacity-providers "$CP_NAME_VAL" --region "$REGION_VAL" \
                 --query 'capacityProviders[0].status' --output text 2>/dev/null || echo "")
-              # Map name to TF address heuristically
-              if echo "$CP_NAME_VAL" | grep -qi "graviton"; then
-                CP_TF_ADDR_VAL="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
-              else
-                CP_TF_ADDR_VAL="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
-              fi
               if [[ "$CP_STATUS_VAL" == "ACTIVE" ]]; then
-                if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR_VAL"; then
-                  echo "  📥 Importing CP: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
-                  terraform import "$CP_TF_ADDR_VAL" "$CP_NAME_VAL" 2>/dev/null && \
-                    echo "  ✅ Imported CP: $CP_NAME_VAL" || echo "  ⚠️  CP import failed: $CP_NAME_VAL"
-                else
-                  echo "  ✅ CP already in state: $CP_NAME_VAL"
+                # Try all possible addresses — TF plan will reveal which is correct
+                # (observed: module.graviton_cp creates the -ecs-ec2-cp resource)
+                IMPORTED_CP=false
+                for CP_TF_ADDR_VAL in \
+                  "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" \
+                  "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"; do
+                  if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR_VAL"; then
+                    echo "  📥 Trying import: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
+                    if terraform import "$CP_TF_ADDR_VAL" "$CP_NAME_VAL" 2>/dev/null; then
+                      echo "  ✅ Imported CP: $CP_NAME_VAL → $CP_TF_ADDR_VAL"
+                      IMPORTED_CP=true
+                      break
+                    fi
+                  else
+                    echo "  ✅ CP already in state: $CP_TF_ADDR_VAL"
+                    IMPORTED_CP=true
+                    break
+                  fi
+                done
+                if [[ "$IMPORTED_CP" != "true" ]]; then
+                  echo "  ⚠️  Could not import CP: $CP_NAME_VAL into any known address"
                 fi
               elif [[ "$CP_STATUS_VAL" == "INACTIVE" ]]; then
                 echo "  🧹 State-rm INACTIVE CP: $CP_NAME_VAL"
-                terraform state rm "$CP_TF_ADDR_VAL" 2>/dev/null || true
+                terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
+                terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
               fi
             done
 

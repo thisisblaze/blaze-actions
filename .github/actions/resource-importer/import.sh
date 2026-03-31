@@ -244,29 +244,38 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
     echo "   🔍 CPs attached to cluster: ${ALL_CP_NAMES:-none}"
     for CP_NAME in $ALL_CP_NAMES; do
       [[ "$CP_NAME" == "FARGATE" || "$CP_NAME" == "FARGATE_SPOT" ]] && continue
-      if echo "$CP_NAME" | grep -qi "graviton"; then
-        CP_TF_ADDR="module.graviton_cp.aws_ecs_capacity_provider.ec2[0]"
-      else
-        CP_TF_ADDR="module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"
-      fi
       CP_STATUS=$(aws ecs describe-capacity-providers \
         --capacity-providers "$CP_NAME" \
         --region "$REGION" \
         --query 'capacityProviders[0].status' \
         --output text 2>/dev/null || echo "")
       if [[ "$CP_STATUS" == "ACTIVE" ]]; then
-        if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR"; then
-          echo "   📥 Importing ECS CP into state: $CP_NAME → $CP_TF_ADDR"
-          terraform import "$CP_TF_ADDR" "$CP_NAME" 2>/dev/null && \
-            echo "   ✅ Imported CP: $CP_NAME" || \
-            echo "   ⚠️  CP import failed for $CP_NAME"
-        else
-          echo "   ✅ CP already in state: $CP_NAME"
+        # Try both known module addresses — observed: module.graviton_cp creates -ecs-ec2-cp
+        IMPORTED_CP=false
+        for CP_TF_ADDR in \
+          "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" \
+          "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]"; do
+          if ! terraform state list 2>/dev/null | grep -qF "$CP_TF_ADDR"; then
+            echo "   📥 Trying import: $CP_NAME → $CP_TF_ADDR"
+            if terraform import "$CP_TF_ADDR" "$CP_NAME" 2>/dev/null; then
+              echo "   ✅ Imported CP: $CP_NAME → $CP_TF_ADDR"
+              IMPORTED_CP=true
+              break
+            fi
+          else
+            echo "   ✅ CP already in state: $CP_TF_ADDR"
+            IMPORTED_CP=true
+            break
+          fi
+        done
+        if [[ "$IMPORTED_CP" != "true" ]]; then
+          echo "   ⚠️  Could not import CP: $CP_NAME into any known address"
         fi
       elif [[ "$CP_STATUS" == "INACTIVE" ]]; then
-        # INACTIVE CPs still block PutClusterCapacityProviders — state-rm them
+        # INACTIVE CPs still block PutClusterCapacityProviders — state-rm both possible addresses
         echo "   🧹 Removing INACTIVE CP from state if present: $CP_NAME"
-        terraform state rm "$CP_TF_ADDR" 2>/dev/null || true
+        terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
+        terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
       fi
     done
 
