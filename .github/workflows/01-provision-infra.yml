@@ -525,10 +525,13 @@ jobs:
         if [[ ("${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "multi-site-network") && "${{ inputs.destroy }}" != "true" ]]; then
           echo "🧹 Removing zombie AWS state entries that would block apply..."
 
-          # ECS Capacity Provider (old module path) — hangs for 20min during destroy
+          # ECS Capacity Provider — hangs for 20min during destroy (suffix: ecs not ec2)
           terraform state rm 'module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]' || true
-          terraform state rm 'module.ec2_capacity_provider[0].aws_autoscaling_group.ec2[0]'     || true
-          terraform state rm 'module.ec2_capacity_provider[0].aws_launch_template.ec2[0]'        || true
+          terraform state rm 'module.ec2_capacity_provider[0].aws_autoscaling_group.ecs[0]'     || true
+          terraform state rm 'module.ec2_capacity_provider[0].aws_launch_template.ecs[0]'       || true
+          terraform state rm 'module.graviton_cp.aws_autoscaling_group.ecs[0]'                  || true
+          terraform state rm 'module.graviton_cp.aws_launch_template.ecs[0]'                    || true
+          terraform state rm 'module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]' || true
 
           # Lambda@Edge replicas — cannot delete while replicated to CloudFront
           terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]'  || true

@@ -219,20 +219,47 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
 
   # Orphan EC2 Launch Template Cleanup
   # pre-destroy.sh state-rm's the LT; AWS retains it; reprovision fails with AlreadyExistsException.
-  LT_NAME="blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
-  LT_ID=$(aws ec2 describe-launch-templates \
-    --filters "Name=launch-template-name,Values=${LT_NAME}" \
-    --region "$REGION" \
-    --query 'LaunchTemplates[0].LaunchTemplateId' \
-    --output text 2>/dev/null || echo "")
-  if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
-    if ! terraform state list | grep -q "module.ec2_capacity_provider\[0\].aws_launch_template.ecs"; then
-      echo "   🧹 Deleting orphan Launch Template: $LT_NAME ($LT_ID)"
-      aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" && \
-        echo "   ✅ Deleted orphan Launch Template: $LT_NAME" || \
-        echo "   ⚠️  Could not delete LT $LT_NAME"
+  for LT_NAME in \
+    "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt" \
+    "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-graviton-cp-lt"; do
+    LT_ID=$(aws ec2 describe-launch-templates \
+      --filters "Name=launch-template-name,Values=${LT_NAME}" \
+      --region "$REGION" \
+      --query 'LaunchTemplates[0].LaunchTemplateId' \
+      --output text 2>/dev/null || echo "")
+    if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
+      # Only delete if not managed by Terraform state
+      if ! terraform state list 2>/dev/null | grep -q "aws_launch_template"; then
+        echo "   🧹 Deleting orphan Launch Template: $LT_NAME ($LT_ID)"
+        aws ec2 delete-launch-template --launch-template-id "$LT_ID" --region "$REGION" && \
+          echo "   ✅ Deleted orphan Launch Template: $LT_NAME" || \
+          echo "   ⚠️  Could not delete LT $LT_NAME"
+      fi
     fi
-  fi
+  done
+
+  # Orphan Auto Scaling Group Cleanup
+  # ASG survives nuke when pre-destroy.sh state-rm's it; reprovision fails with AlreadyExists.
+  for ASG_NAME in \
+    "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-asg" \
+    "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-graviton-cp-asg"; do
+    ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+      --auto-scaling-group-names "$ASG_NAME" \
+      --region "$REGION" \
+      --query 'AutoScalingGroups[0].AutoScalingGroupName' \
+      --output text 2>/dev/null || echo "")
+    if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
+      if ! terraform state list 2>/dev/null | grep -q "aws_autoscaling_group"; then
+        echo "   🧹 Force-deleting orphan ASG: $ASG_NAME"
+        aws autoscaling delete-auto-scaling-group \
+          --auto-scaling-group-name "$ASG_NAME" \
+          --force-delete \
+          --region "$REGION" && \
+          echo "   ✅ Deleted orphan ASG: $ASG_NAME" || \
+          echo "   ⚠️  Could not delete ASG $ASG_NAME"
+      fi
+    fi
+  done
 
 
 elif [[ "$STACK" == "tunnel" || "$STACK" == "third-party-cloudflare" ]]; then
