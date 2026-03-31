@@ -621,19 +621,21 @@ jobs:
               DETACH_OK=false
               for DETACH_ATTEMPT in 1 2 3 4 5; do
                 echo "  🔌 Detach attempt $DETACH_ATTEMPT/5 — setting cluster to FARGATE+FARGATE_SPOT only..."
-                DETACH_ERR=$(aws ecs put-cluster-capacity-providers \
+                DETACH_TMP=$(mktemp)
+                aws ecs put-cluster-capacity-providers \
                   --cluster "$CLUSTER_NAME_VAL" \
                   --capacity-providers FARGATE FARGATE_SPOT \
                   --default-capacity-provider-strategy \
                     capacityProvider=FARGATE,weight=1,base=1 \
-                  --region "$REGION_VAL" 2>&1 >/dev/null)
-                DETACH_RC=$?
+                  --region "$REGION_VAL" >/dev/null 2>"$DETACH_TMP" && DETACH_RC=0 || DETACH_RC=$?
                 if [[ $DETACH_RC -eq 0 ]]; then
                   echo "  ✅ Cluster CPs detached on attempt $DETACH_ATTEMPT"
+                  rm -f "$DETACH_TMP"
                   DETACH_OK=true
                   break
                 fi
-                echo "  ⌛ Detach failed on attempt $DETACH_ATTEMPT. AWS error: $DETACH_ERR"
+                echo "  ⌛ Detach failed on attempt $DETACH_ATTEMPT. AWS error: $(cat "$DETACH_TMP")"
+                rm -f "$DETACH_TMP"
                 sleep 30
                 # Re-check actual task count (ALL states, not just RUNNING)
                 ALL_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER_NAME_VAL" \
