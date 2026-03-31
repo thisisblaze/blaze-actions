@@ -402,32 +402,47 @@ elif [[ "$STACK" == "app" || "$STACK" == "cdn" ]]; then
      fi
   fi
 
-  # DNS Cleanup (App and CDN) - Prevents Cloudflare v5 "already exists" errors since allow_overwrite was removed
+  # DNS — Import-first strategy for managed records
+  # Cloudflare v5 removed allow_overwrite, so TF fails if a record exists but is not in state.
+  # Import-first: pull existing records into state → TF sees no drift → no downtime, no race condition.
+  # Delete is used only for records with no known TF address (genuine orphans).
   if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$INPUT_STAGE_KEY" && -n "$INPUT_DOMAIN_ROOT" ]]; then
-     echo "   🧹 Checking for existing DNS records to prevent 'already exists' errors..."
-     STAGE_KEY="${INPUT_STAGE_KEY}"
-     DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
-     
-     TARGET_RECORDS=(
-       "gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
-       "api-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
-       "frontend-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"
-     )
+    echo "   🔵 DNS import-first pass for managed GCP/CDN records..."
+    STAGE_KEY="${INPUT_STAGE_KEY}"
+    DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
+    CF_ZONE="$TF_VAR_cloudflare_zone_id"
 
-     for RECORD in "${TARGET_RECORDS[@]}"; do
-        RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records?name=$RECORD" \
-          -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-          -H "Content-Type: application/json")
+    # Map: record name → Terraform address
+    # Extend this map when infra-core adds new managed dns_record resources
+    declare -A DNS_TF_MAP
+    DNS_TF_MAP["gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.gcp[0]"
+    DNS_TF_MAP["api-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.api_gcp[0]"
+    DNS_TF_MAP["frontend-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.frontend_gcp[0]"
+    DNS_TF_MAP["cdn-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.cdn[0]"
+    DNS_TF_MAP["frontend-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.frontend[0]"
+    DNS_TF_MAP["api-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.api[0]"
 
-        RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty')
+    for RECORD_NAME in "${!DNS_TF_MAP[@]}"; do
+      TF_ADDR="${DNS_TF_MAP[$RECORD_NAME]}"
+      RESPONSE=$(curl -s -X GET \
+        "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${RECORD_NAME}" \
+        -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+        -H "Content-Type: application/json")
+      RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty')
 
-        if [[ -n "$RECORD_ID" ]]; then
-           echo "   🗑️ Deleting pre-existing record: $RECORD ($RECORD_ID)"
-           curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records/$RECORD_ID" \
-             -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-             -H "Content-Type: application/json" > /dev/null
+      if [[ -n "$RECORD_ID" ]]; then
+        if ! terraform state list 2>/dev/null | grep -qF "$TF_ADDR"; then
+          echo "   📥 Importing DNS record: ${RECORD_NAME} → ${TF_ADDR}"
+          terraform import "$TF_ADDR" "${CF_ZONE}/${RECORD_ID}" 2>/dev/null && \
+            echo "   ✅ Imported: ${RECORD_NAME}" || \
+            echo "   ⚠️  Import failed for ${RECORD_NAME} — TF will attempt create (may fail if name conflicts)"
+        else
+          echo "   ✅ Already in state: ${RECORD_NAME}"
         fi
-     done
+      else
+        echo "   ℹ️  Not found in Cloudflare: ${RECORD_NAME} (will be created fresh)"
+      fi
+    done
   fi
 
 else
@@ -459,21 +474,32 @@ if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n
     fi
   done
   
-  # Also cull the root CNAME or CNAME validations just in case it clashes
-  echo "   🧹 Doing aggressive DNS collision cleanup for ${STAGE_KEY}.${DOMAIN_ROOT}..."
-  for TYPE in A AAAA CNAME TXT; do
-    ALL_RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records?type=$TYPE&per_page=100" \
-      -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
-      -H "Content-Type: application/json")
-    
-    # We selectively delete any record that STARTS with an underscore (validation records)
-    # OR exactly matches our main domains
-    BAD_REC_IDS=$(echo "$ALL_RECORDS" | jq -r ".result[]? | select(.name | startswith(\"_\")) | .id // empty")
-    for ID in $BAD_REC_IDS; do
-      NAME=$(echo "$ALL_RECORDS" | jq -r ".result[] | select(.id==\"$ID\") | .name")
-      echo "      🗑️ Deleting validation record: $NAME ($TYPE) ($ID)"
-      curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$TF_VAR_cloudflare_zone_id/dns_records/$ID" \
-        -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" > /dev/null
-    done
+  # ACM validation CNAMEs (_acme-challenge.* / _*.domain) — import-first, delete only if unimportable
+  # These start with '_' and are managed by cloudflare_dns_record.validation["domain"]
+  echo "   🔵 Checking _* validation records (import-first)..."
+  STAGE_KEY="${INPUT_STAGE_KEY:-}"
+  DOMAIN_ROOT="${INPUT_DOMAIN_ROOT:-}"
+  CF_ZONE="$TF_VAR_cloudflare_zone_id"
+  ALL_VAL=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?type=CNAME&per_page=100" \
+    -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+    -H "Content-Type: application/json")
+  VAL_IDS=$(echo "$ALL_VAL" | jq -r '.result[]? | select(.name | startswith("_")) | .id')
+  for ID in $VAL_IDS; do
+    NAME=$(echo "$ALL_VAL" | jq -r ".result[] | select(.id==\"$ID\") | .name")
+    # Determine the domain root this record belongs to (strip leading _acme-challenge. or similar)
+    REC_DOMAIN=$(echo "$NAME" | sed 's/^_[^.]*\.//')
+    TF_ADDR="module.environment_network.cloudflare_dns_record.validation[\"${REC_DOMAIN}\"]"
+    if ! terraform state list 2>/dev/null | grep -qF "cloudflare_dns_record.validation[\"${REC_DOMAIN}\"]"; then
+      echo "   📥 Importing validation record: ${NAME} → ${TF_ADDR}"
+      terraform import "$TF_ADDR" "${CF_ZONE}/${ID}" 2>/dev/null && \
+        echo "   ✅ Imported validation: ${NAME}" || {
+        # Import failed (wrong TF address) — only then delete as last resort
+        echo "   🗑️  Import failed — deleting unimportable validation record: ${NAME} (${ID})"
+        curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records/${ID}" \
+          -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" > /dev/null
+      }
+    else
+      echo "   ✅ Validation record already in state: ${NAME}"
+    fi
   done
 fi
