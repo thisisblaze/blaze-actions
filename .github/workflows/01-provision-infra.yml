@@ -615,17 +615,35 @@ jobs:
             echo "  🔍 Custom CPs attached to cluster: ${CUSTOM_CPS[*]:-none}"
 
             if [[ ${#CUSTOM_CPS[@]} -gt 0 ]]; then
-              echo "  🔌 Detaching custom CPs from cluster (set to FARGATE+FARGATE_SPOT only)..."
-              aws ecs put-cluster-capacity-providers \
-                --cluster "$CLUSTER_NAME_VAL" \
-                --capacity-providers FARGATE FARGATE_SPOT \
-                --default-capacity-provider-strategy \
-                  capacityProvider=FARGATE,weight=1,base=1 \
-                --region "$REGION_VAL" >/dev/null 2>&1 && \
-                echo "  ✅ Cluster CPs detached" || \
-                echo "  ⚠️  Detach failed (cluster may have running tasks, continuing)"
-              echo "  ⏳ Waiting 30s for CP detach to propagate..."
-              sleep 30
+              # Retry detach up to 5 times — tasks may still be DEPROVISIONING
+              # even though list-tasks --desired-status RUNNING shows 0.
+              # DEPROVISIONING tasks are not RUNNING but still hold the CP in use.
+              DETACH_OK=false
+              for DETACH_ATTEMPT in 1 2 3 4 5; do
+                echo "  🔌 Detach attempt $DETACH_ATTEMPT/5 — setting cluster to FARGATE+FARGATE_SPOT only..."
+                if aws ecs put-cluster-capacity-providers \
+                  --cluster "$CLUSTER_NAME_VAL" \
+                  --capacity-providers FARGATE FARGATE_SPOT \
+                  --default-capacity-provider-strategy \
+                    capacityProvider=FARGATE,weight=1,base=1 \
+                  --region "$REGION_VAL" >/dev/null 2>&1; then
+                  echo "  ✅ Cluster CPs detached on attempt $DETACH_ATTEMPT"
+                  DETACH_OK=true
+                  break
+                fi
+                echo "  ⌛ Detach failed on attempt $DETACH_ATTEMPT — tasks still deprovisioning. Waiting 30s..."
+                sleep 30
+                # Re-check actual task count (ALL states, not just RUNNING)
+                ALL_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER_NAME_VAL" \
+                  --region "$REGION_VAL" \
+                  --query 'taskArns' --output text 2>/dev/null | grep -v "^$\|^None$" | wc -l | tr -d ' ')
+                echo "  🔍 Total tasks on cluster (any state): $ALL_TASKS"
+              done
+              if [[ "$DETACH_OK" == "false" ]]; then
+                echo "  ⚠️  All detach attempts failed — proceeding to delete anyway (CP delete may fail too)"
+              fi
+              echo "  ⏳ Waiting 15s post-detach for propagation..."
+              sleep 15
             fi
 
             # Step 2: Delete orphan CPs from AWS and wait for actual deletion
