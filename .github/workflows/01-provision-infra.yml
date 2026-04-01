@@ -726,7 +726,13 @@ jobs:
             terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
           fi
 
-          echo "✅ Pre-apply complete — Cloudflare ZT resources managed via module removed{} blocks"
+          # State-rm Cloudflare ZT apps (module v2.2.3 dropped them; belt-and-suspenders
+          # alongside root removed{} blocks so stale state is gone before plan runs)
+          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.frontend[0]' 2>/dev/null || true
+          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.admin[0]' 2>/dev/null || true
+          echo "  ✅ ZT app state entries purged — CloudFront Functions basic auth takes over"
+
+          echo "✅ Pre-apply complete"
         fi
 
       tf_vars: |
