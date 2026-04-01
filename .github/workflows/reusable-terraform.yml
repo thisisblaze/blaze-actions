@@ -821,6 +821,7 @@ jobs:
              echo "has_changes=false" >> $GITHUB_ENV
           fi
           echo "summary=$PLAN_SUMMARY" >> $GITHUB_OUTPUT
+          echo "🔍 Terraform Plan EXIT_CODE=$EXIT_CODE (0=no changes, 1=error, 2=changes pending)"
 
           # Handle Drift Detection
           if [[ "${{ inputs.detect_drift }}" == "true" ]]; then
@@ -851,7 +852,10 @@ jobs:
       # It must run before plan so that terraform state rm calls don't invalidate the saved plan.
 
       - name: Terraform Apply
-        if: ${{ (inputs.apply == true || inputs.apply == 'true') && steps.plan.outputs.has_changes == 'true' }}
+        # Run apply whenever inputs.apply=true — the saved tfplan is the source of truth.
+        # If plan had no changes, apply is a fast no-op (exits 0, "Apply complete! Resources: 0 added").
+        # Gating on has_changes was unreliable: PIPESTATUS[0] returned 0 even when plan showed 64 to add.
+        if: ${{ inputs.apply == true || inputs.apply == 'true' }}
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}

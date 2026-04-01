@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.61 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Remove `has_changes` apply gate. `terraform apply tfplan` is idempotent — no changes = fast no-op. Gate was broken because `PIPESTATUS[0]` returned 0 unexpectedly despite plan showing 64 resources to add.
+- Add EXIT_CODE diagnostic print for future debugging.
+
 ## v1.4.60 (2026-04-01)
 
 ### Fixed
@@ -694,6 +700,12 @@
 - fix(infra): restore all live terraform environments wiped in a44b330 (a7f2461)
 - chore: update CHANGELOG for v1.4.28 (f573204)
 # Changelog
+
+## v1.4.61 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Remove `has_changes` apply gate. `terraform apply tfplan` is idempotent — no changes = fast no-op. Gate was broken because `PIPESTATUS[0]` returned 0 unexpectedly despite plan showing 64 resources to add.
+- Add EXIT_CODE diagnostic print for future debugging.
 
 All notable changes to this project will be documented in this file.
 
