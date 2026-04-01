@@ -2,16 +2,8 @@
 
 ## v1.4.75 (2026-04-01)
 
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v1.4.74
-
 ### Fixed
-
+- fix(teardown): add `network_stack` input — `destroy-network` was targeting `dev-network` instead of `multi-site-network`; missing Cloudflare credentials (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_ACCOUNT_ID`) caused `Invalid Attribute Value Match` error on Cloudflare provider during network destroy. Added `ACM_CERTIFICATE_ARN` forwarding.
 
 ## v1.4.74 (2026-04-01)
 
