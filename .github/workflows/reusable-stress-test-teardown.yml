@@ -41,6 +41,12 @@ on:
         required: false
         type: string
         default: aws
+
+      app_stack:
+        description: "App stack type: tenant-app or multi-site-app"
+        required: false
+        default: "tenant-app"
+        type: string
         
       wif_audience:
         description: "OIDC Audience"
@@ -254,7 +260,7 @@ jobs:
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
-          state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate' }}"
+          state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
           aws_region: ${{ needs.config.outputs.aws_region }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -361,9 +367,9 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v1.4.72
     with:
       action: "destroy"
-      tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app' }}"
+      tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: "infra/${{ needs.config.outputs.project_key }}/${{ needs.config.outputs.stage_key }}/${{ (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate' }}"
+      state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
