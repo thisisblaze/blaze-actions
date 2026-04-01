@@ -810,9 +810,14 @@ jobs:
           if [[ $EXIT_CODE -eq 2 ]]; then
              # Changes detected — grep for summary line (best-effort, file may still be flushing)
              PLAN_SUMMARY=$(grep "Plan:" plan.log 2>/dev/null | tail -n 1 || echo "Plan: changes detected")
+             # IMPORTANT: emit as step OUTPUT (not just env var).
+             # env.* in step if: conditions is frozen at job-start and never updates between steps.
+             # steps.<id>.outputs.* IS evaluated dynamically at step runtime.
+             echo "has_changes=true" >> $GITHUB_OUTPUT
              echo "has_changes=true" >> $GITHUB_ENV
           elif [[ $EXIT_CODE -eq 0 ]]; then
              PLAN_SUMMARY="No changes"
+             echo "has_changes=false" >> $GITHUB_OUTPUT
              echo "has_changes=false" >> $GITHUB_ENV
           fi
           echo "summary=$PLAN_SUMMARY" >> $GITHUB_OUTPUT
@@ -833,10 +838,8 @@ jobs:
              if [[ $EXIT_CODE -eq 0 || $EXIT_CODE -eq 2 ]]; then
                 if [[ $EXIT_CODE -eq 2 ]]; then
                    echo "✅ Terraform Plan Successful - Changes Detected"
-                   echo "has_changes=true" >> $GITHUB_ENV
                 else
                    echo "✅ Terraform Plan Successful - No Changes"
-                   echo "has_changes=false" >> $GITHUB_ENV
                 fi
              else
                 echo "❌ Terraform Plan Failed (Exit Code: $EXIT_CODE)"
@@ -848,7 +851,7 @@ jobs:
       # It must run before plan so that terraform state rm calls don't invalidate the saved plan.
 
       - name: Terraform Apply
-        if: ${{ (inputs.apply == true || inputs.apply == 'true') && env.has_changes == 'true' }}
+        if: ${{ (inputs.apply == true || inputs.apply == 'true') && steps.plan.outputs.has_changes == 'true' }}
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}

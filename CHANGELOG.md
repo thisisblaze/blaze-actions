@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.60 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Fix apply gate — `env.has_changes` in step `if:` expressions is evaluated at job-start (frozen), never updated between steps. Now emits `has_changes` as a **step output** (`steps.plan.outputs.has_changes`) which IS evaluated dynamically. This was the root cause of Terraform apply being permanently skipped despite plan detecting 64 resources to add.
+
 ## v1.4.59 (2026-04-01)
 
 ### Fixed
