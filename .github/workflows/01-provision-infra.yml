@@ -713,7 +713,8 @@ jobs:
             terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/dev/null || true
 
             # Import graviton_cp back by name (if it exists) — prevents AlreadyExists on create
-            CP_NAME="${CLIENT_KEY}-${PROJECT_KEY}-${STAGE}-ecs-ec2-cp"
+            # Name format: blaze-{client}-{project}-{stage}-ecs-ec2-cp  (matches label module output)
+            CP_NAME="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-ecs-ec2-cp"
             CP_EXISTS=$(aws ecs describe-capacity-providers \
               --capacity-providers "$CP_NAME" \
               --region "$REGION_VAL" \
