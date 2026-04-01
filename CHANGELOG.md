@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.63 (2026-04-01)
+
+### Fixed
+- **01-provision-infra.yml**: Fix CF ZT app import — derive account_id from API response JSON to avoid GitHub secret masking (`TF_VAR_cloudflare_account_id` value was being masked to `***` in bash). Add comprehensive Cloudflare DNS record imports (api, api_direct, admin, frontend, cdn) to prevent error 81053 on re-runs.
+
 ## v1.4.62 (2026-04-01)
 
 ### Fixed
@@ -705,6 +710,11 @@
 - fix(infra): restore all live terraform environments wiped in a44b330 (a7f2461)
 - chore: update CHANGELOG for v1.4.28 (f573204)
 # Changelog
+
+## v1.4.63 (2026-04-01)
+
+### Fixed
+- **01-provision-infra.yml**: Fix CF ZT app import — derive account_id from API response JSON to avoid GitHub secret masking (`TF_VAR_cloudflare_account_id` value was being masked to `***` in bash). Add comprehensive Cloudflare DNS record imports (api, api_direct, admin, frontend, cdn) to prevent error 81053 on re-runs.
 
 ## v1.4.62 (2026-04-01)
 

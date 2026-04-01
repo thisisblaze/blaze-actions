@@ -464,7 +464,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.62
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.63
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -732,27 +732,56 @@ jobs:
           if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$TF_VAR_cloudflare_account_id" ]]; then
             STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
             DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
-            CF_ACCOUNT="$TF_VAR_cloudflare_account_id"
             CF_ZONE="$TF_VAR_cloudflare_zone_id"
             CF_TOKEN="$TF_VAR_cloudflare_api_token"
 
             echo "🔵 Importing Cloudflare Zero Trust Access Applications into state..."
-            APPS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/access/apps" \
+            APPS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${TF_VAR_cloudflare_account_id}/access/apps" \
               -H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
+
+            # Extract account_id from API response (avoids GitHub secret masking of TF_VAR_cloudflare_account_id)
+            CF_ACCOUNT_FROM_API=$(echo "$APPS" | jq -r '.result[0].account_id // empty' 2>/dev/null || echo "")
+            # Fallback: use the TF_VAR directly (masking is cosmetic only in logs; value is correct in memory)
+            CF_ACCOUNT_ID="${CF_ACCOUNT_FROM_API:-$TF_VAR_cloudflare_account_id}"
 
             for ROLE in "frontend" "admin" "api"; do
               TARGET_DOMAIN="${ROLE}-${STAGE_KEY}.${DOMAIN_ROOT}"
               APP_UUID=$(echo "$APPS" | jq -r ".result[]? | select(.domain == \"$TARGET_DOMAIN\") | .id // empty")
               if [[ -n "$APP_UUID" ]]; then
                 TF_ADDR="module.environment_network.cloudflare_zero_trust_access_application.${ROLE}[0]"
-                if ! terraform state list | grep -qF "${TF_ADDR}"; then
+                if ! terraform state list 2>/dev/null | grep -qF "${TF_ADDR}"; then
                   echo "  📥 Importing ZT App ${TARGET_DOMAIN} (${APP_UUID}) → ${TF_ADDR}"
-                  terraform import "${TF_ADDR}" "${CF_ACCOUNT}/${APP_UUID}" || echo "  ⚠️ Import failed for ${ROLE} (will retry next run)"
+                  # Use account_id from API response to avoid GitHub secret masking
+                  terraform import "${TF_ADDR}" "${CF_ACCOUNT_ID}/${APP_UUID}" 2>&1 | tail -1 || \
+                    echo "  ⚠️ Import failed for ${ROLE} (will retry next run)"
                 else
                   echo "  ✅ ${ROLE} already in state"
                 fi
               fi
             done
+
+            echo "🔵 Importing Cloudflare DNS records into state..."
+            # Import DNS records that may already exist (api, api_direct, admin, frontend, validation, cdn)
+            declare -A DNS_MAP=(
+              ["api"]="module.environment_network.cloudflare_dns_record.api[0]"
+              ["api_direct"]="module.environment_network.cloudflare_dns_record.api_direct[0]"
+              ["admin"]="module.environment_network.cloudflare_dns_record.admin[0]"
+              ["frontend"]="module.environment_network.cloudflare_dns_record.frontend[0]"
+              ["cdn"]="module.environment_network.cloudflare_dns_record.cdn[0]"
+            )
+            for DNS_LABEL in "${!DNS_MAP[@]}"; do
+              SUBDOMAIN="${DNS_LABEL//_/-}-${STAGE_KEY}.${DOMAIN_ROOT}"
+              # Normalize api_direct label
+              [[ "$DNS_LABEL" == "api_direct" ]] && SUBDOMAIN="api-direct-${STAGE_KEY}.${DOMAIN_ROOT}"
+              REC_ID=$(curl -s "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${SUBDOMAIN}" \
+                -H "Authorization: Bearer ${CF_TOKEN}" | jq -r '.result[0].id // empty')
+              TF_ADDR="${DNS_MAP[$DNS_LABEL]}"
+              if [[ -n "$REC_ID" ]] && ! terraform state list 2>/dev/null | grep -qF "${TF_ADDR}"; then
+                echo "  📥 Importing DNS record ${SUBDOMAIN} (${REC_ID})"
+                terraform import "${TF_ADDR}" "${CF_ZONE}/${REC_ID}" 2>&1 | tail -1 || echo "  ⚠️ DNS import failed for ${DNS_LABEL}"
+              fi
+            done
+
 
             echo "🔵 Importing Cloudflare DNS validation record into state..."
             for DOMAIN_KEY in "$DOMAIN_ROOT" "*.${DOMAIN_ROOT}"; do
