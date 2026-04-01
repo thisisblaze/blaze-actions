@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.71 (2026-04-01)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: sync 90-daily-health-check.yml — bump setup-blaze/calculate-config to v1.4.70
+- chore: update CHANGELOG for v1.4.70
+
+### Fixed
+
+
 ## v1.4.70 (2026-04-01)
 
 ### Added
