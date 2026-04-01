@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.62 (2026-04-01)
+
+### Fixed
+- **01-provision-infra.yml**: Broaden Cloudflare DNS validation record import to check all record types (not just CNAME). Fixes error 81053 on `cloudflare_dns_record.validation` when an existing record of any type blocks fresh creation.
+
 ## v1.4.61 (2026-04-01)
 
 ### Fixed
@@ -700,6 +705,11 @@
 - fix(infra): restore all live terraform environments wiped in a44b330 (a7f2461)
 - chore: update CHANGELOG for v1.4.28 (f573204)
 # Changelog
+
+## v1.4.62 (2026-04-01)
+
+### Fixed
+- **01-provision-infra.yml**: Broaden Cloudflare DNS validation record import to check all record types (not just CNAME). Fixes error 81053 on `cloudflare_dns_record.validation` when an existing record of any type blocks fresh creation.
 
 ## v1.4.61 (2026-04-01)
 

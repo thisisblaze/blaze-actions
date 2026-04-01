@@ -464,7 +464,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.61
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v1.4.62
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -756,14 +756,23 @@ jobs:
 
             echo "🔵 Importing Cloudflare DNS validation record into state..."
             for DOMAIN_KEY in "$DOMAIN_ROOT" "*.${DOMAIN_ROOT}"; do
+              # Try CNAME first (ACM validation), then any type (error 81053 = record exists as any type)
               REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${DOMAIN_KEY}&type=CNAME" \
                 -H "Authorization: Bearer ${CF_TOKEN}" | jq -r '.result[0].id // empty')
+              if [[ -z "$REC_ID" ]]; then
+                REC_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${DOMAIN_KEY}" \
+                  -H "Authorization: Bearer ${CF_TOKEN}" | jq -r '.result[0].id // empty')
+              fi
               if [[ -n "$REC_ID" ]]; then
                 TF_ADDR="module.environment_network.cloudflare_dns_record.validation[\"${DOMAIN_ROOT}\"]"
                 if ! terraform state list | grep -qF "cloudflare_dns_record.validation"; then
                   echo "  📥 Importing DNS validation record ${DOMAIN_KEY} (${REC_ID})"
-                  terraform import "${TF_ADDR}" "${CF_ZONE}/${REC_ID}" || echo "  ⚠️ DNS import failed"
+                  terraform import "${TF_ADDR}" "${CF_ZONE}/${REC_ID}" || echo "  ⚠️ DNS import failed (will reconcile next run)"
+                else
+                  echo "  ✅ DNS validation record already in state"
                 fi
+              else
+                echo "  ⏭️  No existing DNS record for ${DOMAIN_KEY} — will create fresh"
               fi
             done
           else
