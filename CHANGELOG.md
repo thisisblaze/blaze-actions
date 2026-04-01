@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.67 (2026-04-01)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.66
+- chore: update CHANGELOG for v1.4.65
+
+### Fixed
+
+
 ## v1.4.66 (2026-04-01)
 
 ### Added
