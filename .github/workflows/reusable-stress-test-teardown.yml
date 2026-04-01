@@ -354,7 +354,7 @@ jobs:
   # 3. TEARDOWN (Infrastructure)
   # --------------------------------------------------------------------------------
   destroy-app:
-    if: ${{ inputs.mode != 'quick-test' && needs.check-states.outputs.app_exists == 'true' }}
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.cleanup-services.result != 'failure' && needs.cleanup-services.result != 'cancelled' && needs.check-states.outputs.app_exists == 'true' }}
     name: "🧨 Destroy App"
 
     needs: [config, cleanup-services, check-states]
@@ -492,7 +492,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-network:
-    if: ${{ inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' }}
+    if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped') }}
     name: "🧨 Destroy Network"
 
     needs: [config, destroy-tunnel, destroy-data-pod, check-states]
