@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.58 (2026-04-01)
+
+### Fixed
+
+- fix(nuke): state-rm all tenant-app resources before destroy plan — prevents terraform plan -destroy from failing when SSM network params are already gone (19 missing params: vpc_id, subnets, cluster, ALBs, CF functions, etc.)
+- fix(nuke): remove `!contains(needs.*.result, 'failure')` global gate from `nuke-destroy-data-aws` and `nuke-destroy-network-aws` — the Gate job already absorbs app-stack failures; the redundant check was blocking the network destroy when tenant-app failed
+
 ## v1.4.57 (2026-03-31)
 
 ### Added
