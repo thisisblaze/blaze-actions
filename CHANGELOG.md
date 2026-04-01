@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.4.70 (2026-04-01)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: sync 90-daily-health-check.yml — bump setup-blaze/calculate-config to v1.4.69
+- chore: sync 90-daily-health-check.yml from deploy repo (Engine 8 parity fix)
+- chore: update CHANGELOG for v1.4.69
+- chore: update CHANGELOG for v1.4.68
+- chore: update CHANGELOG for v1.4.67
+
+### Fixed
+
+
 ## v1.4.69 (2026-04-01)
 
 ### Added
