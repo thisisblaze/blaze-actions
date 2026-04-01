@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.72 (2026-04-01)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.71
+
+### Fixed
+
+- fix(destroy): pass ACM_CERTIFICATE_ARN to destroy ops — unblocks 30-min hang
+
 ## v1.4.71 (2026-04-01)
 
 ### Added
