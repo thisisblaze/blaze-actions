@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.59 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Fix critical `tee plan.log` flush race condition — `has_changes` now driven by `EXIT_CODE` from `-detailed-exitcode` (2=changes) instead of grep timing. Prevents apply being skipped when Terraform detects 64 resources to add but plan.log hasn't flushed yet.
+
 ## v1.4.58 (2026-04-01)
 
 ### Fixed

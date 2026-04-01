@@ -800,13 +800,20 @@ jobs:
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
+          # Sync: wait for tee to finish flushing plan.log before grepping
+          sync plan.log 2>/dev/null || true
 
-          # Extract Plan Summary
-          PLAN_SUMMARY="No changes"
-          if grep -q "Plan:" plan.log; then
-             PLAN_SUMMARY=$(grep "Plan:" plan.log | tail -n 1)
-          elif grep -q "No changes" plan.log; then
+          # Extract Plan Summary — use EXIT_CODE as authoritative source of truth.
+          # -detailed-exitcode: 0 = no changes, 1 = error, 2 = changes pending.
+          # Grepping plan.log for "Plan:" is a nice-to-have human summary, but
+          # the apply gate MUST use EXIT_CODE to avoid the tee flush race condition.
+          if [[ $EXIT_CODE -eq 2 ]]; then
+             # Changes detected — grep for summary line (best-effort, file may still be flushing)
+             PLAN_SUMMARY=$(grep "Plan:" plan.log 2>/dev/null | tail -n 1 || echo "Plan: changes detected")
+             echo "has_changes=true" >> $GITHUB_ENV
+          elif [[ $EXIT_CODE -eq 0 ]]; then
              PLAN_SUMMARY="No changes"
+             echo "has_changes=false" >> $GITHUB_ENV
           fi
           echo "summary=$PLAN_SUMMARY" >> $GITHUB_OUTPUT
 
