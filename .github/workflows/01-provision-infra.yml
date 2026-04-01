@@ -707,11 +707,27 @@ jobs:
               fi
             done
 
-            # Step 3: State-rm CPs and CP association so TF creates them fresh
+            # Step 3: State-rm CPs and CP association so TF re-reconciles them
             terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
             terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
             terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/dev/null || true
-            echo "  ✅ CP state entries removed — TF will create fresh CPs"
+
+            # Import graviton_cp back by name (if it exists) — prevents AlreadyExists on create
+            CP_NAME="${CLIENT_KEY}-${PROJECT_KEY}-${STAGE}-ecs-ec2-cp"
+            CP_EXISTS=$(aws ecs describe-capacity-providers \
+              --capacity-providers "$CP_NAME" \
+              --region "$REGION_VAL" \
+              --query 'capacityProviders[0].name' \
+              --output text 2>/dev/null || echo "NONE")
+            if [[ "$CP_EXISTS" != "NONE" && -n "$CP_EXISTS" && "$CP_EXISTS" != "None" ]]; then
+              echo "  📥 Importing existing graviton_cp back into state: $CP_NAME"
+              terraform import "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" "$CP_NAME" 2>/dev/null && \
+                echo "  ✅ graviton_cp imported — TF will reconcile in-place" || \
+                echo "  ⚠️  CP import failed — TF may hit AlreadyExists"
+            else
+              echo "  ℹ️  graviton_cp not found in AWS — TF will create fresh"
+            fi
+            echo "  ✅ CP state entries reconciled"
 
             # State-rm Lambda@Edge + WAF (still need removal to avoid delete timeout)
             terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
