@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.64 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Add `working-directory: ${{ inputs.tf_dir }}` to the "Run Pre-Apply Script" step. Previously, `terraform import` commands in the pre-apply script ran in the runner's default working directory (missing `.terraform/`), causing all state imports to silently fail. This was the root cause of repeated Cloudflare error 81053 / 11010 on re-runs.
+
 ## v1.4.63 (2026-04-01)
 
 ### Fixed
@@ -710,6 +715,11 @@
 - fix(infra): restore all live terraform environments wiped in a44b330 (a7f2461)
 - chore: update CHANGELOG for v1.4.28 (f573204)
 # Changelog
+
+## v1.4.64 (2026-04-01)
+
+### Fixed
+- **reusable-terraform.yml**: Add `working-directory: ${{ inputs.tf_dir }}` to the "Run Pre-Apply Script" step. Previously, `terraform import` commands in the pre-apply script ran in the runner's default working directory (missing `.terraform/`), causing all state imports to silently fail. This was the root cause of repeated Cloudflare error 81053 / 11010 on re-runs.
 
 ## v1.4.63 (2026-04-01)
 
