@@ -132,22 +132,52 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
   # Note: frontend is abbreviated as 'fe' in target group names
   # Strategy: try to import first; if import fails (e.g. config count=0 or address mismatch),
   # delete the orphan from AWS so terraform apply can recreate it cleanly.
+  # Guard: terraform may not be installed in the Configuration job — skip import, AWS-delete only.
+  TF_AVAILABLE=false
+  command -v terraform > /dev/null 2>&1 && TF_AVAILABLE=true
+
   for TG in admin-blue admin-green fe-blue fe-green api-blue api-green; do
     RESOURCE_NAME=$(echo "$TG" | sed 's/fe-/frontend_/' | tr '-' '_')
     TG_NAME="blaze-${STAGE_KEY}-${TG}-tg"
     TG_ARN=$(aws elbv2 describe-target-groups --names "$TG_NAME" --region "$REGION" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || echo "")
 
     if [[ -n "$TG_ARN" && "$TG_ARN" != "None" ]]; then
-      if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
-        echo "📥 Importing target group: $TG_NAME"
-        terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" 2>/dev/null || true
-        # If still not in state after import attempt, delete the orphan so apply can recreate it
-        if ! terraform state list | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}"; then
-          echo "   ⚠️  Import failed — deleting orphan TG from AWS: $TG_NAME"
-          aws elbv2 delete-target-group --target-group-arn "$TG_ARN" --region "$REGION" && \
-            echo "   ✅ Deleted orphan TG: $TG_NAME" || \
-            echo "   ⚠️  Could not delete $TG_NAME (may have active dependencies)"
+      ALREADY_IN_STATE=false
+      if [[ "$TF_AVAILABLE" == "true" ]]; then
+        terraform state list 2>/dev/null | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}" && ALREADY_IN_STATE=true
+      fi
+
+      if [[ "$ALREADY_IN_STATE" != "true" ]]; then
+        IMPORTED=false
+        if [[ "$TF_AVAILABLE" == "true" ]]; then
+          echo "📥 Importing target group: $TG_NAME"
+          terraform import "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}[0]" "$TG_ARN" 2>/dev/null && IMPORTED=true || true
+          # Re-check state after import attempt
+          terraform state list 2>/dev/null | grep -q "module.environment_network.aws_lb_target_group.${RESOURCE_NAME}" && IMPORTED=true
         fi
+
+        if [[ "$IMPORTED" != "true" ]]; then
+          # Check if TG is attached to a listener before deleting — ResourceInUse if so
+          LISTENERS=$(aws elbv2 describe-listeners \
+            --query "Listeners[?DefaultActions[?TargetGroupArn=='${TG_ARN}']].ListenerArn" \
+            --output text 2>/dev/null || echo "")
+          RULES=$(aws elbv2 describe-rules \
+            --listener-arn "$(aws elbv2 describe-listeners --region "$REGION" \
+              --query 'Listeners[0].ListenerArn' --output text 2>/dev/null || echo "none")" \
+            --region "$REGION" \
+            --query "Rules[?Actions[?TargetGroupArn=='${TG_ARN}']].RuleArn" \
+            --output text 2>/dev/null || echo "") 2>/dev/null || true
+          if [[ -n "$LISTENERS" && "$LISTENERS" != "None" ]]; then
+            echo "   ⚠️  Skipping delete of $TG_NAME — still referenced by a listener (will be replaced by apply)"
+          else
+            echo "   ⚠️  Deleting orphan TG from AWS: $TG_NAME"
+            aws elbv2 delete-target-group --target-group-arn "$TG_ARN" --region "$REGION" && \
+              echo "   ✅ Deleted orphan TG: $TG_NAME" || \
+              echo "   ⚠️  Could not delete $TG_NAME (may have active dependencies)"
+          fi
+        fi
+      else
+        echo "   ✅ TG already in state: $TG_NAME"
       fi
     fi
   done
