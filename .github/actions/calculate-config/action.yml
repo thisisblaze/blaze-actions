@@ -417,7 +417,9 @@ runs:
 
             # V2 Multi-Site App
             elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
+               # multi-site stacks are NOT scoped per-env — dirs are named multi-site-{type} globally.
+               # dev, dev-mini, and multi-site all use the unprefixed stack name.
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" || "$STAGE_KEY" == "multi-site" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${STACK}"
                else
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"

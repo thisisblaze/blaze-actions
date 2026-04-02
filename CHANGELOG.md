@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.86 (2026-04-02)
+
+### Fixed
+- fix(calculate-config): add `multi-site` to the STAGE_KEY guard in multi-site-app/network/cdn dir resolution — prevents `multi-site-multi-site-app` double-prefix when `environment=multi-site`
+
 ## v1.4.85 (2026-04-02)
 
 ### Added
