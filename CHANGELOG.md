@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.88 (2026-04-02)
+
+### Fixed
+- fix(reusable-terraform): add "Bootstrap S3 Backend" step — idempotently creates the S3 state bucket and DynamoDB lock table before `terraform init` runs, solving the bootstrap chicken-and-egg for new environments (e.g., `multi-site`)
+
 ## v1.4.87 (2026-04-02)
 
 ### Added
