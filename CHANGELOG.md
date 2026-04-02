@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.83 (2026-04-02)
+
+### Fixed
+- fix(teardown/post-destroy-state-fix): new job after Destroy Network — syncs DynamoDB digest with actual S3 ETag so next provision never hits "state data in S3 does not have the expected content"
+- fix(teardown/post-destroy-state-fix): new job deletes orphaned ECS Capacity Provider after destroy (blaze-*-ecs-ec2-cp survives Terraform destroy and blocks re-provision with AlreadyExists)
+
 ## v1.4.82 (2026-04-02)
 
 ### Added
