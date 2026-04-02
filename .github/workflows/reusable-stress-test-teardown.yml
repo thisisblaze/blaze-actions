@@ -530,35 +530,57 @@ jobs:
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
 
       - name: "Force-Delete Orphaned SGs + ENIs (Unblocks VPC)"
-        env:
-          ENV: ${{ inputs.environment }}
-          PROJECT: ${{ needs.config.outputs.project_key }}
-          REGION: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
         run: |
-          # The VPC name tag pattern used by blaze TF modules
-          # For multi-site: blaze-b9-{project}-multi-site-vpc
-          # For env-level:  blaze-b9-{project}-{env}-vpc
+          REGION="${{ needs.config.outputs.aws_region || 'eu-west-1' }}"
+
+          # ── Find VPC by CIDR (tag-independent, deterministic) ────────────────
+          # multi-site: 10.4.0.0/16 (hardcoded in multi-site-network/main.tf)
+          # env-level falls back to tag-based lookup
           if [[ "${{ inputs.network_stack }}" == "multi-site-network" ]]; then
-            TAG_VALUE="blaze-b9-${PROJECT}-multi-site"
+            VPC_CIDR="10.4.0.0/16"
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=cidr,Values=${VPC_CIDR}" \
+              --region "$REGION" \
+              --query 'Vpcs[0].VpcId' \
+              --output text 2>/dev/null || echo "")
           else
+            ENV="${{ inputs.environment }}"
+            PROJECT="${{ needs.config.outputs.project_key }}"
             TAG_VALUE="blaze-b9-${PROJECT}-${ENV}"
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
+              --region "$REGION" \
+              --query 'Vpcs[0].VpcId' \
+              --output text 2>/dev/null || echo "")
           fi
 
-          VPC_ID=$(aws ec2 describe-vpcs \
-            --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
-            --region "$REGION" \
-            --query 'Vpcs[0].VpcId' \
-            --output text 2>/dev/null || echo "")
-
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
-            echo "ℹ️  VPC '${TAG_VALUE}-vpc' not found — skipping orphan cleanup"
+            echo "ℹ️  VPC not found — nothing to clean up, Terraform destroy will handle it"
             exit 0
           fi
 
-          echo "🔍 Found VPC: $VPC_ID (tag: ${TAG_VALUE}-vpc)"
+          echo "🔍 Found VPC: $VPC_ID"
 
-          # ── Release any Elastic IPs associated with this VPC ─────────────────
-          echo "🗑️  Releasing orphaned Elastic IPs..."
+          # ── Step 1: Delete NAT Gateways (holds EIPs + keeps ENIs in-use) ─────
+          echo "🗑️  Deleting NAT Gateways in VPC..."
+          NGW_IDS=$(aws ec2 describe-nat-gateways \
+            --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=available,pending" \
+            --region "$REGION" \
+            --query 'NatGateways[*].NatGatewayId' \
+            --output text 2>/dev/null || echo "")
+          for NGW_ID in $NGW_IDS; do
+            echo "   → Deleting NAT GW: $NGW_ID"
+            aws ec2 delete-nat-gateway --nat-gateway-id "$NGW_ID" --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $NGW_ID"
+          done
+          # Wait for NAT GWs to finish deleting (they release EIPs + ENIs asynchronously)
+          if [[ -n "$NGW_IDS" && "$NGW_IDS" != "" ]]; then
+            echo "   ⏳ Waiting 30s for NAT GW deletion to propagate..."
+            sleep 30
+          fi
+
+          # ── Step 2: Release EIPs now freed by NAT GW deletion ────────────────
+          echo "🗑️  Releasing unassociated Elastic IPs..."
           EIP_ALLOC_IDS=$(aws ec2 describe-addresses \
             --filters "Name=domain,Values=vpc" \
             --region "$REGION" \
@@ -570,20 +592,20 @@ jobs:
               && echo "   ✅ Released" || echo "   ⚠️  Could not release $ALLOC_ID"
           done
 
-          # ── Force-delete detached ENIs still in the VPC ──────────────────────
+          # ── Step 3: Delete all ENIs in VPC (available + in-use after NAT GW gone)
           echo "🗑️  Deleting orphaned ENIs in VPC..."
           ENI_IDS=$(aws ec2 describe-network-interfaces \
-            --filters "Name=vpc-id,Values=$VPC_ID" "Name=status,Values=available" \
+            --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'NetworkInterfaces[*].NetworkInterfaceId' \
             --output text 2>/dev/null || echo "")
           for ENI_ID in $ENI_IDS; do
             echo "   → Deleting ENI: $ENI_ID"
             aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $ENI_ID"
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $ENI_ID (still in-use — Terraform will handle)"
           done
 
-          # ── Delete non-default security groups in VPC ─────────────────────────
+          # ── Step 4: Delete non-default Security Groups ────────────────────────
           echo "🗑️  Deleting orphaned Security Groups in VPC..."
           SG_IDS=$(aws ec2 describe-security-groups \
             --filters "Name=vpc-id,Values=$VPC_ID" \
@@ -593,10 +615,11 @@ jobs:
           for SG_ID in $SG_IDS; do
             echo "   → Deleting SG: $SG_ID"
             aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID (may still have dependents — Terraform will handle)"
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID (may still have dependents)"
           done
 
           echo "✅ VPC orphan cleanup complete — Terraform destroy should now proceed cleanly"
+
 
   destroy-network:
     if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped') }}
