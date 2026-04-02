@@ -14,6 +14,12 @@ on:
         default: "host"
         type: string
 
+      app_stack:
+        description: "App stack type (tenant-app or multi-site-app). Controls which deploy path is used."
+        required: false
+        default: "tenant-app"
+        type: string
+
       branch_tag:
         description: "Feature branch tag (required if target_type=feature-branch)"
         required: false
@@ -202,8 +208,9 @@ jobs:
   # --------------------------------------------------------------------------------
   # 5. DEPLOY
   # --------------------------------------------------------------------------------
+  # V1 path: separate api/frontend ECS services (tenant-app, feature-branch)
   deploy-app:
-    if: always() && inputs.mode != 'destroy-only'
+    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack != 'multi-site-app'
     needs: [config]
     name: "🚀 Deploy App"
     uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.4.37
@@ -245,3 +252,98 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Multi-Site V2 AWS deploy path: cluster has site-NNN services, not api/frontend.
+  # Force-deploys each discovered site service so ECS picks up the provisioned
+  # task definition. skip_stability_wait is implicit — stress test validates
+  # infra cycle, not pod readiness.
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-multi-site:
+    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack == 'multi-site-app' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '')
+    needs: [config]
+    name: "🌐 Deploy Multi-Site Apps (AWS)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
+
+      - name: Force-Deploy Site ECS Services
+        env:
+          CLUSTER_NAME: ${{ needs.config.outputs.cluster_name }}
+          REGION: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
+        run: |
+          echo "🌐 Multi-Site ECS Deploy"
+          echo "   Cluster: $CLUSTER_NAME"
+          echo "   Region:  $REGION"
+
+          # Discover all site-NNN service ARNs from the cluster
+          ALL_ARNS=$(aws ecs list-services \
+            --cluster "$CLUSTER_NAME" \
+            --region "$REGION" \
+            --query 'serviceArns' \
+            --output text 2>/dev/null | tr '\t' '\n' || echo "")
+
+          SITE_ARNS=$(echo "$ALL_ARNS" | grep -E '/.*-site-[0-9]+$' || echo "")
+
+          if [[ -z "$SITE_ARNS" ]]; then
+            echo "⚠️  No site-NNN services found in cluster '$CLUSTER_NAME'"
+            echo "   This may mean infrastructure was not provisioned yet — check Phase 2 logs."
+            exit 0
+          fi
+
+          echo ""
+          echo "📋 Site services to deploy:"
+          echo "$SITE_ARNS" | while IFS= read -r ARN; do
+            [[ -z "$ARN" ]] && continue
+            SVC=$(echo "$ARN" | awk -F'/' '{print $NF}')
+            echo "   → $SVC"
+          done
+          echo ""
+
+          PASSED=0
+          FAILED=0
+          SKIPPED=0
+
+          while IFS= read -r ARN; do
+            [[ -z "$ARN" ]] && continue
+            SVC=$(echo "$ARN" | awk -F'/' '{print $NF}')
+
+            STATUS=$(aws ecs describe-services \
+              --cluster "$CLUSTER_NAME" \
+              --services "$SVC" \
+              --region "$REGION" \
+              --query 'services[0].status' \
+              --output text 2>/dev/null || echo "MISSING")
+
+            if [[ "$STATUS" != "ACTIVE" ]]; then
+              echo "⚠️  $SVC — status=$STATUS, skipping"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+
+            aws ecs update-service \
+              --cluster "$CLUSTER_NAME" \
+              --service "$SVC" \
+              --force-new-deployment \
+              --region "$REGION" \
+              --output text > /dev/null 2>&1 \
+              && { echo "✅ $SVC — new deployment triggered"; PASSED=$((PASSED + 1)); } \
+              || { echo "❌ $SVC — update-service failed"; FAILED=$((FAILED + 1)); }
+
+          done <<< "$SITE_ARNS"
+
+          echo ""
+          echo "📊 Result: ✅ $PASSED deployed | ⏭️ $SKIPPED skipped | ❌ $FAILED failed"
+
+          if [[ $FAILED -gt 0 ]]; then
+            echo "::error::$FAILED site service(s) failed to update. Review ECS console."
+            exit 1
+          fi
+
+          echo "✅ Multi-site deploy complete"
