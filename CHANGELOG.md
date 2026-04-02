@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.89 (2026-04-02)
+
+### Fixed
+- fix(01-provision-infra): bump `reusable-terraform` pin from `@v1.4.65` → `@v1.4.88` to pick up S3 backend bootstrap step
+- fix(reusable-stress-test-provision): bump all `01-provision-infra.yml` refs from `@v1.4.87` → `@v1.4.89`
+
 ## v1.4.88 (2026-04-02)
 
 ### Added
