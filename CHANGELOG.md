@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.76 (2026-04-02)
+
+### Fixed
+- fix(teardown): add `cleanup-vpc-orphans` job — force-deletes orphaned ENIs, SGs, and EIPs before `destroy-network` runs. Root cause of run #23872243675 `DependencyViolation` on subnet/IGW deletion after app stack destroyed. Mirrors `99-nuke-env` Step 4. AWS-only, skips non-AWS providers.
+
 ## v1.4.75 (2026-04-01)
 
 ### Fixed
