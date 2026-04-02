@@ -2,6 +2,19 @@
 
 ## v1.4.78 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.77
+
+### Fixed
+
+
+## v1.4.78 (2026-04-02)
+
 ### Fixed
 - fix(teardown/cleanup-vpc-orphans): disassociate EIPs before releasing (fixes IGW "mapped public address" detach error — EIPs still associated to ENIs were blocking IGW detach even after NAT GW deletion)
 - fix(teardown/cleanup-vpc-orphans): force-detach ENI attachments before delete — ENIs held by ALB/ELB interfaces or other `in-use` attachments now have their `AttachmentId` force-detached (`--force`) before delete attempt, with 8s propagation wait
