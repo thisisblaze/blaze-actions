@@ -586,11 +586,22 @@ jobs:
             if [[ -n "$ASSOC_ID" && "$ASSOC_ID" != "None" ]]; then
               echo "   → Disassociating EIP $ALLOC_ID (assoc: $ASSOC_ID)..."
               aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/dev/null || true
-              sleep 2
+              echo "     ⏳ Waiting 10s for disassociation to propagate..."
+              sleep 10
             fi
             echo "   → Releasing EIP: $ALLOC_ID"
-            aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Released" || echo "   ⚠️  Could not release $ALLOC_ID"
+            # Retry up to 3 times — AWS disassociate-address is eventually consistent
+            RELEASED=false
+            for ATTEMPT in 1 2 3; do
+              if aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null; then
+                echo "   ✅ Released (attempt $ATTEMPT)"
+                RELEASED=true
+                break
+              fi
+              echo "   ⏳ Release attempt $ATTEMPT failed — waiting 8s..."
+              sleep 8
+            done
+            [[ "$RELEASED" == "false" ]] && echo "   ⚠️  Could not release $ALLOC_ID after 3 attempts"
           done < <(aws ec2 describe-addresses \
             --filters "Name=domain,Values=vpc" \
             --region "$REGION" \

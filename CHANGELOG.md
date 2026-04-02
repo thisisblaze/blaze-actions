@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.79 (2026-04-02)
+
+### Fixed
+- fix(teardown/cleanup-vpc-orphans): bump post-disassociate sleep 2s→10s + add 3-attempt retry loop on release-address — AWS disassociate-address is eventually consistent; the EIP remained "associated" for several seconds after the API returned, causing immediate release to fail and leaving the IGW with a mapped public address
+
 ## v1.4.78 (2026-04-02)
 
 ### Added
