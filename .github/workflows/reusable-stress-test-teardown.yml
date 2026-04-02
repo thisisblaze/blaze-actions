@@ -834,42 +834,80 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
 
-      - name: Fix DynamoDB State Digest
+      - name: Fix DynamoDB State Digests (All Destroyed Stacks)
         env:
           REGION: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
           BUCKET: ${{ needs.config.outputs.bucket }}
-          STATE_KEY: ${{ inputs.network_stack == 'multi-site-network' && format('infra/{0}/multi-site/network.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) }}
+          PROJECT_KEY: ${{ needs.config.outputs.project_key }}
+          STAGE_KEY: ${{ needs.config.outputs.stage_key }}
           LOCK_TABLE: ${{ needs.config.outputs.lock_table || format('b9-{0}-blaze-tfstate-lock', needs.config.outputs.stage_key) }}
+          IS_MULTI_SITE: ${{ inputs.network_stack == 'multi-site-network' && 'true' || 'false' }}
         run: |
-          echo "🔧 Syncing DynamoDB state digest after Terraform destroy..."
-          echo "   Bucket:    $BUCKET"
-          echo "   State key: $STATE_KEY"
-          echo "   DynamoDB:  $LOCK_TABLE"
+          echo "🔧 Syncing DynamoDB digest for ALL destroyed state files..."
+          echo "   Bucket:   $BUCKET"
+          echo "   DynamoDB: $LOCK_TABLE"
 
-          # Calculate the actual MD5 of the state file in S3
-          ACTUAL_MD5=$(aws s3api head-object \
-            --bucket "$BUCKET" \
-            --key "$STATE_KEY" \
-            --region "$REGION" \
-            --query 'ETag' \
-            --output text 2>/dev/null | tr -d '"' || echo "")
-
-          if [[ -z "$ACTUAL_MD5" || "$ACTUAL_MD5" == "None" ]]; then
-            echo "   ℹ️  State file not found in S3 (already destroyed) — nothing to fix"
-            exit 0
+          # Build list of all state keys that were potentially destroyed in this run.
+          # Multi-site uses infra/<project>/multi-site/<stack>.tfstate
+          # Non-multi-site uses infra/<project>/<stage>/<stack>.tfstate
+          if [[ "$IS_MULTI_SITE" == "true" ]]; then
+            STATE_KEYS=(
+              "infra/${PROJECT_KEY}/multi-site/network.tfstate"
+              "infra/${PROJECT_KEY}/multi-site/app.tfstate"
+              "infra/${PROJECT_KEY}/multi-site/db-pod-alpha.tfstate"
+            )
+          else
+            STATE_KEYS=(
+              "infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
+              "infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
+              "infra/${PROJECT_KEY}/${STAGE_KEY}/tenant-app.tfstate"
+              "infra/${PROJECT_KEY}/${STAGE_KEY}/db-pod-alpha.tfstate"
+            )
           fi
 
-          echo "   Actual S3 ETag (MD5): $ACTUAL_MD5"
+          # Helper: sync one state key's DynamoDB digest with its actual S3 ETag
+          fix_digest() {
+            local KEY="$1"
+            local ACTUAL_MD5
 
-          # Update DynamoDB digest to match actual S3 checksum
-          LOCK_ID="${BUCKET}/${STATE_KEY}-md5"
-          aws dynamodb put-item \
-            --region "$REGION" \
-            --table-name "$LOCK_TABLE" \
-            --item "{\"LockID\":{\"S\":\"${LOCK_ID}\"},\"Digest\":{\"S\":\"${ACTUAL_MD5}\"}}" \
-            2>/dev/null \
-            && echo "   ✅ DynamoDB digest updated: $ACTUAL_MD5" \
-            || echo "   ⚠️  Could not update DynamoDB — next provision may hit checksum mismatch"
+            ACTUAL_MD5=$(aws s3api head-object \
+              --bucket "$BUCKET" --key "$KEY" --region "$REGION" \
+              --query 'ETag' --output text 2>/dev/null | tr -d '"' || echo "")
+
+            if [[ -z "$ACTUAL_MD5" || "$ACTUAL_MD5" == "None" || "$ACTUAL_MD5" == "null" ]]; then
+              echo "   ℹ️  $KEY — not in S3 (skipping)"
+              return 0
+            fi
+
+            local LOCK_ID="${BUCKET}/${KEY}-md5"
+
+            # Check what DynamoDB currently has
+            STORED_MD5=$(aws dynamodb get-item \
+              --region "$REGION" --table-name "$LOCK_TABLE" \
+              --key "{\"LockID\":{\"S\":\"${LOCK_ID}\"}}" \
+              --query 'Item.Digest.S' --output text 2>/dev/null || echo "")
+
+            if [[ "$STORED_MD5" == "$ACTUAL_MD5" ]]; then
+              echo "   ✅ $KEY — digest already correct ($ACTUAL_MD5)"
+              return 0
+            fi
+
+            echo "   → $KEY"
+            echo "     S3 ETag (actual):  $ACTUAL_MD5"
+            echo "     DynamoDB (stored): ${STORED_MD5:-MISSING}"
+
+            aws dynamodb put-item \
+              --region "$REGION" --table-name "$LOCK_TABLE" \
+              --item "{\"LockID\":{\"S\":\"${LOCK_ID}\"},\"Digest\":{\"S\":\"${ACTUAL_MD5}\"}}" \
+              2>/dev/null \
+              && echo "     ✅ Updated" \
+              || echo "     ⚠️  Could not write — next provision may hit mismatch"
+          }
+
+          for KEY in "${STATE_KEYS[@]}"; do
+            fix_digest "$KEY"
+          done
+          echo "✅ Digest sync complete"
 
       - name: Delete Orphaned ECS Capacity Provider
         env:
