@@ -2,6 +2,19 @@
 
 ## v1.4.85 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.84
+
+### Fixed
+
+
+## v1.4.85 (2026-04-02)
+
 ### Fixed
 - fix(deploy/multi-site): add `app_stack` input to `reusable-stress-test-deploy.yml`; gate V1 `deploy-app` job on `app_stack != multi-site-app`
 - feat(deploy/multi-site): add `deploy-multi-site` AWS job that discovers `site-NNN` ECS services by cluster query and force-deploys each one — bypasses missing task-def template issue; validates services exist post-provision
