@@ -2,6 +2,19 @@
 
 ## v1.4.84 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.83
+
+### Fixed
+
+
+## v1.4.84 (2026-04-02)
+
 ### Fixed
 - fix(teardown/post-destroy-state-fix): fix DynamoDB digest for ALL destroyed state files (network + app + tenant-app + db-pod-alpha) — was only fixing network.tfstate, causing checksum mismatch on app.tfstate
 - fix(teardown/post-destroy-state-fix): add pre-check — skip if digest already correct to avoid redundant writes
