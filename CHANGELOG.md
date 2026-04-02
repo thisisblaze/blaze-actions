@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.87 (2026-04-02)
+
+### Fixed
+- fix(01-provision-infra): bump internal `calculate-config` pin from `@v1.4.37` → `@v1.4.86` so the `multi-site` STAGE_KEY guard fix is actually executed at runtime
+- fix(reusable-stress-test-provision): bump all `01-provision-infra.yml` refs to `@v1.4.87`
+
 ## v1.4.86 (2026-04-02)
 
 ### Added
