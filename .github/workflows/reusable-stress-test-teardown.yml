@@ -561,16 +561,25 @@ jobs:
 
           echo "🔍 Found VPC: $VPC_ID"
 
-          # ── Step 0: Suspend ASGs + Terminate EC2 instances (Graviton CP holds EIPs) ──
-          # The Graviton Capacity Provider uses an Auto Scaling Group. If we just terminate
-          # instances the ASG immediately relaunches replacements, re-associating fresh EIPs.
-          # Fix: suspend all ASG scaling processes first, THEN terminate instances, then wait.
-          echo "🗑️  Suspending Auto Scaling Groups in VPC (prevent instance replacement)..."
+          # ══════════════════════════════════════════════════════════════════
+          # DEPENDENCY TEARDOWN ORDER (architectural):
+          #  0a. Suspend ASGs       → prevents instance replacement
+          #  0b. Scale ECS to 0     → drains ECS task ENIs
+          #  0c. Delete LBs         → removes ENIs in subnets + frees lb_sg
+          #  0d. Terminate EC2      → releases instance EIPs + ENIs
+          #  1.  Delete NAT GWs     → releases NAT EIPs
+          #  2.  Release EIPs       → unmaps public addresses from IGW
+          #  3.  Force-detach ENIs  → clears all remaining subnet dependencies
+          #  4.  Revoke+delete SGs  → breaks circular SG references
+          #  → Terraform: subnets / route tables / IGW / VPC
+          # ══════════════════════════════════════════════════════════════════
+
+          # ── Step 0a: Suspend ASGs (prevent Graviton CP replacement) ──────
+          echo "🗑️  Suspending Auto Scaling Groups..."
           ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
             --region "$REGION" \
-            --query "AutoScalingGroups[?VPCZoneIdentifier!=null && contains(VPCZoneIdentifier, '$VPC_ID') == \`true\`].AutoScalingGroupName" \
+            --query "AutoScalingGroups[?contains(VPCZoneIdentifier, '${VPC_ID}')].AutoScalingGroupName" \
             --output text 2>/dev/null || echo "")
-          # Fallback: find ASGs by tag namespace (handles cases where VPC filter misses)
           if [[ -z "$ASG_NAMES" || "$ASG_NAMES" == "None" ]]; then
             ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
               --region "$REGION" \
@@ -579,45 +588,100 @@ jobs:
           fi
           if [[ -n "$ASG_NAMES" && "$ASG_NAMES" != "None" ]]; then
             for ASG_NAME in $ASG_NAMES; do
-              echo "   → Suspending ASG: $ASG_NAME"
+              echo "   → Suspending: $ASG_NAME"
               aws autoscaling suspend-processes \
                 --auto-scaling-group-name "$ASG_NAME" \
                 --scaling-processes Launch Terminate ReplaceUnhealthy AZRebalance \
-                --region "$REGION" 2>/dev/null \
-                && echo "   ✅ Suspended" || echo "   ⚠️  Could not suspend $ASG_NAME"
-              # Set desired + min to 0 to drain cleanly
+                --region "$REGION" 2>/dev/null && echo "   ✅ Suspended" || true
               aws autoscaling update-auto-scaling-group \
                 --auto-scaling-group-name "$ASG_NAME" \
                 --min-size 0 --desired-capacity 0 \
                 --region "$REGION" 2>/dev/null && echo "   ✅ Scaled to 0" || true
             done
           else
-            echo "   ℹ️  No ASGs found for this VPC/namespace"
+            echo "   ℹ️  No ASGs found"
           fi
 
-          echo "🗑️  Terminating running EC2 instances in VPC (Graviton CP)..."
+          # ── Step 0b: Scale all ECS services to 0 (drain task ENIs) ──────
+          echo "🗑️  Scaling ECS services to 0..."
+          ECS_CLUSTERS=$(aws ecs list-clusters \
+            --region "$REGION" \
+            --query 'clusterArns[]' \
+            --output text 2>/dev/null || echo "")
+          for CLUSTER_ARN in $ECS_CLUSTERS; do
+            CLUSTER_NAME=$(echo "$CLUSTER_ARN" | awk -F'/' '{print $NF}')
+            # Only touch clusters in our namespace
+            [[ "$CLUSTER_NAME" != *"$NAMESPACE"* ]] && continue
+            echo "   → Cluster: $CLUSTER_NAME"
+            SVC_ARNS=$(aws ecs list-services --cluster "$CLUSTER_ARN" \
+              --region "$REGION" --query 'serviceArns[]' --output text 2>/dev/null || echo "")
+            for SVC_ARN in $SVC_ARNS; do
+              SVC_NAME=$(echo "$SVC_ARN" | awk -F'/' '{print $NF}')
+              aws ecs update-service --cluster "$CLUSTER_ARN" --service "$SVC_ARN" \
+                --desired-count 0 --region "$REGION" 2>/dev/null \
+                && echo "     ✅ $SVC_NAME → 0" || true
+            done
+          done
+          if [[ -n "$ECS_CLUSTERS" && "$ECS_CLUSTERS" != "None" ]]; then
+            echo "   ⏳ Waiting 20s for ECS tasks to drain..."
+            sleep 20
+          fi
+
+          # ── Step 0c: Delete Load Balancers (CRITICAL — holds lb_sg + subnet ENIs) ─
+          # ALBs are part of the network module (module.environment_network.aws_security_group.lb_sg)
+          # and block subnet + SG deletion. Must delete before Terraform runs.
+          echo "🗑️  Deleting Load Balancers in VPC..."
+          LB_ARNS=$(aws elbv2 describe-load-balancers \
+            --region "$REGION" \
+            --query "LoadBalancers[?VpcId=='${VPC_ID}'].LoadBalancerArn" \
+            --output text 2>/dev/null || echo "")
+          for LB_ARN in $LB_ARNS; do
+            LB_NAME=$(aws elbv2 describe-load-balancers \
+              --load-balancer-arns "$LB_ARN" --region "$REGION" \
+              --query 'LoadBalancers[0].LoadBalancerName' --output text 2>/dev/null)
+            echo "   → Deleting LB: $LB_NAME ($LB_ARN)"
+            aws elbv2 delete-load-balancer --load-balancer-arn "$LB_ARN" \
+              --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $LB_NAME"
+          done
+          # Also clean up classic ELBs
+          CLB_NAMES=$(aws elb describe-load-balancers \
+            --region "$REGION" \
+            --query "LoadBalancerDescriptions[?VPCId=='${VPC_ID}'].LoadBalancerName" \
+            --output text 2>/dev/null || echo "")
+          for CLB_NAME in $CLB_NAMES; do
+            echo "   → Deleting CLB: $CLB_NAME"
+            aws elb delete-load-balancer --load-balancer-name "$CLB_NAME" \
+              --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Deleted" || true
+          done
+          if [[ -n "$LB_ARNS" || -n "$CLB_NAMES" ]]; then
+            echo "   ⏳ Waiting 30s for LB deletion + ENI release..."
+            sleep 30
+          fi
+
+          # ── Step 0d: Terminate EC2 instances (Graviton CP EIPs) ──────────
+          echo "🗑️  Terminating running EC2 instances in VPC..."
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --filters "Name=vpc-id,Values=$VPC_ID" "Name=instance-state-name,Values=running,stopping,pending" \
             --region "$REGION" \
             --query 'Reservations[*].Instances[*].InstanceId' \
             --output text 2>/dev/null || echo "")
           if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
-            echo "   → Found instances: $INSTANCE_IDS"
+            echo "   → Found: $INSTANCE_IDS"
             aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Termination initiated" || echo "   ⚠️  Could not terminate instances"
-            echo "   ⏳ Waiting for instances to reach terminated state..."
+              && echo "   ✅ Termination initiated" || echo "   ⚠️  Could not terminate"
+            echo "   ⏳ Waiting for confirmed termination..."
             aws ec2 wait instance-terminated \
-              --instance-ids $INSTANCE_IDS \
-              --region "$REGION" 2>/dev/null \
-              && echo "   ✅ All instances terminated — EIPs/ENIs released" \
-              || echo "   ⚠️  Wait timed out — proceeding anyway"
+              --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Terminated — EIPs/ENIs released" \
+              || echo "   ⚠️  Wait timed out — proceeding"
           else
-            echo "   ℹ️  No running instances found in VPC"
+            echo "   ℹ️  No running instances"
           fi
 
-
-          # ── Step 1: Delete NAT Gateways (holds EIPs + keeps ENIs in-use) ─────
-          echo "🗑️  Deleting NAT Gateways in VPC..."
+          # ── Step 1: Delete NAT Gateways ────────────────────────────────
+          echo "🗑️  Deleting NAT Gateways..."
           NGW_IDS=$(aws ec2 describe-nat-gateways \
             --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=available,pending" \
             --region "$REGION" \
@@ -628,11 +692,11 @@ jobs:
             aws ec2 delete-nat-gateway --nat-gateway-id "$NGW_ID" --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $NGW_ID"
           done
-          # Wait for NAT GWs to finish deleting (they release EIPs + ENIs asynchronously)
-          if [[ -n "$NGW_IDS" && "$NGW_IDS" != "" ]]; then
-            echo "   ⏳ Waiting 30s for NAT GW deletion to propagate..."
+          if [[ -n "$NGW_IDS" && "$NGW_IDS" != "None" && "$NGW_IDS" != "" ]]; then
+            echo "   ⏳ Waiting 30s for NAT GW deletion..."
             sleep 30
           fi
+
 
           # ── Step 2: Disassociate + Release ALL EIPs (including still-associated ones)
           echo "🗑️  Disassociating and releasing all Elastic IPs..."
