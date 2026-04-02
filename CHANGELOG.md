@@ -2,6 +2,20 @@
 
 ## v1.4.76 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-04-01
+- chore: update CHANGELOG for v1.4.75
+
+### Fixed
+
+
+## v1.4.76 (2026-04-02)
+
 ### Fixed
 - fix(teardown): add `cleanup-vpc-orphans` job — force-deletes orphaned ENIs, SGs, and EIPs before `destroy-network` runs. Root cause of run #23872243675 `DependencyViolation` on subnet/IGW deletion after app stack destroyed. Mirrors `99-nuke-env` Step 4. AWS-only, skips non-AWS providers.
 
