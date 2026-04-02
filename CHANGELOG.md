@@ -2,6 +2,19 @@
 
 ## v1.4.86 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.85
+
+### Fixed
+
+
+## v1.4.86 (2026-04-02)
+
 ### Fixed
 - fix(calculate-config): add `multi-site` to the STAGE_KEY guard in multi-site-app/network/cdn dir resolution — prevents `multi-site-multi-site-app` double-prefix when `environment=multi-site`
 
