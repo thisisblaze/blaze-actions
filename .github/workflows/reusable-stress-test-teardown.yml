@@ -561,6 +561,26 @@ jobs:
 
           echo "🔍 Found VPC: $VPC_ID"
 
+          # ── Step 0: Terminate running EC2 instances (Graviton CP holds EIPs) ──
+          # EIPs associated to running EC2 instances cannot be disassociated via
+          # disassociate-address. Terminating the instances causes AWS to release
+          # their EIPs and detach their ENIs automatically and cleanly.
+          echo "🗑️  Terminating running EC2 instances in VPC (Graviton CP)..."
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=instance-state-name,Values=running,stopping,pending" \
+            --region "$REGION" \
+            --query 'Reservations[*].Instances[*].InstanceId' \
+            --output text 2>/dev/null || echo "")
+          if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
+            echo "   → Found instances: $INSTANCE_IDS"
+            aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Termination initiated" || echo "   ⚠️  Could not terminate instances"
+            echo "   ⏳ Waiting 45s for instances to terminate and release EIPs/ENIs..."
+            sleep 45
+          else
+            echo "   ℹ️  No running instances found in VPC"
+          fi
+
           # ── Step 1: Delete NAT Gateways (holds EIPs + keeps ENIs in-use) ─────
           echo "🗑️  Deleting NAT Gateways in VPC..."
           NGW_IDS=$(aws ec2 describe-nat-gateways \

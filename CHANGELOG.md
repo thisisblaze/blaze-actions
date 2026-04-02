@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.80 (2026-04-02)
+
+### Fixed
+- fix(teardown/cleanup-vpc-orphans): add Step 0 — terminate running EC2 instances in VPC before EIP/ENI cleanup — Graviton CP instances hold EIPs via instance-association which cannot be freed with disassociate-address while the instance is running; terminating first causes AWS to automatically release EIPs and detach ENIs cleanly
+
 ## v1.4.79 (2026-04-02)
 
 ### Added
