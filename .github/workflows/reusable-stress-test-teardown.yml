@@ -561,10 +561,40 @@ jobs:
 
           echo "🔍 Found VPC: $VPC_ID"
 
-          # ── Step 0: Terminate running EC2 instances (Graviton CP holds EIPs) ──
-          # EIPs associated to running EC2 instances cannot be disassociated via
-          # disassociate-address. Terminating the instances causes AWS to release
-          # their EIPs and detach their ENIs automatically and cleanly.
+          # ── Step 0: Suspend ASGs + Terminate EC2 instances (Graviton CP holds EIPs) ──
+          # The Graviton Capacity Provider uses an Auto Scaling Group. If we just terminate
+          # instances the ASG immediately relaunches replacements, re-associating fresh EIPs.
+          # Fix: suspend all ASG scaling processes first, THEN terminate instances, then wait.
+          echo "🗑️  Suspending Auto Scaling Groups in VPC (prevent instance replacement)..."
+          ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
+            --region "$REGION" \
+            --query "AutoScalingGroups[?VPCZoneIdentifier!=null && contains(VPCZoneIdentifier, '$VPC_ID') == \`true\`].AutoScalingGroupName" \
+            --output text 2>/dev/null || echo "")
+          # Fallback: find ASGs by tag namespace (handles cases where VPC filter misses)
+          if [[ -z "$ASG_NAMES" || "$ASG_NAMES" == "None" ]]; then
+            ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
+              --region "$REGION" \
+              --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${NAMESPACE}')].AutoScalingGroupName" \
+              --output text 2>/dev/null || echo "")
+          fi
+          if [[ -n "$ASG_NAMES" && "$ASG_NAMES" != "None" ]]; then
+            for ASG_NAME in $ASG_NAMES; do
+              echo "   → Suspending ASG: $ASG_NAME"
+              aws autoscaling suspend-processes \
+                --auto-scaling-group-name "$ASG_NAME" \
+                --scaling-processes Launch Terminate ReplaceUnhealthy AZRebalance \
+                --region "$REGION" 2>/dev/null \
+                && echo "   ✅ Suspended" || echo "   ⚠️  Could not suspend $ASG_NAME"
+              # Set desired + min to 0 to drain cleanly
+              aws autoscaling update-auto-scaling-group \
+                --auto-scaling-group-name "$ASG_NAME" \
+                --min-size 0 --desired-capacity 0 \
+                --region "$REGION" 2>/dev/null && echo "   ✅ Scaled to 0" || true
+            done
+          else
+            echo "   ℹ️  No ASGs found for this VPC/namespace"
+          fi
+
           echo "🗑️  Terminating running EC2 instances in VPC (Graviton CP)..."
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --filters "Name=vpc-id,Values=$VPC_ID" "Name=instance-state-name,Values=running,stopping,pending" \
@@ -575,11 +605,16 @@ jobs:
             echo "   → Found instances: $INSTANCE_IDS"
             aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
               && echo "   ✅ Termination initiated" || echo "   ⚠️  Could not terminate instances"
-            echo "   ⏳ Waiting 45s for instances to terminate and release EIPs/ENIs..."
-            sleep 45
+            echo "   ⏳ Waiting for instances to reach terminated state..."
+            aws ec2 wait instance-terminated \
+              --instance-ids $INSTANCE_IDS \
+              --region "$REGION" 2>/dev/null \
+              && echo "   ✅ All instances terminated — EIPs/ENIs released" \
+              || echo "   ⚠️  Wait timed out — proceeding anyway"
           else
             echo "   ℹ️  No running instances found in VPC"
           fi
+
 
           # ── Step 1: Delete NAT Gateways (holds EIPs + keeps ENIs in-use) ─────
           echo "🗑️  Deleting NAT Gateways in VPC..."

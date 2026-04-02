@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.81 (2026-04-02)
+
+### Fixed
+- fix(teardown/cleanup-vpc-orphans): suspend Graviton ASG scaling processes (Launch/Terminate/ReplaceUnhealthy/AZRebalance) + set desired=0 before instance termination — ASG was immediately relaunching replacement instances after terminate, re-associating fresh EIPs; suspension prevents this
+- fix(teardown/cleanup-vpc-orphans): replace blind sleep 45s with aws ec2 wait instance-terminated — waits for actual termination confirmation instead of guessing
+
 ## v1.4.80 (2026-04-02)
 
 ### Added
