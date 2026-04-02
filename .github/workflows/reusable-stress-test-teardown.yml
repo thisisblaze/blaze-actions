@@ -579,43 +579,69 @@ jobs:
             sleep 30
           fi
 
-          # ── Step 2: Release EIPs now freed by NAT GW deletion ────────────────
-          echo "🗑️  Releasing unassociated Elastic IPs..."
-          EIP_ALLOC_IDS=$(aws ec2 describe-addresses \
-            --filters "Name=domain,Values=vpc" \
-            --region "$REGION" \
-            --query "Addresses[?AssociationId==null].AllocationId" \
-            --output text 2>/dev/null || echo "")
-          for ALLOC_ID in $EIP_ALLOC_IDS; do
+          # ── Step 2: Disassociate + Release ALL EIPs (including still-associated ones)
+          echo "🗑️  Disassociating and releasing all Elastic IPs..."
+          while IFS=$'\t' read -r ALLOC_ID ASSOC_ID; do
+            [[ -z "$ALLOC_ID" || "$ALLOC_ID" == "None" ]] && continue
+            if [[ -n "$ASSOC_ID" && "$ASSOC_ID" != "None" ]]; then
+              echo "   → Disassociating EIP $ALLOC_ID (assoc: $ASSOC_ID)..."
+              aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/dev/null || true
+              sleep 2
+            fi
             echo "   → Releasing EIP: $ALLOC_ID"
             aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null \
               && echo "   ✅ Released" || echo "   ⚠️  Could not release $ALLOC_ID"
-          done
+          done < <(aws ec2 describe-addresses \
+            --filters "Name=domain,Values=vpc" \
+            --region "$REGION" \
+            --query 'Addresses[*].[AllocationId,AssociationId]' \
+            --output text 2>/dev/null || true)
 
-          # ── Step 3: Delete all ENIs in VPC (available + in-use after NAT GW gone)
-          echo "🗑️  Deleting orphaned ENIs in VPC..."
-          ENI_IDS=$(aws ec2 describe-network-interfaces \
+          # ── Step 3: Force-detach + delete all ENIs in VPC ────────────────────
+          echo "🗑️  Force-detaching and deleting orphaned ENIs in VPC..."
+          while IFS=$'\t' read -r ENI_ID ATTACH_ID STATUS; do
+            [[ -z "$ENI_ID" || "$ENI_ID" == "None" ]] && continue
+            echo "   → ENI: $ENI_ID (status=$STATUS)"
+            if [[ -n "$ATTACH_ID" && "$ATTACH_ID" != "None" && "$STATUS" == "in-use" ]]; then
+              echo "     Force-detaching attachment $ATTACH_ID..."
+              aws ec2 detach-network-interface --attachment-id "$ATTACH_ID" --force --region "$REGION" 2>/dev/null \
+                && echo "     ✅ Detached — waiting 8s..." && sleep 8 \
+                || echo "     ⚠️  Detach failed (will retry delete anyway)"
+            fi
+            aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/dev/null \
+              && echo "     ✅ Deleted" || echo "     ⚠️  Could not delete $ENI_ID"
+          done < <(aws ec2 describe-network-interfaces \
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
-            --query 'NetworkInterfaces[*].NetworkInterfaceId' \
-            --output text 2>/dev/null || echo "")
-          for ENI_ID in $ENI_IDS; do
-            echo "   → Deleting ENI: $ENI_ID"
-            aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $ENI_ID (still in-use — Terraform will handle)"
-          done
+            --query 'NetworkInterfaces[*].[NetworkInterfaceId,Attachment.AttachmentId,Status]' \
+            --output text 2>/dev/null || true)
 
-          # ── Step 4: Delete non-default Security Groups ────────────────────────
-          echo "🗑️  Deleting orphaned Security Groups in VPC..."
+          # ── Step 4: Revoke all SG rules then delete ───────────────────────────
+          echo "🗑️  Revoking rules and deleting orphaned Security Groups in VPC..."
           SG_IDS=$(aws ec2 describe-security-groups \
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
             --output text 2>/dev/null || echo "")
           for SG_ID in $SG_IDS; do
+            echo "   → Revoking rules for SG: $SG_ID"
+            # Revoke all ingress
+            INGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
+              --query 'SecurityGroups[0].IpPermissions' --output json 2>/dev/null || echo "[]")
+            if [[ "$INGRESS" != "[]" && "$INGRESS" != "null" ]]; then
+              aws ec2 revoke-security-group-ingress --group-id "$SG_ID" --region "$REGION" \
+                --ip-permissions "$INGRESS" 2>/dev/null && echo "     ✅ Ingress revoked" || true
+            fi
+            # Revoke all egress
+            EGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
+              --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/dev/null || echo "[]")
+            if [[ "$EGRESS" != "[]" && "$EGRESS" != "null" ]]; then
+              aws ec2 revoke-security-group-egress --group-id "$SG_ID" --region "$REGION" \
+                --ip-permissions "$EGRESS" 2>/dev/null && echo "     ✅ Egress revoked" || true
+            fi
             echo "   → Deleting SG: $SG_ID"
             aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID (may still have dependents)"
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID"
           done
 
           echo "✅ VPC orphan cleanup complete — Terraform destroy should now proceed cleanly"
