@@ -2,6 +2,19 @@
 
 ## v1.4.77 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.76
+
+### Fixed
+
+
+## v1.4.77 (2026-04-02)
+
 ### Fixed
 - fix(teardown/cleanup-vpc-orphans): find VPC by CIDR (`10.4.0.0/16` for multi-site) instead of Name tag — tag lookup returned nothing because `terraform-aws-modules/vpc` sets the Name tag differently than expected. CIDR is hardcoded in `main.tf` and deterministic.
 - fix(teardown/cleanup-vpc-orphans): add NAT Gateway deletion (Step 1) before ENI/SG cleanup — NAT GWs hold EIPs attached to the IGW and keep ENIs `in-use`, which was the real root cause of the `DependencyViolation` on subnet/IGW deletion. Also removed `status=available` filter from ENI cleanup (delete all ENIs in VPC after NAT GW is gone).
