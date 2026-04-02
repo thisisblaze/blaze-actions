@@ -2,6 +2,19 @@
 
 ## v1.4.82 (2026-04-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.81
+
+### Fixed
+
+
+## v1.4.82 (2026-04-02)
+
 ### Fixed
 - fix(teardown/cleanup-vpc-orphans): complete architectural rewrite of teardown order — add Step 0b (scale ECS services to 0) and Step 0c (delete ALBs/CLBs) which are the root cause of lb_sg + subnet DependencyViolation; LBs create ENIs in subnets and reference lb_sg blocking Terraform destroy
 - fix(teardown/cleanup-vpc-orphans): simplify ASG VPC filter query to avoid JMESPath backtick escaping issues
