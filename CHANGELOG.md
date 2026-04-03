@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.91 (2026-04-03)
+
+### Fixed
+- fix(reusable-stress-test-verify): bump `reusable-verify-aws.yml` pin `@v1.4.37` → `@v1.4.90` — was referencing a 53-version-old pin, meaning the 20-min ECS stable-wait fix would never have been picked up at runtime
+
 ## v1.4.90 (2026-04-03)
 
 ### Fixed

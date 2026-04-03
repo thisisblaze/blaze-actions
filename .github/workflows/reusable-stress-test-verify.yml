@@ -206,7 +206,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'aws'
     needs: [config]
     name: "✅ Verify Environment (AWS)"
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@v1.4.37
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@v1.4.90
     with:
       environment: ${{ inputs.environment }}
       cluster_name: ${{ needs.config.outputs.cluster_name }}
