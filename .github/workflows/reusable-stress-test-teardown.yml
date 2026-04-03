@@ -520,7 +520,7 @@ jobs:
     name: "🧹 Cleanup VPC Orphans (Pre-Network Destroy)"
     needs: [config, destroy-app, destroy-tunnel, destroy-data-pod, check-states]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
@@ -674,11 +674,48 @@ jobs:
             echo "   ⏳ Waiting for confirmed termination..."
             aws ec2 wait instance-terminated \
               --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
-              && echo "   ✅ Terminated — EIPs/ENIs released" \
+              && echo "   ✅ Instances terminated" \
               || echo "   ⚠️  Wait timed out — proceeding"
           else
             echo "   ℹ️  No running instances"
           fi
+
+          # ── Step 0e: Wait for ECS trunk ENI drain (CRITICAL for awsvpc mode) ──
+          # ECS VPC trunking (EC2 + awsvpc) creates trunk ENIs attached to Graviton
+          # instances. These ENIs are managed by the ECS control plane and persist
+          # 2-5 min after instance termination even after aws ec2 wait instance-terminated.
+          # Force-detaching trunk ENIs is not possible (API error: cannot detach trunk).
+          # We must poll until ECS releases them before Destroy Network runs.
+          echo "   ⏳ Polling for ECS trunk ENI drain (max 5 min)..."
+          TRUNK_WAIT=0
+          TRUNK_MAX=300  # 5 minutes
+          while true; do
+            TRUNK_ENI_COUNT=$(aws ec2 describe-network-interfaces \
+              --filters "Name=vpc-id,Values=$VPC_ID" "Name=interface-type,Values=trunk" \
+              --region "$REGION" \
+              --query 'length(NetworkInterfaces)' \
+              --output text 2>/dev/null || echo "0")
+            ECS_ENI_COUNT=$(aws ec2 describe-network-interfaces \
+              --filters "Name=vpc-id,Values=$VPC_ID" "Name=description,Values=arn:aws:ecs:*" \
+              --region "$REGION" \
+              --query 'length(NetworkInterfaces)' \
+              --output text 2>/dev/null || echo "0")
+            TRUNK_ENI_COUNT="${TRUNK_ENI_COUNT//None/0}"
+            ECS_ENI_COUNT="${ECS_ENI_COUNT//None/0}"
+            TOTAL=$((TRUNK_ENI_COUNT + ECS_ENI_COUNT))
+            if [[ "$TOTAL" -eq 0 ]]; then
+              echo "   ✅ All ECS/trunk ENIs released (${TRUNK_WAIT}s elapsed)"
+              break
+            fi
+            if [[ "$TRUNK_WAIT" -ge "$TRUNK_MAX" ]]; then
+              echo "   ⚠️  ECS ENI drain timed out after ${TRUNK_WAIT}s — ${TRUNK_ENI_COUNT} trunk + ${ECS_ENI_COUNT} ECS ENIs remain"
+              echo "      Proceeding — Step 3 force-detach will attempt cleanup"
+              break
+            fi
+            echo "   ⌛ ${TRUNK_ENI_COUNT} trunk + ${ECS_ENI_COUNT} ECS ENIs still attached (${TRUNK_WAIT}s elapsed)..."
+            sleep 10
+            TRUNK_WAIT=$((TRUNK_WAIT + 10))
+          done
 
           # ── Step 1: Delete NAT Gateways ────────────────────────────────
           echo "🗑️  Deleting NAT Gateways..."
