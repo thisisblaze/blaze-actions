@@ -2,6 +2,20 @@
 
 ## v1.4.92 (2026-04-03)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.91
+- chore: update CHANGELOG for v1.4.90
+
+### Fixed
+
+
+## v1.4.92 (2026-04-03)
+
 ### Fixed
 - fix(reusable-stress-test-teardown): add ECS trunk ENI drain poll loop (Step 0e) in `cleanup-vpc-orphans` — after `aws ec2 wait instance-terminated`, ECS control plane holds trunk ENIs for 2–5 min in awsvpc mode; new loop polls every 10s (max 5 min) until all trunk + ECS-description ENIs are released from the VPC, preventing `DependencyViolation` on subnet/IGW deletion in Destroy Network
 - chore: bump `cleanup-vpc-orphans` `timeout-minutes` 15 → 20 to accommodate drain wait
