@@ -114,7 +114,7 @@ env:
 jobs:
   verify:
     name: "⚡ Verify Deployment"
-    timeout-minutes: 30
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -136,7 +136,7 @@ jobs:
           CLUSTER="${{ inputs.cluster_name }}"
           REGION="${{ inputs.aws_region }}"
 
-          echo "⏳ Waiting up to 10 min for all ECS services to reach stable state..."
+          echo "⏳ Waiting up to 20 min for all ECS services to reach stable state..."
 
           {
             echo "## 🎯 ECS Service Status"
@@ -156,7 +156,7 @@ jobs:
             SERVICE_NAMES=$(echo "$SERVICES" | xargs -I{} sh -c 'echo "${1##*/}"' -- {})
             echo "Waiting for services: $SERVICE_NAMES" >&2
             
-            TIMEOUT=600
+            TIMEOUT=1200
             ELAPSED=0
             STABLE=false
             while [ $ELAPSED -lt $TIMEOUT ]; do

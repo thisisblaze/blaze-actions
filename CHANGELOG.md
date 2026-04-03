@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.90 (2026-04-03)
+
+### Fixed
+- fix(reusable-verify-aws): increase ECS stable-wait timeout 600s → 1200s (10 min → 20 min) — root cause of run #23907200232 failure: Graviton ASG cold-starts from 0 on fresh provision; EC2 boot + ECS agent register + 300s instance_warmup_period = ~7 min before tasks can place, leaving only 3 min within the old 10-min window
+- fix(reusable-verify-aws): bump job `timeout-minutes` 30 → 45 to accommodate the new 20-min ECS wait plus subsequent URL verification steps
+
 ## v1.4.89 (2026-04-02)
 
 ### Added
