@@ -333,7 +333,7 @@ jobs:
 
   dispatch-azure:
     if: inputs.cloud_provider == 'azure'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v1.4.37
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v2.1.1
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
