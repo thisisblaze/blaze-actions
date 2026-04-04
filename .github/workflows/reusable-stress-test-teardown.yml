@@ -535,9 +535,11 @@ jobs:
           BLAZE_ENV="${{ inputs.environment }}"
           BLAZE_PROJECT="${{ needs.config.outputs.project_key }}"
 
-          # ── Find VPC: tag-first (Blaze:Architecture), then CIDR fallback ────
-          # v1.4.94+: Resources provisioned with Blaze tags expose tag-first lookup.
-          # Until all environments are reprovisioned, CIDR/Name fallback remains.
+          # ── Find VPC: tag-first (Blaze tags), then Name tag fallback ────────
+          # v1.4.94+: Blaze:Architecture+Project+Environment tags used first.
+          # Fallback: Name tag convention blaze-b9-{project}-{env}-vpc (all stacks).
+          # NOTE: CIDR-based fallback removed (v1.4.95) — CIDR is not unique across
+          # environments (e.g. dev and multi-site may share the same CIDR range).
           VPC_ID=$(aws ec2 describe-vpcs \
             --filters \
               "Name=tag:Blaze:Architecture,Values=two-pillar-v2" \
@@ -548,22 +550,13 @@ jobs:
             --output text 2>/dev/null || echo "")
 
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
-            echo "⚠️  Tag-based VPC not found — falling back to CIDR/Name lookup"
-            if [[ "${{ inputs.network_stack }}" == "multi-site-network" ]]; then
-              VPC_CIDR="10.4.0.0/16"
-              VPC_ID=$(aws ec2 describe-vpcs \
-                --filters "Name=cidr,Values=${VPC_CIDR}" \
-                --region "$REGION" \
-                --query 'Vpcs[0].VpcId' \
-                --output text 2>/dev/null || echo "")
-            else
-              TAG_VALUE="blaze-b9-${BLAZE_PROJECT}-${BLAZE_ENV}"
-              VPC_ID=$(aws ec2 describe-vpcs \
-                --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
-                --region "$REGION" \
-                --query 'Vpcs[0].VpcId' \
-                --output text 2>/dev/null || echo "")
-            fi
+            echo "⚠️  Tag-based VPC not found — falling back to Name tag lookup"
+            TAG_VALUE="blaze-b9-${BLAZE_PROJECT}-${BLAZE_ENV}"
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
+              --region "$REGION" \
+              --query 'Vpcs[0].VpcId' \
+              --output text 2>/dev/null || echo "")
           fi
 
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
