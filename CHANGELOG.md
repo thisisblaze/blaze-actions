@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.4.93 (2026-04-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.94
+
+### Fixed
+
+
 ## v1.4.94 (2026-04-04)
 
 ### Added
