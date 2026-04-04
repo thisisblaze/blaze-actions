@@ -93,3 +93,18 @@ variable "ec2_asg_desired" {
   description = "Initial desired count for the Graviton ASG"
   default     = 2
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# BLAZE SIGNATURE TAGS (v1.4.94)
+# ──────────────────────────────────────────────────────────────────────────────
+variable "stack_name" {
+  type        = string
+  default     = "multi-site-network"
+  description = "Stack identifier for Blaze:Stack tag. Set automatically by CI."
+}
+
+variable "blaze_run_id" {
+  type        = string
+  default     = "manual"
+  description = "GitHub Actions run ID for Blaze:RunId tag."
+}

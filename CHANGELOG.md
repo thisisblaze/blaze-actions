@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.4.94 (2026-04-04)
+
+### Added
+- feat(tag-taxonomy): introduce mandatory **Blaze Signature Tag** taxonomy across all live AWS Terraform stacks in `blaze-template-deploy` and `blaze-actions`:
+  - Tags injected via AWS provider `default_tags` (Option A — provider-level, no infra-core module changes)
+  - Tag set: `Blaze:Architecture=two-pillar-v2`, `Blaze:Provisioner=blaze-actions`, `Blaze:ManagedBy=terraform`, `Blaze:Project`, `Blaze:Environment`, `Blaze:Client`, `Blaze:Stack`, `Blaze:RunId`
+  - `Blaze:RunId=$GITHUB_RUN_ID` enables per-run cost attribution and surgical tag-based cleanup
+- feat(reusable-terraform): inject `TF_VAR_stack_name` (basename of tf_dir) and `TF_VAR_blaze_run_id` ($GITHUB_RUN_ID) in new **Inject Blaze Signature Tag Vars** step — auto-covers all stacks
+- feat(variables): add `stack_name` + `blaze_run_id` variables with safe defaults to all AWS live stack `variables.tf`
+
+### Changed
+- feat(cleanup-vpc-orphans): VPC discovery upgraded to **tag-first** strategy using Blaze tags, with CIDR/Name fallback for older environments
+- feat(99-nuke-env): Steps 4+5 use tag-first VPC discovery; Step 5 adds NAT GW + VPC-scoped EIP release before IGW detach
+- chore(99-nuke-env): bump action pins `@v1.4.92` → `@v1.4.93`
+
+## v1.4.93 (2026-04-04)
+
+### Fixed
+- fix(cleanup-vpc-orphans): **EIP scoping root cause** — `aws ec2 describe-addresses` has no `vpc-id` filter; account-wide query missed the IGW-mapped EIP causing `DependencyViolation`. New strategy: enumerate via NAT GW + EC2 + ENI→VPC client-side catch-all
+- fix(cleanup-vpc-orphans): add **IGW unmap verification loop** (Step 2b) — poll until zero associated EIPs before Terraform destroy (max 60s)
+- fix(cleanup-vpc-orphans): **two-pass SG cleanup** — Pass 1: revoke ALL rules across ALL SGs; Pass 2: delete all SGs. Eliminates circular SG reference failures
+- fix(99-nuke-env): Step 4 upgraded to two-pass SG revoke-then-delete
+
+
 ## v1.4.92 (2026-04-03)
 
 ### Added

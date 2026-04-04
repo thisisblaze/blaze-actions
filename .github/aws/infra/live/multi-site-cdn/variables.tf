@@ -99,3 +99,18 @@ variable "cloudfront_price_class" {
     error_message = "cloudfront_price_class must be PriceClass_100, PriceClass_200, or PriceClass_All"
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# BLAZE SIGNATURE TAGS (v1.4.94)
+# ──────────────────────────────────────────────────────────────────────────────
+variable "stack_name" {
+  type        = string
+  default     = "multi-site-cdn"
+  description = "Stack identifier for Blaze:Stack tag. Set automatically by CI."
+}
+
+variable "blaze_run_id" {
+  type        = string
+  default     = "manual"
+  description = "GitHub Actions run ID for Blaze:RunId tag."
+}

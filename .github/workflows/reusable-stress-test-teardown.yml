@@ -532,26 +532,38 @@ jobs:
       - name: "Force-Delete Orphaned SGs + ENIs (Unblocks VPC)"
         run: |
           REGION="${{ needs.config.outputs.aws_region || 'eu-west-1' }}"
+          BLAZE_ENV="${{ inputs.environment }}"
+          BLAZE_PROJECT="${{ needs.config.outputs.project_key }}"
 
-          # ── Find VPC by CIDR (tag-independent, deterministic) ────────────────
-          # multi-site: 10.4.0.0/16 (hardcoded in multi-site-network/main.tf)
-          # env-level falls back to tag-based lookup
-          if [[ "${{ inputs.network_stack }}" == "multi-site-network" ]]; then
-            VPC_CIDR="10.4.0.0/16"
-            VPC_ID=$(aws ec2 describe-vpcs \
-              --filters "Name=cidr,Values=${VPC_CIDR}" \
-              --region "$REGION" \
-              --query 'Vpcs[0].VpcId' \
-              --output text 2>/dev/null || echo "")
-          else
-            ENV="${{ inputs.environment }}"
-            PROJECT="${{ needs.config.outputs.project_key }}"
-            TAG_VALUE="blaze-b9-${PROJECT}-${ENV}"
-            VPC_ID=$(aws ec2 describe-vpcs \
-              --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
-              --region "$REGION" \
-              --query 'Vpcs[0].VpcId' \
-              --output text 2>/dev/null || echo "")
+          # ── Find VPC: tag-first (Blaze:Architecture), then CIDR fallback ────
+          # v1.4.94+: Resources provisioned with Blaze tags expose tag-first lookup.
+          # Until all environments are reprovisioned, CIDR/Name fallback remains.
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters \
+              "Name=tag:Blaze:Architecture,Values=two-pillar-v2" \
+              "Name=tag:Blaze:Project,Values=${BLAZE_PROJECT}" \
+              "Name=tag:Blaze:Environment,Values=${BLAZE_ENV}" \
+            --region "$REGION" \
+            --query 'Vpcs[0].VpcId' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
+            echo "⚠️  Tag-based VPC not found — falling back to CIDR/Name lookup"
+            if [[ "${{ inputs.network_stack }}" == "multi-site-network" ]]; then
+              VPC_CIDR="10.4.0.0/16"
+              VPC_ID=$(aws ec2 describe-vpcs \
+                --filters "Name=cidr,Values=${VPC_CIDR}" \
+                --region "$REGION" \
+                --query 'Vpcs[0].VpcId' \
+                --output text 2>/dev/null || echo "")
+            else
+              TAG_VALUE="blaze-b9-${BLAZE_PROJECT}-${BLAZE_ENV}"
+              VPC_ID=$(aws ec2 describe-vpcs \
+                --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
+                --region "$REGION" \
+                --query 'Vpcs[0].VpcId' \
+                --output text 2>/dev/null || echo "")
+            fi
           fi
 
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
@@ -567,10 +579,14 @@ jobs:
           #  0b. Scale ECS to 0     → drains ECS task ENIs
           #  0c. Delete LBs         → removes ENIs in subnets + frees lb_sg
           #  0d. Terminate EC2      → releases instance EIPs + ENIs
+          #  0e. Wait for ECS trunk ENI drain (awsvpc trunking)
           #  1.  Delete NAT GWs     → releases NAT EIPs
-          #  2.  Release EIPs       → unmaps public addresses from IGW
+          #  2.  Release EIPs       → VPC-scoped: NAT GW + EC2 + ENI queries
+          #                           (describe-addresses has NO vpc-id filter)
+          #  2b. Verify IGW unmap   → poll until no mapped public addresses
           #  3.  Force-detach ENIs  → clears all remaining subnet dependencies
-          #  4.  Revoke+delete SGs  → breaks circular SG references
+          #  4a. Revoke ALL SG rules (all SGs first — breaks circular refs)
+          #  4b. Delete ALL SGs     (second pass — all cross-refs already gone)
           #  → Terraform: subnets / route tables / IGW / VPC
           # ══════════════════════════════════════════════════════════════════
 
@@ -735,10 +751,55 @@ jobs:
           fi
 
 
-          # ── Step 2: Disassociate + Release ALL EIPs (including still-associated ones)
-          echo "🗑️  Disassociating and releasing all Elastic IPs..."
-          while IFS=$'\t' read -r ALLOC_ID ASSOC_ID; do
-            [[ -z "$ALLOC_ID" || "$ALLOC_ID" == "None" ]] && continue
+          # ── Step 2: Disassociate + Release ALL EIPs — VPC-scoped ─────────────
+          # CRITICAL FIX (v1.4.93): aws ec2 describe-addresses has NO vpc-id filter.
+          # Account-wide query silently misses EIPs mapped to OUR IGW.
+          # Strategy: enumerate EIPs via NAT GWs + EC2 instances in this VPC,
+          # then catch any remaining via ENI→VPC association client-side check.
+          echo "🗑️  Discovering and releasing EIPs scoped to VPC $VPC_ID..."
+          ALLOC_IDS=()
+
+          # NAT Gateway EIPs (most common cause of IGW 'mapped public address' error)
+          NGW_EIPS=$(aws ec2 describe-nat-gateways \
+            --filter "Name=vpc-id,Values=$VPC_ID" \
+            --region "$REGION" \
+            --query 'NatGateways[*].NatGatewayAddresses[*].AllocationId' \
+            --output text 2>/dev/null || echo "")
+          for EIP in $NGW_EIPS; do
+            [[ -n "$EIP" && "$EIP" != "None" ]] && ALLOC_IDS+=("$EIP")
+          done
+
+          # EC2 instance EIPs (Graviton ASG instances)
+          EC2_EIPS=$(aws ec2 describe-instances \
+            --filters "Name=vpc-id,Values=$VPC_ID" \
+            --region "$REGION" \
+            --query 'Reservations[*].Instances[*].NetworkInterfaces[*].Association.AllocationId' \
+            --output text 2>/dev/null || echo "")
+          for EIP in $EC2_EIPS; do
+            [[ -n "$EIP" && "$EIP" != "None" ]] && ALLOC_IDS+=("$EIP")
+          done
+
+          # Catch-all: EIPs associated with ENIs in our VPC (e.g. IGW-mapped EIPs)
+          while IFS=$'\t' read -r ALLOC NIC; do
+            [[ -z "$ALLOC" || "$ALLOC" == "None" || -z "$NIC" || "$NIC" == "None" ]] && continue
+            NIC_VPC=$(aws ec2 describe-network-interfaces \
+              --network-interface-ids "$NIC" --region "$REGION" \
+              --query 'NetworkInterfaces[0].VpcId' --output text 2>/dev/null || echo "")
+            [[ "$NIC_VPC" == "$VPC_ID" ]] && ALLOC_IDS+=("$ALLOC")
+          done < <(aws ec2 describe-addresses \
+            --filters "Name=domain,Values=vpc" \
+            --region "$REGION" \
+            --query 'Addresses[?NetworkInterfaceId!=null].[AllocationId,NetworkInterfaceId]' \
+            --output text 2>/dev/null || true)
+
+          # Deduplicate
+          ALLOC_IDS=($(printf '%s\n' "${ALLOC_IDS[@]}" | sort -u))
+          echo "   Found ${#ALLOC_IDS[@]} EIPs associated with VPC $VPC_ID"
+
+          for ALLOC_ID in "${ALLOC_IDS[@]}"; do
+            ASSOC_ID=$(aws ec2 describe-addresses \
+              --allocation-ids "$ALLOC_ID" --region "$REGION" \
+              --query 'Addresses[0].AssociationId' --output text 2>/dev/null || echo "")
             if [[ -n "$ASSOC_ID" && "$ASSOC_ID" != "None" ]]; then
               echo "   → Disassociating EIP $ALLOC_ID (assoc: $ASSOC_ID)..."
               aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/dev/null || true
@@ -746,7 +807,6 @@ jobs:
               sleep 10
             fi
             echo "   → Releasing EIP: $ALLOC_ID"
-            # Retry up to 3 times — AWS disassociate-address is eventually consistent
             RELEASED=false
             for ATTEMPT in 1 2 3; do
               if aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null; then
@@ -758,11 +818,38 @@ jobs:
               sleep 8
             done
             [[ "$RELEASED" == "false" ]] && echo "   ⚠️  Could not release $ALLOC_ID after 3 attempts"
-          done < <(aws ec2 describe-addresses \
-            --filters "Name=domain,Values=vpc" \
-            --region "$REGION" \
-            --query 'Addresses[*].[AllocationId,AssociationId]' \
-            --output text 2>/dev/null || true)
+          done
+
+          # ── Step 2b: Verify IGW has no mapped public addresses before Terraform ─
+          # IGW detach fails if VPC still has mapped public addresses (EIPs).
+          # Poll until clear (max 60s) — gives AWS time to propagate EIP releases.
+          if [[ ${#ALLOC_IDS[@]} -gt 0 ]]; then
+            echo "   ⏳ Waiting for IGW public address unmap propagation (max 60s)..."
+            IGW_WAIT=0
+            while [[ $IGW_WAIT -lt 60 ]]; do
+              IGW_ID=$(aws ec2 describe-internet-gateways \
+                --filters "Name=attachment.vpc-id,Values=$VPC_ID" \
+                --region "$REGION" \
+                --query 'InternetGateways[0].InternetGatewayId' \
+                --output text 2>/dev/null || echo "")
+              if [[ -z "$IGW_ID" || "$IGW_ID" == "None" ]]; then
+                echo "   ✅ No IGW found (already detached or never existed)"
+                break
+              fi
+              # Check for EIPs still referencing ENIs in our VPC
+              REMAINING_EIPS=$(aws ec2 describe-addresses \
+                --filters "Name=domain,Values=vpc" \
+                --region "$REGION" \
+                --query 'Addresses[?AssociationId!=null] | length(@)' \
+                --output text 2>/dev/null || echo "0")
+              if [[ "${REMAINING_EIPS:-0}" -eq 0 ]]; then
+                echo "   ✅ All EIPs released — IGW unmapped (${IGW_WAIT}s)"
+                break
+              fi
+              echo "   ⌛ ${REMAINING_EIPS} EIPs still associated (${IGW_WAIT}s elapsed)..."
+              sleep 10; IGW_WAIT=$((IGW_WAIT + 10))
+            done
+          fi
 
           # ── Step 3: Force-detach + delete all ENIs in VPC ────────────────────
           echo "🗑️  Force-detaching and deleting orphaned ENIs in VPC..."
@@ -783,8 +870,11 @@ jobs:
             --query 'NetworkInterfaces[*].[NetworkInterfaceId,Attachment.AttachmentId,Status]' \
             --output text 2>/dev/null || true)
 
-          # ── Step 4: Revoke all SG rules then delete ───────────────────────────
-          echo "🗑️  Revoking rules and deleting orphaned Security Groups in VPC..."
+          # ── Step 4a: Revoke ALL SG rules (all SGs first — breaks circular refs) ──
+          # CRITICAL FIX (v1.4.93): The previous single-pass loop failed because
+          # SG-A→SG-B cross-references prevented deletion while the other SG still
+          # referenced it. Two-pass: revoke all rules across all SGs first, then delete.
+          echo "🗑️  Pass 1/2 — Revoking all SG rules (breaks circular cross-references)..."
           SG_IDS=$(aws ec2 describe-security-groups \
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
@@ -792,20 +882,24 @@ jobs:
             --output text 2>/dev/null || echo "")
           for SG_ID in $SG_IDS; do
             echo "   → Revoking rules for SG: $SG_ID"
-            # Revoke all ingress
             INGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
               --query 'SecurityGroups[0].IpPermissions' --output json 2>/dev/null || echo "[]")
             if [[ "$INGRESS" != "[]" && "$INGRESS" != "null" ]]; then
               aws ec2 revoke-security-group-ingress --group-id "$SG_ID" --region "$REGION" \
                 --ip-permissions "$INGRESS" 2>/dev/null && echo "     ✅ Ingress revoked" || true
             fi
-            # Revoke all egress
             EGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
               --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/dev/null || echo "[]")
             if [[ "$EGRESS" != "[]" && "$EGRESS" != "null" ]]; then
               aws ec2 revoke-security-group-egress --group-id "$SG_ID" --region "$REGION" \
                 --ip-permissions "$EGRESS" 2>/dev/null && echo "     ✅ Egress revoked" || true
             fi
+          done
+          echo "   ✅ All SG rules revoked"
+
+          # ── Step 4b: Delete ALL SGs (second pass — no cross-refs remain) ─────
+          echo "🗑️  Pass 2/2 — Deleting all Security Groups..."
+          for SG_ID in $SG_IDS; do
             echo "   → Deleting SG: $SG_ID"
             aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID"

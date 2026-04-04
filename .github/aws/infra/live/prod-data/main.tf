@@ -17,6 +17,15 @@ provider "aws" {
       "Managed by" = var.tag_managed_by
       Support      = var.tag_support
       State        = var.tag_state
+      # ── Blaze Signature Tags (v1.4.94) ───────────────────────────────
+      "Blaze:Architecture" = "two-pillar-v2"
+      "Blaze:Provisioner"  = "blaze-actions"
+      "Blaze:ManagedBy"    = "terraform"
+      "Blaze:Project"      = var.project_key
+      "Blaze:Environment"  = var.stage
+      "Blaze:Client"       = var.client_key
+      "Blaze:Stack"        = var.stack_name
+      "Blaze:RunId"        = var.blaze_run_id
     }
   }
 }
