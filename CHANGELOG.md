@@ -3,6 +3,22 @@
 ## v1.4.94 (2026-04-04)
 
 ### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: sweep @v1.4.70 → @v1.4.92 in 90-daily-health-check (Engine 4 drift fix)
+- chore: update CHANGELOG for v1.4.92
+- chore: update CHANGELOG for v1.4.91
+- chore: update CHANGELOG for v1.4.90
+
+### Fixed
+
+
+## v1.4.94 (2026-04-04)
+
+### Added
 - feat(tag-taxonomy): introduce mandatory **Blaze Signature Tag** taxonomy across all live AWS Terraform stacks in `blaze-template-deploy` and `blaze-actions`:
   - Tags injected via AWS provider `default_tags` (Option A — provider-level, no infra-core module changes)
   - Tag set: `Blaze:Architecture=two-pillar-v2`, `Blaze:Provisioner=blaze-actions`, `Blaze:ManagedBy=terraform`, `Blaze:Project`, `Blaze:Environment`, `Blaze:Client`, `Blaze:Stack`, `Blaze:RunId`
