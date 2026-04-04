@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.4.95 (2026-04-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v1.4.93
+- chore: update CHANGELOG for v1.4.94
+
+### Fixed
+
+- fix(v1.4.95): replace wrong CIDR fallback with Name tag in VPC discovery
+
 ## v1.4.93 (2026-04-04)
 
 ### Added
