@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-04-05] - Engine 4 Full Resolution & Module Ref Normalization
+
+### Changed
+- chore(infra): Normalize ALL `blaze-terraform-infra-core` module refs to `v2.2.14` across all live stacks (AWS, GCP). Eliminates Engine 4 split-brain (`v1.51.0`, `v2.1.1`, `v2.2.2` → `v2.2.14`). 33 files updated.
+- chore(infra): Migrate `preinit/main.tf` from legacy `git::https://` format to modern `github.com//` source URL.
+
+---
+
 ## v1.4.95 (2026-04-04)
 
 ### Added
