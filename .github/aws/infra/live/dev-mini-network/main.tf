@@ -59,7 +59,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.2.2"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.2.14"
 
   providers = {
     aws           = aws
@@ -135,7 +135,7 @@ module "environment_network" {
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
 # --------------------------------------------------------------------------------
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.2.2"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.2.14"
   count  = var.enable_ec2 ? 1 : 0
 
   # Identity (context provides label defaults, but these are required)
