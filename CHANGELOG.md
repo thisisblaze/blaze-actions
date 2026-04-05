@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.96 (2026-04-05)
+
+### Fixed
+- fix(teardown): add **Purge Stale Network Resources** step to `reusable-terraform.yml` — runs only on destroy (AWS). Pre-nuke cleanup deletes the ALB (cascading all listener deletions) before Terraform destroy runs, leaving ALB stub listeners and Cloudflare ACM validation DNS records in state. Terraform then fails with `ListenerNotFound` and Cloudflare `404 Record does not exist`. New step `terraform state rm`s the three stale resources before plan. All removals use `|| echo` guards — fully idempotent, never fails when resources are still present (TF handles them normally). Root cause run: `23999146033` (dev-network, 2026-04-05).
+
+---
+
 ## [2026-04-05] - Engine 4 Full Resolution & Module Ref Normalization
 
 ### Changed
