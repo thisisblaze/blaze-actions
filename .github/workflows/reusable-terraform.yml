@@ -813,6 +813,25 @@ jobs:
 
           echo "✅ Lambda resources removed from state"
 
+      # ── Purge Stale Network Resources — runs only on destroy ──
+      # Prevents ListenerNotFound / Cloudflare-404 errors when pre-nuke cleanup
+      # already deleted ALBs/DNS records before Terraform destroy runs.
+      - name: Purge Stale Network Resources (Prevent ALB/DNS 404 on Destroy)
+        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') }}
+        working-directory: ${{ inputs.tf_dir }}
+        run: |
+          echo "🧹 Purging stale network resources from state (idempotent — || echo guards ensure no failure)..."
+
+          # ALB Stub Listeners — deleted by pre-nuke cleanup cascading off ALB deletion.
+          # module.environment_network maps to both environment-network and multi-site-network stacks.
+          terraform state rm 'module.environment_network.aws_lb_listener.https[0]' || echo "aws_lb_listener.https[0] not in state — already clean"
+          terraform state rm 'module.environment_network.aws_lb_listener.api_https[0]' || echo "aws_lb_listener.api_https[0] not in state — already clean"
+
+          # Cloudflare ACM validation DNS record — may be absent if a prior destroy already cleaned it.
+          terraform state rm 'module.environment_network.cloudflare_dns_record.validation[0]' || echo "cloudflare_dns_record.validation[0] not in state — already clean"
+
+          echo "✅ Stale network resources purged"
+
       # ── Pre-Destroy Hook — runs BEFORE plan so state changes don't stale the plan ──
       - name: Run Pre-Destroy Hook
         if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.apply == true || inputs.apply == 'true') }}
