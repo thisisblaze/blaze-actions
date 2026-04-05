@@ -166,7 +166,7 @@ module "ec2_capacity_provider" {
 }
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.2.2"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.2.14"
   name    = "logs"
   context = module.environment_network.context
 }

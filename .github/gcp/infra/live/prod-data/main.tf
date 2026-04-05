@@ -43,7 +43,7 @@ locals {
 
 # ── Memorystore Redis ──
 module "redis" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/memorystore-redis?ref=v2.1.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/memorystore-redis?ref=v2.2.14"
   count  = var.enable_redis ? 1 : 0
 
   context        = {}
@@ -61,7 +61,7 @@ module "redis" {
 
 # ── Cloud SQL PostgreSQL ──
 module "cloud_sql" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/cloud-sql?ref=v2.1.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/cloud-sql?ref=v2.2.14"
   count  = var.enable_cloud_sql ? 1 : 0
 
   context        = {}
