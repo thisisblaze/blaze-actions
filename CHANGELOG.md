@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.11 (2026-04-07)
+
+### Fixed
+- fix(reusable-terraform): use `github.token` as primary auth for `terraform init` private module cloning. `GH_PAT` expired (2026-04-07) — uses callee-scoped `github.token` (has org-level access to `thisisblaze/*`) as primary, with `GH_PAT` as a secondary overlay for cross-org (`thebyte9/`) repos. Deploy Key (SSH) still takes highest priority when set.
+- fix(reusable-terraform): swap git credential priority — `DEPLOY_KEY` > `github.token` + `GH_PAT-overlay` > fallback.
+
 ## v2.1.10 (2026-04-07)
 
 ### Fixed

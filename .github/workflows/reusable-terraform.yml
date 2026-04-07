@@ -328,10 +328,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         run: |
-          if [ -n "${GH_PAT}" ]; then
-            echo "✅ Configuring Git with GH_PAT..."
-            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
-          elif [ -n "${DEPLOY_KEY}" ]; then
+          if [ -n "${DEPLOY_KEY}" ]; then
             echo "✅ Configuring Git with SSH Deploy Key..."
             mkdir -p ~/.ssh
             echo "${DEPLOY_KEY}" > ~/.ssh/id_rsa
@@ -339,8 +336,14 @@ jobs:
             ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
             git config --global url."git@github.com:".insteadOf "https://github.com/"
           else
-            echo "⚠️ No GH_PAT or DEPLOY_KEY found. Using GITHUB_TOKEN (cross-repo private modules may fail)."
+            # Use GITHUB_TOKEN (callee-scoped to thisisblaze org) as primary auth.
+            # GH_PAT is kept as an overlay for cross-org repos if still valid.
+            echo "✅ Configuring Git with GITHUB_TOKEN (thisisblaze org)..."
             git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
+            if [ -n "${GH_PAT}" ]; then
+              echo "ℹ️ GH_PAT also present — adding as overlay for cross-org access."
+              git config --global url."https://${GH_PAT}@github.com/thebyte9/".insteadOf "https://github.com/thebyte9/"
+            fi
           fi
 
       - name: Bootstrap S3 Backend (Create Bucket + Lock Table if Missing)
