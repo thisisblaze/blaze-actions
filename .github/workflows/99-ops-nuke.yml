@@ -687,7 +687,7 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       # Key format: infra/{project}/{stage}/{stack}.tfstate
       # We must reconstruct the key for each stack.
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/thisisblaze.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/${{ needs.configuration.outputs.project_key }}.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
