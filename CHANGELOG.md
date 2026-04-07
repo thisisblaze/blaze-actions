@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.1.9 (2026-04-07)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.8
+- chore: update CHANGELOG for v2.1.7
+- chore: update CHANGELOG for v2.1.6
+- chore: update CHANGELOG for v2.1.5
+
+### Fixed
+
+
 ## v2.1.8 (2026-04-07)
 
 ### Added
