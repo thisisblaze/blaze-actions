@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.12 (2026-04-07)
+
+### Fixed
+- fix(01-provision-infra): bump `reusable-terraform` pin `@v2.1.9` → `@v2.1.11` — picks up `github.token` primary git auth fix.
+
 ## v2.1.11 (2026-04-07)
 
 ### Fixed
