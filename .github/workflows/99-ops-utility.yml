@@ -408,14 +408,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH_FILTER="${{ inputs.branch_tag }}"
-          if [[ -n "$BRANCH_FILTER" ]]; then
-            echo "🎯 Filtering by branch: $BRANCH_FILTER"
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --branch "$BRANCH_FILTER" --json databaseId,name --limit 50)
-          else
-            RUNS=$(gh run list --repo "${{ github.repository }}" --status in_progress --json databaseId,name --limit 50)
-          fi
           CURRENT_ID="${{ github.run_id }}"
           TARGET_ID="${{ inputs.run_id }}"
+
+          # Collect runs across ALL active statuses (in_progress, queued, pending)
+          echo "🔍 Collecting active runs (in_progress + queued + pending)..."
+          RUNS_IP=$(gh run list --repo "${{ github.repository }}" --status in_progress ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
+          RUNS_QU=$(gh run list --repo "${{ github.repository }}" --status queued ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
+          RUNS_PE=$(gh run list --repo "${{ github.repository }}" --status pending ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50 2>/dev/null || echo '[]')
+          RUNS=$(jq -s 'add | unique_by(.databaseId)' <(echo "$RUNS_IP") <(echo "$RUNS_QU") <(echo "$RUNS_PE"))
+
+          echo "Found $(echo "$RUNS" | jq 'length') active runs"
 
           for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
@@ -424,8 +427,11 @@ jobs:
             if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
             if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
             echo "🔪 Killing Run $id ($name)..."
-            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel"
+            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel" 2>&1 || \
+              gh run cancel $id --repo "${{ github.repository }}" 2>&1 || \
+              echo "⚠️ Could not force-cancel $id (may already be finalising)"
           done
+          echo "✅ Kill sweep complete"
 
   summary:
     name: 📝 Ops Summary
