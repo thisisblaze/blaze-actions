@@ -342,7 +342,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
