@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-07
 **Owner**: Infrastructure Team
 
 ---
@@ -6,9 +6,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 52 (31 main + 19 reusable)  
-**Version**: v1.5.0  
-**Last Updated**: 2026-03-16
+**Total Workflows**: 53 (32 main + 21 reusable)  
+**Version**: v2.1.13  
+**Last Updated**: 2026-04-07
 
 ---
 
@@ -100,33 +100,24 @@
 
 ### Testing & Validation
 
-#### stress-test.yml
+#### 08-stress-test-suite.yml
 
-**Purpose**: Full environment lifecycle testing  
-**Use Case**: Validate complete infrastructure + deployment
-
-**Modes**:
-
-- `standard`: Destroy → Provision → Deploy → Verify → KEEP (~30-35 min)
-- `full-circle`: Standard + auto-cleanup (~35-40 min)
-- `quick-test`: Test existing infrastructure (~8-10 min)
-- `destroy-only`: Cleanup only (~6-8 min)
+**Purpose**: Full environment lifecycle stress testing  
+**Use Case**: Validate complete infrastructure + deployment pipeline
 
 **Inputs**:
 
 - `environment` (required): dev-mini/dev/stage/prod
-- `target_type` (optional): host|feature-branch
+- `mode` (required): mini|standard|full-circle|quick-test|destroy-only
 - `branch_tag` (optional): Feature branch tag
-- `mode` (required): Execution mode
 - `include_third_party` (boolean): Test MongoDB/Elastic?
 - `preserve_host` (boolean): Skip network destroy/provision?
 
 **What it does**:
 
 - Complete lifecycle: provision → deploy → verify
-- URL health checks
-- Service validation
-- Optional cleanup
+- URL health checks, service validation
+- Optional cleanup post-test
 
 **When to run**: Release validation, CI/CD gates
 
@@ -265,22 +256,20 @@
 
 ---
 
-#### check-stack-exists.yml
+#### lint-agent-workflows.yml
 
-**Purpose**: Verify Terraform state existence  
-**Use Case**: Pre-flight checks
+**Purpose**: Validate `.agent/workflows/*.md` YAML frontmatter on every push/PR  
+**Use Case**: CI gate ensuring agent workflow files have valid `description:` metadata
 
-**Inputs**:
+**Trigger**: `push` (main), `pull_request` (paths: `.agent/**`)
 
-- `bucket` (required): S3 bucket name
-- `state_key` (required): State file key
-- `aws_region` (required): AWS region
+**What it does**:
 
-**Outputs**:
+- Checks out repository
+- Lints YAML frontmatter in all agent workflow markdown files
+- Fails CI if `description:` is missing or malformed
 
-- `exists`: true/false
-
-**When to run**: Before destroy operations
+**When to run**: Automatic — triggered on every PR touching `.agent/**`
 
 ---
 
@@ -435,23 +424,28 @@
 
 ---
 #### deploy-azure-site.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Deploy a single site to Azure Container Apps (multi-site architecture)
+
+---
+#### deploy-gcp-site.yml
+**Purpose**: Deploy a single site to GCP Cloud Run (multi-site, `reusable-gcp-multi-site-deploy.yml` caller)
+**Inputs**: `site_key`, `environment`, `image_tag`, `cloud_provider`
 
 ---
 #### deploy-site.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Deploy a single site (AWS ECS multi-site) — calls `reusable-multi-site-deploy.yml`
 
 ---
 #### release.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Auto-tag and create GitHub Release on main push — bumps semver patch
 
 ---
 #### update-changelog.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Automated changelog update on merge to main
 
 ---
 #### validate-workflows.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Lint and validate all workflow YAML files in the repository
 
 ---
 ## Reusable Workflows (19)
@@ -515,7 +509,14 @@ These are called by main workflows, not directly by users.
 
 ---
 
+### reusable-provision-db-users.yml
 
+**Purpose**: Provision database users post-infrastructure deployment  
+**Use Case**: Create app-level DB users in RDS/MongoDB after Terraform apply  
+**Inputs**: `environment`, `project`, `cloud_provider`, `db_type`  
+**Outputs**: `users_created`
+
+---
 
 ### Newly Added Reusable Workflows
 
@@ -573,18 +574,26 @@ These are called by main workflows, not directly by users.
 ---
 ## Quick Reference
 
-| Workflow                | Common Use             | Typical Runtime |
-| :---------------------- | :--------------------- | :-------------- |
-| `00_setup_environment`  | First-time setup       | 5-10 min        |
-| `01-provision-infra`    | Infrastructure changes | 10-20 min       |
-| `02-deploy-app`         | Code deployments       | 5-10 min        |
-| `stress-test`           | Release validation     | 30-40 min       |
-| `99-ops-utility`        | Ad-hoc operations      | 2-5 min         |
-| `90-daily-health-check` | Daily monitoring       | 2-5 min         |
+| Workflow                  | Common Use             | Typical Runtime |
+| :------------------------ | :--------------------- | :-------------- |
+| `00_setup_environment`    | First-time setup       | 5-10 min        |
+| `01-provision-infra`      | Infrastructure changes | 10-20 min       |
+| `02-deploy-app`           | Code deployments       | 5-10 min        |
+| `08-stress-test-suite`    | Release validation     | 30-40 min       |
+| `99-ops-utility`          | Ad-hoc operations      | 2-5 min         |
+| `90-daily-health-check`   | Daily monitoring       | 2-5 min         |
+| `lint-agent-workflows`    | Agent workflow CI gate | <1 min          |
 
 ---
 
 ## Version History
+
+**v2.1.13** (2026-04-07):
+
+- `reusable-terraform.yml`: Restored GH_PAT as primary git auth for module cloning (DEPLOY_KEY > GH_PAT > github.token)
+- `01-provision-infra.yml`: Added `destroy != true` guard on zombie importer step
+- `90-daily-health-check.yml`: Bumped all pins to `v2.1.13` (parity with blaze-template-deploy)
+- Catalog: Removed deleted `stress-test.yml` and `check-stack-exists.yml`; added `deploy-gcp-site.yml`, `lint-agent-workflows.yml`, `reusable-provision-db-users.yml`
 
 **v1.5.0** (2026-02-27):
 
@@ -607,6 +616,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-03-16  
+**Last Updated**: 2026-04-07  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

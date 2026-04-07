@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-07
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-07
 
 ---
 
@@ -487,16 +487,16 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@main` for development, `@v1.0.0` for production.
+A: Use an explicit semver tag (e.g. `@v2.1.13`) for all environments. `@main` is never recommended for production — it moves.
 
 **Q: How do I update all client projects?**  
-A: Update hub workflow once. All clients using `@main` get update immediately. Clients using `@v1.0.0` update when ready.
+A: Update hub workflow, cut a new tag, update client pins to the new tag. The `checkengines` Engine 4 sweep detects split-brain pin drift automatically.
 
 **Q: Can I test changes before they affect production?**  
-A: Yes! Use `@dev` branch for testing, `@main` for stable, `@v1.0.0` for production.
+A: Yes! Cut a pre-release tag (e.g. `v2.1.14-rc1`) and pin the test repo to it.
 
 **Q: What if the hub workflow breaks?**  
-A: Version pinning protects you. Clients on `@v1.0.0` unaffected. Test fixes on `@dev` first.
+A: Version pinning protects you — clients on the previous tag are unaffected. Fix on main, cut a new patch tag.
 
 ---
 
@@ -521,7 +521,7 @@ The `reusable-calculate-config.yml` workflow provides a `namespace` output:
 ```yaml
 jobs:
   config:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v2.1.13
     with:
       environment: dev
       terraform_stack: app
@@ -568,6 +568,6 @@ Set in `vars/blaze-env.json`:
 
 ---
 
-**Last Updated**: 2026-03-16  
+**Last Updated**: 2026-04-07  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

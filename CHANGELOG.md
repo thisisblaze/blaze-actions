@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.14 (2026-04-07)
+
+### Maintenance (Deep CI/CD Sync — /13-deep-cicd-maintenance)
+- chore(WORKFLOW_CATALOG): sync to reality — remove deleted `stress-test.yml` + `check-stack-exists.yml`; add `deploy-gcp-site.yml`, `lint-agent-workflows.yml`, `reusable-provision-db-users.yml`; bump count 52→53, version v1.5.0→v2.1.13
+- chore(REUSABLE_WORKFLOWS): bump example pins to v2.1.13; update FAQ to discourage `@main`; align namespace example ref
+- chore(90-daily-health-check): bump all blaze-actions pins v1.4.95 → v2.1.13 (Engine 8 parity fix)
+- chore(timestamps): audit and refresh Last Updated on WORKFLOW_CATALOG.md, REUSABLE_WORKFLOWS.md, ENVIRONMENT-ARCHITECTURE.md → 2026-04-07
+- chore(blaze-template-deploy): bulk-bump all stale pins (v1.0.0, v2.1.4, v2.1.5 → v2.1.13) across 20+ workflow files (Engine 4 split-brain fix)
+- chore(blaze-terraform-infra-core): bump 90-daily-health-check.yml pin v1.4.95 → v2.1.13
+
 ## v2.1.13 (2026-04-07)
 
 ### Fixed
