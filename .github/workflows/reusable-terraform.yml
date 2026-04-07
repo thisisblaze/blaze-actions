@@ -335,15 +335,12 @@ jobs:
             chmod 600 ~/.ssh/id_rsa
             ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
             git config --global url."git@github.com:".insteadOf "https://github.com/"
+          elif [ -n "${GH_PAT}" ]; then
+            echo "✅ Configuring Git with GH_PAT (all github.com)..."
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
           else
-            # Use GITHUB_TOKEN (callee-scoped to thisisblaze org) as primary auth.
-            # GH_PAT is kept as an overlay for cross-org repos if still valid.
-            echo "✅ Configuring Git with GITHUB_TOKEN (thisisblaze org)..."
+            echo "⚠️ No GH_PAT or DEPLOY_KEY. Using GITHUB_TOKEN (callee-scoped, cross-repo private modules may fail)."
             git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
-            if [ -n "${GH_PAT}" ]; then
-              echo "ℹ️ GH_PAT also present — adding as overlay for cross-org access."
-              git config --global url."https://${GH_PAT}@github.com/thebyte9/".insteadOf "https://github.com/thebyte9/"
-            fi
           fi
 
       - name: Bootstrap S3 Backend (Create Bucket + Lock Table if Missing)

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.13 (2026-04-07)
+
+### Fixed
+- fix(reusable-terraform): restore GH_PAT as primary git auth for terraform init. The DEPLOY_KEY-first swap accidentally dropped GH_PAT for all-github.com coverage. Order is now: DEPLOY_KEY (SSH) > GH_PAT (all github.com) > github.token (fallback).
+
+# Changelog
+
 ## v2.1.12 (2026-04-07)
 
 ### Fixed
