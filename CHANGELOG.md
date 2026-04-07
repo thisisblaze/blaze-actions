@@ -1,5 +1,25 @@
 # Changelog
 
+## v2.1.13 (2026-04-07)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.12
+- chore: update CHANGELOG for v2.1.11
+- chore: update CHANGELOG for v2.1.10
+- chore: update CHANGELOG for v2.1.9
+- chore: update CHANGELOG for v2.1.8
+- chore: update CHANGELOG for v2.1.7
+- chore: update CHANGELOG for v2.1.6
+- chore: update CHANGELOG for v2.1.5
+
+### Fixed
+
+
 ## v2.1.12 (2026-04-07)
 
 ### Added
