@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.9 (2026-04-07)
+
+### Fixed
+- fix(reusable-terraform): switch `actions/checkout` token from `GH_PAT || github.token` to `github.token` only — `GH_PAT` was expired (last rotated 2026-01-07) causing `git fetch` to fail with `terminal prompts disabled`. In `workflow_call` context, `github.token` is scoped to the **caller's** repo, so it can checkout `thebyte9/blaze-template-deploy` without a separately managed PAT.
+
 ## v2.1.8 (2026-04-07)
 
 ### Fixed
