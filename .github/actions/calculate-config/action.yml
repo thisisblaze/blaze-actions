@@ -285,6 +285,9 @@ runs:
           "network")
             STACK="network"
             ;;
+          "dedicated-network")
+            STACK="dedicated-network"
+            ;;
           "tenant-app")
             STACK="tenant-app"
             ;;
@@ -414,6 +417,11 @@ runs:
                else
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
                fi
+
+            # Dedicated High-Traffic Network (opt-in per-env dedicated VPC/ALB/ECS)
+            elif [[ "$STACK" == "dedicated-network" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-dedicated-network"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/dedicated-network.tfstate"
 
             # V2 Multi-Site App
             elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
