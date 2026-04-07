@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.8 (2026-04-07)
+
+### Fixed
+- fix(01-provision-infra): bump `reusable-terraform` pin `@v1.4.88` → `@v2.1.7` — the old pin was causing `git checkout` failures (`could not read Username`) because `v1.4.88` predates the private-repo checkout hardening. Also required to pick up v2.1.6's expanded `Purge Stale Network Resources` step (ALB/SG/subnet purge) in the `destroy` path.
+
 ## v2.1.7 (2026-04-07)
 
 ### Fixed
