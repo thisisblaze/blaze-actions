@@ -814,21 +814,59 @@ jobs:
           echo "✅ Lambda resources removed from state"
 
       # ── Purge Stale Network Resources — runs only on destroy ──
-      # Prevents ListenerNotFound / Cloudflare-404 errors when pre-nuke cleanup
-      # already deleted ALBs/DNS records before Terraform destroy runs.
+      # Prevents ListenerNotFound / SG-not-found / subnet errors when pre-nuke cleanup
+      # already deleted ALBs/DNS records/SGs before Terraform destroy runs.
       - name: Purge Stale Network Resources (Prevent ALB/DNS 404 on Destroy)
         if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
           echo "🧹 Purging stale network resources from state (idempotent — || echo guards ensure no failure)..."
 
-          # ALB Stub Listeners — deleted by pre-nuke cleanup cascading off ALB deletion.
-          # module.environment_network maps to both environment-network and multi-site-network stacks.
-          terraform state rm 'module.environment_network.aws_lb_listener.https[0]' || echo "aws_lb_listener.https[0] not in state — already clean"
-          terraform state rm 'module.environment_network.aws_lb_listener.api_https[0]' || echo "aws_lb_listener.api_https[0] not in state — already clean"
+          # ── ALB Listeners ──────────────────────────────────────────────────────────
+          # Pre-nuke Step 5 deletes ALBs; Terraform then hits ListenerNotFound when trying
+          # to delete listeners that were implicitly removed with the ALB.
+          # Covers both indexed [0] (environment-network) and bare (multi-site-network) variants.
+          for ADDR in \
+            'module.environment_network.aws_lb_listener.https[0]' \
+            'module.environment_network.aws_lb_listener.api_https[0]' \
+            'module.environment_network.aws_lb_listener.http[0]' \
+            'module.environment_network.aws_lb_listener.https' \
+            'module.environment_network.aws_lb_listener.http' \
+            'module.environment_network.aws_lb_listener.api_https'; do
+            terraform state rm "$ADDR" 2>/dev/null || echo "   $ADDR not in state — already clean"
+          done
 
-          # Cloudflare ACM validation DNS record — may be absent if a prior destroy already cleaned it.
-          terraform state rm 'module.environment_network.cloudflare_dns_record.validation[0]' || echo "cloudflare_dns_record.validation[0] not in state — already clean"
+          # ── ALBs themselves ────────────────────────────────────────────────────────
+          # Pre-nuke Step 5 deletes ALBs directly; remove from state to avoid LoadBalancerNotFound.
+          for ADDR in \
+            'module.environment_network.aws_lb.main' \
+            'module.environment_network.aws_lb.api'; do
+            terraform state rm "$ADDR" 2>/dev/null || echo "   $ADDR not in state — already clean"
+          done
+
+          # ── ALB Target Groups ──────────────────────────────────────────────────────
+          # Target groups deregister when ALBs are deleted; remove to avoid TG-not-found errors.
+          for ADDR in \
+            'module.environment_network.aws_lb_target_group.api_blue' \
+            'module.environment_network.aws_lb_target_group.frontend_blue' \
+            'module.environment_network.aws_lb_target_group.api[0]' \
+            'module.environment_network.aws_lb_target_group.frontend[0]'; do
+            terraform state rm "$ADDR" 2>/dev/null || echo "   $ADDR not in state — already clean"
+          done
+
+          # ── ALB Security Group ─────────────────────────────────────────────────────
+          # Pre-nuke Step 4 force-deletes all non-default SGs in the VPC.
+          terraform state rm 'module.environment_network.aws_security_group.lb_sg' 2>/dev/null || echo "   lb_sg not in state — already clean"
+
+          # ── Subnets ────────────────────────────────────────────────────────────────
+          # Pre-nuke Step 5 deletes subnets before VPC deletion.
+          terraform state rm 'module.environment_network.module.networking.module.vpc.aws_subnet.public' 2>/dev/null || echo "   public subnets not in state — already clean"
+          terraform state rm 'module.environment_network.module.networking.module.vpc.aws_subnet.private' 2>/dev/null || echo "   private subnets not in state — already clean"
+
+          # ── Cloudflare ACM validation DNS record ───────────────────────────────────
+          # May be absent if a prior destroy already cleaned it.
+          terraform state rm 'module.environment_network.cloudflare_dns_record.validation[0]' 2>/dev/null || echo "   cloudflare_dns_record.validation[0] not in state — already clean"
+          terraform state rm 'module.environment_network.cloudflare_dns_record.validation' 2>/dev/null || echo "   cloudflare_dns_record.validation not in state — already clean"
 
           echo "✅ Stale network resources purged"
 

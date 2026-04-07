@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.6 (2026-04-07)
+
+### Fixed
+- fix(reusable-terraform): extend **Purge Stale Network Resources** step to cover all ALB/listener/SG/subnet/TG address variants for both `environment-network` and `multi-site-network` stacks. Root cause of run #24089510040 failure: pre-nuke Step 5 deleted the ALB (cascading implicit listener deletion), but Terraform's destroy plan still tried to delete the bare-indexed listeners (`aws_lb_listener.https`, `aws_lb_listener.http`) and the ALB itself — addresses not covered by the previous indexed-only purge. Also purges `aws_lb_target_group.api_blue/frontend_blue`, `aws_security_group.lb_sg`, and public/private subnets deleted by pre-nuke Step 4/5. All removals use `|| echo` guards — fully idempotent.
+
 ## v2.1.5 (2026-04-07)
 
 ### Added
