@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.7 (2026-04-07)
+
+### Fixed
+- fix(01-provision-infra): skip `Pre Apply Script (Import Zombies)` when `destroy: true` — the importer fetches a remote script via `gh api repos/thisisblaze/blaze-actions/...` which returns `401 Bad credentials` when called from `99-nuke-env` (no `GH_PAT` in scope). Importing resources is a no-op on teardown anyway. Guard: `inputs.destroy != true`.
+
 ## v2.1.6 (2026-04-07)
 
 ### Fixed
