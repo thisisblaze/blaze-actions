@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.10 (2026-04-07)
+
+### Fixed
+- fix(01-provision-infra): bump `reusable-terraform` pin `@v2.1.7` → `@v2.1.9` — picks up the `github.token` checkout fix.
+
 ## v2.1.9 (2026-04-07)
 
 ### Fixed
