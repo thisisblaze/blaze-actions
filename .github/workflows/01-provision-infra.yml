@@ -31,6 +31,7 @@ on:
         type: choice
         options:
           - "network"
+          - "dedicated-network"
           - "db-pod-alpha"
           - "tenant-app"
           - "single-network"
@@ -418,7 +419,7 @@ jobs:
     name: Build Sharp Lambda Layer
     needs: [configuration]
     if: >
-      inputs.stack == 'network' &&
+      (inputs.stack == 'network' || inputs.stack == 'dedicated-network') &&
       needs.configuration.result == 'success' &&
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
       inputs.enable_image_resize == true
@@ -773,7 +774,7 @@ jobs:
         api_cpu_architecture=${{ inputs.api_cpu_architecture }}
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
-      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'multi-site-network' }}
+      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
@@ -1099,7 +1100,7 @@ jobs:
           # ------------------------------------------------------------------
           # 4. Feature: Image Resize
           # ------------------------------------------------------------------
-          if [[ "$PROVIDER" != "gcp" && "${{ inputs.stack }}" == "network" ]]; then
+          if [[ "$PROVIDER" != "gcp" && ("${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "dedicated-network") ]]; then
             if [[ "$PROVIDER" == "azure" ]]; then
               # Azure Front Door CDN summary
               echo "## 🌐 Azure Front Door CDN" >> $GITHUB_STEP_SUMMARY
