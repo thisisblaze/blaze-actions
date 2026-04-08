@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026-04-08] - Engine 4/8 Split-Brain Resolution: GCP stacks + 90-daily-health-check
+
+### Fixed
+- fix(infra): bump 15 GCP live stacks in `blaze-actions` from `v2.2.14` → `v2.2.16` (all environments: dev/stage/prod network, app, data, cdn, multi-site)
+- fix(infra): bump `aws/infra/preinit/main.tf` from `v2.2.14` → `v2.2.16`
+- fix(90-daily-health-check.yml): replace stale `@v1.4.95` refs with `@v2.1.13` — Engine 8 parity fix
+
+### Context
+- Engine 4 (Module Versions) now green across all 3 repos: all Terraform stacks on `v2.2.16`
+- Engine 8 (Workflow Parity) now green: `90-daily-health-check.yml` aligned across `blaze-actions` and `blaze-template-deploy`
+- GCP stacks were the last remaining split-brain from the April 2026 `v2.2.16` governance sync
+
+---
+
 ## [2026-04-08] - Plan 134 Phase 4: Multi-Tenant Documentation + Workflow Updates
 
 ### Added
