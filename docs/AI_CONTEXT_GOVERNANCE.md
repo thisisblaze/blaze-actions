@@ -189,7 +189,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v1.4.75** | All 3 repos synced. Lowercase env options fix. |
+| `blaze-actions` | **v2.1.13** | All 3 repos synced. Lowercase env options fix. |
 | `blaze-terraform-infra-core` | **v2.2.2** (stage/prod Multi-Site V2) | Stage uses `stage-tenant-app` (two-pillar stack) |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
