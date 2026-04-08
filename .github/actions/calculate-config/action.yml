@@ -114,6 +114,9 @@ outputs:
   cluster_tier:
     description: "MongoDB Cluster Tier"
     value: ${{ steps.config.outputs.cluster_tier }}
+  db_ssm_path:
+    description: "Database SSM Path"
+    value: ${{ steps.config.outputs.db_ssm_path }}
 
 runs:
   using: "composite"
@@ -188,6 +191,11 @@ runs:
         DOMAIN_ROOT=$(echo "$MERGED_CONFIG" | jq -r '.common.DOMAIN_ROOT')
         GTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
+        DB_SSM_PATH=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_SSM_PATH // ""')
+        # Resolve templated variables in DB_SSM_PATH
+        DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
+        DB_SSM_PATH="${DB_SSM_PATH//\${PROJECT_KEY\}/$PROJECT_KEY}"
+        DB_SSM_PATH="${DB_SSM_PATH//\${stage\}/$STAGE_KEY}"
 
         # ── MULTI-CLOUD: Read CLOUD_PROVIDER and provider-specific config ──
         CONFIG_CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
@@ -258,6 +266,8 @@ runs:
         echo "gtm_id=$GTM_ID" >> $GITHUB_OUTPUT
         echo "dfp_network_id=$DFP_NETWORK_ID" >> $GITHUB_OUTPUT
 
+        echo "db_ssm_path=$DB_SSM_PATH" >> $GITHUB_OUTPUT
+
         # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
         if [[ "$CLUSTER_TIER" == "auto" ]]; then
@@ -302,6 +312,9 @@ runs:
             ;;
           "db-pod-alpha")
             STACK="db-pod-alpha"
+            ;;
+          "dedicated-db")
+            STACK="dedicated-db"
             ;;
           "single-network")
             STACK="single-network"
@@ -417,6 +430,11 @@ runs:
                else
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
                fi
+
+            # Dedicated DB Stack (per-project DB like thisisblaze-db)
+            elif [[ "$STACK" == "dedicated-db" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${INPUT_PROJECT}-db"
+               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}-db.tfstate"
 
             # Dedicated High-Traffic Network (opt-in per-env dedicated VPC/ALB/ECS)
             elif [[ "$STACK" == "dedicated-network" ]]; then
