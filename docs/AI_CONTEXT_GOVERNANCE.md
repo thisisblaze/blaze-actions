@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-01
+**Last Updated**: 2026-04-08
 **Owner**: Infrastructure Team
 
 ---
@@ -185,13 +185,25 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **ECS EC2 capacity provider bootstrap** | Terraform planning hangs on `data "aws_ecs_capacity_provider"` lookup | SSM parameter `blaze-b9-thisisblaze-stage-ecs-ec2-cp` missing or wrong; dead-code SSM data sources block plan | Fix SSM parameter value; remove dead-code data sources from `multi-site-tenant-app` module |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-04-01)
+## 13. Current Version Pins (2026-04-08)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.1.13** | All 3 repos synced. Lowercase env options fix. |
-| `blaze-terraform-infra-core` | **v2.2.2** (stage/prod Multi-Site V2) | Stage uses `stage-tenant-app` (two-pillar stack) |
+| `blaze-actions` | **v2.1.13** | All 3 repos synced. |
+| `blaze-terraform-infra-core` | **v2.2.16** | Multi-Site V2 stable. Multi-tenant (thisisblaze+support) GA. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
+
+## 14. Multi-Tenant Nuke Failure Patterns (2026-04-08)
+
+> [!CAUTION]
+> Discovered during Plan 134 dev environment nuke-and-reprovision cycle.
+
+| Pattern | Symptom | Root Cause | Fix |
+| :------ | :------- | :--------- | :-- |
+| **pre_apply.sh TG state removal** | 503 on all endpoints after deploy | Script unconditionally removed `aws_lb_target_group` + `aws_lb_listener_rule` from TF state | Disabled destructive sections in `pre_apply.sh`. See `blaze-template-deploy` Plan 134 §6 |
+| **IGW DependencyViolation on destroy** | `Network has some mapped public address(es)` | NAT GW EIPs still associated; EC2s not yet terminated when TF destroy runs | Terminate EC2s → wait `terminated` → re-run nuke |
+| **CloudFront orphan after nuke** | CFs remain Enabled after destroy | Nuke pre-destroy timed out before CF disable propagated (~15 min) | Manually disable → wait Deployed → delete |
+| **PROJECT_SLUG must always be present** | DNS interpolation breaks for primary project | CI/CD reads `PROJECT_SLUG`; absent = undefined | Primary: `PROJECT_SLUG: ""`. Sub-projects: `PROJECT_SLUG: "support"`. Field MUST exist |
 
 ---
 
