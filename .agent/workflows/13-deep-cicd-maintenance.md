@@ -80,3 +80,21 @@ Upon completion, generate a summary table detailing what was updated:
 
 "A system perfectly aligned requires no force to maintain." 🖖
 ```
+
+---
+
+## Multi-Project Awareness (April 2026)
+
+The platform now supports multiple projects on the shared ECS cluster. When performing deep CI/CD maintenance:
+
+1. **Verify multi-project readiness** in `calculate-config` and `deploy-ecs-service` actions:
+   - `calculate-config`: reads `vars/${project}/blaze-env.json` — confirm it accepts arbitrary `project` values (not just `thisisblaze`)
+   - `deploy-ecs-service`: URL construction logic — verify `FRONTEND_URL` resolves correctly for `support` project (same `DOMAIN_ROOT`, different slug)
+
+2. **Check reusable workflows** for hardcoded `thisisblaze` references:
+   - `reusable-stress-test-deploy.yml`
+   - `reusable-stress-test-provision.yml`
+
+3. **Active projects**: `thisisblaze` (primary), `support` (Phase 3 active)
+
+Reference: `docs/plans/134_multi_tenant_multi_domain_expansion_aws.md`
