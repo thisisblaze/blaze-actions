@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-04-08] - Module Ref Sync: v2.2.14 → v2.2.16
+
+### Changed
+- chore(infra): bump all `blaze-terraform-infra-core` module refs from `v2.2.14` → `v2.2.16` across 19 AWS live stacks (Engine 4 split-brain resolution). `blaze-template-deploy` was already at `v2.2.16`; this brings `blaze-actions` into parity. Both repos now agree on the same pinned tag.
+  - v2.2.15: CI pin bump governance (`90-daily-health-check`)
+  - v2.2.16: CloudFront descriptive comment strings in `environment-network` — cosmetic, non-breaking
+
+---
+
 ## v2.1.14 (2026-04-07)
 
 ### Added
