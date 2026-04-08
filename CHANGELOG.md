@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-04-08] - Plan 134 Phase 4: Multi-Tenant Documentation + Workflow Updates
+
+### Added
+- docs(13-deep-cicd-maintenance.md): multi-project awareness for `support` project — verify `calculate-config`, `deploy-ecs-service`, and reusable stress test workflows for hardcoded `thisisblaze` references
+
+### Context
+- Plan 134 Phase 4 complete: 13 files updated across `blaze-template-deploy` and `blaze-actions`
+- `calculate-config` action verified already multi-project ready (reads `vars/${project}/blaze-env.json` generically)
+- `support` project ECS services confirmed healthy (1/1, COMPLETED) on shared dev cluster
+
+---
+
 ## [2026-04-08] - Module Ref Sync: v2.2.14 → v2.2.16
 
 ### Changed
