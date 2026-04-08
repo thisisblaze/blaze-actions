@@ -1,3 +1,9 @@
+## [Unreleased] - 2026-04-08
+
+### Changed
+- chore: end-of-day governance sync — 2026-04-08
+
+
 # Changelog
 
 ## [2026-04-08] - Engine 4/8 Split-Brain Resolution: GCP stacks + 90-daily-health-check
