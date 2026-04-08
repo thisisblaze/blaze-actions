@@ -409,17 +409,26 @@ runs:
         #   - frontend-dev-bz-01.${DOMAIN_ROOT}
         #   - api-dev-bz-01.${DOMAIN_ROOT}
         #   - admin-dev-bz-01.${DOMAIN_ROOT}
-        export API_URL="https://api-${STAGE_KEY}.${DOMAIN_ROOT}"
-        if [[ "${BASE_STAGE}" == "dev" ]]; then
-           export FRONTEND_URL="https://frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
-           export ADMIN_URL="https://admin-${STAGE_KEY}.${DOMAIN_ROOT}"
-        elif [[ "${STAGE_KEY}" == "prod" ]]; then
-           export API_URL="https://api.${DOMAIN_ROOT}"
-           export FRONTEND_URL="https://${DOMAIN_ROOT}"
-           export ADMIN_URL="https://admin.${DOMAIN_ROOT}"
+        # Incorporate PROJECT_SLUG if present
+        SLUG_SUFFIX=""
+        if [[ -n "${PROJECT_SLUG:-}" ]]; then
+           SLUG_SUFFIX="-${PROJECT_SLUG}"
+        fi
+
+        export API_URL="https://api-${STAGE_KEY}${SLUG_SUFFIX}.${DOMAIN_ROOT}"
+        if [[ "${STAGE_KEY}" == "prod" ]]; then
+           if [[ -n "${PROJECT_SLUG:-}" ]]; then
+               export API_URL="https://api${SLUG_SUFFIX}.${DOMAIN_ROOT}"
+               export FRONTEND_URL="https://${PROJECT_SLUG}.${DOMAIN_ROOT}"
+               export ADMIN_URL="https://admin${SLUG_SUFFIX}.${DOMAIN_ROOT}"
+           else
+               export API_URL="https://api.${DOMAIN_ROOT}"
+               export FRONTEND_URL="https://${DOMAIN_ROOT}"
+               export ADMIN_URL="https://admin.${DOMAIN_ROOT}"
+           fi
         else
-           export FRONTEND_URL="https://frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
-           export ADMIN_URL="https://admin-${STAGE_KEY}.${DOMAIN_ROOT}"
+           export FRONTEND_URL="https://frontend-${STAGE_KEY}${SLUG_SUFFIX}.${DOMAIN_ROOT}"
+           export ADMIN_URL="https://admin-${STAGE_KEY}${SLUG_SUFFIX}.${DOMAIN_ROOT}"
         fi
         export FRONTEND_HOST=$(echo $FRONTEND_URL | sed 's~http[s]*://~~g')
         export API_URL
