@@ -1,4 +1,5 @@
 ## [Unreleased] - 2026-04-08
+- build: Unified Terraform module tags to v2.2.26 across all deployments
 
 - chore(cicd): /13-deep-cicd-maintenance — unified module pins to v2.2.20, fixed ECS task definition port 80 mappings
 ### Changed
