@@ -1,5 +1,6 @@
 ## [Unreleased] - 2026-04-08
 
+- chore(cicd): /13-deep-cicd-maintenance — unified module pins to v2.2.20, fixed ECS task definition port 80 mappings
 ### Changed
 - chore: end-of-day governance sync — 2026-04-08
 

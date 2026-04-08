@@ -190,7 +190,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
 | `blaze-actions` | **v2.1.13** | All 3 repos synced. |
-| `blaze-terraform-infra-core` | **v2.2.16** | Multi-Site V2 stable. Multi-tenant (thisisblaze+support) GA. |
+| `blaze-terraform-infra-core` | **v2.2.20** | Multi-Site V2 stable. Multi-tenant (thisisblaze+support) GA. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
 ## 14. Multi-Tenant Nuke Failure Patterns (2026-04-08)
