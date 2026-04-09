@@ -120,6 +120,9 @@ outputs:
   db_ssm_path:
     description: "Database SSM Path"
     value: ${{ steps.config.outputs.db_ssm_path }}
+  admin_bucket:
+    description: "Admin S3 Bucket Name"
+    value: ${{ steps.config.outputs.admin_bucket }}
 
 runs:
   using: "composite"
@@ -547,5 +550,10 @@ runs:
         else
           AZURE_ACR_NAME=""
         fi
+        ADMIN_BUCKET=$(echo "$MERGED_CONFIG" | jq -r ".[\"${STAGE_KEY}\"]?.ADMIN_BUCKET // .common.ADMIN_BUCKET // \"\"")
+        if [[ -z "$ADMIN_BUCKET" ]]; then
+           ADMIN_BUCKET="${NAMESPACE}-${CLIENT_KEY}-${PLATFORM}-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
+        fi
+        echo "admin_bucket=$ADMIN_BUCKET" >> $GITHUB_OUTPUT
         echo "azure_acr_name=$AZURE_ACR_NAME" >> $GITHUB_OUTPUT
         echo "🐳 Azure ACR Name: $AZURE_ACR_NAME"
