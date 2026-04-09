@@ -1,3 +1,17 @@
+## v2.1.22 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.21
+
+### Fixed
+
+- fix: correct YAML syntax error in calculate-config action outputs
+
 ## v2.1.21 (2026-04-09)
 
 ### Added
