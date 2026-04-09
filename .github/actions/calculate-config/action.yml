@@ -443,17 +443,38 @@ runs:
 
             # V2 Multi-Site App
             elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
-               # multi-site stacks are NOT scoped per-env — dirs are named multi-site-{type} globally.
+               # ── Per-project state split (April 2026) ──────────────────────────────
+               # multi-site-app is now split per project: each project has its own
+               # isolated TF stack directory and S3 state key.
+               # Primary project (thisisblaze) uses the canonical "multi-site-app" dir.
+               # Sub-projects (support, thisisblaze2, …) use "multi-site-app-{project}" dir.
+               # Network + CDN stacks remain shared (no per-project split needed).
+
+               # Resolve the project-scoped dir suffix for app stack only
+               if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
+                  STACK_DIR="multi-site-app-${INPUT_PROJECT}"
+                  # State key uses the project_key to isolate state per project
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+               else
+                  STACK_DIR="$STACK"
+                  if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+                     STATE_KEY="gcp/multi-site/${STACK}"
+                  else
+                     STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STACK#multi-site-}.tfstate"
+                  fi
+               fi
+
+               # multi-site stacks are NOT scoped per-env — dirs are named globally.
                # dev, dev-mini, and multi-site all use the unprefixed stack name.
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" || "$STAGE_KEY" == "multi-site" ]]; then
-                  TF_DIR="${INFRA_PREFIX}/${STACK}"
+                  TF_DIR="${INFRA_PREFIX}/${STACK_DIR}"
                else
-                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
-               fi
-               if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-                  STATE_KEY="gcp/multi-site/${STACK}"
-               else
-                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STACK#multi-site-}.tfstate"
+                  # For stage/prod, prefix the env: stage-multi-site-app or stage-multi-site-app-support
+                  if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
+                     TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-multi-site-app-${INPUT_PROJECT}"
+                  else
+                     TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK_DIR}"
+                  fi
                fi
 
             # Legacy Single-Site Fallback
