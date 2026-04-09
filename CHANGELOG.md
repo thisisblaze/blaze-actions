@@ -1,3 +1,21 @@
+## v2.1.24 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.23
+- chore: update CHANGELOG for v2.1.22
+- chore: update CHANGELOG for v2.1.21
+
+### Fixed
+
+- fix: export admin_bucket explicitly to support multi-site V2 naming convention
+- fix: bump internal references to v2.1.23 after YAML fix
+- fix: correct YAML syntax error in calculate-config action outputs
+
 ## v2.1.23 (2026-04-09)
 
 ### Added
