@@ -727,6 +727,35 @@ jobs:
           echo "   🏷️  Blaze:Stack   = ${STACK_NAME}"
           echo "   🏷️  Blaze:RunId   = ${{ github.run_id }}"
 
+      - name: Inject AWS Account ID
+        # Resolves the AWS account ID via STS and exports as:
+        #   - TF_VAR_aws_account_id  → picked up by Terraform if var declared in variables.tf
+        #   - AWS_ACCOUNT_ID         → used by envsubst step below to substitute ${AWS_ACCOUNT_ID}
+        #                              tokens in terraform.tfvars (ECR image URI pattern)
+        # Only runs for AWS provider (STS call requires AWS credentials already configured).
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "TF_VAR_aws_account_id=${ACCOUNT_ID}" >> "$GITHUB_ENV"
+          echo "AWS_ACCOUNT_ID=${ACCOUNT_ID}"        >> "$GITHUB_ENV"
+          echo "   🔑  AWS Account ID injected (TF_VAR_aws_account_id + AWS_ACCOUNT_ID)"
+
+      - name: Substitute env vars in tfvars
+        # Replaces ${AWS_ACCOUNT_ID} (and any other exported env vars) in *.tfvars files
+        # before Terraform Plan reads them. Terraform does not support variable references
+        # in .tfvars files, so ECR image URIs like
+        #   "${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/..."
+        # must be resolved at CI runtime via envsubst.
+        # Only substitutes tokens whose vars are set — unset vars are left untouched.
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        run: |
+          for f in *.tfvars; do
+            if [[ -f "$f" ]]; then
+              envsubst '${AWS_ACCOUNT_ID}' < "$f" > "$f.substituted" && mv "$f.substituted" "$f"
+              echo "   🔤  envsubst applied to $f"
+            fi
+          done
+
       - name: Resolve ACM Certificate ARN dynamically (if needed)
         id: resolve-acm
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
