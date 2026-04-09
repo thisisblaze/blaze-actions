@@ -64,11 +64,11 @@ outputs:
     description: "Client Key"
     value: ${{ steps.config.outputs.client_key }}
   project_key:
+    description: "Project Key"
+    value: ${{ steps.config.outputs.project_key }}
   shared_host_project:
     description: "Shared Host Project"
     value: ${{ steps.config.outputs.shared_host_project }}
-    description: "Project Key"
-    value: ${{ steps.config.outputs.project_key }}
   namespace:
     description: "Namespace"
     value: ${{ steps.config.outputs.namespace }}
