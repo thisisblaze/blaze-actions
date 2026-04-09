@@ -202,8 +202,17 @@ runs:
           ROLE_STAGE="dev"
         fi
 
+        # Resolve SHARED_HOST_PROJECT early to calculate the correct cluster
+        GLOBAL_CONFIG="vars/blaze-env.json"
+        PROJECT_CONFIG="vars/${PROJECT_KEY}/blaze-env.json"
+        SHARED_HOST_PROJECT=""
+        if [[ -f "$GLOBAL_CONFIG" && -f "$PROJECT_CONFIG" ]]; then
+           SHARED_HOST_PROJECT=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG" | jq -r '.common.SHARED_HOST_PROJECT // ""')
+        fi
+        HOST_PROJ="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+
         # Cluster Name (shared for DEV features)
-        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${CLUSTER_STAGE}-cluster"
+        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${CLUSTER_STAGE}-cluster"
 
         AWS_ACCOUNT_ID=$(echo "$REGISTRY" | cut -d'.' -f1)
 
