@@ -1,3 +1,17 @@
+## v2.1.25 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.24
+
+### Fixed
+
+- fix: resolve SHARED_HOST_PROJECT correctly in deploy-ecs-service to target the right ECS cluster
+
 ## v2.1.24 (2026-04-09)
 
 ### Added
