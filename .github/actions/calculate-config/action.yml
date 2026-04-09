@@ -552,7 +552,11 @@ runs:
         fi
         ADMIN_BUCKET=$(echo "$MERGED_CONFIG" | jq -r ".[\"${STAGE_KEY}\"]?.ADMIN_BUCKET // .common.ADMIN_BUCKET // \"\"")
         if [[ -z "$ADMIN_BUCKET" ]]; then
-           ADMIN_BUCKET="${NAMESPACE}-${CLIENT_KEY}-${PLATFORM}-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
+           # Multi-site-app module naming (April 2026):
+           # Bucket = {namespace}-{client}-{project_key}-{stage}-{admin_key}-static
+           # admin_key matches PROJECT_KEY (the admins={} map key in tfvars).
+           # Legacy: {namespace}-{client}-{platform}-{project}-{stage}-admin-origin  ← OLD
+           ADMIN_BUCKET="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-static"
         fi
         echo "admin_bucket=$ADMIN_BUCKET" >> $GITHUB_OUTPUT
         echo "azure_acr_name=$AZURE_ACR_NAME" >> $GITHUB_OUTPUT
