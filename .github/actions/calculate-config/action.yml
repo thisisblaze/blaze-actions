@@ -64,6 +64,9 @@ outputs:
     description: "Client Key"
     value: ${{ steps.config.outputs.client_key }}
   project_key:
+  shared_host_project:
+    description: "Shared Host Project"
+    value: ${{ steps.config.outputs.shared_host_project }}
     description: "Project Key"
     value: ${{ steps.config.outputs.project_key }}
   namespace:
@@ -185,6 +188,7 @@ runs:
         # Read keys from MERGED config
         CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY // "b9"')
         PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY // "blaze-actions-test"')
+        SHARED_HOST_PROJECT=$(echo "$MERGED_CONFIG" | jq -r '.common.SHARED_HOST_PROJECT // ""')
         NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE // "blaze"')
         PLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')
         AWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')
@@ -252,13 +256,14 @@ runs:
         fi
 
         # Export to Outputs
-        echo "client_key=$CLIENT_KEY" >> $GITHUB_OUTPUT
-        echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
-        echo "namespace=$NAMESPACE" >> $GITHUB_OUTPUT
-        echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
-        echo "cloud_provider=$CLOUD_PROVIDER" >> $GITHUB_OUTPUT
-        echo "cloud_region=$CLOUD_REGION" >> $GITHUB_OUTPUT
-        echo "infra_prefix=$INFRA_PREFIX" >> $GITHUB_OUTPUT
+        echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
+        echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
+        echo "shared_host_project=$SHARED_HOST_PROJECT" >> "$GITHUB_OUTPUT"
+        echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
+        echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+        echo "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"
+        echo "cloud_region=$CLOUD_REGION" >> "$GITHUB_OUTPUT"
+        echo "infra_prefix=$INFRA_PREFIX" >> "$GITHUB_OUTPUT"
         echo "gcp_project_id=$GCP_PROJECT_ID" >> $GITHUB_OUTPUT
         echo "aws_region=$AWS_REGION" >> $GITHUB_OUTPUT
         echo "domain_root=$DOMAIN_ROOT" >> $GITHUB_OUTPUT
@@ -502,7 +507,7 @@ runs:
         STATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')
 
         # Calculate Cluster Name
-        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${SHARED_HOST_PROJECT:-$PROJECT_KEY}-${STAGE_KEY}-cluster"
         echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
 
         echo "env_val=$ENV_VAL" >> $GITHUB_OUTPUT
