@@ -1,3 +1,17 @@
+## v2.1.20 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.19
+
+### Fixed
+
+- fix: Bump internal action references to v2.1.19/20
+
 ## v2.1.19 (2026-04-09)
 
 ### Added
