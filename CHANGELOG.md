@@ -1,3 +1,14 @@
+## [2026-04-09] - calculate-config Per-Project State Split
+
+### Changed
+- feat(calculate-config): **Project-aware `multi-site-app-{project}` TF path resolution** — when `stack=multi-site-app` and `project != thisisblaze`, resolves to `live/multi-site-app-{project}` (or `{stage}-multi-site-app-{project}` for non-dev envs) with isolated S3 state key `infra/{project}/multi-site/app.tfstate`. Primary project (`thisisblaze`) uses canonical `multi-site-app` directory unchanged. Network + CDN stacks unaffected.
+
+### Context
+- Enables independent deploy and destroy of each project's app stack.
+- Works in conjunction with `blaze-template-deploy` per-project stack dirs: `multi-site-app-support/`, `stage-multi-site-app-support/`, `prod-multi-site-app-support/`.
+
+---
+
 ## [Unreleased] - 2026-04-08
 - build: Unified Terraform module tags to v2.2.26 across all deployments
 
