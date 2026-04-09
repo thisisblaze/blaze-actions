@@ -1,3 +1,17 @@
+## v2.1.27 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.26
+
+### Fixed
+
+- fix: map admin_bucket in configuration job outputs so it is passed to Deploy Admin
+
 ## v2.1.26 (2026-04-09)
 
 ### Added
