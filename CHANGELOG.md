@@ -1,3 +1,17 @@
+## v2.1.26 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.25
+
+### Fixed
+
+- fix: bump all internal nested action references to v2.1.26 to prevent split-brain
+
 ## v2.1.25 (2026-04-09)
 
 ### Added
