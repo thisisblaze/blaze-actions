@@ -276,6 +276,7 @@ jobs:
       config_env: ${{ steps.config.outputs.config_env }}
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
+      admin_bucket: ${{ steps.config.outputs.admin_bucket }}
     steps:
       - uses: actions/checkout@v6.0.2
 
