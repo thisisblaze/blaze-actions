@@ -1,3 +1,18 @@
+## v2.1.28 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- docs: update changelog for 13-deep-cicd-maintenance sync
+- chore: update CHANGELOG for v2.1.27
+
+### Fixed
+
+- fix: sync internal workflow dependencies to v2.1.27
+
 ## v2.1.27 (2026-04-09)
 
 ### Added
