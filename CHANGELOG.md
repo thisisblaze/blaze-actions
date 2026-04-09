@@ -1,3 +1,34 @@
+## v2.1.18 (2026-04-09)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.17
+- chore: update CHANGELOG for v2.1.16
+- chore: update CHANGELOG for v2.1.15
+- chore: end-of-day governance sync — 2026-04-09
+- chore: end-of-day governance sync — 2026-04-09 (multi-tenant frontend routing slugs)
+- docs: update CHANGELOG for end of day sync — 2026-04-08
+- chore: end-of-day governance sync — 2026-04-08
+- chore: allstop governance sync 2026-04-08 — §14 nuke incident patterns, version pin v2.2.16
+- chore: allstop governance sync — 2026-04-08
+- chore: update CHANGELOG for v2.1.14
+- chore: update CHANGELOG for v2.1.13
+- chore: update CHANGELOG for v2.1.12
+- chore: update CHANGELOG for v2.1.11
+- chore: update CHANGELOG for v2.1.10
+- chore: update CHANGELOG for v2.1.9
+- chore: update CHANGELOG for v2.1.8
+- chore: update CHANGELOG for v2.1.7
+- chore: update CHANGELOG for v2.1.6
+- chore: update CHANGELOG for v2.1.5
+
+### Fixed
+
+
 ## v2.1.17 (2026-04-09)
 
 ### Added
