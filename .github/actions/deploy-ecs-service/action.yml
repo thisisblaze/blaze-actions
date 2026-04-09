@@ -494,6 +494,9 @@ runs:
          if ! aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
            NAMESPACED_SERVICE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
            PARTIAL_SERVICE="${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
+           # 4. multi-site-app pattern: {ns}-{client}-{project}-{stage}-{project}-{service}
+           #    e.g. blaze-b9-support-dev-support-api (project key repeated as namespace prefix)
+           MULTI_SITE_SERVICE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-${SERVICE_NAME}"
            
            # 2. Check Namespaced Name (e.g. "blaze-b9-thisisblaze-stage-api")
            if aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$NAMESPACED_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
@@ -501,12 +504,16 @@ runs:
            # 3. Check Partial/Non-Namespaced Name (e.g. "b9-thisisblaze-stage-api")
            elif aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$PARTIAL_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
               TARGET_SERVICE="$PARTIAL_SERVICE"
+           # 4. Check multi-site-app pattern (e.g. "blaze-b9-support-dev-support-api")
+           elif aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$MULTI_SITE_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+              TARGET_SERVICE="$MULTI_SITE_SERVICE"
            else
               echo "❌ Service not found in cluster '$CLUSTER_NAME'."
               echo "   Checked:"
               echo "   1. $SERVICE_NAME"
               echo "   2. $NAMESPACED_SERVICE"
               echo "   3. $PARTIAL_SERVICE"
+              echo "   4. $MULTI_SITE_SERVICE (multi-site-app pattern)"
               echo ""
               echo "👉 HINT: Has the Infrastructure been provisioned?"
               echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
