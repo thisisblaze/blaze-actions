@@ -476,19 +476,11 @@ runs:
            exit 1
         fi
 
-        echo "📝 Rendering $TEMPLATE to task-def.json..."
-        envsubst < "$TEMPLATE" > task-def.json
-
-        # Basic Validation
-        if ! jq empty task-def.json; then
-           echo "❌ ERROR: Rendered JSON is invalid."
-           exit 1
-        fi
-
         # ---------------------------------------------------------
         # 6. DEPLOYMENT CONFIG (CodeDeploy vs ECS)
         # ---------------------------------------------------------
-        # Check Service Name (Full vs Simple)
+        # Check Service Name (Full vs Simple) --- MUST happen BEFORE envsubst
+        # so CONTAINER_NAME is available for the template render.
         TARGET_SERVICE="$SERVICE_NAME"
         # 1. Check Simple Name (e.g. "api")
          if ! aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
@@ -519,6 +511,28 @@ runs:
               echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
               exit 1
            fi
+        fi
+
+        # CONTAINER_NAME = the last hyphen-separated segment(s) that identify the container
+        # For standard: blaze-b9-thisisblaze-dev-api     → CONTAINER_NAME=api
+        # For multi-site: blaze-b9-support-dev-support-api → CONTAINER_NAME=support-api
+        # Strategy: strip the known namespace prefix from TARGET_SERVICE to get the container suffix
+        _STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+        if [[ "$TARGET_SERVICE" == ${_STAGE_PREFIX}* ]]; then
+           CONTAINER_NAME="${TARGET_SERVICE#${_STAGE_PREFIX}}"
+        else
+           CONTAINER_NAME="$SERVICE_NAME"
+        fi
+        export CONTAINER_NAME
+        echo "🏷️  Container name resolved: $CONTAINER_NAME (service: $TARGET_SERVICE)"
+
+        echo "📝 Rendering $TEMPLATE to task-def.json..."
+        envsubst < "$TEMPLATE" > task-def.json
+
+        # Basic Validation
+        if ! jq empty task-def.json; then
+           echo "❌ ERROR: Rendered JSON is invalid."
+           exit 1
         fi
 
         echo "service_name=$TARGET_SERVICE" >> $GITHUB_OUTPUT
