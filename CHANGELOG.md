@@ -1,3 +1,17 @@
+## v2.1.40 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- fix(02-deploy-aws): update calculate-config pin to v2.1.39
+- chore: update CHANGELOG for v2.1.39
+
+### Fixed
+
+
 ## [v2.1.40] - 2026-04-10
 
 ### Fixed
