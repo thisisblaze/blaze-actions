@@ -6,6 +6,22 @@
 
 ### Changed
 
+- chore: bump all workflow pins to v2.1.33
+- chore: update CHANGELOG for v2.1.33
+- chore: update CHANGELOG for v2.1.32
+
+### Fixed
+
+- fix(deploy-ecs-service): resolve CONTAINER_NAME before envsubst
+
+## v2.1.33 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v2.1.32
 
 ### Fixed
