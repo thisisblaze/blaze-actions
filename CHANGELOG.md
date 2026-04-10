@@ -1,3 +1,9 @@
+## [v2.1.40] - 2026-04-10
+
+### Fixed
+- `02-deploy-aws.yml`: updated internal `calculate-config` pin from `@v2.1.27` to `@v2.1.39`
+  so the new `project_slug` output is available in the `build-frontend` job BLAZE_GRAPHQL_URI formula.
+
 ## v2.1.39 (2026-04-10)
 
 ### Added
