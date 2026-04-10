@@ -231,7 +231,7 @@ env:
 jobs:
   dispatch-aws:
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.1.36
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.1.37
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
