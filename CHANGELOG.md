@@ -1,3 +1,17 @@
+## v2.1.38 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: bump to v2.1.38
+- chore: update CHANGELOG for v2.1.37
+
+### Fixed
+
+
 ## v2.1.37 (2026-04-10)
 
 ### Added
