@@ -785,7 +785,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.34
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.35
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -834,7 +834,7 @@ jobs:
       == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services
       == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.34
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.35
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -883,7 +883,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.34
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.35
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
