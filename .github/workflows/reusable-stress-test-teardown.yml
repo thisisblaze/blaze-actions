@@ -370,7 +370,7 @@ jobs:
     name: "🧨 Destroy App"
 
     needs: [config, cleanup-services, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
@@ -401,7 +401,7 @@ jobs:
     name: "🧨 Destroy Data Pod"
 
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-db-pod-alpha"
@@ -430,7 +430,7 @@ jobs:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.mongodb_exists == 'true' }}
     name: "🧨 Destroy MongoDB"
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
@@ -455,7 +455,7 @@ jobs:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.elastic_exists == 'true' }}
     name: "🧨 Destroy Elastic"
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
@@ -482,7 +482,7 @@ jobs:
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
@@ -906,7 +906,7 @@ jobs:
     name: "🧨 Destroy Network"
 
     needs: [config, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.27
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.41
     with:
       action: "destroy"
       tf_dir: ${{ inputs.network_stack == 'multi-site-network' && format('{0}/multi-site-network', needs.config.outputs.infra_prefix) || format('{0}/{1}-network', needs.config.outputs.infra_prefix, inputs.environment) }}
