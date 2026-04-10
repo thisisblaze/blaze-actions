@@ -123,6 +123,9 @@ outputs:
   admin_bucket:
     description: "Admin S3 Bucket Name"
     value: ${{ steps.config.outputs.admin_bucket }}
+  project_slug:
+    description: "Multi-tenant subdomain slug (empty for primary project, e.g. 'support' for sub-projects)"
+    value: ${{ steps.config.outputs.project_slug }}
 
 runs:
   using: "composite"
@@ -561,3 +564,8 @@ runs:
         echo "admin_bucket=$ADMIN_BUCKET" >> $GITHUB_OUTPUT
         echo "azure_acr_name=$AZURE_ACR_NAME" >> $GITHUB_OUTPUT
         echo "🐳 Azure ACR Name: $AZURE_ACR_NAME"
+
+        # ── Project Slug (multi-tenant subdomain suffix) ──
+        PROJECT_SLUG=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_SLUG // ""')
+        echo "project_slug=$PROJECT_SLUG" >> $GITHUB_OUTPUT
+        echo "🏷️  Project Slug: '${PROJECT_SLUG:-<primary>}'"
