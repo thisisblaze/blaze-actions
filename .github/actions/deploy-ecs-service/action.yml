@@ -404,21 +404,21 @@ runs:
         # - Otherwise (typically DEV with in-cluster Mongo), build the internal URI using MONGO_PASS.
         if [[ -n "${MONGODB_URI:-}" ]]; then
           echo "✅ Using provided MONGODB_URI (external MongoDB, e.g. Atlas)."
-          # For sub-projects sharing the host Atlas cluster, fetch their own provisioned
-          # connection string from: /blaze/multi-site/v2/{stage}/tenants/{project}/mongodb/app_connection_string
-          # This gives the sub-project its own Atlas user with correct DB permissions.
+          # For sub-projects sharing the host Atlas cluster, fetch their own project-scoped
+          # Atlas connection string from: /{namespace}/{client}/{project}/{stage}/BLAZE_CONNECTION_STRING
+          # This mirrors the convention used for the host project (e.g. /blaze/b9/thisisblaze/dev/...).
           if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
-            MULTI_SITE_SSM="/blaze/multi-site/v2/${BASE_STAGE}/tenants/${PROJECT_KEY}/mongodb/app_connection_string"
-            echo "ℹ️  Sub-project: reading Atlas URI from SSM: $MULTI_SITE_SSM"
+            SUB_SSM="/${NAMESPACE}/${CLIENT_KEY}/${PROJECT_KEY}/${BASE_STAGE}/BLAZE_CONNECTION_STRING"
+            echo "ℹ️  Sub-project: reading Atlas URI from SSM: $SUB_SSM"
             SUB_MONGODB_URI=$(aws ssm get-parameter \
-              --name "$MULTI_SITE_SSM" \
+              --name "$SUB_SSM" \
               --with-decryption \
               --query 'Parameter.Value' --output text 2>/dev/null || true)
             if [[ -n "$SUB_MONGODB_URI" ]]; then
               MONGODB_URI="$SUB_MONGODB_URI"
               echo "✅ Using sub-project Atlas URI from SSM."
             else
-              echo "⚠️  SSM path not found: $MULTI_SITE_SSM. Falling back to shared URI."
+              echo "⚠️  SSM path not found: $SUB_SSM. Falling back to shared URI."
             fi
           fi
         else
