@@ -1,3 +1,16 @@
+## v2.1.41 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.40
+
+### Fixed
+
+
 ## [v2.1.41] - 2026-04-10
 
 ### Fixed
