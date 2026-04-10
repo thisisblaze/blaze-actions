@@ -404,12 +404,13 @@ runs:
         # - Otherwise (typically DEV with in-cluster Mongo), build the internal URI using MONGO_PASS.
         if [[ -n "${MONGODB_URI:-}" ]]; then
           echo "✅ Using provided MONGODB_URI (external MongoDB, e.g. Atlas)."
-          # For sub-projects sharing the host Atlas cluster, rewrite the DB name segment.
-          # e.g. thisisblaze secret has /blaze-b9-thisisblaze-dev? → rewrite to /blaze-b9-support-dev?
+          # For sub-projects sharing the host Atlas cluster, rewrite only the DB name path segment.
+          # The URI pattern is: scheme://user:pass@host/DATABASE_NAME?opts
+          # Use sed to replace the path segment specifically (avoids matching the username).
           if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
             HOST_DB="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${BASE_STAGE}"
             SUB_DB="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${BASE_STAGE}"
-            MONGODB_URI="${MONGODB_URI/${HOST_DB}/${SUB_DB}}"
+            MONGODB_URI=$(echo "$MONGODB_URI" | sed "s|/${HOST_DB}?|/${SUB_DB}?|")
             echo "ℹ️  Sub-project DB rewrite: ${HOST_DB} → ${SUB_DB}"
           fi
         else
