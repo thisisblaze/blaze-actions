@@ -1,3 +1,18 @@
+## v2.1.39 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: bump to v2.1.39
+- chore: update CHANGELOG for v2.1.38
+
+### Fixed
+
+- fix: add project_slug output to calculate-config and fix BLAZE_GRAPHQL_URI for multi-tenant sub-projects
+
 ## [v2.1.39] - 2026-04-10
 
 ### Added
