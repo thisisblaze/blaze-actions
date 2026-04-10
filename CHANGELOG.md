@@ -1,3 +1,17 @@
+## v2.1.36 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: bump to v2.1.36
+- chore: update CHANGELOG for v2.1.35
+
+### Fixed
+
+
 ## v2.1.35 (2026-04-10)
 
 ### Added
