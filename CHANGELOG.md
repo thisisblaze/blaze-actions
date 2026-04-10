@@ -1,3 +1,14 @@
+## [v2.1.39] - 2026-04-10
+
+### Added
+- `calculate-config` action: added `project_slug` output (reads `PROJECT_SLUG` from `blaze-env.json`)
+
+### Fixed
+- `02-deploy-aws.yml`: corrected `BLAZE_GRAPHQL_URI` Docker build arg for multi-tenant sub-projects.
+  Sub-projects (e.g. `support` with `PROJECT_SLUG=support`) now get the correct API URL
+  (`api-{stage}-{slug}.{domain}`) instead of the primary project URL (`api-{client}-{stage}.{domain}`).
+
+
 ## v2.1.38 (2026-04-10)
 
 ### Added
