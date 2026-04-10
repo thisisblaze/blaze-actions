@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-03
+**Last Updated**: 2026-04-10
 **Owner**: Infrastructure Team
 
 ---
@@ -6,7 +6,7 @@
 # System Constitution: blaze-actions (Hub)
 
 > **Version**: ACTIONS_CONSTITUTION_V1
-> **Last Updated**: 2026-03-03
+> **Last Updated**: 2026-04-10
 > **Role**: Workflow Architect
 > **Scope**: GitHub Actions Reusable Workflows
 
@@ -106,7 +106,7 @@ PROJECT: "blaze-client-project-admin" # WRONG!
 
 #### Namespace Variable
 
-- **Source:** `reusable-calculate-config.yml`
+- **Source:** `calculate-config` action
 - **Default:** `"blaze"` (for backward compatibility)
 - **Configurable via:** `vars/blaze-env.json` → `NAMESPACE` variable
 - **Access in workflows:** `needs.calculate-config.outputs.namespace` or `needs.configuration.outputs.namespace`
@@ -123,6 +123,8 @@ if [[ "$CLUSTER" =~ ([^-]+)-([^-]+)-([^-]+)-([^-]+)-cluster ]]; then
   PROJECT_KEY="${BASH_REMATCH[3]}"
   STAGE_KEY="${BASH_REMATCH[4]}"
 fi
+# Note: In Multi-Tenant setups, the PROJECT_KEY alone defines the cluster namespace.
+# Sub-projects (e.g. support) deploy to the primary project's cluster.
 ```
 
 #### Testing Requirement

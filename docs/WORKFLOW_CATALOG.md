@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-10
 **Owner**: Infrastructure Team
 
 ---
@@ -8,7 +8,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 52 (31 main + 19 reusable)  
 **Version**: v1.5.0  
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-10
 
 ---
 
@@ -458,12 +458,6 @@
 
 These are called by main workflows, not directly by users.
 
-### reusable-calculate-config.yml
-
-**Purpose**: Configuration loading and calculation  
-**Inputs**: environment, terraform_stack, branch_tag, project  
-**Outputs**: All config values (bucket, state_key, aws_region, etc.)
-
 ---
 
 ### reusable-terraform.yml
@@ -607,6 +601,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-03-16  
+**Last Updated**: 2026-04-10  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

@@ -1,4 +1,4 @@
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-10
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-03-16
+**Last Updated**: 2026-04-10
 
 ---
 
@@ -506,7 +506,7 @@ All workflows automatically receive a **namespace** output from `reusable-calcul
 
 ### Namespace Output
 
-The `reusable-calculate-config.yml` workflow provides a `namespace` output:
+The `calculate-config` composite action provides a `namespace` output:
 
 | Output         | Description               | Example                            | Default   |
 | -------------- | ------------------------- | ---------------------------------- | --------- |
@@ -515,16 +515,25 @@ The `reusable-calculate-config.yml` workflow provides a `namespace` output:
 | `project_key`  | Project identifier        | `thisisblaze`                      | -         |
 | `stage_key`    | Environment stage         | `dev`, `stage`, `prod`             | -         |
 | `cluster_name` | Full ECS cluster name     | `blaze-b9-thisisblaze-dev-cluster` | -         |
+| `project_slug` | Subdomain tenant slug     | `support` or empty                 | -         |
 
 ### Usage Example
 
 ```yaml
 jobs:
   config:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v1
-    with:
-      environment: dev
-      terraform_stack: app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        with:
+          environment: dev
+          terraform_stack: app
+          deploy_infra: 'false'
+          build_images: 'false'
+          deploy_services: 'false'
+          event_name: 'test'
 
   deploy:
     needs: config
@@ -534,6 +543,7 @@ jobs:
         env:
           NAMESPACE: ${{ needs.config.outputs.namespace }}
           CLUSTER: ${{ needs.config.outputs.cluster_name }}
+          SLUG: ${{ needs.config.outputs.project_slug }}
         run: |
           echo "Deploying to cluster: $CLUSTER"
           # Cluster name will be: ${namespace}-${client}-${project}-${stage}-cluster
@@ -568,6 +578,6 @@ Set in `vars/blaze-env.json`:
 
 ---
 
-**Last Updated**: 2026-03-16  
+**Last Updated**: 2026-04-10  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
