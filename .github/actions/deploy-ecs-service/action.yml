@@ -357,16 +357,28 @@ runs:
            exit 1
         fi
 
-        ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${ROLE_STAGE}-exec-role"
+        # Exec role: tied to the HOST cluster owner (SHARED_HOST_PROJECT), not the sub-project
+        # thisisblaze-sub-projects (support, etc.) share the host exec-role:
+        #   blaze-b9-thisisblaze-dev-exec-role
+        ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${ROLE_STAGE}-exec-role"
         echo "⏳ Expected IAM Role: $ROLE_NAME"
 
-        # Optional: Service-specific task role (DEV-V2 API uses dedicated role for S3 access)
+        # Service-specific task role: for multi-site, Terraform creates:
+        #   blaze-b9-{project}-{stage}-{servicekey}-task-role
+        # where servicekey = CONTAINER_NAME (support-api, support-frontend, api, frontend, etc.)
+        # We compute CONTAINER_NAME here using the same stage-prefix-strip logic.
         TASK_ROLE_NAME="$ROLE_NAME"
-        if [[ "$SERVICE_NAME" == "api" ]]; then
-          CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-api-task-role"
-          echo "ℹ️ Using API task role: $CANDIDATE_TASK_ROLE (OIDC GetRole check skipped due to IAM constraints)"
-          TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
+        _ROLE_STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+        _POSSIBLE_TARGET="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-${SERVICE_NAME}"
+        # Detect multi-site naming: if PROJECT_KEY != HOST_PROJ, then the service key is prefixed
+        if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
+           _CONTAINER_EARLY="${PROJECT_KEY}-${SERVICE_NAME}"
+        else
+           _CONTAINER_EARLY="${SERVICE_NAME}"
         fi
+        CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${_CONTAINER_EARLY}-task-role"
+        echo "ℹ️ Checking task role: $CANDIDATE_TASK_ROLE"
+        TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
 
         # ---------------------------------------------------------
         if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/mongo:latest"
