@@ -1,3 +1,17 @@
+## v2.1.34 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: bump all workflow pins to v2.1.34
+- chore: update CHANGELOG for v2.1.33
+
+### Fixed
+
+
 ## v2.1.33 (2026-04-10)
 
 ### Added
