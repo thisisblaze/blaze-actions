@@ -6,6 +6,20 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v2.1.32
+- chore: update CHANGELOG for v2.1.31
+
+### Fixed
+
+
+## v2.1.32 (2026-04-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v2.1.31
 
 ### Fixed
