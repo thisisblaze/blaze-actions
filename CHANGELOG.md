@@ -1,3 +1,9 @@
+## [v2.1.41] - 2026-04-10
+
+### Fixed
+- `02-deploy-app.yml`: pin `02-deploy-aws.yml` from `@v2.1.38` to `@v2.1.40`.
+  Completes project_slug fix chain: 02-deploy-app@v2.1.41 -> 02-deploy-aws@v2.1.40 -> calculate-config@v2.1.39.
+
 ## v2.1.40 (2026-04-10)
 
 ### Added
