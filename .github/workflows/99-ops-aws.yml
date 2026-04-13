@@ -235,7 +235,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.42
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.43
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -347,7 +347,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.42
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.43
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -403,7 +403,7 @@ jobs:
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.42
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.43
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -629,7 +629,7 @@ jobs:
     name: ☢️ Nuke CloudFront
     needs: [configuration]
     if: inputs.action == 'nuke-cloudfront'
-    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v2.1.42
+    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v2.1.43
     with:
       dist_id: ${{ inputs.dist_id }}
     secrets:

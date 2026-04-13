@@ -213,7 +213,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.app_stack != 'multi-site-app'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.1.42
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.1.43
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
