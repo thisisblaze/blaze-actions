@@ -824,6 +824,7 @@ jobs:
 
       - name: Orphan Lambda Resources (Prevent Hang)
         if: ${{ inputs.orphan_lambda == true }}
+        continue-on-error: true
         working-directory: ${{ inputs.tf_dir }}
         run: |
           echo "🧹 Orphaning Lambda@Edge FUNCTIONS to prevent destroy hang (IAM preserved)..."
@@ -877,6 +878,7 @@ jobs:
       # already deleted ALBs/DNS records before Terraform destroy runs.
       - name: Purge Stale Network Resources (Prevent ALB/DNS 404 on Destroy)
         if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') }}
+        continue-on-error: true
         working-directory: ${{ inputs.tf_dir }}
         run: |
           echo "🧹 Purging stale network resources from state (idempotent — || echo guards ensure no failure)..."
