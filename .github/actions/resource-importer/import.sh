@@ -225,6 +225,76 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
     echo "   ⚠️ Cloudflare credentials missing. Skipping CF validation import."
   fi
 
+  # ── DNS Records Import-First Pass (network / multi-site-network) ──────────────
+  # Cloudflare provider v5 removed allow_overwrite. Records that exist in CF but
+  # are absent from TF state cause terraform to POST (create) → 81053 AlreadyExists.
+  # Fix: import existing records into state before apply → TF issues PATCH (update),
+  # not POST → no conflict, no downtime, fully idempotent.
+  #
+  # Record name logic mirrors environment-network module locals exactly:
+  #   is_prod = stage == "prod"
+  #   api_record_name   = is_prod ? "api"       : "api-${stage}"
+  #   fe_record_name    = is_prod ? "@"          : "frontend-${stage}"
+  #   admin_record_name = is_prod ? "admin"      : "admin-${stage}"
+  #   cdn_record_name   = is_prod ? "cdn"        : "cdn-${stage}"
+  #   api_direct        = always "api-direct-${stage}"
+  # Note: CF stores apex "@" as the bare DOMAIN_ROOT (e.g. "thisisblaze.uk").
+  if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$INPUT_STAGE_KEY" && -n "$INPUT_DOMAIN_ROOT" ]]; then
+    echo "   🔵 DNS import-first pass for managed network/multi-site-network DNS records..."
+    STAGE_KEY="${INPUT_STAGE_KEY}"
+    DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
+    CF_ZONE="$TF_VAR_cloudflare_zone_id"
+
+    IS_PROD=false
+    [[ "$STAGE_KEY" == "prod" ]] && IS_PROD=true
+
+    if [[ "$IS_PROD" == "true" ]]; then
+      API_RECORD="api.${DOMAIN_ROOT}"
+      FE_RECORD="${DOMAIN_ROOT}"               # apex @
+      ADMIN_RECORD="admin.${DOMAIN_ROOT}"
+      CDN_RECORD="cdn.${DOMAIN_ROOT}"
+    else
+      API_RECORD="api-${STAGE_KEY}.${DOMAIN_ROOT}"
+      FE_RECORD="frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
+      ADMIN_RECORD="admin-${STAGE_KEY}.${DOMAIN_ROOT}"
+      CDN_RECORD="cdn-${STAGE_KEY}.${DOMAIN_ROOT}"
+    fi
+    API_DIRECT_RECORD="api-direct-${STAGE_KEY}.${DOMAIN_ROOT}"
+
+    # Map: CF record name (as stored in Cloudflare) → Terraform state address
+    declare -A NET_DNS_TF_MAP
+    NET_DNS_TF_MAP["$API_RECORD"]="module.environment_network.cloudflare_dns_record.api[0]"
+    NET_DNS_TF_MAP["$FE_RECORD"]="module.environment_network.cloudflare_dns_record.frontend[0]"
+    NET_DNS_TF_MAP["$ADMIN_RECORD"]="module.environment_network.cloudflare_dns_record.admin[0]"
+    NET_DNS_TF_MAP["$CDN_RECORD"]="module.environment_network.cloudflare_dns_record.cdn[0]"
+    NET_DNS_TF_MAP["$API_DIRECT_RECORD"]="module.environment_network.cloudflare_dns_record.api_direct[0]"
+
+    for RECORD_NAME in "${!NET_DNS_TF_MAP[@]}"; do
+      TF_ADDR="${NET_DNS_TF_MAP[$RECORD_NAME]}"
+      RESPONSE=$(curl -s -X GET \
+        "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${RECORD_NAME}" \
+        -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
+        -H "Content-Type: application/json")
+      RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty')
+
+      if [[ -n "$RECORD_ID" ]]; then
+        if ! terraform state list 2>/dev/null | grep -qF "$TF_ADDR"; then
+          echo "   📥 Importing DNS record: ${RECORD_NAME} → ${TF_ADDR}"
+          terraform import "$TF_ADDR" "${CF_ZONE}/${RECORD_ID}" 2>/dev/null && \
+            echo "   ✅ Imported: ${RECORD_NAME}" || \
+            echo "   ⚠️  Import failed for ${RECORD_NAME} — TF will attempt create (may conflict if record exists)"
+        else
+          echo "   ✅ Already in state: ${RECORD_NAME}"
+        fi
+      else
+        echo "   ℹ️  Not found in Cloudflare: ${RECORD_NAME} (TF will create fresh)"
+      fi
+    done
+  else
+    echo "   ⚠️ Cloudflare credentials or stage/domain missing — skipping DNS import-first pass."
+  fi
+  # ─────────────────────────────────────────────────────────────────────────────
+
   echo "   🧹 Culling orphaned IAM roles to unblock terraform entity creation..."
   for ROLE in "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-instance-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-execution-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-codedeploy-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-task-role" "blaze-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-task-execution-role"; do
     if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
