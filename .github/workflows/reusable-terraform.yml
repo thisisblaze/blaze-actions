@@ -826,21 +826,52 @@ jobs:
         if: ${{ inputs.orphan_lambda == true }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
-          echo "🧹 Orphaning Lambda@Edge resources to prevent destroy hang..."
+          echo "🧹 Orphaning Lambda@Edge FUNCTIONS to prevent destroy hang (IAM preserved)..."
 
-          # 1. Current Image Resize Lambda (Module)
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' || echo "resize-image module not in state"
+          # Remove ONLY the Lambda function resources that cause destroy hang.
+          # DO NOT remove aws_iam_role / aws_iam_policy — these survive teardown
+          # and attempting to re-create them on apply hits EntityAlreadyExists (409).
+          # The IAM resources are re-imported in pre_apply_script before this step,
+          # but the whole-module state-rm was wiping them. Now we are surgical.
 
-          # 2. Vestigial/Phantom Normalize Lambda (Legacy Module)
-          terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]' || echo "normalize module not in state"
+          # 1. Lambda function resources only (not the full module)
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]'   2>/dev/null || echo "viewer_request not in state"
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]'   2>/dev/null || echo "origin_response not in state"
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].time_sleep.wait_for_edge_propagation[0]'  2>/dev/null || echo "time_sleep not in state"
 
-          # 3. Specific Function Resource targeting (Safety Net)
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]' || echo "origin_response function already gone"
+          # 2. Vestigial/Phantom Normalize Lambda (Legacy Module — full module, no IAM to worry about)
+          terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]' 2>/dev/null || echo "normalize module not in state"
 
-          # 4. Remove time_sleep dependencies
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].time_sleep.wait_for_edge_propagation[0]' || echo "time_sleep not in state"
+          # 3. Safety net — if whole module was in state (first-time run), ensure IAM is re-imported
+          #    so plan sees them as update not create.
+          LAMBDA_NS="${{ inputs.orphan_lambda_namespace || 'blaze' }}"
+          LAMBDA_STAGE=$(basename "${{ inputs.tf_dir }}" | cut -d'-' -f1)
+          LAMBDA_ROLE_NAME="${LAMBDA_NS}-${LAMBDA_STAGE}-lambda-edge-role"
+          if ! terraform state show 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' >/dev/null 2>&1; then
+            LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
+              --query 'Role.RoleName' --output text 2>/dev/null || echo "")
+            if [[ -n "$LAMBDA_ROLE_EXISTS" && "$LAMBDA_ROLE_EXISTS" != "None" ]]; then
+              echo "  📥 IAM role not in state — re-importing: $LAMBDA_ROLE_NAME"
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' \
+                "$LAMBDA_ROLE_NAME" 2>/dev/null && echo "  ✅ IAM role imported" || echo "  ⚠️  IAM role import failed"
+            fi
+          fi
+          LAMBDA_POLICY_NAME="${LAMBDA_NS}-${LAMBDA_STAGE}-lambda-edge-s3-write-transformed"
+          if ! terraform state show 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' >/dev/null 2>&1; then
+            LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
+              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
+              --output text 2>/dev/null || echo "")
+            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+            if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
+              echo "  📥 IAM policy not in state — re-importing: $LAMBDA_POLICY_NAME"
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
+                "$LAMBDA_POLICY_ARN" 2>/dev/null && echo "  ✅ IAM policy imported" || echo "  ⚠️  IAM policy import failed"
+            fi
+          fi
 
-          echo "✅ Lambda resources removed from state"
+          echo "✅ Lambda functions orphaned from state (IAM preserved/re-imported)"
 
       # ── Purge Stale Network Resources — runs only on destroy ──
       # Prevents ListenerNotFound / Cloudflare-404 errors when pre-nuke cleanup
