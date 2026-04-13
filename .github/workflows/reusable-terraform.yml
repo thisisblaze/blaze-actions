@@ -883,13 +883,29 @@ jobs:
         run: |
           echo "🧹 Purging stale network resources from state (idempotent — || echo guards ensure no failure)..."
 
-          # ALB Stub Listeners — deleted by pre-nuke cleanup cascading off ALB deletion.
-          # module.environment_network maps to both environment-network and multi-site-network stacks.
-          terraform state rm 'module.environment_network.aws_lb_listener.https[0]' || echo "aws_lb_listener.https[0] not in state — already clean"
-          terraform state rm 'module.environment_network.aws_lb_listener.api_https[0]' || echo "aws_lb_listener.api_https[0] not in state — already clean"
+          # ALB Listeners — deleted by pre-nuke cleanup cascading off ALB deletion.
+          # Cover all naming variants: http/https, with and without api_ prefix.
+          for ADDR in \
+            'module.environment_network.aws_lb_listener.http[0]' \
+            'module.environment_network.aws_lb_listener.https[0]' \
+            'module.environment_network.aws_lb_listener.api_http[0]' \
+            'module.environment_network.aws_lb_listener.api_https[0]'; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ℹ️  Not in state: $ADDR"
+          done
 
-          # Cloudflare ACM validation DNS record — may be absent if a prior destroy already cleaned it.
-          terraform state rm 'module.environment_network.cloudflare_dns_record.validation[0]' || echo "cloudflare_dns_record.validation[0] not in state — already clean"
+          # Cloudflare DNS records — may already be deleted; cover all key variants.
+          for ADDR in \
+            'module.environment_network.cloudflare_dns_record.validation[0]' \
+            'module.environment_network.cloudflare_dns_record.cdn[0]' \
+            'module.environment_network.cloudflare_dns_record.api[0]' \
+            'module.environment_network.cloudflare_dns_record.admin[0]' \
+            'module.environment_network.cloudflare_dns_record.api_direct[0]'; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ℹ️  Not in state: $ADDR"
+          done
+          # Map-keyed validation records (e.g. validation["thisisblaze.uk"])
+          terraform state list 2>/dev/null | grep 'cloudflare_dns_record.validation\[' | while read ADDR; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
+          done
 
           echo "✅ Stale network resources purged"
 
