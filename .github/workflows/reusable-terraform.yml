@@ -860,9 +860,8 @@ jobs:
           LAMBDA_POLICY_NAME="${LAMBDA_NS}-${LAMBDA_STAGE}-lambda-edge-s3-write-transformed"
           if ! terraform state show 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' >/dev/null 2>&1; then
             LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
-              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
-              --output text 2>/dev/null || echo "")
-            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+              --output json 2>/dev/null \
+              | jq -r --arg name "$LAMBDA_POLICY_NAME" '.Policies[] | select(.PolicyName==$name) | .Arn' || echo "")
             if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
               echo "  📥 IAM policy not in state — re-importing: $LAMBDA_POLICY_NAME"
               terraform import \

@@ -754,9 +754,8 @@ jobs:
 
             LAMBDA_POLICY_NAME="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
             LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
-              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
-              --output text 2>/dev/null || echo "")
-            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+              --output json 2>/dev/null \
+              | jq -r --arg name "$LAMBDA_POLICY_NAME" '.Policies[] | select(.PolicyName==$name) | .Arn' || echo "")
             if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
               echo "  📥 Re-importing Lambda@Edge IAM policy after state-rm: $LAMBDA_POLICY_NAME"
               terraform import \
@@ -782,9 +781,8 @@ jobs:
             fi
             LAMBDA_POLICY_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
             LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
-              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
-              --output text 2>/dev/null || echo "")
-            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+              --output json 2>/dev/null \
+              | jq -r --arg name "$LAMBDA_POLICY_NAME" '.Policies[] | select(.PolicyName==$name) | .Arn' || echo "")
             if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
               terraform import \
                 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
