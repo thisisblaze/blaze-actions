@@ -1,30 +1,78 @@
 ## v2.1.47 (2026-04-13)
 
-### Fixed
-- fix(01-provision-infra): bump all internal action/workflow pins to v2.1.46 — ensures `reusable-terraform@v2.1.46` is used during destroy so `continue-on-error` and correct purge addresses take effect.
+### Added
 
----
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.46
+- chore: update CHANGELOG for v2.1.45
+- chore: update CHANGELOG for v2.1.44
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
 
 ## v2.1.46 (2026-04-13)
 
-### Fixed
-- fix(reusable-terraform/purge): add `aws_lb_listener.http[0]` + `api_http[0]` to pre-destroy state-rm (was only purging `https` variants); purge all Cloudflare DNS record addresses (`cdn`, `api`, `admin`, `api_direct`, `validation` + map-keyed variants) to prevent `81044` errors on destroy.
+### Added
 
----
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.45
+- chore: update CHANGELOG for v2.1.44
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
 
 ## v2.1.45 (2026-04-13)
 
-### Fixed
-- fix(01-provision-infra): bump all internal pins to v2.1.44 — `reusable-terraform.yml@v2.1.43` was still being called from within `01-provision-infra.yml`, bypassing the `continue-on-error` fix for `terraform state rm` on destroy.
+### Added
 
----
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.44
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
 
 ## v2.1.44 (2026-04-13)
 
-### Fixed
-- fix(reusable-terraform): add `continue-on-error: true` to `orphan_lambda` and `Purge Stale Network Resources` steps — `terraform state rm` exits non-zero on `Invalid target address` when resources are already gone (pre-nuke CLI deleted them). These state-rm operations are best-effort and must not block the destroy.
+### Added
 
----
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
+
+## v2.1.43 (2026-04-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.43
+- chore: bump refs to v2.1.43
+- chore: update CHANGELOG for v2.1.43
+- chore: bump blaze-actions refs to v2.1.42
+- chore: update CHANGELOG for v2.1.42
+
+### Fixed
+
+- fix(iam-policy-import): use jq -r instead of --output text for policy ARN lookup
 
 ## v2.1.43 (2026-04-13)
 
