@@ -1,4 +1,15 @@
-## v2.1.41 (2026-04-10)
+## [Unreleased] - 2026-04-13
+
+### Documentation
+- docs(WORKFLOW_CATALOG): corrected total workflow count (52→53), removed dead `stress-test.yml` reference (decomposed into reusable phases), removed non-existent `check-stack-exists.yml`, expanded all 16 stub entries with real descriptions, added 3 missing workflows (`lint-agent-workflows`, `deploy-gcp-site`, `reusable-provision-db-users`)
+- docs(REUSABLE_WORKFLOWS): updated `vars/blaze-env.json` path to `vars/{project}/blaze-env.json` to reflect multi-project blaze-env layout; bumped timestamps to 2026-04-13
+
+### Known Drift
+- Engine 4: `v2.2.26` / `v2.2.28` split-brain on Azure and GCP stacks (not AWS). AWS stacks are all `v2.2.28`. Azure/GCP bump deferred until multi-cloud reprovision cycle.
+
+---
+
+
 
 ### Added
 

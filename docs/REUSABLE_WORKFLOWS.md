@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-13
 **Owner**: Infrastructure Team
 
 ---
@@ -7,7 +7,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-13
 
 ---
 
@@ -551,7 +551,7 @@ jobs:
 
 ### Configuration
 
-Set in `vars/blaze-env.json`:
+Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`):
 
 ```json
 {
@@ -578,6 +578,6 @@ Set in `vars/blaze-env.json`:
 
 ---
 
-**Last Updated**: 2026-04-10  
+**Last Updated**: 2026-04-13  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

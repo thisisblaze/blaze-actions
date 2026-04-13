@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-13
 **Owner**: Infrastructure Team
 
 ---
@@ -6,9 +6,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 52 (31 main + 19 reusable)  
+**Total Workflows**: 53 (34 main + 19 reusable)  
 **Version**: v1.5.0  
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-13
 
 ---
 
@@ -100,35 +100,15 @@
 
 ### Testing & Validation
 
-#### stress-test.yml
+#### stress-test (decomposed into reusable-stress-test-*.yml)
 
-**Purpose**: Full environment lifecycle testing  
-**Use Case**: Validate complete infrastructure + deployment
+**Purpose**: Full environment lifecycle testing has been split into composable reusable workflows:  
+- `reusable-stress-test-provision.yml` — Provision phase  
+- `reusable-stress-test-deploy.yml` — Deploy phase  
+- `reusable-stress-test-verify.yml` — Verify phase  
+- `reusable-stress-test-teardown.yml` — Teardown phase  
 
-**Modes**:
-
-- `standard`: Destroy → Provision → Deploy → Verify → KEEP (~30-35 min)
-- `full-circle`: Standard + auto-cleanup (~35-40 min)
-- `quick-test`: Test existing infrastructure (~8-10 min)
-- `destroy-only`: Cleanup only (~6-8 min)
-
-**Inputs**:
-
-- `environment` (required): dev-mini/dev/stage/prod
-- `target_type` (optional): host|feature-branch
-- `branch_tag` (optional): Feature branch tag
-- `mode` (required): Execution mode
-- `include_third_party` (boolean): Test MongoDB/Elastic?
-- `preserve_host` (boolean): Skip network destroy/provision?
-
-**What it does**:
-
-- Complete lifecycle: provision → deploy → verify
-- URL health checks
-- Service validation
-- Optional cleanup
-
-**When to run**: Release validation, CI/CD gates
+**Note**: `stress-test.yml` as a single file no longer exists. Use the reusable components via `/03-fire-stress-test` agent workflow.
 
 ---
 
@@ -265,22 +245,45 @@
 
 ---
 
-#### check-stack-exists.yml
+#### lint-agent-workflows.yml
 
-**Purpose**: Verify Terraform state existence  
-**Use Case**: Pre-flight checks
+**Purpose**: Validate agent workflow markdown files on push to dev or PRs touching `.agent/workflows/**`  
+**Trigger**: Automatic (push/PR)
 
-**Inputs**:
+**What it does**:
 
-- `bucket` (required): S3 bucket name
-- `state_key` (required): State file key
-- `aws_region` (required): AWS region
+- Lints `.agent/workflows/` markdown for formatting issues
+- Blocks PRs that break agent workflow syntax
 
-**Outputs**:
+**When to run**: Automatic CI gate
 
-- `exists`: true/false
+---
 
-**When to run**: Before destroy operations
+#### validate-workflows.yml
+
+**Purpose**: Validate GitHub Actions workflow YAML syntax  
+**Trigger**: Automatic on PR or push
+
+**What it does**:
+
+- Runs `actionlint` on all workflow files
+- Prevents broken workflow YAML from merging
+
+**When to run**: Automatic CI gate
+
+---
+
+#### update-changelog.yml
+
+**Purpose**: Automated CHANGELOG.md generation on release tags  
+**Trigger**: Automatic on tag push
+
+**What it does**:
+
+- Compiles commit history into CHANGELOG.md under the new version section
+- Opens a PR with the generated changelog entry
+
+**When to run**: Automatic on `git tag` push
 
 ---
 
@@ -388,70 +391,72 @@
 
 
 
-### Newly Added Main Workflows
-
 #### 02-deploy-aws.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `02-deploy-app.yml`.
 
 ---
 #### 02-deploy-azure.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Azure Container Apps deployment entrypoint. Builds image, pushes to ACR, rolls out new revision.
 
 ---
 #### 02-deploy-gcp.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: GCP Cloud Run deployment entrypoint. Builds image, pushes to Artifact Registry, shifts traffic to new revision.
 
 ---
 #### 02-deploy-pages.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Cloudflare Pages deployment (DEV-MINI admin SPA). Builds Next.js admin and deploys to Cloudflare Pages project.
 
 ---
 #### 99-ops-aws.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas.
 
 ---
 #### 99-ops-azure.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Azure operational tasks — resource group inspection, Container App management, teardown.
 
 ---
 #### 99-ops-cloudflare.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Cloudflare DNS and zone operations — list records, delete conflicts, manage tunnel configs.
 
 ---
 #### 99-ops-gcp.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: GCP operational tasks — Cloud Run inspection, Artifact Registry cleanup, project teardown.
 
 ---
 #### 99-ops-nuke.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Full environment nuke across any cloud provider. Inputs: `cloud_provider`, `environment`, `action` (default: nuke-environment). Destroys all Terraform stacks in reverse dependency order.
 
 ---
 #### 99-ops-terraform.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Direct Terraform operations — plan, apply, destroy, state management for a specific stack without the full workflow pipeline.
 
 ---
 #### 99-verify-azure.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Azure environment health verification — checks Container App status, DNS resolution, HTTPS endpoints.
 
 ---
 #### deploy-azure-site.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Reusable multi-site Azure Container Apps deployment. Called by the main Azure deploy pipeline for per-site updates.
+
+---
+#### deploy-gcp-site.yml
+**Purpose**: Reusable multi-site GCP Cloud Run deployment. Wraps `reusable-docker-build.yml` and `reusable-gcp-multi-site-deploy.yml`. Handles Docker build → AR push → Cloud Run traffic shift.
 
 ---
 #### deploy-site.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: AWS multi-site ECS deployment. Deploys a single site's containers (api + frontend) via native ECS rolling update.
 
 ---
 #### release.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Semantic versioning release — bumps version tag, generates CHANGELOG entry, creates GitHub Release.
 
 ---
 #### update-changelog.yml
-**Purpose**: Refer to newer cloud-specific operation
+**Purpose**: Automated CHANGELOG generation on release tag push. Opens a PR with the compiled changelog.
 
 ---
-#### validate-workflows.yml
-**Purpose**: Refer to newer cloud-specific operation
+#### reusable-provision-db-users.yml
+**Purpose**: Provision MongoDB database users for a given project/environment. Called post-cluster provisioning. Inputs: `environment`, `project`, `stage_key`, `namespace`, `client_key`.
 
 ---
 ## Reusable Workflows (19)
@@ -511,58 +516,56 @@ These are called by main workflows, not directly by users.
 
 
 
-### Newly Added Reusable Workflows
-
 #### reusable-azure-multi-site-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Azure Container Apps multi-site deployment. Iterates site definitions, updates container app revisions per site.
 
 ---
 #### reusable-cloudrun-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: GCP Cloud Run service update. Deploys new image URI to a Cloud Run service and shifts traffic.
 
 ---
 #### reusable-container-app-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Azure Container App revision deployment. Creates new revision with updated container image.
 
 ---
 #### reusable-gcp-multi-site-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: GCP multi-site Cloud Run deployment orchestrator. Loops through site configs and delegates to `reusable-cloudrun-deploy`.
 
 ---
 #### reusable-multi-site-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: AWS multi-site ECS deployment orchestrator. Iterates site configs, triggers per-site native ECS rolling updates.
 
 ---
 #### reusable-noop.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: No-op placeholder workflow. Used as a safe target for conditional `needs:` chains when a step is skipped.
 
 ---
 #### reusable-verify-aws.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: AWS environment health verification. Checks ECS service counts, ALB target health, and HTTPS endpoint responses.
 
 ---
 #### reusable-verify-azure.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Azure environment health verification. Validates Container App running state and HTTPS endpoint responses.
 
 ---
 #### reusable-verify-gcp.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: GCP environment health verification. Validates Cloud Run serving state and HTTPS endpoint responses.
 
 ---
 #### reusable-stress-test-provision.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Stress test provision phase. Runs `01-provision-infra` for network, app, and third-party stacks. Uses `project_key` from `calculate-config` — no hardcoded project names.
 
 ---
 #### reusable-stress-test-deploy.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Stress test deploy phase. Calls `02-deploy-app` with the calculated project config. Uses `project_key` from `calculate-config`.
 
 ---
 #### reusable-stress-test-teardown.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Stress test teardown phase. Destroys all stacks in reverse order after a stress test cycle.
 
 ---
 #### reusable-stress-test-verify.yml
-**Purpose**: Reusable component for specific cloud or test phase
+**Purpose**: Stress test verification phase. Runs URL health checks and ECS service validation after deployment.
 
 ---
 ## Quick Reference
@@ -601,6 +604,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-10  
+**Last Updated**: 2026-04-13  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
