@@ -736,12 +736,60 @@ jobs:
             terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
             terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
             echo "  ✅ Lambda@Edge + WAF state entries removed (orphan prevention)"
+
+            # Re-import Lambda@Edge IAM resources that survive state-rm but already exist in AWS.
+            # The state-rm above removes the whole lambda_edge_image_resize[0] module (incl. IAM).
+            # On re-apply, TF tries to CREATE these → EntityAlreadyExists (409).
+            # Fix: re-import them into the individual addresses TF now plans to create.
+            LAMBDA_NS="${{ needs.configuration.outputs.namespace || 'blaze' }}"
+            LAMBDA_ROLE_NAME="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-role"
+            LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
+              --query 'Role.RoleName' --output text 2>/dev/null || echo "")
+            if [[ -n "$LAMBDA_ROLE_EXISTS" && "$LAMBDA_ROLE_EXISTS" != "None" ]]; then
+              echo "  📥 Re-importing Lambda@Edge IAM role after state-rm: $LAMBDA_ROLE_NAME"
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' \
+                "$LAMBDA_ROLE_NAME" 2>/dev/null && echo "  ✅ IAM role re-imported" || echo "  ⚠️  IAM role re-import failed (TF may hit EntityAlreadyExists)"
+            fi
+
+            LAMBDA_POLICY_NAME="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
+            LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
+              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
+              --output text 2>/dev/null || echo "")
+            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+            if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
+              echo "  📥 Re-importing Lambda@Edge IAM policy after state-rm: $LAMBDA_POLICY_NAME"
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
+                "$LAMBDA_POLICY_ARN" 2>/dev/null && echo "  ✅ IAM policy re-imported" || echo "  ⚠️  IAM policy re-import failed (TF may hit EntityAlreadyExists)"
+            fi
           else
             echo "  ℹ️  No ECS cluster found — Terraform will create fresh"
             # Still remove Lambda/WAF state entries that can block re-creation
             terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
             terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
             terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
+
+            # Also re-import IAM resources if they exist (state could be empty but IAM persists)
+            LAMBDA_NS_2="${{ needs.configuration.outputs.namespace || 'blaze' }}"
+            LAMBDA_ROLE_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-role"
+            LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
+              --query 'Role.RoleName' --output text 2>/dev/null || echo "")
+            if [[ -n "$LAMBDA_ROLE_EXISTS" && "$LAMBDA_ROLE_EXISTS" != "None" ]]; then
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' \
+                "$LAMBDA_ROLE_NAME" 2>/dev/null || true
+            fi
+            LAMBDA_POLICY_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
+            LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
+              --query "Policies[?PolicyName=='${LAMBDA_POLICY_NAME}'].Arn | [0]" \
+              --output text 2>/dev/null || echo "")
+            [[ "$LAMBDA_POLICY_ARN" == "None" ]] && LAMBDA_POLICY_ARN=""
+            if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
+              terraform import \
+                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
+                "$LAMBDA_POLICY_ARN" 2>/dev/null || true
+            fi
           fi
 
           # State-rm Cloudflare ZT apps (module v2.2.3 dropped them; belt-and-suspenders
