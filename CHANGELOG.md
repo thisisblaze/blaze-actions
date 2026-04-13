@@ -6,6 +6,24 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v2.1.43
+- chore: bump refs to v2.1.43
+- chore: update CHANGELOG for v2.1.43
+- chore: bump blaze-actions refs to v2.1.42
+- chore: update CHANGELOG for v2.1.42
+
+### Fixed
+
+- fix(iam-policy-import): use jq -r instead of --output text for policy ARN lookup
+
+## v2.1.43 (2026-04-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: bump refs to v2.1.43
 - chore: update CHANGELOG for v2.1.43
 - chore: bump blaze-actions refs to v2.1.42
