@@ -1,3 +1,21 @@
+## v2.1.42 (2026-04-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- docs: /13-deep-cicd-maintenance — fix WORKFLOW_CATALOG (count, dead refs, stubs→real descriptions), update REUSABLE_WORKFLOWS vars path, add CHANGELOG April 13
+- chore: end-of-day governance sync — 2026-04-11
+- chore: end-of-day governance sync — 2026-04-10
+- chore: update CHANGELOG for v2.1.41
+
+### Fixed
+
+- fix(network): re-import Lambda@Edge IAM role+policy after state-rm
+- fix(import): add DNS import-first pass for network/multi-site-network stacks
+
 ## [Unreleased] - 2026-04-13
 
 ### Documentation
