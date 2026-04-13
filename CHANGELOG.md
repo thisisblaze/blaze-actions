@@ -1,3 +1,19 @@
+## v2.1.47 (2026-04-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.46
+- chore: update CHANGELOG for v2.1.45
+- chore: update CHANGELOG for v2.1.44
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
+
 ## v2.1.46 (2026-04-13)
 
 ### Added
