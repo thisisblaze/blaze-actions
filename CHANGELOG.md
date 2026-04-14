@@ -1,3 +1,23 @@
+## v2.1.48 (2026-04-14)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-04-14
+- chore: end-of-day governance sync — 2026-04-14
+- chore: end-of-day governance sync — 2026-04-13
+- chore: update CHANGELOG for v2.1.47
+- chore: update CHANGELOG for v2.1.46
+- chore: update CHANGELOG for v2.1.45
+- chore: update CHANGELOG for v2.1.44
+- chore: update CHANGELOG for v2.1.43
+
+### Fixed
+
+
 ## [Unreleased] - 2026-04-14
 
 ### Added
