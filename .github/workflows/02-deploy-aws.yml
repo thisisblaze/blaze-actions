@@ -234,7 +234,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -279,7 +279,7 @@ jobs:
       admin_bucket: ${{ steps.config.outputs.admin_bucket }}
       project_slug: ${{ steps.config.outputs.project_slug }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -661,7 +661,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - name: Setup Node
         uses: actions/setup-node@v6.3.0
         env:
@@ -931,7 +931,7 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - uses: actions/download-artifact@v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}

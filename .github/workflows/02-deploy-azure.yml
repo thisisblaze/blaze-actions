@@ -234,7 +234,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -277,7 +277,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Debug Inputs
         run: |

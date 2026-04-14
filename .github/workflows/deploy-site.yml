@@ -204,7 +204,7 @@ jobs:
         steps:
             - name: Checkout
               if: inputs.skip_build != 'true' && inputs.skip_build != true
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6.0.2
 
             - name: Configure AWS Credentials
               if: inputs.skip_build != 'true' && inputs.skip_build != true

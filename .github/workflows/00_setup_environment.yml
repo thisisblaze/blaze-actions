@@ -194,7 +194,7 @@ jobs:
       platform: ${{ steps.calc.outputs.platform }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
       
       - name: Calculate Configuration
         id: calc
@@ -218,7 +218,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Load Access List
         id: load-access
@@ -415,7 +415,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'

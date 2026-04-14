@@ -60,7 +60,7 @@ jobs:
       ELASTIC_ADMIN_USER: ""
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6.0.0
