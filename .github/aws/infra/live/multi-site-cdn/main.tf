@@ -112,7 +112,7 @@ resource "aws_acm_certificate" "multi_site" {
 # Deployed once · serves all 120+ sites
 # ──────────────────────────────────────────────────────────────────────────────
 module "image_resize" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/image-resize?ref=v2.2.26"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/image-resize?ref=v2.2.29"
 
   providers = {
     aws           = aws
