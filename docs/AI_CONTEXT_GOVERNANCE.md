@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-11
+**Last Updated**: 2026-04-14
 **Owner**: Infrastructure Team
 
 ---
@@ -185,12 +185,12 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **ECS EC2 capacity provider bootstrap** | Terraform planning hangs on `data "aws_ecs_capacity_provider"` lookup | SSM parameter `blaze-b9-thisisblaze-stage-ecs-ec2-cp` missing or wrong; dead-code SSM data sources block plan | Fix SSM parameter value; remove dead-code data sources from `multi-site-tenant-app` module |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-04-08)
+## 13. Current Version Pins (2026-04-14)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.1.13** | All 3 repos synced. |
-| `blaze-terraform-infra-core` | **v2.2.20** | Multi-Site V2 stable. Multi-tenant (thisisblaze+support) GA. |
+| `blaze-actions` | **v2.1.47** | Engine 4+8 refs fixed. 01g-provision-db-pod added. reusable-provision-db-users deprecated (multi-site). |
+| `blaze-terraform-infra-core` | **v2.3.4** | Atlas IP access list locked to VPC CIDR when peering active. Per-site DB user provisioning via multi-site-app. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
 ## 14. Multi-Tenant Nuke Failure Patterns (2026-04-08)
