@@ -237,7 +237,8 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
   #   fe_record_name    = is_prod ? "@"          : "frontend-${stage}"
   #   admin_record_name = is_prod ? "admin"      : "admin-${stage}"
   #   cdn_record_name   = is_prod ? "cdn"        : "cdn-${stage}"
-  #   api_direct        = always "api-direct-${stage}"
+  #   api_direct        = prod → "api-direct" | non-prod → "api-direct-${stage}"
+  #                     (v2.2.29: api_direct_subdomain_override removed -prod suffix)
   # Note: CF stores apex "@" as the bare DOMAIN_ROOT (e.g. "thisisblaze.uk").
   if [[ -n "$TF_VAR_cloudflare_api_token" && -n "$TF_VAR_cloudflare_zone_id" && -n "$INPUT_STAGE_KEY" && -n "$INPUT_DOMAIN_ROOT" ]]; then
     echo "   🔵 DNS import-first pass for managed network/multi-site-network DNS records..."
@@ -253,13 +254,15 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
       FE_RECORD="${DOMAIN_ROOT}"               # apex @
       ADMIN_RECORD="admin.${DOMAIN_ROOT}"
       CDN_RECORD="cdn.${DOMAIN_ROOT}"
+      # v2.2.29: api-direct in prod drops the -prod suffix (api_direct_subdomain_override)
+      API_DIRECT_RECORD="api-direct.${DOMAIN_ROOT}"
     else
       API_RECORD="api-${STAGE_KEY}.${DOMAIN_ROOT}"
       FE_RECORD="frontend-${STAGE_KEY}.${DOMAIN_ROOT}"
       ADMIN_RECORD="admin-${STAGE_KEY}.${DOMAIN_ROOT}"
       CDN_RECORD="cdn-${STAGE_KEY}.${DOMAIN_ROOT}"
+      API_DIRECT_RECORD="api-direct-${STAGE_KEY}.${DOMAIN_ROOT}"
     fi
-    API_DIRECT_RECORD="api-direct-${STAGE_KEY}.${DOMAIN_ROOT}"
 
     # Map: CF record name (as stored in Cloudflare) → Terraform state address
     declare -A NET_DNS_TF_MAP
@@ -275,7 +278,7 @@ elif [[ "$STACK" == "network" || "$STACK" == "multi-site-network" ]]; then
         "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?name=${RECORD_NAME}" \
         -H "Authorization: Bearer $TF_VAR_cloudflare_api_token" \
         -H "Content-Type: application/json")
-      RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty')
+      RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id // empty' 2>/dev/null || true)
 
       if [[ -n "$RECORD_ID" ]]; then
         if ! terraform state list 2>/dev/null | grep -qF "$TF_ADDR"; then
