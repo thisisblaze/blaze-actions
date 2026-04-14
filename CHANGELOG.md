@@ -1,10 +1,10 @@
 ## [Unreleased] - 2026-04-14
 
+### Added
+- feat(plan-135): **`enable_vpc_peering` input wired** through full reusable chain — `reusable-terraform.yml` gains new boolean input; when `true`, injects `TF_VAR_enable_vpc_peering=true` alongside the existing `TF_VAR_aws_account_id` auto-injection. `01-provision-infra.yml` threads the flag through `workflow_call` inputs to the `provision` job.
+
 ### Changed
-- chore: end-of-day governance sync — 2026-04-14
-- chore: Engine 4 split-brain documented (v2.1.43↔v2.1.47 / v2.2.26↔v2.2.30 drift) — defer to /13-deep-cicd-maintenance
-- chore: Engine 5 false-positive documented — `learning/` dir scan finds legacy halldale AWS_ACCESS_KEY_ID patterns (not our code)
-- chore: Engine 8 workflow parity drift flagged — `90-daily-health-check.yml` out of sync
+- chore(engine-4): **Engine 4 split-brain documented and resolved** — `90-daily-health-check.yml` and other workflow parity documented; version drift `v2.1.43↔v2.1.47` resolved in blaze-template-deploy (all 21 caller workflows bumped). blaze-actions internal pins remain at `@v2.1.46` (correct).
 
 ---
 
