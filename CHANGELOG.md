@@ -1,4 +1,15 @@
+## [Unreleased] - 2026-04-14
+
+### Changed
+- chore: end-of-day governance sync — 2026-04-14
+- chore: Engine 4 split-brain documented (v2.1.43↔v2.1.47 / v2.2.26↔v2.2.30 drift) — defer to /13-deep-cicd-maintenance
+- chore: Engine 5 false-positive documented — `learning/` dir scan finds legacy halldale AWS_ACCESS_KEY_ID patterns (not our code)
+- chore: Engine 8 workflow parity drift flagged — `90-daily-health-check.yml` out of sync
+
+---
+
 ## v2.1.47 (2026-04-13)
+
 
 ### Added
 
