@@ -158,6 +158,11 @@ on:
         required: false
         type: boolean
         default: false
+      enable_vpc_peering:
+        description: "Enable Atlas VPC peering (Plan 135). Requires non-flex cluster (M10+). Passed as TF_VAR_enable_vpc_peering."
+        required: false
+        type: boolean
+        default: false
       api_launch_type:
         required: false
         type: string
@@ -822,6 +827,7 @@ jobs:
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
       orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
+      enable_vpc_peering: ${{ inputs.enable_vpc_peering == true }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
 

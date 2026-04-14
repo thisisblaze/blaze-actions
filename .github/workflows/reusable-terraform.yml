@@ -70,6 +70,11 @@ on:
         required: false
         type: boolean
         default: false
+      enable_vpc_peering:
+        description: "Enable Atlas VPC peering (Plan 135). Sets TF_VAR_enable_vpc_peering=true for MongoDB DB stacks. Requires non-flex cluster (M10+)."
+        required: false
+        type: boolean
+        default: false
       split_apply:
         description: "Enable Split Apply (Targeted Apply -> Sleep -> Full Apply)"
         required: false
@@ -739,6 +744,16 @@ jobs:
           echo "TF_VAR_aws_account_id=${ACCOUNT_ID}" >> "$GITHUB_ENV"
           echo "AWS_ACCOUNT_ID=${ACCOUNT_ID}"        >> "$GITHUB_ENV"
           echo "   🔑  AWS Account ID injected (TF_VAR_aws_account_id + AWS_ACCOUNT_ID)"
+
+      - name: Inject Atlas VPC Peering Flag (Plan 135)
+        # Injects TF_VAR_enable_vpc_peering=true when enable_vpc_peering input is true.
+        # Used by MongoDB DB stacks (thisisblaze-db, db-pod-alpha) to activate the
+        # atlas_vpc_peering module (count = var.enable_vpc_peering ? 1 : 0).
+        # TF_VAR_aws_account_id is already injected above — no duplication needed.
+        if: inputs.enable_vpc_peering == true
+        run: |
+          echo "TF_VAR_enable_vpc_peering=true" >> "$GITHUB_ENV"
+          echo "   🔗  Atlas VPC Peering ENABLED (TF_VAR_enable_vpc_peering=true)"
 
       - name: Substitute env vars in tfvars
         # Replaces ${AWS_ACCOUNT_ID} (and any other exported env vars) in *.tfvars files
