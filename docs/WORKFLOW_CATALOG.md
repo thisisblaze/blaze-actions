@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-13
+**Last Updated**: 2026-04-14
 **Owner**: Infrastructure Team
 
 ---
@@ -6,9 +6,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 53 (34 main + 19 reusable)  
-**Version**: v1.5.0  
-**Last Updated**: 2026-04-13
+**Total Workflows**: 54 (35 main + 19 reusable)  
+**Version**: v1.6.0  
+**Last Updated**: 2026-04-14
 
 ---
 
@@ -456,9 +456,26 @@
 
 ---
 #### reusable-provision-db-users.yml
-**Purpose**: Provision MongoDB database users for a given project/environment. Called post-cluster provisioning. Inputs: `environment`, `project`, `stage_key`, `namespace`, `client_key`.
+**Purpose**: ~~Provision MongoDB database users for a given project/environment.~~ **DEPRECATED for multi-site environments (2026-04-14).** Superseded by the `enable_db_users` flag in `multi-site-app` module (v2.3.3+), which provisions Atlas users automatically per `project_key` in the `sites` map when `01c` runs. Still used for legacy single-tenant stacks.
 
 ---
+
+#### 01g-provision-db-pod.yml *(new — 2026-04-14)*
+**Purpose**: Provision the shared environment-level MongoDB Atlas DB pod (cluster + VPC peering) for multi-site environments. Runs **once per environment** before enabling `enable_db_users=true` in the multi-site-app stacks. Replaces the need for 01d/01e/01f manual DB workflows in multi-tenant setups.
+
+**Inputs**:
+- `environment` (required): `stage` | `prod`
+- `stack`: fixed as `db-pod-alpha`
+- `apply` (boolean): Run terraform apply? (default: false)
+- `enable_vpc_peering` (boolean): Enable Atlas→AWS VPC peering (requires M10+)
+
+**What it does**:
+- Provisions/refreshes the shared Atlas M10 cluster
+- Optionally enables VPC peering (Atlas CIDR → AWS VPC CIDR)
+- Writes `cluster_uri` + `atlas_project_id` to state (`infra/shared/{env}/db-pod-alpha.tfstate`)
+- These outputs are consumed by `01c` multi-site-app stacks via remote state
+
+**When to run**: Once per environment before enabling per-tenant DB users in `01c`
 ## Reusable Workflows (19)
 
 These are called by main workflows, not directly by users.
@@ -581,7 +598,17 @@ These are called by main workflows, not directly by users.
 
 ---
 
+---
+
 ## Version History
+
+**v1.6.0** (2026-04-14):
+
+- Added `01g-provision-db-pod.yml` — env-level Atlas DB pod workflow for multi-site
+- `reusable-provision-db-users.yml` deprecated for multi-site environments
+- Per-site Atlas DB user provisioning now automatic via `multi-site-app` v2.3.3+ `module.db_tenant`
+- Atlas IP access list security: locked to VPC CIDR when peering active (vpc-peering v2.3.4)
+- `90-daily-health-check.yml` pinned to `@v2.1.47` across template-deploy and blaze-actions
 
 **v1.5.0** (2026-02-27):
 
@@ -604,6 +631,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-13  
+**Last Updated**: 2026-04-14  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

@@ -2,9 +2,17 @@
 
 ### Added
 - feat(plan-135): **`enable_vpc_peering` input wired** through full reusable chain — `reusable-terraform.yml` gains new boolean input; when `true`, injects `TF_VAR_enable_vpc_peering=true` alongside the existing `TF_VAR_aws_account_id` auto-injection. `01-provision-infra.yml` threads the flag through `workflow_call` inputs to the `provision` job.
+- feat(db-provisioning): **`reusable-provision-db-users.yml`** per-project isolation — uses canonical `STACK_KEY` to scope Atlas users per-project, preventing cross-tenant credential pollution.
 
 ### Changed
-- chore(engine-4): **Engine 4 split-brain documented and resolved** — `90-daily-health-check.yml` and other workflow parity documented; version drift `v2.1.43↔v2.1.47` resolved in blaze-template-deploy (all 21 caller workflows bumped). blaze-actions internal pins remain at `@v2.1.46` (correct).
+- chore(engine-4): **Engine 4 split-brain resolved (2026-04-14)** — `90-daily-health-check.yml` in blaze-actions fixed from `@v2.1.43` → `@v2.1.47`. `01g-provision-db-pod.yml` fixed from non-existent `@v2.1.50` → `@v2.1.47`.
+- docs(WORKFLOW_CATALOG): bumped to v1.6.0 — added `01g-provision-db-pod` entry, deprecated `reusable-provision-db-users` for multi-site, updated total count 53→54, added v1.6.0 history entry.
+- docs(ENVIRONMENT-ARCHITECTURE.md): added Multi-Site Architecture section (April 2026 two-pillar-v2 model — shared cluster, per-project isolation table, DB provisioning model, tenant onboarding guide).
+- docs(agent-workflows): bumped timestamps from 2026-03-16 → 2026-04-14 on: `troubleshoot-cloudfront.md`, `debug-cicd-workflows.md`, `02-add-sharp-layer.md`, `troubleshoot-terraform-locks.md`.
+
+### Security
+- security(atlas): **`vpc-peering` module v2.3.4** — `mongodbatlas_project_ip_access_list.vpc_cidr` added, locks Atlas IP access to AWS VPC CIDR when peering active. Eliminates open `0.0.0.0/0` when private peering tunnel exists. `additional_cidr_allowlist` variable added with validation blocking `0.0.0.0/0`.
+
 
 ---
 

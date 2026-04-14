@@ -249,7 +249,50 @@ If you want to enable CloudFront in DEV (not recommended):
 
 ---
 
-**Last Updated:** 2026-03-16  
+## Multi-Site Architecture (April 2026 — two-pillar-v2)
+
+The platform now supports multiple projects sharing a single ECS cluster, ALB, and VPC. Each project gets fully isolated ECS services, CloudFront distributions, S3 buckets, and (optionally) Atlas DB users.
+
+### Active Projects
+
+| Project | Environments | Stack | Priority Base |
+|---------|-------------|-------|---------------|
+| `thisisblaze` | dev, stage, prod | `{env}-multi-site-app` | 100 |
+| `support` | dev, stage, prod | `{env}-multi-site-app-support` | 200 |
+
+### Shared vs. Isolated Resources
+
+| Resource | Shared | Isolated |
+|----------|--------|----------|
+| ECS Cluster + VPC | ✅ All projects | — |
+| ALB + Listeners | ✅ All projects | — |
+| Atlas Cluster (db-pod-alpha) | ✅ Per environment | — |
+| ECS Services | — | ✅ Per project |
+| ALB Listener Rules + TGs | — | ✅ Per site (`lb_priority` pinned) |
+| CloudFront Distributions | — | ✅ Per site |
+| S3 Buckets (admin, CDN, storage) | — | ✅ Per project |
+| Atlas DB User + SSM `BLAZE_CONNECTION_STRING` | — | ✅ Per `project_key` |
+
+### Database Provisioning Model (2026-04-14)
+
+```
+01g  → shared Atlas M10 cluster + VPC peering  (once per environment)
+01c  → per-project Atlas DB user + SSM secret    (automatic when enable_db_users=true)
+```
+
+- SSM path: `/blaze/{client}/{project_key}/{stage}/BLAZE_CONNECTION_STRING`
+- ECS containers read via `valueFrom` — no runtime secret injection needed
+- VPC peering locks Atlas IP access to VPC CIDR only (no open 0.0.0.0/0)
+
+### Adding a New Tenant
+
+1. Add entry to `sites = {}` in `{env}-multi-site-app/terraform.tfvars` with `project_key`
+2. Run `01c` for that environment
+3. Done — ECS service, ALB rules, CloudFront, S3, Atlas user all provisioned automatically
+
+---
+
+**Last Updated:** 2026-04-14  
 **Maintained By:** Infrastructure Team  
 **Review Frequency:** Quarterly or when architecture changes  
 **Cloud Providers:** AWS (ECS Fargate/EC2 Hybrid), GCP (Cloud Run), Azure (Container Apps)
