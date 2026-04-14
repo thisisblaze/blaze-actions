@@ -186,7 +186,7 @@ jobs:
       NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
@@ -319,7 +319,7 @@ jobs:
       NPM_TOKEN_VAL: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
