@@ -115,7 +115,7 @@ By setting `separate_api_alb = true`, the module provisions a dedicated ALB for 
 
 ```hcl
 module "network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v1.50.3"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.3.7"
 
   namespace    = var.namespace  # e.g., "blaze"
   client_key   = "b9"
