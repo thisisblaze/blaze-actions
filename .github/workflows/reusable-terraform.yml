@@ -913,6 +913,7 @@ jobs:
             'module.environment_network.cloudflare_dns_record.validation[0]' \
             'module.environment_network.cloudflare_dns_record.cdn[0]' \
             'module.environment_network.cloudflare_dns_record.api[0]' \
+            'module.environment_network.cloudflare_dns_record.frontend[0]' \
             'module.environment_network.cloudflare_dns_record.admin[0]' \
             'module.environment_network.cloudflare_dns_record.api_direct[0]'; do
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ℹ️  Not in state: $ADDR"
