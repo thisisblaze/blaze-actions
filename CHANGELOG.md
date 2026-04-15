@@ -7,6 +7,22 @@
 ### Changed
 
 - chore: update CHANGELOG for v2.1.54
+- chore: update CHANGELOG for v2.1.54
+- chore: update CHANGELOG for v2.1.53
+
+### Fixed
+
+- fix: correct ecr-login version in setup-blaze action
+
+## v2.1.54 (2026-04-15)
+
+### Added
+
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.54
 - chore: update CHANGELOG for v2.1.53
 
 ### Fixed
