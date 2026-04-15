@@ -1,3 +1,19 @@
+## v2.1.55 (2026-04-15)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for ASG teardown optimization
+- chore: update changelog and integrate centralized knowledge base
+- chore: update CHANGELOG for v2.1.54
+
+### Fixed
+
+- fix: correctly capture multi-tenant lambda edge names in orphaned cleanup
+
 ## v2.1.54 (2026-04-15)
 
 ### Added
