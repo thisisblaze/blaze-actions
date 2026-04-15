@@ -456,9 +456,9 @@ jobs:
           fi
 
           # 2. Pattern Matching
-          # Matches: blaze-b9-thisisblaze-stage-lambda-edge-resize-image-c533830b
-          # Pattern: [namespace]-.*-[stage]-lambda-edge-*
-          PATTERN="${NAMESPACE}-.*-${STAGE_KEY}-lambda-edge-.*"
+          # Matches: blaze-dev-lambda-edge-resize-image-f2a766a9, blaze-stage-lambda-edge-normalize-params-e8267bfe, blaze-b9-support-prod-lambda-edge
+          # Pattern: ^[namespace].*[stage].*(lambda-edge|image-resize).*
+          PATTERN="^${NAMESPACE}.*${STAGE_KEY}.*(lambda-edge|image-resize).*"
           echo "   - PATTERN:   '$PATTERN'"
 
           echo "--------------------------------"
