@@ -126,6 +126,12 @@ outputs:
   project_slug:
     description: "Multi-tenant subdomain slug (empty for primary project, e.g. 'support' for sub-projects)"
     value: ${{ steps.config.outputs.project_slug }}
+  db_tier:
+    description: "Database tier provisioned mapping"
+    value: ${{ steps.config.outputs.db_tier }}
+  ecs_compute_tier:
+    description: "ECS Compute Node Mapping Tier"
+    value: ${{ steps.config.outputs.ecs_compute_tier }}
 
 runs:
   using: "composite"
@@ -202,6 +208,9 @@ runs:
         GTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
         DB_SSM_PATH=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_SSM_PATH // ""')
+        DB_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_TIER // "shared"')
+        ECS_COMPUTE_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.ECS_COMPUTE_TIER // "standard"')
+        PROJECT_SLUG=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_SLUG // ""')
         # Resolve templated variables in DB_SSM_PATH
         DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
         DB_SSM_PATH="${DB_SSM_PATH//\${PROJECT_KEY\}/$PROJECT_KEY}"
@@ -278,6 +287,9 @@ runs:
         echo "dfp_network_id=$DFP_NETWORK_ID" >> $GITHUB_OUTPUT
 
         echo "db_ssm_path=$DB_SSM_PATH" >> $GITHUB_OUTPUT
+        echo "db_tier=$DB_TIER" >> $GITHUB_OUTPUT
+        echo "ecs_compute_tier=$ECS_COMPUTE_TIER" >> $GITHUB_OUTPUT
+        echo "project_slug=$PROJECT_SLUG" >> $GITHUB_OUTPUT
 
         # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
