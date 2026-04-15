@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- fix(teardown): explicitly suspend ASG Launch processes before scaling down EC2 to prevent ECS managed scaling churn
 - fix: correct ecr-login version in setup-blaze action
 
 ## v2.1.54 (2026-04-15)
