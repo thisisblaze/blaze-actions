@@ -791,9 +791,24 @@ jobs:
           # 📋 CLEANUP TASK DEFINITIONS (Attempt)
           # ---------------------------------------------------------
           if [[ -n "${{ inputs.environment }}" ]]; then
-             echo "      Searching for orphaned task definition families containing -${{ inputs.environment }}-..."
-             # Extract all families, match environment exact token
-             FAMILIES=$(aws ecs list-task-definition-families --region "${{ inputs.aws_region }}" --query "families[]" --output text 2>/dev/null | tr '\t' '\n' | grep "\-${{ inputs.environment }}\-" || true)
+             echo "      Searching for task definition families via Tags for environment ${{ inputs.environment }}..."
+             # Extract all tagged task definitions across all revisions mapping to the footprint
+             TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+               --region "${{ inputs.aws_region }}" \
+               --tag-filters "Key=Blaze:Environment,Values=${{ inputs.environment }}" \
+               --resource-type-filters "ecs:task-definition" \
+               --query "ResourceTagMappingList[*].ResourceARN" \
+               --output text 2>/dev/null || echo "")
+
+             FAMILIES=""
+             for ARN in $TAGGED_ARNS; do
+               # Extract family name by stripping path and revision version
+               REST="${ARN##*:task-definition/}"
+               FAMILY="${REST%:*}"
+               if [[ " $FAMILIES " != *" $FAMILY "* ]]; then
+                 FAMILIES="$FAMILIES $FAMILY"
+               fi
+             done
              
              if [[ -z "$FAMILIES" || "$FAMILIES" == "None" ]]; then
                 echo "      ✅ No orphaned families found for environment ${{ inputs.environment }}."

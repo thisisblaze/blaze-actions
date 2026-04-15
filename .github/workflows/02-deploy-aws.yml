@@ -955,8 +955,22 @@ jobs:
           # Sync to S3
           aws s3 sync packages/admin/dist "s3://$EXPECTED_BUCKET" --delete
 
-          # Find CloudFront Distribution ID by Alias
-          CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items!=null] | [?contains(Aliases.Items, '$ADMIN_DOMAIN')].Id | [0]" --output text)
+          # Find CloudFront Distribution ID bounded organically by Tags
+          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          CF_DIST_ID="None"
+          for CF_ARN in $TAGGED_CF_ARNS; do
+             DIST_ID="${CF_ARN##*distribution/}"
+             CF_ALIASES=$(aws cloudfront get-distribution --id "$DIST_ID" --query "Distribution.DistributionConfig.Aliases.Items" --output text 2>/dev/null || echo "")
+             if [[ "$CF_ALIASES" == *"$ADMIN_DOMAIN"* ]]; then
+               CF_DIST_ID="$DIST_ID"
+               break
+             fi
+          done
 
           if [[ "$CF_DIST_ID" != "None" && -n "$CF_DIST_ID" ]]; then
             echo "Found CloudFront Distribution: $CF_DIST_ID"
