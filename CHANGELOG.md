@@ -1,3 +1,16 @@
+## v2.1.54 (2026-04-15)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.53
+
+### Fixed
+
+
 ## v2.1.53 (2026-04-15)
 
 ### Added
