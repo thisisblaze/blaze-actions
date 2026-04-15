@@ -444,7 +444,11 @@ runs:
 
             # Dedicated DB Stack (per-project DB like thisisblaze-db)
             elif [[ "$STACK" == "dedicated-db" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${INPUT_PROJECT}-db"
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
+                  TF_DIR="${INFRA_PREFIX}/${INPUT_PROJECT}-db"
+               else
+                  TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${INPUT_PROJECT}-db"
+               fi
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}-db.tfstate"
 
             # Dedicated High-Traffic Network (opt-in per-env dedicated VPC/ALB/ECS)
