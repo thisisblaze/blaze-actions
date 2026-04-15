@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-15
 **Owner**: Infrastructure Team
 
 ---
@@ -7,8 +7,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 54 (35 main + 19 reusable)  
-**Version**: v1.6.0  
-**Last Updated**: 2026-04-14
+**Version**: v1.6.1  
+**Last Updated**: 2026-04-15
 
 ---
 
@@ -424,7 +424,7 @@
 
 ---
 #### 99-ops-nuke.yml
-**Purpose**: Full environment nuke across any cloud provider. Inputs: `cloud_provider`, `environment`, `action` (default: nuke-environment). Destroys all Terraform stacks in reverse dependency order.
+**Purpose**: Full environment nuke across any cloud provider. Inputs: `cloud_provider`, `environment`, `action` (default: nuke-environment), `skip_lambda_destroy` (boolean). Destroys all Terraform stacks in reverse dependency order.
 
 ---
 #### 99-ops-terraform.yml
@@ -602,6 +602,11 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v1.6.1** (2026-04-15):
+- Global standardization to `@v2.1.57` to resolve split-brain drift tagging.
+- Enhanced `cleanup-orphaned-lambdas` with wildcard matching for multi-tenant and legacy single-tenant namespaces.
+- Introduced `skip_lambda_destroy` parameter to `99-ops-nuke.yml`.
+
 **v1.6.0** (2026-04-14):
 
 - Added `01g-provision-db-pod.yml` — env-level Atlas DB pod workflow for multi-site
@@ -631,6 +636,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-14  
+**Last Updated**: 2026-04-15  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
