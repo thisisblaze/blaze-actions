@@ -784,25 +784,32 @@ jobs:
           # ---------------------------------------------------------
           # 📋 CLEANUP TASK DEFINITIONS (Attempt)
           # ---------------------------------------------------------
-          # Only if stage filter is NOT set (shared cluster safety)
-          if [[ -z "$STAGE_FILTER" && "$CLUSTER" =~ (.+)-cluster ]]; then
-             BASE_PREFIX="${BASH_REMATCH[1]}"
-             KNOWN_SERVICES=("api" "frontend" "admin" "tunnel" "mongo" "elasticsearch" "kibana")
-             for SVC in "${KNOWN_SERVICES[@]}"; do
-                FAMILY="${BASE_PREFIX}-${SVC}"
-                TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
-                if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
+          if [[ -n "${{ inputs.environment }}" ]]; then
+             echo "      Searching for orphaned task definition families containing -${{ inputs.environment }}-..."
+             # Extract all families, match environment exact token
+             FAMILIES=$(aws ecs list-task-definition-families --region "${{ inputs.aws_region }}" --query "families[]" --output text 2>/dev/null | tr '\t' '\n' | grep "\-${{ inputs.environment }}\-" || true)
+             
+             if [[ -z "$FAMILIES" || "$FAMILIES" == "None" ]]; then
+                echo "      ✅ No orphaned families found for environment ${{ inputs.environment }}."
+             else
+                for FAMILY in $FAMILIES; do
                    echo "      Cleaning task defs for $FAMILY..."
-                   if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-                      echo "         [DRY RUN] Would deregister task definitions"
-                   else
-                      for ARN in $TASK_DEF_ARNS; do
-                         aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
-                         aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
-                      done
+                   
+                   # Get all revisions
+                   TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
+                   if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
+                      if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                         echo "         [DRY RUN] Would delete and deregister task definitions for $FAMILY"
+                      else
+                         for ARN in $TASK_DEF_ARNS; do
+                            aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
+                            aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
+                         done
+                         echo "         ✅ Swept $FAMILY"
+                      fi
                    fi
-                fi
-             done
+                done
+             fi
           fi
 
           echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
