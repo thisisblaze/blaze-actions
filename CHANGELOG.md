@@ -2,6 +2,20 @@
 
 ### Added
 
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.54
+- chore: update CHANGELOG for v2.1.53
+
+### Fixed
+
+
+## v2.1.54 (2026-04-15)
+
+### Added
+
 - No new features in this release
 
 ### Changed
