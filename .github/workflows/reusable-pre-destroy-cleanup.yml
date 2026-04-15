@@ -583,7 +583,12 @@ jobs:
              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                 echo "      [DRY RUN] Would scale ASG $ASG_NAME to 0 and wait"
              else
-                echo "      📉 Scaling ASG to 0..."
+                echo "      📉 Suspending Auto-Scaling processes and forcing size to 0..."
+                aws autoscaling suspend-processes \
+                  --auto-scaling-group-name "$ASG_NAME" \
+                  --scaling-processes Launch ReplaceUnhealthy \
+                  --region "$REGION" || echo "      ⚠️ Failed to suspend ASG processes"
+
                 aws autoscaling update-auto-scaling-group \
                   --auto-scaling-group-name "$ASG_NAME" \
                   --min-size 0 --max-size 0 --desired-capacity 0 \
