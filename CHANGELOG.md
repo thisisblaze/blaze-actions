@@ -126,7 +126,12 @@
 ### Fixed
 
 
-## [Unreleased] - 2026-04-14
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-04-14
 
 ### Added
 - feat(plan-135): **`enable_vpc_peering` input wired** through full reusable chain — `reusable-terraform.yml` gains new boolean input; when `true`, injects `TF_VAR_enable_vpc_peering=true` alongside the existing `TF_VAR_aws_account_id` auto-injection. `01-provision-infra.yml` threads the flag through `workflow_call` inputs to the `provision` job.
@@ -269,7 +274,12 @@
 - fix(network): re-import Lambda@Edge IAM role+policy after state-rm
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
-## [Unreleased] - 2026-04-13
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-04-13
 
 ### Documentation
 - docs(WORKFLOW_CATALOG): corrected total workflow count (52→53), removed dead `stress-test.yml` reference (decomposed into reusable phases), removed non-existent `check-stack-exists.yml`, expanded all 16 stub entries with real descriptions, added 3 missing workflows (`lint-agent-workflows`, `deploy-gcp-site`, `reusable-provision-db-users`)
@@ -808,7 +818,12 @@
 
 ---
 
-## [Unreleased] - 2026-04-10
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-04-10
 - chore: end-of-day governance sync — 2026-04-10
 - chore(cicd): /13-deep-cicd-maintenance — synced nested action representations to v2.1.41 across all internal workflows and updated documentation to reflect calculate-config as a composite action.
 - fix(infra): hardened multi-site-app Terraform module to natively apply `/graphql` and `200,400` matcher for all API target groups.
@@ -2262,7 +2277,12 @@
 - chore: Purged orphaned `scratch/` directories to pass `/checkengines` hygiene protocols.
 - chore: end-of-day governance sync — 2026-03-29
 
-## [Unreleased] - 2026-03-27
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-03-27
 
 ### Fixed
 - **GCP Deployments:** Patched `02-deploy-pages.yml` to explicitly skip Admin Cloudflare Pages deployments on GCP tenant environments, enforcing the Pillar 1 (Core) vs Pillar 2 (Tenant) boundaries.
@@ -2273,7 +2293,12 @@
 ### Changed
 - chore: end-of-day governance sync — 2026-03-27
 
-## [Unreleased] - 2026-03-26
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-03-26
 
 ### Changed
 - chore: end-of-day governance sync — 2026-03-26
@@ -2281,7 +2306,12 @@
 ### Fixed
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
-## [Unreleased] - 2026-03-25### Changed
+## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+ - 2026-03-25### Changed
 - chore: end-of-day governance sync — 2026-03-25
 - docs: Complete Multi-Site V2 architecture documentation rewrite (Two-Pillar strategy).
 - infra: Decoupled CloudFront API distribution from Frontend.
@@ -2309,6 +2339,11 @@
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 ### Added
 - feat(ops): Implement 10-engine checkengines workflow routing via pure python.
@@ -2380,6 +2415,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 ### Changed
 - feat(ci): Simplified the `01-provision-infra.yml` workflow dropdown by removing unused `data`, `cdn`, and `tunnel` options to streamline provisioning.
@@ -2649,6 +2689,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-20
@@ -2657,6 +2702,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
@@ -3141,6 +3191,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively.
@@ -3156,6 +3211,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
@@ -3173,6 +3233,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-14
@@ -3186,6 +3251,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-03-12
@@ -3195,6 +3265,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
@@ -3210,6 +3285,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
@@ -3270,6 +3350,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
+
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively. - 2026-02-25
@@ -3309,6 +3394,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
@@ -3486,6 +3576,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+
+### Changed (2026-04-15)
+- fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
+- feat: bypass destructive ECS capacity provider reconciliation by default
+
 
 - **Automation**: Patched `90-daily-health-check.yml` to load `trivy-action@master` (resolving syntax crash), universally silence Node 20 deprecation tracks, and strictly sandbox Github `${{ }}` outputs via `env:` variables to block Bash 127 panics.
 - **Terraform Engine**: Stripped out fictitious `1.14.7` minimum Terraform bounds across `.yml` arguments globally, returning stability to `1.9.0` initialization sequences.
