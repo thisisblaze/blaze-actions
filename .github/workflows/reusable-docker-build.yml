@@ -197,7 +197,7 @@ jobs:
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@v2.1.1
+        uses: aws-actions/amazon-ecr-login@v2.1.54
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
@@ -330,7 +330,7 @@ jobs:
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@v2.1.1
+        uses: aws-actions/amazon-ecr-login@v2.1.54
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
@@ -461,7 +461,7 @@ jobs:
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@v2.1.1
+        uses: aws-actions/amazon-ecr-login@v2.1.54
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
