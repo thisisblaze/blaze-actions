@@ -53,6 +53,10 @@ on:
         description: "DESTROY (Teardown Stack)"
         type: boolean
         default: false
+      force_destructive_reconcile:
+        description: "Force Destructive Reconciliation (CPs/Lambda)"
+        type: boolean
+        default: false
 
       terraform_version:
         description: "Terraform Version"
@@ -129,6 +133,10 @@ on:
         type: boolean
         default: false
       destroy:
+        required: false
+        type: boolean
+        default: false
+      force_destructive_reconcile:
         required: false
         type: boolean
         default: false
@@ -528,7 +536,7 @@ jobs:
 
         # ── Network Stack: Orphan zombie AWS resources that block apply ──
         # SKIP during destroy — pre-destroy.sh handles state cleanup for destroy runs
-        if [[ ("${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "multi-site-network") && "${{ inputs.destroy }}" != "true" ]]; then
+        if [[ ("${{ inputs.stack }}" == "network" || "${{ inputs.stack }}" == "multi-site-network") && "${{ inputs.destroy }}" != "true" && "${{ inputs.force_destructive_reconcile }}" == "true" ]]; then
           echo "🔵 Importing ECS cluster + CPs into state (idempotent, replaces prior state-rm approach)..."
           STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
           CLIENT_KEY_VAL="${{ needs.configuration.outputs.client_key }}"
