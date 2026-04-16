@@ -1,3 +1,28 @@
+## v2.1.58 (2026-04-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: manual sync — apply SCALED Multi-Tenant V2 logic to repository README mapping
+- chore: manual sync — apply SCALED Multi-Tenant V2 logic to CONTRIBUTING mapping
+- chore: manual sync — apply SCALED Multi-Tenant V2 logic to root documentation
+- chore: ai prompt sync — apply SCALED Multi-Tenant V2 logic to google-notebooklm schemas
+- chore: ai prompt sync — apply SCALED Multi-Tenant V2 logic to repository core prompts
+- chore: knowledge base sync — apply SCALED Multi-Tenant V2 definitions to incident reports
+- chore: diagram sync — force 04 orchestrator labels in multi cloud topology
+- chore: docs sync — apply SCALED Multi-Tenant V2 logic to analysis plans
+- chore: end-of-day governance sync — 2026-04-16
+- chore: end-of-day governance sync — 2026-04-15
+- chore: update CHANGELOG for v2.1.57
+
+### Fixed
+
+- fix: correctly match legacy and multi-tenant edge lambda names in cleanup
+- fix: purge cloudflare frontend record on network destroy
+
 ## v2.1.57 (2026-04-15)
 
 ### Added
