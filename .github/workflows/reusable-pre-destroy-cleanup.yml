@@ -462,6 +462,43 @@ jobs:
              fi
           done
 
+      - name: Cleanup CloudFront Functions
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
+        run: |
+          NAMESPACE="${{ env.NAMESPACE }}"
+          CLIENT_KEY="${{ env.CLIENT_KEY }}"
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+
+          PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
+          echo "Searching for CloudFront functions starting with: $PREFIX"
+
+          FUNCTIONS=$(aws cloudfront list-functions --query "FunctionList.Items[?starts_with(Name, '$PREFIX')].Name" --output text 2>/dev/null || echo "")
+
+          if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+             for FUNC_NAME in $FUNCTIONS; do
+                echo "   🔄 Checking CloudFront function: $FUNC_NAME"
+                
+                ETAG=$(aws cloudfront describe-function --name "$FUNC_NAME" --query "ETag" --output text 2>/dev/null || echo "")
+                
+                if [[ -n "$ETAG" ]]; then
+                   if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                      echo "   [DRY RUN] Would delete CloudFront function $FUNC_NAME with ETag $ETAG"
+                   else
+                      if aws cloudfront delete-function --name "$FUNC_NAME" --if-match "$ETAG" 2>&1; then
+                         echo "   ✅ Deleted $FUNC_NAME"
+                      else
+                         echo "   ⚠️ Delete failed (likely attached to an active distribution). Skipping."
+                      fi
+                   fi
+                else
+                   echo "   ⚠️ Could not fetch ETag. Skipping."
+                fi
+             done
+          else
+             echo "   ✅ No orphaned CloudFront functions found."
+          fi
+
       - name: Cleanup Zombie Cloudflare Records
         if: env.PROJECT_KEY != ''
         env:
