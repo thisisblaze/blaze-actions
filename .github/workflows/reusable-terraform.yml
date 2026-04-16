@@ -925,9 +925,21 @@ jobs:
 
           # ECS Capacity Providers — already physically removed by external cleanup/ASG zeroing
           echo "  🧹 Removing ECS Capacity Providers from state to prevent PutClusterCapacityProviders failures..."
-          terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-          terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-          terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/dev/null || true
+          for ADDR in \
+            "module.graviton_cp.aws_ecs_capacity_provider.ec2" \
+            "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" \
+            "module.graviton_cp.aws_ecs_cluster_capacity_providers.ec2" \
+            "module.graviton_cp.aws_ecs_cluster_capacity_providers.ec2[0]" \
+            "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" \
+            "module.ec2_capacity_provider[0].aws_ecs_cluster_capacity_providers.ec2[0]" \
+            "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]"; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
+          done
+
+          # VPC Internet Gateway — prevent DependencyViolation if ENIs linger
+          for ADDR in "module.environment_network.module.vpc.aws_internet_gateway.this[0]" "module.environment_network.module.vpc.aws_internet_gateway.this"; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
+          done
 
           echo "✅ Stale network resources purged"
 
