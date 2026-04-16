@@ -2,8 +2,11 @@
 
 **Reusable GitHub Actions workflows and composite actions for CI/CD**
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Repository execution instructions are strictly mapped to Phase 1 Foundation / Phase 2 Tenant orchestrator layers.
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v1.4.33-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v2.3.7-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 > [!CAUTION]
 > ### 🚨 THIS REPO IS A WORKFLOW LIBRARY — NOT FOR DIRECT RUNS 🚨
@@ -51,7 +54,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 # Recommended: Pin to specific version for stability
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1.2.0-multi-cloud-foundation
+    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.3.7
     with:
       environment: dev
       project: myproject
@@ -69,7 +72,7 @@ jobs:
 **For development/testing**:
 
 ```yaml
-uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@dev
+uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@dev
 ```
 
 ### Using Actions (Any Organization)
@@ -79,7 +82,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v1.4.31
+      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.3.7
         with:
           project_key: myproject
 ```
@@ -88,12 +91,12 @@ jobs:
 
 ## Version Pinning Recommendations
 
-> [!IMPORTANT] > **Production environments** should always pin to specific versions (e.g., `@v1.4.31`) for stability and predictability. **Development environments** can use `@dev` for latest features.
+> [!IMPORTANT] > **Production environments** should always pin to specific versions (e.g., `@v2.3.7`) for stability and predictability. **Development environments** can use `@dev` for latest features.
 
 | Use Case                 | Recommended Version              | Example            |
 | :----------------------- | :------------------------------- | :----------------- |
-| **Production**           | Specific version                 | `@v1.4.31`          |
-| **Staging**              | Specific version or latest minor | `@v1.4.31` or `@v1` |
+| **Production**           | Specific version                 | `@v2.3.7`          |
+| **Staging**              | Specific version or latest minor | `@v2.3.7` or `@v2` |
 | **Development**          | Latest dev branch                | `@dev`             |
 | **Testing new features** | Specific commit SHA              | `@abc123f`         |
 
@@ -272,13 +275,14 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 
 - Sets up OIDC, state backend, secrets
 
-**01-provision-infra.yml** - Infrastructure provisioning
+**01a-provision-network.yml** - Foundation Phase 1
+- Terraform plan/apply for Core Hub routing and external ingress mappings
 
-- Terraform plan/apply for network and app stacks (Creation only - use 99 for destroy)
+**01g-provision-db-pod.yml** - Foundation Phase 1 (Data)
+- Terraform plan/apply for Shared Stateful architectures (Atlas/ElastiCache)
 
-**02-deploy-app.yml** - Application deployment
-
-- Docker build, push, ECS deploy
+**04-deploy-multi-site.yml** - Application Phase 2
+- Docker build, tag pushing, isolated Tenant ECS allocation and routing
 
 **stress-test.yml** - Full environment testing
 
@@ -286,9 +290,8 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 
 ### Operations Workflows
 
-**99-ops-utility.yml** - Multi-purpose operations
-
-- View config, check stacks, manual interventions
+**99-ops-nuke.yml** - Multi-purpose destruction
+- Eradicates active architectures returning targeted region entirely to zero-state
 
 **90-daily-health-check.yml** - Automated monitoring
 
@@ -408,7 +411,7 @@ on:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.3.7
     with:
       environment: prod
       project_key: myproject
@@ -444,14 +447,14 @@ jobs:
 ```yaml
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.3.7
     with:
       environment: dev
     secrets: inherit
 
   deploy:
     needs: provision
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.3.7
     with:
       environment: dev
     secrets: inherit
@@ -501,10 +504,11 @@ Follow semantic versioning:
 
 | Workflow               | Purpose                  | Inputs                                             |
 | :--------------------- | :----------------------- | :------------------------------------------------- |
-| **01-provision-infra** | Provision infrastructure | env, stack, cloud_provider, api_launch_type |
-| **02-deploy-app**      | Deploy App + Admin SPA   | env, cloud_provider, api_launch_type, target_services |
+| **01a-provision-network**| Provision Phase 1 Net    | env, stack, cloud_provider, api_launch_type |
+| **01g-provision-db-pod** | Provision Phase 1 Data   | env, stack, cloud_provider, api_launch_type |
+| **04-deploy-multi-site** | Deploy Phase 2 Tenant    | env, cloud_provider, api_launch_type, target_services |
 | **reusable-stress-test-*** | Full environment test suite    | environment, mode                           |
-| **99-ops-utility**     | Operations utility       | action, confirmation (cleanup integrated)   |
+| **99-ops-nuke**          | Total Teardown operations| action, confirmation                        |
 
 > Environments: `dev-mini` | `dev` | `stage` | `prod`
 > Admin SPA: S3+CloudFront on DEV/STAGE/PROD · Cloudflare Pages on DEV-MINI
