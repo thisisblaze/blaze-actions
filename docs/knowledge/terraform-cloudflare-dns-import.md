@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # Terraform Cloudflare DNS Provider Interoperability
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 `terraform apply` fails when attempting to create network routing components (like ACM certificates or Cloudflare Pages domains) with an error resembling:

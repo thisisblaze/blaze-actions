@@ -1,5 +1,9 @@
 # Architectural Decision Record: ECS Capacity Provider Reconciliation
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Context & The Problem
 AWS has a strict limitation natively regarding **ECS Capacity Providers (CPs)**: You cannot delete or update an ECS Capacity Provider if any tasks are currently running on it, or if it is actively associated with the cluster. AWS returns a `ResourceInUseException`.
 

@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # GCP Workload Identity Federation (WIF) Terraform Backend Authentication
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic/Symptom
 When executing `terraform init` to configure a GCS backend in GitHub Actions using Workload Identity Federation (WIF), the workflow fails with a `403 Forbidden` error:
 

@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # GitHub Actions OIDC Credentials in Environments
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 Reusable workflows (e.g., `check-stack-exists.yml`, `stress-test.yml`) failing with:

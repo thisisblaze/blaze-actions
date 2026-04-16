@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # AWS CloudFront SPA Routing
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 Directly navigating to a deep link (e.g., `https://app.example.com/dashboard/users`) in a deployed React/Vite Single Page Application (SPA) returns a `403 Access Denied` or `404 Not Found` XML payload from Amazon S3 instead of loading the app.

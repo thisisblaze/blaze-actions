@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # Terraform State Checksum Mismatch and Drift
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 `terraform plan` fails instantly with an error indicating an inconsistency between the AWS S3 state file and the DynamoDB lock table checksums.

@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # GitHub Actions Nested Relative Paths Across Organizations
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 When a caller workflow in one repository (`Repo A`) calls a reusable workflow in another repository (`Repo B`), and that reusable workflow attempts to call a secondary, internal workflow inside `Repo B` using a relative path (`uses: ./.github/workflows/internal.yml`), GitHub Actions fatally crashes with `workflow was not found`.

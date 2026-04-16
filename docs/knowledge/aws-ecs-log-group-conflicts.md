@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # AWS ECS Log Group Conflicts
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 ## Topic
 
 ECS tasks hanging indefinitely in the `PENDING` state and deployments ultimately timing out (e.g., `api` deployment hanging).

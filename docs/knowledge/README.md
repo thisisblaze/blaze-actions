@@ -5,6 +5,10 @@ Owner: Infrastructure Team
 
 # Blaze Smart Fixes Knowledge Library
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 Welcome to the Blaze Knowledge Library. This directory contains quick-reference guides, architectures, and "smart fixes" for complex edge-cases encountered across our CI/CD pipelines, AWS/GCP/Azure infrastructure, and Terraform deployments.
 
 ## Documenting A Fix
