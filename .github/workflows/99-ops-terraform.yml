@@ -234,7 +234,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.58
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.59
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -346,7 +346,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.58
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.59
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -478,7 +478,7 @@ jobs:
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.1.58
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.1.59
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -501,7 +501,7 @@ jobs:
       inputs.action == 'destroy-resources' &&
       needs.configuration.result == 'success' &&
       (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.58
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.59
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
