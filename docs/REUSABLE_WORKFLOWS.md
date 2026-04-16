@@ -3,6 +3,10 @@
 
 ---
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 # Reusable Workflows Guide
 
 **Repository**: blaze-actions  
@@ -35,7 +39,7 @@ on:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
@@ -105,7 +109,7 @@ jobs:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     secrets: inherit # Pass all secrets to remote workflow
 ```
 
@@ -161,14 +165,14 @@ jobs:
 
 ## Hybrid ECS (EC2 & Fargate)
 
-The `02-deploy-app` workflow supports mixed compute strategies on AWS.
+The `04-deploy-multi-site` workflow supports mixed compute strategies on AWS.
 
 ### Inputs for Hybrid ECS
 
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     with:
       environment: prod
       # Deployment Strategy:
@@ -195,7 +199,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@dev
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -208,12 +212,12 @@ jobs:
 
 ## Admin SPA Deploy (AWS)
 
-For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to S3 and invalidates CloudFront.
+For AWS `DEV`/`STAGE`/`PROD`, `04-deploy-multi-site` also syncs the Admin SPA build to S3 and invalidates CloudFront.
 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@dev
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
@@ -241,7 +245,7 @@ jobs:
 
   destroy:
     needs: cleanup
-    uses: thebyte9/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/99-ops-nuke.yml@main
     with:
       action: destroy
     secrets: inherit
@@ -282,7 +286,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     with:
       environment: dev
     secrets: inherit
@@ -299,7 +303,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     with:
       environment: prod
     secrets: inherit
@@ -344,7 +348,7 @@ with:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     secrets: inherit # Add this line
 ```
 
@@ -443,7 +447,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v1.0.0
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v1.0.0
     with:
       environment: prod
       target_services: "Blaze all"
@@ -472,7 +476,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
     with:
       environment: dev
       target_services: "api frontend"

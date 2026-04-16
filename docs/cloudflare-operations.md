@@ -3,6 +3,10 @@
 
 ---
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 # Cloudflare Pages Operations Guide
 
 **Version**: 1.4.0  
@@ -433,8 +437,8 @@ All operations use:
 ## Related Documentation
 
 - [Cloudflare Pages API Documentation](https://developers.cloudflare.com/api/operations/pages-project)
-- [99 - Ops Utility Workflow](../.github/workflows/99-ops-utility.yml)
-- [Cloudflare Pages Creation (02-deploy-app.yml)](../.github/workflows/02-deploy-app.yml#L516-L538)
+- [99 - Ops Utility Workflow](../.github/workflows/99-ops-nuke.yml)
+- [Cloudflare Pages Creation (04-deploy-multi-site.yml)](../.github/workflows/04-deploy-multi-site.yml#L516-L538)
 
 ---
 

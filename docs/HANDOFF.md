@@ -1,5 +1,9 @@
 # Session Handoff State
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 **Date/Time**: 2026-03-22T22:55:47Z
 
 ## 1. The Exact Objective

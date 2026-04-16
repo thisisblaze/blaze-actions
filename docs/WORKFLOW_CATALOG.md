@@ -3,6 +3,10 @@
 
 ---
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 # Workflow Catalog
 
 **Repository**: blaze-actions  
@@ -66,7 +70,7 @@
 
 ---
 
-#### 02-deploy-app.yml
+#### 04-deploy-multi-site.yml
 
 **Purpose**: Application deployment (ECS, Cloud Run, or Container Apps)
 **Use Case**: Deploy Docker containers + Admin SPA (S3/CloudFront for AWS)
@@ -180,7 +184,7 @@
 
 ### Operations & Utilities
 
-#### 99-ops-utility.yml
+#### 99-ops-nuke.yml
 
 **Purpose**: Multi-purpose operational tasks  
 **Use Case**: Ad-hoc operations
@@ -392,7 +396,7 @@
 
 
 #### 02-deploy-aws.yml
-**Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `02-deploy-app.yml`.
+**Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `04-deploy-multi-site.yml`.
 
 ---
 #### 02-deploy-azure.yml
@@ -574,7 +578,7 @@ These are called by main workflows, not directly by users.
 
 ---
 #### reusable-stress-test-deploy.yml
-**Purpose**: Stress test deploy phase. Calls `02-deploy-app` with the calculated project config. Uses `project_key` from `calculate-config`.
+**Purpose**: Stress test deploy phase. Calls `04-deploy-multi-site` with the calculated project config. Uses `project_key` from `calculate-config`.
 
 ---
 #### reusable-stress-test-teardown.yml
@@ -591,9 +595,9 @@ These are called by main workflows, not directly by users.
 | :---------------------- | :--------------------- | :-------------- |
 | `00_setup_environment`  | First-time setup       | 5-10 min        |
 | `01-provision-infra`    | Infrastructure changes | 10-20 min       |
-| `02-deploy-app`         | Code deployments       | 5-10 min        |
+| `04-deploy-multi-site`         | Code deployments       | 5-10 min        |
 | `stress-test`           | Release validation     | 30-40 min       |
-| `99-ops-utility`        | Ad-hoc operations      | 2-5 min         |
+| `99-ops-nuke`        | Ad-hoc operations      | 2-5 min         |
 | `90-daily-health-check` | Daily monitoring       | 2-5 min         |
 
 ---
@@ -619,7 +623,7 @@ These are called by main workflows, not directly by users.
 
 - Native ECS Blue/Green (no CodeDeploy)
 - DEV-MINI environment (Cloudflare Tunnel only)
-- Admin SPA: S3 sync + CloudFront invalidation added to `02-deploy-app`
+- Admin SPA: S3 sync + CloudFront invalidation added to `04-deploy-multi-site`
 - DEV mirrors STAGE (full CloudFront + WAF + ALB + Image Resize)
 - `deploy-site.yml` blue-green migrated from CodeDeploy to Native ECS B/G
 

@@ -3,6 +3,10 @@
 
 ---
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. Agent workflow instructions adhere strictly to the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
+
 # Cross-Organization Secret Propagation in GitHub Actions
 
 ## Problem Statement
