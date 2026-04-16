@@ -1,5 +1,9 @@
 # Google NotebookLM Presentation Prompts
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Purpose:** Comprehensive documentation about the Blaze Infrastructure Platform designed for Google NotebookLM to generate engaging presentations.
 
 ---

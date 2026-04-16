@@ -1,5 +1,9 @@
 # NotebookLM Prompt Template
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Copy and paste this into NotebookLM chat to guide the Slide deck/Infographic generation**
 
 ---

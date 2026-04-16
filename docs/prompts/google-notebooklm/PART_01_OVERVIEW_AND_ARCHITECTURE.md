@@ -1,5 +1,9 @@
 # PART 1: Blaze Infrastructure Platform - Overview and Architecture
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Document Purpose:** Foundational overview for Google NotebookLM presentation generation  
 **Target Length:** 5-7 minutes of presentation content  
 **Focus:** High-level architecture, problem statement, solution approach
@@ -153,8 +157,8 @@
 
 - `00_setup_environment.yml` - Bootstrap AWS infrastructure
 - `01-provision-infra.yml` - Terraform infrastructure provisioning
-- `02-deploy-app.yml` - Application deployment
-- `99-ops-utility.yml` - Operations and maintenance
+- `04-deploy-multi-site.yml` - Application deployment
+- `99-ops-nuke.yml` - Operations and maintenance
 - `90-daily-health-check.yml` - Automated monitoring
 
 **Benefits:**
@@ -223,7 +227,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v1.33.2
     with:
       environment: prod
     secrets: inherit
@@ -507,7 +511,7 @@ clientA-acme-webapp-prod-cluster        (custom)
 3. Configure GitHub secrets
 4. Run `00_setup_environment.yml` for each environment
 5. Run `01_provision_infrastructure.yml` for network + app
-6. Run `02-deploy-app.yml` to deploy application
+6. Run `04-deploy-multi-site.yml` to deploy application
 
 **Time:** 1 hour
 **Result:** Fully functional 3-environment setup

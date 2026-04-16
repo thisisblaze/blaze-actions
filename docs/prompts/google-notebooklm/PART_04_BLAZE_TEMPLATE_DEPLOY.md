@@ -1,5 +1,9 @@
 # PART 4: blaze-template-deploy - Deployment Templates
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Document Purpose:** Project template and deployment patterns for Google NotebookLM  
 **Target Length:** 2-3 minutes of presentation content  
 **Focus:** How projects consume the platform
@@ -31,21 +35,21 @@ blaze-template-deploy/
 ├── .github/
 │   └── workflows/
 │       ├── 01-provision-infra.yml      # 15 lines (wrapper)
-│       ├── 02-deploy-app.yml           # 15 lines (wrapper)
-│       └── 99-ops-utility.yml          # 15 lines (wrapper)
+│       ├── 04-deploy-multi-site.yml           # 15 lines (wrapper)
+│       └── 99-ops-nuke.yml          # 15 lines (wrapper)
 ├── vars/
 │   ├── blaze-env.json                  # Global config
 │   └── thisisblaze/
 │       └── blaze-env.json              # Project-specific
-├── .github/aws/infra/live/
+├── .aws/live/
 │   ├── dev-network/main.tf             # DEV AWS network stack
 │   ├── dev-app/main.tf                 # DEV AWS app stack
 │   ├── stage-network/main.tf           # STAGE AWS network
 │   └── stage-app/main.tf               # STAGE AWS app
-├── .github/gcp/infra/live/
+├── .gcp/live/
 │   ├── dev-network/main.tf             # DEV GCP network stack
 │   └── dev-app/main.tf                 # DEV GCP app stack
-├── .github/azure/infra/live/
+├── .azure/live/
 │   ├── dev-network/main.tf             # DEV Azure network stack
 │   └── dev-app/main.tf                 # DEV Azure app stack
 ├── packages/                            # Application code
@@ -139,7 +143,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v1.33.2
     with:
       environment: dev
     secrets: inherit
@@ -154,7 +158,7 @@ jobs:
 ### Pattern: Live Directory Structure
 
 ```
-.github/aws/infra/live/
+.aws/live/
 ├── dev-network/
 │   ├── main.tf
 │   ├── outputs.tf
@@ -219,7 +223,7 @@ output "vpc_id" {
 4. Run 00_setup_environment (bootstrap)
 5. Run 01_provision_infrastructure (network)
 6. Run 01_provision_infrastructure (app)
-7. Run 02-deploy-app
+7. Run 04-deploy-multi-site
 
 **Result:** Fully functional DEV environment
 
@@ -308,13 +312,13 @@ jobs:
 **Development:**
 
 ```yaml
-uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@dev
 ```
 
 **Production:**
 
 ```yaml
-uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v1.33.2
+uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v1.33.2
 ```
 
 ### 3. Secret Management

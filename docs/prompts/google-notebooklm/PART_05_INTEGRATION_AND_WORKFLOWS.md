@@ -1,5 +1,9 @@
 # PART 5: Integration and Complete Workflows
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Document Purpose:** End-to-end examples for Google NotebookLM  
 **Target Length:** 3-4 minutes of presentation content  
 **Focus:** How all 3 repositories work together
@@ -144,7 +148,7 @@ Outputs:
 #### Phase 5: Application Deployment (10 minutes)
 
 ```yaml
-# Run: 02-deploy-app.yml
+# Run: 04-deploy-multi-site.yml
 Environment: dev
 Services: "Blaze all"
 
@@ -193,7 +197,7 @@ git push origin hotfix/critical-bug
 
 ```yaml
 # Triggered by merge to main
-Workflow: 02-deploy-app.yml
+Workflow: 04-deploy-multi-site.yml
 Environment: prod
 Services: "api"  # Only API service needs update
 
@@ -223,7 +227,7 @@ Downtime: 0 seconds
 ```yaml
 # If new version has issues
 Action: Revert merge commit
-Trigger: 02-deploy-app.yml again
+Trigger: 04-deploy-multi-site.yml again
 Time: 8 minutes to previous version
 ```
 
@@ -344,7 +348,7 @@ Notifications:
 ### Manual Operations
 
 ```yaml
-# Workflow: 99-ops-utility.yml
+# Workflow: 99-ops-nuke.yml
 
 Available Actions:
   - view-config

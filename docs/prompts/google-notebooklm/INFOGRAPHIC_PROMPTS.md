@@ -1,5 +1,9 @@
 # INFOGRAPHIC PROMPT: Workflow Visualizations
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Copy-paste this into NotebookLM to create workflow-focused infographics**
 
 ---

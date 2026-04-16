@@ -1,5 +1,9 @@
 # PART 3: blaze-terraform-infra-core - Infrastructure Modules
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Document Purpose:** Infrastructure module library for Google NotebookLM  
 **Target Length:** 2-3 minutes of presentation content  
 **Focus:** Reusable Terraform modules and infrastructure patterns

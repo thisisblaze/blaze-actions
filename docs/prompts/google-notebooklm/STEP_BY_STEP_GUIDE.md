@@ -1,5 +1,9 @@
 # STEP-BY-STEP: How to Create Presentations with Google NotebookLM
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 This guide walks you through **exactly** how to use the prompt files to generate presentations.
 
 ---
