@@ -1,5 +1,8 @@
 # Contributing Guide
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. All code contributions must align to the Phase 1 Foundation / Phase 2 Tenant orchestrator model.
+
 Thank you for contributing to blaze-actions!
 
 ---
@@ -79,7 +82,7 @@ jobs:
 ```
 
 **Cleanup Protocol** (Mandatory):
-- Any workflow creating resources **MUST** have a corresponding destruction path in `99-ops-utility.yml`.
+- Any workflow creating resources **MUST** have a corresponding destruction path in `99-ops-nuke.yml`.
 - Use `reusable-pre-destroy-cleanup.yml` for complex removal (e.g., EC2 Capacity Providers).
 
 **Multi-Cloud Support**:
