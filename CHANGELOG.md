@@ -6,6 +6,19 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v2.1.59
+
+### Fixed
+
+
+## v2.1.59 (2026-04-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 
 ### Fixed
 
