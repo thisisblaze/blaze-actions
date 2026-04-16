@@ -1,4 +1,5 @@
-%% Blaze Multi-Cloud Topology — Updated 2026-02-27
+%% Blaze Multi-Cloud Topology — Updated 2026-04-16
+%% Status: SCALED (Multi-Tenant V2) — Enforcing Pillar 1 Foundation and Pillar 2 Tenant layers.
 %% DEV-MINI: Cloudflare Tunnel only (Admin on Cloudflare Pages)
 %% DEV / STAGE / PROD: Full AWS stack (CloudFront + ALB + ECS, Admin on CloudFront+S3)
 
@@ -61,11 +62,11 @@ graph TB
         ELASTIC["Elastic Cloud"]
     end
 
-    %% CI deploys to each env
+    %% V2 Tenant Orchestrators route to specific execution layers
     CALC -->|"tunnel deploy"| CF_TUNNEL
-    CALC -->|"Cloudflare Pages"| CF_ADMIN
-    CALC -->|"app deploy"| AWS_CF
-    CALC -->|"S3 sync + invalidate"| AWS_S3_ADMIN
+    CALC -->|"04-Deploy Tenant Pages"| CF_ADMIN
+    CALC -->|"04-Deploy App Layer"| AWS_CF
+    CALC -->|"04-S3 Tenant Auth Sync"| AWS_S3_ADMIN
     CALC -->|deploy| GCP_RUN
     CALC -->|deploy| AZ_ACA
 
