@@ -847,12 +847,10 @@ jobs:
           # Remove ONLY the Lambda function resources that cause destroy hang.
           # DO NOT remove aws_iam_role / aws_iam_policy — these survive teardown
           # and attempting to re-create them on apply hits EntityAlreadyExists (409).
-          # The IAM resources are re-imported in pre_apply_script before this step,
-          # but the whole-module state-rm was wiping them. Now we are surgical.
-
-          # 1. Lambda function resources only (not the full module)
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]'   2>/dev/null || echo "viewer_request not in state"
-          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]'   2>/dev/null || echo "origin_response not in state"
+          # Lambda@Edge can't be deleted without waiting for replica deletion (hours)
+          echo "  🧹 Removing Lambda@Edge elements from state to prevent destroy blockages..."
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]' 2>/dev/null || true
+          terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]' 2>/dev/null || true
           terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0].time_sleep.wait_for_edge_propagation[0]'  2>/dev/null || echo "time_sleep not in state"
 
           # 2. Vestigial/Phantom Normalize Lambda (Legacy Module — full module, no IAM to worry about)
@@ -923,9 +921,9 @@ jobs:
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
           done
 
-          # ECS Capacity Providers — already physically removed by external cleanup/ASG zeroing
+          # ECS Capacity Providers — restrict to just the cluster mapping to avoid API deadlock
           echo "  🧹 Removing ECS Capacity Providers from state (dynamic match) to prevent PutClusterCapacityProviders failures..."
-          terraform state list 2>/dev/null | grep -E 'aws_ecs_cluster_capacity_providers|aws_ecs_capacity_provider' | while read -r ADDR; do
+          terraform state list 2>/dev/null | grep -E 'aws_ecs_cluster_capacity_providers' | while read -r ADDR; do
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Failed to remove: $ADDR"
           done
 
