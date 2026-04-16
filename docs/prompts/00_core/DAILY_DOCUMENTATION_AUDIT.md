@@ -7,6 +7,10 @@ execution_time: end_of_day
 
 # DAILY DOCUMENTATION CONSISTENCY AUDIT
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Purpose:** Execute a systematic, comprehensive documentation audit and update across all Blaze repositories to ensure accuracy, consistency, and completeness.
 
 **When to run:** End of each workday, after code changes have been committed.

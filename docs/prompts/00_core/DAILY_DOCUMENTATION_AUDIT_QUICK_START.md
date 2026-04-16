@@ -4,6 +4,10 @@ description: Quick-reference card for daily documentation audit
 
 # DAILY DOCUMENTATION AUDIT - QUICK START
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 **Time:** 2 hours max | **Frequency:** Daily, end of workday
 
 ---

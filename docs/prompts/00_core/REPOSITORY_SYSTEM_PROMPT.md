@@ -3,6 +3,10 @@
 
 ---
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. AI instructions strictly enforce the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping layers.
+
+
 # System Constitution: blaze-actions (Hub)
 
 > **Version**: ACTIONS_CONSTITUTION_V1
