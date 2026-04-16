@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-15
+**Last Updated**: 2026-04-16
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 54 (35 main + 19 reusable)  
-**Version**: v1.6.1  
-**Last Updated**: 2026-04-15
+**Total Workflows**: 56 (37 main + 19 reusable)  
+**Version**: v1.6.2  
+**Last Updated**: 2026-04-16
 
 ---
 
@@ -395,6 +395,10 @@
 
 
 
+#### 02-deploy-app.yml
+**Purpose**: Generic multi-cloud app deployment entrypoint. Routes to the appropriate cloud-specific deploy workflow (`02-deploy-aws`, `02-deploy-gcp`, `02-deploy-azure`) based on `cloud_provider` input. Primary dispatcher used by `04-deploy-multi-site.yml`.
+
+---
 #### 02-deploy-aws.yml
 **Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `04-deploy-multi-site.yml`.
 
@@ -429,6 +433,10 @@
 ---
 #### 99-ops-nuke.yml
 **Purpose**: Full environment nuke across any cloud provider. Inputs: `cloud_provider`, `environment`, `action` (default: nuke-environment), `skip_lambda_destroy` (boolean). Destroys all Terraform stacks in reverse dependency order.
+
+---
+#### 99-ops-utility.yml
+**Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
 
 ---
 #### 99-ops-terraform.yml
@@ -606,8 +614,13 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v1.6.2** (2026-04-16):
+- Added missing `02-deploy-app.yml` and `99-ops-utility.yml` entries to catalog.
+- Bumped `blaze-terraform-infra-core/90-daily-health-check.yml` to `@v2.1.59` (was `v2.1.57`).
+- Total workflow count corrected to 56 (37 main + 19 reusable).
+
 **v1.6.1** (2026-04-15):
-- Global standardization to `@v2.1.57` to resolve split-brain drift tagging.
+- Global standardization to `@v2.1.59` to resolve split-brain drift tagging.
 - Enhanced `cleanup-orphaned-lambdas` with wildcard matching for multi-tenant and legacy single-tenant namespaces.
 - Introduced `skip_lambda_destroy` parameter to `99-ops-nuke.yml`.
 
@@ -617,7 +630,7 @@ These are called by main workflows, not directly by users.
 - `reusable-provision-db-users.yml` deprecated for multi-site environments
 - Per-site Atlas DB user provisioning now automatic via `multi-site-app` v2.3.3+ `module.db_tenant`
 - Atlas IP access list security: locked to VPC CIDR when peering active (vpc-peering v2.3.4)
-- `90-daily-health-check.yml` pinned to `@v2.1.47` across template-deploy and blaze-actions
+- `90-daily-health-check.yml` bumped to `@v2.1.59` across all repos
 
 **v1.5.0** (2026-02-27):
 
@@ -640,6 +653,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-15  
+**Last Updated**: 2026-04-16  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
