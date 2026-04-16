@@ -924,21 +924,15 @@ jobs:
           done
 
           # ECS Capacity Providers — already physically removed by external cleanup/ASG zeroing
-          echo "  🧹 Removing ECS Capacity Providers from state to prevent PutClusterCapacityProviders failures..."
-          for ADDR in \
-            "module.graviton_cp.aws_ecs_capacity_provider.ec2" \
-            "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" \
-            "module.graviton_cp.aws_ecs_cluster_capacity_providers.ec2" \
-            "module.graviton_cp.aws_ecs_cluster_capacity_providers.ec2[0]" \
-            "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" \
-            "module.ec2_capacity_provider[0].aws_ecs_cluster_capacity_providers.ec2[0]" \
-            "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]"; do
-            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
+          echo "  🧹 Removing ECS Capacity Providers from state (dynamic match) to prevent PutClusterCapacityProviders failures..."
+          terraform state list 2>/dev/null | grep -E 'aws_ecs_cluster_capacity_providers|aws_ecs_capacity_provider' | while read -r ADDR; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Failed to remove: $ADDR"
           done
 
           # VPC Internet Gateway — prevent DependencyViolation if ENIs linger
-          for ADDR in "module.environment_network.module.vpc.aws_internet_gateway.this[0]" "module.environment_network.module.vpc.aws_internet_gateway.this"; do
-            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
+          echo "  🧹 Removing Internet Gateways from state (dynamic match) to prevent DependencyViolation..."
+          terraform state list 2>/dev/null | grep -E 'aws_internet_gateway\.this' | while read -r ADDR; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Failed to remove: $ADDR"
           done
 
           echo "✅ Stale network resources purged"
