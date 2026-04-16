@@ -1,13 +1,16 @@
-**Last Updated**: 2026-04-15
+**Last Updated**: 2026-04-14
 **Owner**: Infrastructure Team
 
 ---
 
 # AI Context Governance: The Blaze Standard
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. All agents must enforce and operate within the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
-**REPO ROLE**: Reusable GitHub Actions Workflows
+**REPO ROLE**: Application Implementation & Infrastructure Instantiation (Hub)
 
 ## 1. The Prime Directive
 
@@ -49,7 +52,7 @@ _(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-c
 **Action**:
 
 1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
-2.  View the **Territory**: `docs/graphs/aws_resource_topology.mermaid` (AWS), `.github/gcp/` (GCP), `.github/azure/` (Azure)
+2.  View the **Territory**: `docs/graphs/aws_resource_topology.mermaid` (AWS), `.gcp/live/` (GCP), `.azure/live/` (Azure)
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
 4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS/GCP/Azure) Blaze stack."
 
@@ -85,12 +88,12 @@ _(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly
 
 Consult these approved workflows for specific operational tasks:
 
-- **Add Workflow**: `/01-add-workflow` → `.agent/workflows/01-add-workflow.md`
-- **Add Sharp Layer**: `/02-add-sharp-layer` → `.agent/workflows/02-add-sharp-layer.md`
-- **Deep CICD Maintenance**: `/13-deep-cicd-maintenance` → `.agent/workflows/13-deep-cicd-maintenance.md`
-- **Troubleshoot CloudFront**: `/troubleshoot-cloudfront` → `.agent/workflows/troubleshoot-cloudfront.md`
-- **Troubleshoot TF Locks**: `/troubleshoot-terraform-locks` → `.agent/workflows/troubleshoot-terraform-locks.md`
-- **Debug CICD Workflows**: `/debug-cicd-workflows` → `.agent/workflows/debug-cicd-workflows.md`
+- **Analysis**: `/01-analyze` → `.agent/workflows/01-analyze.md`
+- **Testing**: `/02-test` → `.agent/workflows/02-test.md`
+- **Security Audit**: `/08-audit` → `.agent/workflows/08-audit.md`
+- **Consistency Check**: `/cross-environment-consistency` → `.agent/workflows/cross-environment-consistency.md`
+- **Image Resize Deploy**: `/09-deploy-image-resize` → `.agent/workflows/09-deploy-image-resize.md` (AWS only)
+- **Troubleshooting**: `/04-troubleshoot` → `.agent/workflows/04-troubleshoot.md`
 - **Docs Maintenance**: `/09-maintain-docs` → `.agent/workflows/09-maintain-docs.md`
 
 ## 6. Key References
@@ -158,7 +161,6 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
 | `blaze-template-deploy` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
-
 ## 11. Deployment Architecture Facts (2026-03-25)
 
 **Status: MANDATORY — agents must not assume older patterns**
@@ -169,9 +171,9 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **ECS API Deployment**             | **Native ECS Blue/Green** — no CodeDeploy, no `appspec.yml`, no deployment group                   |
 | **CloudFront Topologies**          | **3 Distributions per Tenant** (Admin, API, Frontend). Allows extreme Blue/Green isolation         |
 | **Database Strategy**              | **Shared Pods** (e.g. `db-pod-alpha`) utilizing native MongoDB Atlas Autoscaling (M10-M30)         |
-| **Dev Environment (Foundation)**   | `dev-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
+| **Dev Environment (Foundation)**   | `01a-provision-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
 | **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **Multi-Site V2 Default**                                           |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.3.7 Default**                                           |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
@@ -185,26 +187,112 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **ECS EC2 capacity provider bootstrap** | Terraform planning hangs on `data "aws_ecs_capacity_provider"` lookup | SSM parameter `blaze-b9-thisisblaze-stage-ecs-ec2-cp` missing or wrong; dead-code SSM data sources block plan | Fix SSM parameter value; remove dead-code data sources from `multi-site-tenant-app` module |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-04-14)
+## 13. Current Version Pins (2026-04-16)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.1.47** | Engine 4+8 refs fixed. 01g-provision-db-pod added. reusable-provision-db-users deprecated (multi-site). |
-| `blaze-terraform-infra-core` | **v2.3.4** | Atlas IP access list locked to VPC CIDR when peering active. Per-site DB user provisioning via multi-site-app. |
+| `blaze-actions` | **v2.3.7** | latest stable — nuke robustness fixes. All caller workflows unified to V2 orchestrators |
+| `blaze-terraform-infra-core` | **v2.3.7** | Atlas IP access locked to VPC CIDR (security). Multi-site-app auto-provisions per-tenant Atlas DB users. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
-## 14. Multi-Tenant Nuke Failure Patterns (2026-04-08)
+---
+
+
+## 14. Multi-Project Registry (April 2026+)
+
+> [!IMPORTANT]
+> The Blaze platform now supports multiple projects on a single shared ECS cluster. All AI agents MUST be aware of the active project registry before modifying any resource.
+
+| `PROJECT_KEY`  | `DOMAIN_ROOT`      | `PROJECT_SLUG` | Infra                    | Status        |
+|:--------------|:------------------|:--------------|:------------------------|:--------------|
+| `thisisblaze` | `thisisblaze.uk`  | *(empty)*      | Shared cluster (multi-site) | ✅ Active  |
+| `support`     | `thisisblaze.uk`  | `support`      | Shared cluster (multi-site) | 🔧 Phase 3 |
+| `thisisblaze2`| `thisisblaze2.uk` | *(empty)*      | Shared cluster*            | 📋 Planned |
+
+_* `thisisblaze2` requires a separate Cloudflare zone + ACM cert when the domain is registered._
+
+### `PROJECT_SLUG` Definition
+
+`PROJECT_SLUG` is the suffix appended to domain names for sub-projects on a shared zone:
+- `thisisblaze`: no slug (primary project, no suffix) → `frontend-dev.thisisblaze.uk`
+- `support`: slug = `support` → `frontend-dev-support.thisisblaze.uk`
+- DNS pattern (settled April 2026): `{service}-{env}-{slug}.{domain}` — service first, env second, slug last. Prod drops env. Primary project drops slug.
+
+### ECS Cluster Sharing Rule
+
+All projects share **ONE ECS cluster per environment**. Blast-radius events (cluster failure, capacity starvation) affect all projects simultaneously. Scale testing for one project must account for headroom required by others.
+
+### Blast-Radius Safety for Nuke Operations
+
+When destroying a multi-site environment, ALWAYS scope by `Blaze:Project` tag. **Never destroy the `multi-site-network` stack** without confirming ALL projects' services are down. See: `docs/guides/teardown_guide.md`.
+
+### Config File Locations
+
+| Project | blaze-env.json | Project overrides |
+|:--------|:---------------|:------------------|
+| thisisblaze | `vars/thisisblaze/blaze-env.json` | `projects/thisisblaze/packages/` |
+| support | `vars/support/blaze-env.json` | `projects/support/packages/` |
+| thisisblaze2 | `vars/thisisblaze2/blaze-env.json` | `projects/thisisblaze2/packages/` |
+
+See: `docs/plans/134_multi_tenant_multi_domain_expansion_aws.md`
+
+## 15. Multi-Tenant Nuke Failure Patterns (2026-04-08)
 
 > [!CAUTION]
 > Discovered during Plan 134 dev environment nuke-and-reprovision cycle.
 
 | Pattern | Symptom | Root Cause | Fix |
 | :------ | :------- | :--------- | :-- |
-| **pre_apply.sh TG state removal** | 503 on all endpoints after deploy | Script unconditionally removed `aws_lb_target_group` + `aws_lb_listener_rule` from TF state | Disabled destructive sections in `pre_apply.sh`. See `blaze-template-deploy` Plan 134 §6 |
-| **IGW DependencyViolation on destroy** | `Network has some mapped public address(es)` | NAT GW EIPs still associated; EC2s not yet terminated when TF destroy runs | Terminate EC2s → wait `terminated` → re-run nuke |
-| **CloudFront orphan after nuke** | CFs remain Enabled after destroy | Nuke pre-destroy timed out before CF disable propagated (~15 min) | Manually disable → wait Deployed → delete |
-| **PROJECT_SLUG must always be present** | DNS interpolation breaks for primary project | CI/CD reads `PROJECT_SLUG`; absent = undefined | Primary: `PROJECT_SLUG: ""`. Sub-projects: `PROJECT_SLUG: "support"`. Field MUST exist |
+| **pre_apply.sh TG state removal** | 503 on all endpoints after deploy | Script unconditionally removed `aws_lb_target_group` + `aws_lb_listener_rule` from TF state | Disabled destructive sections; added idempotent TG import in Section 4. See Plan 134 §6 |
+| **IGW DependencyViolation on destroy** | `Network has some mapped public address(es)` | NAT GW EIPs still associated + EC2 instances not yet terminated when TF destroy runs | Terminate EC2s → wait `terminated` → re-run nuke. EIPs auto-release with NAT GWs |
+| **CloudFront orphan after nuke** | 3 CFs remain Enabled after destroy | Nuke timed out before CF disable propagated (~15 min needed) | Manually disable → wait Deployed → delete. Add explicit CF wait to nuke hook |
+| **SG DependencyViolation** | `sg has a dependent object` | EC2 ENIs still attached to SG during destroy | Terminate instances first, verify `terminated` state, then destroy SG |
+| **PROJECT_SLUG must always be present** | DNS interpolation breaks for primary project | CI/CD reads `PROJECT_SLUG`; absent = undefined | Primary: `PROJECT_SLUG: ""`. Sub-projects: `PROJECT_SLUG: "support"`. Field MUST exist in `vars/{project}/blaze-env.json` |
+
+---
+
+## 16. Terraform State Isolation Rule (2026-04-13)
+
+> [!CAUTION]
+> **MANDATORY FOR ALL AGENTS AND DEVELOPERS.** Violation = immediate pipeline risk.
+
+**Every environment MUST have its own isolated Terraform state key. No two environments (dev, dev-mini, stage, prod, or any future ephemeral env) may share the same `.tfstate` file.**
+
+### Required State Key Pattern
+
+```
+infra/{project_key}/{environment}/{stack_name}.tfstate
+```
+
+| Token | Rule |
+|-------|------|
+| `{project_key}` | MUST use `var.project_key` — never hardcoded |
+| `{environment}` | MUST use `var.stage` — `dev`, `dev-mini`, `stage`, `prod` |
+| `{stack_name}` | Descriptive purpose (`network`, `third-party-mongodb`, `thisisblaze-db`, `multi-site-app`) |
+
+### Known Violations (being fixed in Plan P5.2)
+
+| Stack | Current (Wrong) Key | Correct Key |
+|-------|---------------------|-------------|
+| `01d` MongoDB (stage+prod) | `infra/thisisblaze/third-party/mongodb.tfstate` | `infra/thisisblaze/stage/third-party-mongodb.tfstate` / `…/prod/…` |
+
+### Enforcement
+
+- Any new `backend "s3" {}` block without both `${project_key}` and `${stage}` in the key **must be rejected in code review**.
+- When creating a new stack directory, always copy the pattern from a correctly-isolated stack (e.g. `multi-site-network/main.tf`).
+- See: `docs/plans/april_2026_roadmap.md` § Priority 5 for the full fix plan.
 
 ---
 
 _This document governs the interaction between Human Intent and AI Execution. Deviation results in broken pipelines._
+
+## 17. Token Budget Policy (Token Frugality & Grep-First)
+
+**Status: MANDATORY**
+
+Token Context is a finite, depletable resource. To prevent context window bloat and maintain high-fidelity LLM reasoning, all Agents must obey the following:
+
+- **Minimal Viable Information (MVI)**: Never load cloud context speculatively. Only load what is strictly necessary.
+- **The Grep-First Rule**: For any reference document > 100 lines (e.g. `NETWORK_STACK_RESOURCES.md`), you MUST use `grep_search` before falling back to reading the entire file with `view_file`.
+- **Handoff Trigger Zone**: When approaching the remaining 5% Context Window Safety Buffer, you MUST proactively trigger `/slash-handoff` to securely freeze state rather than hitting the hard limit.
+- **Anti-Patterns**: Reading all three cloud topology graphs simultaneously, running recursive directory listings on the repo root, and loading the full Governance policy when only checking a single flag are strictly forbidden.

@@ -1,158 +1,148 @@
-# Cursor AI Rules for Blaze Actions (Reusable Workflows Repository)
+---
+description: "Project Rules and Standards for Blaze Template Deploy"
+globs: ["**/*.tf", "**/*.yml", "**/*.yaml", "**/*.md", "**/*.sh"]
+---
 
-## Repository Role
+# Project Rules & Standards
 
-This is the **shared GitHub Actions repository** (`blaze-actions`). It provides reusable workflows and composite actions consumed by `blaze-template-deploy` and other Blaze repos.
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. All editor actions MUST conform to the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping logic.
 
-**Architecture**: Split-Repository Design
-- `blaze-terraform-infra-core`: Core Terraform modules (Source of Truth).
-- `blaze-actions` (This Repo): Shared/Reusable GitHub Actions Workflows.
-- `blaze-template-deploy`: Application Implementation & Infrastructure Instantiation.
+This repository follows strict conventions for Infrastructure as Code (Terrform) and CI/CD (GitHub Actions).
 
-## Execution Context (CRITICAL)
+## 1. Core Technology Stack
+- **Infrastructure**: Terraform (State stored in S3, Locking via DynamoDB).
+- **Cloud Provider**: AWS (ECS Fargate/EC2 Hybrid, VPC, ALB, EFS, MongoDB Atlas, Elastic Cloud).
+- **CI/CD**: GitHub Actions (Self-hosted or Ubuntu runners).
+- **Containerization**: Docker (Images stored in ECR).
 
-**Status: MANDATORY**
-This repository (`blaze-actions`) is strictly a **LIBRARY** of reusable code.
-- You MUST NEVER execute `gh workflow run`, `gh secret list`, `gh run list` or any deployment commands from this repository.
-- You MUST NEVER attempt to fetch or read secrets from this repository.
-- **ALL execution, state, and secrets belong to the caller repository** (e.g., `blaze-template-deploy`). 
-- When the user asks to run a workflow or nuke an environment, you MUST execute the command from the deployment repository (`blaze-template-deploy`), NOT from `blaze-actions`.
+## 2. Naming Conventions
 
-## Public Repository Constraints (CRITICAL)
+### 2.1 AWS Resources
+All AWS resources MUST follow this pattern to ensure global uniqueness and ease of identification:
+`<namespace>-<client_key>-<project_key>-<stage_key>-<resource-suffix>`
 
-**Status: MANDATORY**
-This repository (`blaze-actions`) is a **PUBLIC** repository open to the internet. 
-- You MUST NEVER commit company-specific domains (e.g., `thisisblaze.uk`, internal dev URLs).
-- You MUST NEVER commit exact AWS Account IDs, proprietary ARNs, or real access keys.
-- You MUST ALWAYS use generic placeholders (`example.com`, `123456789012`, `foo-bucket`) when providing examples in documentation, scripts, or templates.
+- **Namespace**: Configurable prefix (default: `blaze`).
+- **Client Key**: Organization identifier (e.g., `b9`).
+- **Project Key**: Short identifier for the project (e.g., `thisisblaze`).
+- **Stage Key**: Environment identifier (`dev-mini`, `dev`, `stage`, `prod`).
+- **Examples**:
+  - `blaze-b9-thisisblaze-dev-mini-cluster`
+  - `blaze-b9-thisisblaze-dev-cluster`
+  - `blaze-b9-thisisblaze-prod-vpc`
+  - `blaze-b9-thisisblaze-stage-alb`
 
-## GitHub Actions Workflow Standards
+### 2.2 Workflows (V2 Standard)
+GitHub Actions workflows use a strict Multi-Tenant lifecycle phase mapping:
 
-### SHA Pinning (MANDATORY)
+- **01a-provision-network**: Phase 1 Foundation Networking Edge.
+- **01g-provision-db-pod**: Phase 1 Foundation Data Shared pods.
+- **04-deploy-multi-site**: Phase 2 Tenant Application deployment and Tenant Edge routing.
+- **99-ops-nuke**: Total teardown command for both Foundation and Tenant layers.
 
-All third-party GitHub Actions MUST use commit SHA pinning:
+### 2.3 Variables
+- Use `snake_case` for Terraform variables.
+- Use `UPPER_CASE` for GitHub Secrets and Environment Variables.
 
-```yaml
-# ❌ Bad — tag reference
-- uses: actions/checkout@v4
+## 3. Directory Structure
 
-# ✅ Good — SHA pinned with version comment
-- uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+### 3.1 Live Infrastructures: `/.aws/`, `/.gcp/`, `/.azure/`
+- **`modules/`**: Distributed universally via remote `blaze-terraform-infra-core@v2.3.7`.
+- **`live/`**: Instantiations of infrastructure across explicit Pillars:
+  - `01a-provision-network/`: Foundation Layer Networking.
+  - `01g-provision-db-pod/`: Foundation Layer Data pods.
+  - `04-deploy-multi-site/`: Tenant Application properties and routing.
+
+### 3.2 `/.github/workflows/`
+Contains all automation logic.
+- **Rules**:
+  - **Inputs**: Use `workflow_dispatch` inputs for manual controls.
+  - **Environment**: Always specify `environment: DEV/STAGE/PROD` in jobs.
+  - **Role-Based Access**: Use checks against `vars.ALLOWED_INFRA_USERS` for destructive/admin actions.
+
+## 4. Terraform Best Practices
+
+### 4.1 State Management
+- **Remote State**: S3 Bucket specific to the environment/stack.
+- **Locking**: DynamoDB table (same name as bucket) is MANDATORY.
+- **Isolation**:
+  - **Shared State**: Used for Base/Data layers (VPC, DBs).
+  - **Split State**: Used for Prod/Stage (Network vs App) to reduce blast radius.
+
+### 4.2 Tagging
+All `provider "aws"` blocks MUST include `default_tags`:
+```hcl
+default_tags {
+  tags = {
+    Client    = var.client_key
+    Namespace = var.namespace
+    Project   = var.project_key
+    Stage     = var.stage
+    ManagedBy = "Terraform"
+    State     = "active" # or "maintenance"
+  }
+}
 ```
 
-### Timeout Protection (MANDATORY)
+## 5. Deployment Strategy
 
-Every job MUST have `timeout-minutes` set:
+> **Environment Model (2026-02-27)**:
+> - **DEV-MINI**: Cloudflare Tunnel only. No ALB, no CloudFront. Admin on Cloudflare Pages. Feature branch environment.
+> - **DEV**: Full AWS stack — CloudFront + WAF + ALB + ECS Fargate + Image Resize + Admin CloudFront+S3. Mirrors STAGE.
+> - **STAGE**: Full AWS stack (ECS Fargate).
+> - **PROD**: Full AWS stack (ECS EC2 Graviton, bin-packing).
 
-```yaml
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-```
+- **Blue/Green (API)**: **Native ECS Blue/Green** for all environments with ALB (DEV/STAGE/PROD). ECS manages task set swap and traffic shift natively. **No CodeDeploy, no AppSpec.**
+- **Rolling (Frontend)**: Used for Frontend ECS service (`aws ecs update-service --force-new-deployment`).
+- **Admin SPA**:
+  - **DEV/STAGE/PROD**: S3 sync + CloudFront cache invalidation (separate Admin CloudFront distribution).
+  - **DEV-MINI**: Cloudflare Pages deployment (no S3 sync).
+- **Feature Branches**: Deployed to `dev-mini` environment using "Guest Mode" (sharing DEV-MINI Host VPC).
+- **Beta Strategy** (Prod):
+  - **API**: Always live (`api.domain.com`).
+  - **Frontend**: Controlled via `BETA` GitHub Environment Variable.
+    - `BETA=true`: Routes `beta.domain.com` to new version.
+    - `BETA=false`: Routes `domain.com` to new version.
 
-### Reusable Workflow Structure
+## 5.1 Native ECS Blue/Green (Replaces CodeDeploy)
 
-- Reusable workflows MUST be in `.github/workflows/` (top level, not subdirectories)
-- MUST use `workflow_call` trigger
-- MUST include `secrets: inherit` when calling from consuming repos
-- File naming: `reusable-<name>.yml` for reusable, `<number>-<name>.yml` for top-level
+**CRITICAL**: CodeDeploy has been **fully removed** as of 2026-02-27. The API service uses Native ECS Blue/Green exclusively.
 
-### Input Validation
+- **NO** `appspec.yml` files.
+- **NO** `aws deploy create-deployment` calls.
+- **NO** CodeDeploy application or deployment group resources.
+- ECS performs the task set swap and traffic shift automatically when a new task definition is registered.
+- Monitor with: `aws ecs wait services-stable --cluster <cluster> --services <service>`
 
-```yaml
-inputs:
-  environment:
-    description: "Target environment"
-    required: true
-    type: choice
-    options: ["dev", "stage", "prod"]
-  cloud_provider:
-    description: "Cloud provider"
-    required: true
-    type: choice
-    options: ["aws", "gcp", "azure"]
-```
+> If you see any CodeDeploy reference in the codebase — it is a **bug**. Remove it.
 
-### Number Type Inputs
+## 6. Networking Standards
+- **Routing**: Host-Based Routing (ALB) for DEV/STAGE/PROD. Path-Based Routing is deprecated for these environments.
+- **Domains**:
+  - **DEV-MINI**: `frontend-dev-mini.domain.com` / `api-dev-mini.domain.com` (Cloudflare Tunnel). Admin on Cloudflare Pages (no domain URL).
+  - **DEV**: `api-dev.domain.com` / `frontend-dev.domain.com` / `admin-dev.domain.com` (AWS CloudFront+S3 for admin).
+  - **Stage**: `api-stage.domain.com` / `frontend-stage.domain.com` / `admin-stage.domain.com`.
+  - **Prod**: `api.domain.com` / `domain.com` (and `beta.domain.com`). `admin.domain.com` on CloudFront+S3.
 
-Handle undefined/empty cases for number inputs:
-```yaml
-${{ inputs.count != '' && inputs.count != null && inputs.count || 0 }}
-```
+## 7. Cross-Environment Consistency Rules
 
-## Multi-Cloud Support
+**CRITICAL**: When making changes, ensure consistency across environments.
 
-- Workflows MUST accept `cloud_provider` input (aws, gcp, azure) where applicable
-- Architecture utilizes the **Multi-Site V2 Two-Pillar Strategy** for Day 0 Foundation and Day 2 Tenant isolation.
-- Use `actions/calculate-config` for state backend routing
-- Provider-specific logic should be in conditional steps, not separate workflows
+> **Environment Model (2026-04-16 — Read Before Proceeding)**:
+> - **Foundation Constraints**: Ensure `01a-provision-network` alterations don't affect live Phase 2 deployments.
+> - **Tenant Constraints**: Changes against `04-deploy-multi-site` will cascade against all isolated tenants inside the Target Group pool.
 
-## Cleanup Protocol (The Law of Zero Waste)
+### 7.1 Validation Requirements
 
-**Status: MANDATORY**
+**Before committing changes to `01a-provision-network` or `01g-provision-db-pod`:**
+- [ ] Ensure backward compatibility with `04-deploy-multi-site`.
+- [ ] Confirm State IDs remain strictly mapped per module.
 
-- Any workflow creating resources **MUST** have a corresponding destruction path in `99-ops-utility.yml`
-- Use `reusable-pre-destroy-cleanup.yml` for complex resource removal (EC2 Capacity Providers, Launch Templates, CloudWatch Logs)
-- S3 buckets must be emptied before destroy
+**Before committing changes to `04-deploy-multi-site`:**
+- [ ] Apply changes systematically to Stage and Prod counterpart tenants.
+- [ ] Do NOT assume scaling logic impacts only a single active environment unless declared in parameters.
 
-## Terraform Variable Passing
-
-When workflows pass Terraform variables:
-
-### DUAL APPROACH (Required for reusable workflows):
-1. Pass common variables directly in the `env:` block (always available)
-2. Parse additional variables from JSON input (service-specific secrets)
-
-```yaml
-- name: Terraform Apply
-  env:
-    # CRITICAL: Common variables in env: block
-    TF_VAR_project_key: ${{ vars.PROJECT_KEY }}
-    TF_VAR_client_key: ${{ vars.CLIENT_KEY }}
-    TF_VAR_namespace: ${{ vars.NAMESPACE }}
-    TF_VAR_platform: ${{ vars.CLOUD_PLATFORM }}
-    TF_VAR_aws_region: ${{ vars.AWS_REGION }}
-  run: terraform apply -auto-approve
-```
-
-### Anti-Patterns (DO NOT DO):
-- ❌ Relying ONLY on JSON parsing for essential variables
-- ❌ Passing common variables ONLY via JSON
-- ❌ Not having a fallback for critical variables
-
-## YAML Formatting
-
-- 2-space indentation (strict)
-- Comments above complex sections
-- Descriptive step names with emoji prefix matching repo convention
-- Quote strings containing special characters
-
-## Composite Actions
-
-- Directory: `.github/actions/<action-name>/`
-- MUST include `action.yml` and `README.md`
-- Prefer composite actions for reusable step sequences
-
-## Linting Suppressions
-
-### GitHub Actions Secrets & Contexts
-- **Ignore**: `Context access might be invalid: .*`
-- **Reason**: Private repo with dynamic environments. Linter false positives.
-
-### Reusable Workflows
-- **Ignore**: `Unable to find reusable workflow`
-- **Reason**: Files exist, paths correct. Local linter issue.
-
-## Package Management & Security
-
-**CRITICAL**: Before installing ANY new package:
-1. Check official documentation and NPM/Registry page
-2. Verify package is actively maintained and NOT deprecated
-3. Avoid packages not updated in >1 year if alternatives exist
-4. Prioritize libraries recommended by official service documentation
-
-## GitHub Environment Case Sensitivity
-**CRITICAL**: GitHub environments are strictly **case-sensitive** (e.g., `stage`, `prod`). 
-- ALWAYS use LOWERCASE environment names in workflow `environment:` keys or when matching branches.
-- DONT use uppercase `STAGE`, `PROD` as it will create a blank GitHub environment and secrets (like `NPM_TOKEN`) will fail to resolve.
+### 7.2 Anti-Patterns (DO NOT DO)
+- ❌ Committing to `01a` Foundation while modifying `04` scaling instances inside a single scope context.
+- ❌ Cross-referencing deprecated monolithic AWS paths.
+- ❌ Using CodeDeploy functions (Deprecated 2026-02-27).

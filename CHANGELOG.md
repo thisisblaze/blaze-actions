@@ -171,6 +171,12 @@
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -318,6 +324,12 @@
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -862,6 +874,12 @@
 ---
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -2322,6 +2340,12 @@
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -2338,6 +2362,12 @@
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -2350,6 +2380,12 @@
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -2382,6 +2418,12 @@
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -2458,6 +2500,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -2732,6 +2780,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -2745,6 +2799,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -3234,6 +3294,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -3254,6 +3320,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -3276,6 +3348,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -3294,6 +3372,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -3308,6 +3392,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -3328,6 +3418,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -3393,6 +3489,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
+
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
 - feat: bypass destructive ECS capacity provider reconciliation by default
@@ -3437,6 +3539,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
@@ -3619,6 +3727,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+
+### [Unreleased] - 2026-04-16
+#### Added
+- Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
+- Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
+
 
 ### Changed (2026-04-15)
 - fix: resolve `amazon-ecr-login` action constraint resolving to v2.1.54
