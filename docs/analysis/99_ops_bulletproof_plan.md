@@ -1,12 +1,16 @@
 # 99-Ops Workflows: Bulletproof Redesign Plan
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. This architectural plan outlines the V2 execution boundaries enforced across Pillar 1 Foundation / Pillar 2 Tenants.
+
+
 ## Objective
 The recent incident where destroying the `third-party-mongodb` stack triggered a broad AWS ECS cleanup highlighted a critical flaw in the `99-*` ops workflows: **lack of strict scoping in destructive pre-cleanup scripts**.
 
 This plan outlines a comprehensive, bulletproof approach to analyzing and hardening all `99-ops-*.yml` and `reusable-*.yml` utility workflows to ensure operations are strictly confined to their intended blast radius.
 
 ## 1. Audit Current Workflow Routing
-- **Map the execution paths**: Map every `action` input (e.g., `destroy-resources`, `nuke-environment`, `manage-environment`) from `99-ops-utility.yml` through its respective sub-workflow (`99-ops-aws.yml`, `99-ops-terraform.yml`, etc.).
+- **Map the execution paths**: Map every `action` input (e.g., `destroy-resources`, `nuke-environment`, `manage-environment`) from `99-ops-nuke.yml` through its respective sub-workflow (`99-ops-aws.yml`, `99-ops-terraform.yml`, etc.).
 - **Identify implicit logic**: Find all steps using `always()`, `if: inputs.action == ...`, or missing `inputs.stack` guards.
 
 ## 2. Harden `reusable-pre-destroy-cleanup.yml`

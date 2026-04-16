@@ -1,5 +1,9 @@
 # Analysis: Current Blue/Green Implementations & Room for Improvement
 
+> [!TIP]
+> **Status: SCALED (Multi-Tenant V2)**. This architectural plan outlines the V2 execution boundaries enforced across Pillar 1 Foundation / Pillar 2 Tenants.
+
+
 **Date:** February 2026
 
 ## 1. How Blue/Green is Currently Used
