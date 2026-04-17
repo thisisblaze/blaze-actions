@@ -328,6 +328,40 @@ jobs:
              echo "❌ EC_API_KEY is NOT DETECTED (Empty)."
           fi
 
+      - name: Export Global Terraform Credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+          EC_API_KEY: ${{ secrets.EC_API_KEY }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
+        run: |
+          {
+            echo "TF_VAR_cloudflare_api_token=$CLOUDFLARE_API_TOKEN"
+            echo "TF_VAR_cloudflare_zone_id=$CLOUDFLARE_ZONE_ID"
+            echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID"
+            echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
+            echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
+            echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
+            echo "TF_VAR_atlas_project_id=$MONGODB_ATLAS_PROJECT_ID"
+            echo "TF_VAR_atlas_org_id=$MONGODB_ATLAS_ORG_ID"
+            echo "MONGODB_ATLAS_PUBLIC_KEY=$MONGODB_ATLAS_PUBLIC_KEY"
+            echo "MONGODB_ATLAS_PRIVATE_KEY=$MONGODB_ATLAS_PRIVATE_KEY"
+            echo "MONGODB_ATLAS_PROJECT_ID=$MONGODB_ATLAS_PROJECT_ID"
+            echo "EC_API_KEY=$EC_API_KEY"
+            echo "ARM_USE_OIDC=${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}"
+            echo "ARM_CLIENT_ID=$ARM_CLIENT_ID"
+            echo "ARM_TENANT_ID=$ARM_TENANT_ID"
+            echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
+          } >> "$GITHUB_ENV"
+
       - name: Configure Git for Private Modules
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -818,20 +852,7 @@ jobs:
       - name: Run Pre-Apply Script
         if: ${{ inputs.pre_apply_script != '' }}
         env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          EC_API_KEY: ${{ secrets.EC_API_KEY }}
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-          # Azure OIDC credentials — needed for azurerm provider init during terraform import
-          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
           echo "📜 Running Pre-Apply Script (cwd: $(pwd))..."
@@ -961,26 +982,6 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
-          # Blaze Signature Tags (v1.4.94) — picked up from GITHUB_ENV set by 'Inject Blaze Signature Tag Vars'
-          TF_VAR_stack_name: ${{ env.TF_VAR_stack_name }}
-          TF_VAR_blaze_run_id: ${{ env.TF_VAR_blaze_run_id }}
-          # Azure OIDC
-          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         run: |
           DESTROY_FLAG=""
           if [[ "${{ inputs.destroy }}" == "true" ]]; then
@@ -1065,26 +1066,6 @@ jobs:
         # If plan had no changes, apply is a fast no-op (exits 0, "Apply complete! Resources: 0 added").
         # Gating on has_changes was unreliable: PIPESTATUS[0] returned 0 even when plan showed 64 to add.
         if: ${{ inputs.apply == true || inputs.apply == 'true' }}
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
-          TF_VAR_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          TF_VAR_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-          TF_VAR_atlas_org_id: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
-          # Blaze Signature Tags (v1.4.94) — picked up from GITHUB_ENV set by 'Inject Blaze Signature Tag Vars'
-          TF_VAR_stack_name: ${{ env.TF_VAR_stack_name }}
-          TF_VAR_blaze_run_id: ${{ env.TF_VAR_blaze_run_id }}
-          # Azure OIDC
-          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         run: |
           if [[ "${{ inputs.split_apply }}" == "true" && "${{ inputs.destroy }}" != "true" ]]; then
              echo "🛡️ Split Apply Enabled - Phase 1: Targeted Apply"
@@ -1117,12 +1098,6 @@ jobs:
       - name: Export Terraform Outputs
         id: tf_outputs
         if: ${{ inputs.apply == true }}
-        env:
-          # Azure OIDC: terraform output needs azurerm provider auth too
-          ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         run: |
           echo "📤 Exporting Terraform Outputs..."
           terraform output -json > tf_outputs.json

@@ -608,13 +608,16 @@ jobs:
           # ---------------------------------------------------------
           # 1. Find and scale down ASG
           # ---------------------------------------------------------
-          ASG_NAME="${RESOURCE_PREFIX}-ecs-ec2-cp-asg"
-          echo "   🔍 Checking ASG: $ASG_NAME"
-          ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names "$ASG_NAME" \
+          echo "   🔍 Searching for ASG matching ${PROJECT_KEY} and ${STAGE_KEY}-ecs-ec2-cp..."
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
             --region "$REGION" \
-            --query "AutoScalingGroups[0].AutoScalingGroupName" \
+            --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${PROJECT_KEY}') && contains(AutoScalingGroupName, '${STAGE_KEY}-ecs-ec2-cp')].AutoScalingGroupName | [0]" \
             --output text 2>/dev/null || echo "None")
+          
+          if [[ "$ASG_NAME" == "null" ]]; then ASG_NAME="None"; fi
+          echo "   🔍 Evaluated ASG: $ASG_NAME"
+          
+          ASG_EXISTS="$ASG_NAME"
 
           if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
@@ -722,17 +725,16 @@ jobs:
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
 
-          # Construct the implementation-standard name
-          LT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-ec2-cp-lt"
-
-          echo "🚀 Checking for Launch Template: $LT_NAME in $REGION..."
+          echo "🚀 Searching for Launch Template matching ${PROJECT_KEY} and ${STAGE_KEY}-ecs-ec2-cp-lt in $REGION..."
 
           # Check if exists
           LT_ID=$(aws ec2 describe-launch-templates \
-              --launch-template-names "$LT_NAME" \
+              --filters "Name=launch-template-name,Values=*${PROJECT_KEY}*${STAGE_KEY}-ecs-ec2-cp-lt*" \
               --region "$REGION" \
               --query "LaunchTemplates[0].LaunchTemplateId" \
               --output text 2>/dev/null || echo "None")
+
+          if [[ "$LT_ID" == "null" ]]; then LT_ID="None"; fi
 
           if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
              echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
@@ -868,6 +870,76 @@ jobs:
                    fi
                 done
              fi
+          fi
+
+      - name: Cleanup Network Dependencies (ENIs & NACLs)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && contains(fromJson('["network", "all"]'), inputs.target_stack)
+        run: |
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=*${STAGE_KEY}-vpc" --region "$REGION" --query "Vpcs[0].VpcId" --output text 2>/dev/null || echo "None")
+          if [[ "$VPC_ID" == "None" || -z "$VPC_ID" ]]; then
+             echo "   ✅ VPC not found. Skipping network cleanup."
+             exit 0
+          fi
+          
+          echo "🧹 Cleaning up Network Dependencies (NACLs & ENIs) for VPC: $VPC_ID"
+
+          # 1. Reset Custom Network ACLs to Default
+          DEFAULT_NACL=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=true" --region "$REGION" --query "NetworkAcls[0].NetworkAclId" --output text 2>/dev/null || echo "None")
+          
+          if [[ "$DEFAULT_NACL" != "None" ]]; then
+             CUSTOM_NACLS=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=false" --region "$REGION" --query "NetworkAcls[].NetworkAclId" --output text 2>/dev/null || echo "")
+             
+             if [[ -n "$CUSTOM_NACLS" && "$CUSTOM_NACLS" != "None" ]]; then
+                for NACL in $CUSTOM_NACLS; do
+                   echo "   🔄 Resetting Subnet Associations for Custom NACL: $NACL"
+                   ASSOCS=$(aws ec2 describe-network-acls --network-acl-ids "$NACL" --region "$REGION" --query "NetworkAcls[0].Associations[].NetworkAclAssociationId" --output text 2>/dev/null || echo "")
+                   for ASSOC in $ASSOCS; do
+                      if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                         echo "      [DRY RUN] Would replace network acl association $ASSOC with default $DEFAULT_NACL"
+                      else
+                         aws ec2 replace-network-acl-association --association-id "$ASSOC" --network-acl-id "$DEFAULT_NACL" --region "$REGION" || true
+                      fi
+                   done
+                   if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                      echo "      [DRY RUN] Would delete Custom NACL $NACL"
+                   else
+                      aws ec2 delete-network-acl --network-acl-id "$NACL" --region "$REGION" || true
+                   fi
+                done
+             fi
+          fi
+
+          # 2. Force delete dangling ENIs
+          ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Status=='available'].NetworkInterfaceId" --output text 2>/dev/null || echo "")
+          if [[ -n "$ENIS" && "$ENIS" != "None" ]]; then
+             for ENI in $ENIS; do
+                echo "   🗑️ Deleting available dangling ENI: $ENI"
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "      [DRY RUN] Would delete ENI"
+                else
+                   aws ec2 delete-network-interface --network-interface-id "$ENI" --region "$REGION" || true
+                fi
+             done
+          fi
+          
+          # 3. Handle stuck 'in-use' ENIs (Detach then Delete)
+          STUCK_ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Attachment!=null].[NetworkInterfaceId,Attachment.AttachmentId]" --output text 2>/dev/null || echo "")
+          if [[ -n "$STUCK_ENIS" && "$STUCK_ENIS" != "None" ]]; then
+             while read -r ENI ATT; do
+                if [[ -z "$ENI" ]]; then continue; fi
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "      [DRY RUN] Would detach and delete ENI $ENI (Attachment: $ATT)"
+                else
+                   echo "   🔪 Force detaching ENI: $ENI"
+                   aws ec2 detach-network-interface --attachment-id "$ATT" --force --region "$REGION" || true
+                   # AWS takes a few seconds to detach
+                   sleep 5
+                   aws ec2 delete-network-interface --network-interface-id "$ENI" --region "$REGION" || true
+                fi
+             done <<< "$STUCK_ENIS"
           fi
 
           echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
