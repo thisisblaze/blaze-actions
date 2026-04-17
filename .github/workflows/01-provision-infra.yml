@@ -747,11 +747,7 @@ jobs:
             fi
             echo "  ✅ CP state entries reconciled"
 
-            # State-rm Lambda@Edge + WAF (still need removal to avoid delete timeout)
-            terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
-            terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
-            terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
-            echo "  ✅ Lambda@Edge + WAF state entries removed (orphan prevention)"
+
 
             # Re-import Lambda@Edge IAM resources that survive state-rm but already exist in AWS.
             # The state-rm above removes the whole lambda_edge_image_resize[0] module (incl. IAM).
@@ -780,12 +776,6 @@ jobs:
             fi
           else
             echo "  ℹ️  No ECS cluster found — Terraform will create fresh"
-            # Still remove Lambda/WAF state entries that can block re-creation
-            terraform state rm 'module.environment_network.module.lambda_edge_image_resize[0]' 2>/dev/null || true
-            terraform state rm 'module.environment_network.module.lambda_edge_normalize[0]'     2>/dev/null || true
-            terraform state rm 'module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]' 2>/dev/null || true
-
-            # Also re-import IAM resources if they exist (state could be empty but IAM persists)
             LAMBDA_NS_2="${{ needs.configuration.outputs.namespace || 'blaze' }}"
             LAMBDA_ROLE_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-role"
             LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
@@ -806,6 +796,44 @@ jobs:
             fi
           fi
 
+
+          # ── Smart Import: WAF Global Web ACL ──
+          WAF_NAME="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-cloudfront"
+          WAF_ID=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1 --query "WebACLs[?Name=='$WAF_NAME'].Id" --output text 2>/dev/null | grep -v 'None' || echo "")
+          if [[ -n "$WAF_ID" ]]; then
+            WAF_ADDR="module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]"
+            if ! terraform state list 2>/dev/null | grep -qF "aws_wafv2_web_acl.this"; then
+              echo "  📥 Importing existing WAF into state: $WAF_NAME"
+              ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+              terraform import "$WAF_ADDR" "arn:aws:wafv2:us-east-1:${ACCOUNT_ID}:global/webacl/${WAF_NAME}/${WAF_ID}/${WAF_NAME}/${WAF_ID}" 2>/dev/null || true
+            fi
+          fi
+
+          # ── Smart Import: Lambda@Edge Functions ──
+          LAMBDA_NS="${{ needs.configuration.outputs.namespace || 'blaze' }}"
+          
+          # Normalize
+          NORM_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-normalize-params-"
+          NORM_FN=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '${NORM_PREFIX}')].FunctionName" --output text 2>/dev/null | grep -v 'None' | awk '{print $1}')
+          if [[ -n "$NORM_FN" ]]; then
+             TF_NORM_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]"
+             if ! terraform state list 2>/dev/null | grep -qF "$TF_NORM_ADDR"; then
+               echo "  📥 Importing normalize lambda: $NORM_FN"
+               terraform import "$TF_NORM_ADDR" "$NORM_FN" 2>/dev/null || true
+             fi
+          fi
+
+          # Resize
+          RESIZE_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-resize-image-"
+          RESIZE_FN=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '${RESIZE_PREFIX}')].FunctionName" --output text 2>/dev/null | grep -v 'None' | awk '{print $1}')
+          if [[ -n "$RESIZE_FN" ]]; then
+             TF_RESIZE_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]"
+             if ! terraform state list 2>/dev/null | grep -qF "$TF_RESIZE_ADDR"; then
+               echo "  📥 Importing resize lambda: $RESIZE_FN"
+               terraform import "$TF_RESIZE_ADDR" "$RESIZE_FN" 2>/dev/null || true
+             fi
+          fi
+          echo "  ✅ Lambda@Edge + WAF state reconciled via Smart Import (no blind state dropping)"
           # State-rm Cloudflare ZT apps (module v2.2.3 dropped them; belt-and-suspenders
           # alongside root removed{} blocks so stale state is gone before plan runs)
           terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.frontend[0]' 2>/dev/null || true
