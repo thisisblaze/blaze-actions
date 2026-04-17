@@ -658,6 +658,9 @@ jobs:
                    sleep 15
                    elapsed=$((elapsed+15))
                 done
+
+                echo "      🗑️ Explicitly deleting Auto Scaling Group: $ASG_NAME"
+                aws autoscaling delete-auto-scaling-group --auto-scaling-group-name "$ASG_NAME" --force-delete --region "$REGION" || echo "      ⚠️ Failed to delete ASG"
              fi
           else
              echo "      ✅ ASG not found (no EC2 capacity provider)"
@@ -728,13 +731,16 @@ jobs:
           echo "🚀 Searching for Launch Template matching ${PROJECT_KEY} and ${STAGE_KEY}-ecs-ec2-cp-lt in $REGION..."
 
           # Check if exists
-          LT_ID=$(aws ec2 describe-launch-templates \
+          LT_INFO=$(aws ec2 describe-launch-templates \
               --filters "Name=launch-template-name,Values=*${PROJECT_KEY}*${STAGE_KEY}-ecs-ec2-cp-lt*" \
               --region "$REGION" \
-              --query "LaunchTemplates[0].LaunchTemplateId" \
-              --output text 2>/dev/null || echo "None")
+              --query "LaunchTemplates[0].[LaunchTemplateId, LaunchTemplateName]" \
+              --output text 2>/dev/null || echo "None None")
 
-          if [[ "$LT_ID" == "null" ]]; then LT_ID="None"; fi
+          LT_ID=$(echo "$LT_INFO" | awk '{print $1}')
+          LT_NAME=$(echo "$LT_INFO" | awk '{print $2}')
+
+          if [[ "$LT_ID" == "null" || "$LT_ID" == "None" ]]; then LT_ID="None"; fi
 
           if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
              echo "      🗑️ Deleting Launch Template: $LT_NAME ($LT_ID)"
