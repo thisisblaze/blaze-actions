@@ -501,7 +501,7 @@ jobs:
       inputs.action == 'destroy-resources' &&
       needs.configuration.result == 'success' &&
       (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.59
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.61
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
