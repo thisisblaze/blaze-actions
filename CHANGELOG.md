@@ -1,3 +1,16 @@
+## v2.1.61 (2026-04-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.60
+
+### Fixed
+
+
 ## v2.1.60 (2026-04-17)
 
 ### Added
