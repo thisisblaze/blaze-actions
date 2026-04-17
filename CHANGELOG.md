@@ -10,6 +10,7 @@
 
 ### Fixed
 
+- **Garbage Collection (99-ops-aws)**: Handled missing Lambda@Edge bindings natively (`grep` short-circuit `|| true`) to ensure zero-state environments do not trigger false-positive exit codes during dry runs or teardowns.
 
 ## v2.1.60 (2026-04-17)
 

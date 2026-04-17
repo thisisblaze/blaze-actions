@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 56 (37 main + 19 reusable)  
-**Version**: v2.1.60  
+**Version**: v2.1.61  
 **Last Updated**: 2026-04-17
 
 ---
@@ -416,7 +416,7 @@
 
 ---
 #### 99-ops-aws.yml
-**Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas. Upgraded natively with CloudFront Active Telemetry to assure precise Surgical Garbage Collection during teardowns.
+**Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas. Upgraded natively with CloudFront Active Telemetry to assure precise Surgical Garbage Collection during teardowns; explicitly hardened to gracefully manage zero-state environments (where zero CloudFront metadata exists) without crashing dry runs.
 
 ---
 #### 99-ops-azure.yml
