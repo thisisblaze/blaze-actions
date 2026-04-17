@@ -188,7 +188,7 @@ jobs:
   deploy:
     name: "🚀 Deploy [${{ inputs.site_key }}]"
     needs: [build]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-azure-multi-site-deploy.yml@v2.1.59
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-azure-multi-site-deploy.yml@v2.1.61
     with:
       site_key: ${{ inputs.site_key }}
       container_app_name: ${{ inputs.container_app_name }}
