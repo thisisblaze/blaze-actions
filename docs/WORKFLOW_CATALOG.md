@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-16
+**Last Updated**: 2026-04-17
 **Owner**: Infrastructure Team
 
 ---
@@ -11,8 +11,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 56 (37 main + 19 reusable)  
-**Version**: v1.6.2  
-**Last Updated**: 2026-04-16
+**Version**: v2.1.60  
+**Last Updated**: 2026-04-17
 
 ---
 
@@ -416,7 +416,7 @@
 
 ---
 #### 99-ops-aws.yml
-**Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas.
+**Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas. Upgraded natively with CloudFront Active Telemetry to assure precise Surgical Garbage Collection during teardowns.
 
 ---
 #### 99-ops-azure.yml
@@ -614,17 +614,19 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
-**v1.6.2** (2026-04-16):
+**v2.1.60** (2026-04-17):
+- Replaced destructive `terraform state rm` logic in `01-provision-infra.yml` with secure **Smart Import** for Lambda@Edge and WAF to prevent `ResourceConflictException` (HTTP 409) during dirty pipeline redeployments.
+- Hardened `cleanup-orphaned-lambdas` logic in `99-ops-aws.yml` with **Surgical Telemetry**. The script now physically queries CloudFront's `LambdaFunctionAssociations` to perfectly skip active bindings, eliminating AWS blocking errors from the logs.
+- Re-architected DNS Teardown: Re-enabled `nuke-cleanup-dns` during nuke routines to purge robust Stage records natively, saving downstream CloudFront distribution 409 collisions.
+
+**v2.1.59** (2026-04-16):
+- Global standardization to `@v2.1.59` to resolve split-brain drift tagging.
+- Enhanced `cleanup-orphaned-lambdas` with wildcard matching for multi-tenant namespaces.
+- Introduced `skip_lambda_destroy` parameter to `99-ops-nuke.yml`.
 - Added missing `02-deploy-app.yml` and `99-ops-utility.yml` entries to catalog.
-- Bumped `blaze-terraform-infra-core/90-daily-health-check.yml` to `@v2.1.59` (was `v2.1.57`).
 - Total workflow count corrected to 56 (37 main + 19 reusable).
 
-**v1.6.1** (2026-04-15):
-- Global standardization to `@v2.1.59` to resolve split-brain drift tagging.
-- Enhanced `cleanup-orphaned-lambdas` with wildcard matching for multi-tenant and legacy single-tenant namespaces.
-- Introduced `skip_lambda_destroy` parameter to `99-ops-nuke.yml`.
-
-**v1.6.0** (2026-04-14):
+**v2.1.58** (2026-04-14):
 
 - Added `01g-provision-db-pod.yml` — env-level Atlas DB pod workflow for multi-site
 - `reusable-provision-db-users.yml` deprecated for multi-site environments
@@ -653,6 +655,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-16  
+**Last Updated**: 2026-04-17  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

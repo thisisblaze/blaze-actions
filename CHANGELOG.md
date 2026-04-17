@@ -1,43 +1,20 @@
-## v2.1.59 (2026-04-16)
+## [Unreleased]
 
 ### Added
-
-- No new features in this release
+- **Smart Import Reconciliation**: Replaced destructive `terraform state rm` in `01-provision-infra` with `terraform import` for Lambda@Edge and WAF to prevent `ResourceConflictException` (HTTP 409) collisions.
+- **Surgical Telemetry GC**: Overhauled `cleanup-orphaned-lambdas` logic. The GC now natively queries CloudFront `LambdaFunctionAssociations` to perfectly skip active functions instead of blindly relying on AWS deletion exceptions.
+- **Robust DNS Nuke**: Re-enabled `nuke-cleanup-dns` to purge persistent Cloudflare stage aliases during teardowns.
 
 ### Changed
-
-- chore: update CHANGELOG for v2.1.59
-- chore: update CHANGELOG for v2.1.59
-
-### Fixed
-
+- chore: Bump versions and execute `/13-deep-cicd-maintenance` to `v2.1.60`.
 
 ## v2.1.59 (2026-04-16)
 
 ### Added
-
 - No new features in this release
 
 ### Changed
-
 - chore: update CHANGELOG for v2.1.59
-
-### Fixed
-
-
-## v2.1.59 (2026-04-16)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-
-### Fixed
-
-
-## v2.1.58 (2026-04-16)
 
 ### Added
 
