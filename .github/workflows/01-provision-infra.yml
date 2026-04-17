@@ -406,30 +406,7 @@ jobs:
           cluster_tier: ${{ inputs.cluster_tier }}
           cloud_provider: ${{ inputs.cloud_provider }}
 
-      - name: Pre Apply Script (Import Zombies)
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }} # Required for gh api
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          # Export Context for Importer Script
-          export INPUT_STACK="${{ inputs.stack }}"
-          export INPUT_DOMAIN_ROOT="${{ steps.config.outputs.domain_root }}"
-          export INPUT_AWS_REGION="${{ steps.config.outputs.aws_region }}"
-          export INPUT_CLIENT_KEY="${{ steps.config.outputs.client_key }}"
-          export INPUT_PROJECT_KEY="${{ steps.config.outputs.project_key }}"
-          export INPUT_STAGE_KEY="${{ steps.config.outputs.stage_key }}"
-          export INPUT_CLUSTER_NAME="${{ steps.config.outputs.cluster_name }}"
-          export INPUT_NAMESPACE="${{ steps.config.outputs.namespace }}"
-
-          # Run Importer (Fetch from blaze-actions)
-          echo "🚀 Fetching Resource Importer Logic..."
-          gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh \
-            -H "Accept: application/vnd.github.v3.raw" > import.sh
-          chmod +x import.sh
-          bash import.sh
+          # Importer logic sequence moved to Terraform pre-apply phase (see lines below)
 
   build_sharp_layer:
     name: Build Sharp Lambda Layer
@@ -528,6 +505,32 @@ jobs:
           export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
           export TF_DESTROY="${{ inputs.destroy }}"
           bash "$SCRIPT"
+        fi
+
+        # ── Fetch and Run Resource Importer Logic Native to TF Dir ──
+        if [[ "${{ inputs.cloud_provider }}" == "aws" || "${{ inputs.cloud_provider }}" == "" || "${{ inputs.cloud_provider }}" == "null" ]]; then
+          echo "🚀 Fetching Resource Importer Logic..."
+          export INPUT_STACK="${{ inputs.stack }}"
+          export INPUT_DOMAIN_ROOT="${{ needs.configuration.outputs.domain_root }}"
+          export INPUT_AWS_REGION="${{ needs.configuration.outputs.aws_region }}"
+          export INPUT_CLIENT_KEY="${{ needs.configuration.outputs.client_key }}"
+          export INPUT_PROJECT_KEY="${{ needs.configuration.outputs.project_key }}"
+          export INPUT_STAGE_KEY="${{ needs.configuration.outputs.stage_key }}"
+          export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
+          export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
+          
+          # Pass Cloudflare/GH tokens for API access during import.sh execution
+          export GH_TOKEN="${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}"
+          export TF_VAR_cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          export TF_VAR_cloudflare_zone_id="${{ secrets.CLOUDFLARE_ZONE_ID }}"
+          export TF_VAR_cloudflare_account_id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh -H "Accept: application/vnd.github.v3.raw" > dynamic_import.sh; then
+            chmod +x dynamic_import.sh
+            bash dynamic_import.sh
+          else
+            echo "⚠️  Failed to fetch dynamic_import.sh from blaze-actions. Skipping module imports."
+          fi
         fi
 
         # Run local pre_apply.sh if it exists (for environment-specific drifts)
