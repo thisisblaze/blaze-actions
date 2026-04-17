@@ -282,7 +282,7 @@ jobs:
 
   dispatch-gcp:
     if: inputs.cloud_provider == 'gcp'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.1.59
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.1.61
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
