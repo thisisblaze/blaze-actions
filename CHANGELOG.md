@@ -1,3 +1,18 @@
+## v2.1.62 (2026-04-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: execute /13-deep-cicd-maintenance sync — validate v2.1.61 zero-state logic and timestamps
+- chore: update CHANGELOG for v2.1.61
+- chore: update CHANGELOG for v2.1.60
+
+### Fixed
+
+
 ## v2.1.61 (2026-04-17)
 
 ### Added
