@@ -814,7 +814,7 @@ jobs:
           
           # Normalize
           NORM_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-normalize-params-"
-          NORM_FN=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '${NORM_PREFIX}')].FunctionName" --output text 2>/dev/null | grep -v 'None' | awk '{print $1}')
+          NORM_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/dev/null | jq -r ".[] | select(startswith(\"${NORM_PREFIX}\"))" | tail -n 1)
           if [[ -n "$NORM_FN" ]]; then
              TF_NORM_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]"
              if ! terraform state list 2>/dev/null | grep -qF "$TF_NORM_ADDR"; then
@@ -825,7 +825,7 @@ jobs:
 
           # Resize
           RESIZE_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-resize-image-"
-          RESIZE_FN=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '${RESIZE_PREFIX}')].FunctionName" --output text 2>/dev/null | grep -v 'None' | awk '{print $1}')
+          RESIZE_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/dev/null | jq -r ".[] | select(startswith(\"${RESIZE_PREFIX}\"))" | tail -n 1)
           if [[ -n "$RESIZE_FN" ]]; then
              TF_RESIZE_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]"
              if ! terraform state list 2>/dev/null | grep -qF "$TF_RESIZE_ADDR"; then
