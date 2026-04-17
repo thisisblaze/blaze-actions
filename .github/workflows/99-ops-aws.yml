@@ -483,12 +483,29 @@ jobs:
           cat found_lambdas.txt
           echo "--------------------------------"
 
+          echo "🌐 Querying CloudFront for Active Lambda Deployments globally..."
+          # Fetch all active Lambda@Edge bindings across all distributions in the AWS account to prevent false-positives
+          ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
+          ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
+          
+          ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u)
+          ACTIVE_COUNT=$(echo "$ACTIVE_LAMBDAS" | grep -v "^$" | wc -l | tr -d ' ')
+          
+          echo "✅ Found $ACTIVE_COUNT Edge Lambdas currently bound to live CloudFront distributions."
+          echo "--------------------------------"
+
           while read func; do
-            if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
-                echo "🗑️ Deleting $func..."
-                aws lambda delete-function --function-name "$func" --region us-east-1 || echo "⚠️ Failed to delete $func (might be attached or already gone)"
+            # Cross-reference the CloudFront Active Registry. 
+            # Note: CloudFront specifies ARNs with versions (e.g., :function:my-func:1). grep isolating :function:NAME: guarantees a match.
+            if echo "$ACTIVE_LAMBDAS" | grep -q ":function:${func}:"; then
+                echo "✅ Active CloudFront binding detected for $func. Safely skipping..."
             else
-                echo "ℹ️ [DRY RUN] Would delete $func"
+                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                    echo "🗑️ Orphan confirmed. Deleting $func..."
+                    aws lambda delete-function --function-name "$func" --region us-east-1 || echo "⚠️ Failed to delete $func (might be transitioning out)"
+                else
+                    echo "ℹ️ [DRY RUN] Orphan confirmed. Would delete $func"
+                fi
             fi
             FOUND_COUNT=$((FOUND_COUNT+1))
           done < found_lambdas.txt
