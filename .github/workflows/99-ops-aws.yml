@@ -488,7 +488,7 @@ jobs:
           ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
           ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
           
-          ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u)
+          ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u || true)
           ACTIVE_COUNT=$(echo "$ACTIVE_LAMBDAS" | grep -v "^$" | wc -l | tr -d ' ')
           
           echo "✅ Found $ACTIVE_COUNT Edge Lambdas currently bound to live CloudFront distributions."
