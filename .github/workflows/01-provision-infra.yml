@@ -520,7 +520,7 @@ jobs:
           export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
           
           # Pass Cloudflare/GH tokens for API access during import.sh execution
-          export GH_TOKEN="${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}"
+          export GH_TOKEN="${GH_PAT:-${GITHUB_TOKEN}}"
           export TF_VAR_cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
           export TF_VAR_cloudflare_zone_id="${{ secrets.CLOUDFLARE_ZONE_ID }}"
           export TF_VAR_cloudflare_account_id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
@@ -886,7 +886,7 @@ jobs:
 
       - name: Sync Connection String Secret
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
           ENV_NAME: ${{ inputs.environment }}
           CONNECTION_STRING: ${{ needs.provision.outputs.mongodb_uri }}
         run: |
@@ -1041,7 +1041,7 @@ jobs:
           DOMAIN_ROOT: ${{ needs.configuration.outputs.domain_root }}
           AZURE_REGION: ${{ needs.configuration.outputs.cloud_region }}
           CAE_HOSTNAME: ${{ steps.cae_hostname.outputs.cae_hostname }}
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

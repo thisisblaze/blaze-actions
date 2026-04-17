@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 56 (37 main + 19 reusable)  
-**Version**: v2.1.61  
+**Version**: v2.1.62  
 **Last Updated**: 2026-04-17
 
 ---
