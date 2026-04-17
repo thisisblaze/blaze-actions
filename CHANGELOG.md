@@ -1,3 +1,17 @@
+## v2.1.60 (2026-04-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: execute /13-deep-cicd-maintenance sync
+- chore: update CHANGELOG for v2.1.59
+
+### Fixed
+
+
 ## [Unreleased]
 
 ### Added
