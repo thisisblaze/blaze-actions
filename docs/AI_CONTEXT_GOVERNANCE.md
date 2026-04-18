@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-18
 **Owner**: Infrastructure Team
 
 ---
@@ -19,6 +19,14 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 
 - ❌ **Bad Assumption**: Resource is named `blaze-api-cluster` (assumes 'blaze' namespace).
 - ✅ **Correct Logic**: Resource is named `${NAMESPACE}-api-cluster`. Always use placeholders like `{namespace}`, `{client}`, `{project}`, `{stage}` in analysis.
+
+### 1.2. The Prime Directive of Non-Destruction
+
+**ZERO AUTONOMOUS DESTRUCTION POLICY.**
+The AI Agent is strictly forbidden from executing ANY autonomous command that deletes, removes, or destroys cloud infrastructure (e.g. AWS CLI deletions) or local repository files (e.g. rm commands).
+
+- ❌ **Bad Action**: Running a script or CLI statement with `SafeToAutoRun=true` that silently deletes AWS resources.
+- ✅ **Correct Action**: Output the proposed destruction/deletion command inside a markdown code block, halt execution entirely, and ask the human operator: *"Are you okay with me running this deletion command?"* Only proceed if explicitly approved.
 
 ### 1.5. Public Repository Sanitization
 
