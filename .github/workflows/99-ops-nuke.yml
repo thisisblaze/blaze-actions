@@ -350,7 +350,7 @@ jobs:
       # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
       # The calculate-config action handles missing AWS credentials gracefully
       # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v6
+      #   uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
       #   with:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -457,14 +457,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
+        uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200 # v2.1.0
 
       - name: Delete Cloud Run Services
         run: |
@@ -520,7 +520,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Authenticate to Azure
-        uses: azure/login@v3.0.0
+        uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

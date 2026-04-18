@@ -183,7 +183,7 @@ jobs:
                 fi
 
             - name: Authenticate to Azure
-              uses: azure/login@v3.0.0
+              uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
               with:
                   client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
                   tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
