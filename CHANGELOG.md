@@ -77,6 +77,10 @@
 ## [Unreleased]
 
 ### Changed
+- chore: execute `/13-deep-cicd-maintenance` sync — resolved Git blocker states, audited and synchronized WORKFLOW_CATALOG and REUSABLE_WORKFLOWS, updated Agent deployment triggers to target `01c-provision-app-infra.yml`, and aligned timestamps across repositories.
+
+
+### Changed
 - chore: execute `/13-deep-cicd-maintenance` sync — pinned internal workflow actions universally to `@v2.1.62`.
 - feat(99-ops-aws): completely overhauled `cleanup-orphaned-lambdas` and other GC algorithms to exclusively use native Tag-Based discovery (`Blaze:Environment`) instead of name prefix arrays.
 

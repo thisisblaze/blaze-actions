@@ -49,16 +49,24 @@
 
 **Inputs**:
 
-- `environment` (required): DEV-MINI/DEV/STAGE/PROD
-- `project` (optional): Project key (default: thisisblaze)
-- `cloud_provider` (required): aws|gcp|azure (default: aws)
-- `stack` (required): network|acm|tunnel|app|account-settings|third-party-mongodb|third-party-elastic
+- `cloud_provider` (choice): aws|gcp|azure (default: aws)
+- `wif_audience` (optional): WIF Audience
+- `environment` (required): DEV/DEV-MINI/STAGE/PROD/MULTI-SITE
+- `project` (required): Project Identity (default: thisisblaze)
+- `stack` (required): network|dedicated-network|db-pod-alpha|tenant-app|single-network|single-app|app|acm|third-party-mongodb|third-party-elastic
 - `branch_name` (optional): Feature branch tag
 - `apply` (boolean): Run terraform apply? (default: false)
-- `cluster_tier` (optional): MongoDB tier (auto|M2|M10|M20|M30)
-- `kibana_size` (optional): Elastic Kibana size (1g|2g)
-- `is_paused` (boolean): Pause MongoDB cluster?
+- `destroy` (boolean): Teardown Stack (default: false)
+- `force_destructive_reconcile` (boolean): Force reconcile (default: false)
+- `terraform_version` (string): TF version (default: 1.9.0)
+- `cluster_tier` (choice): MongoDB tier (auto|flex|M0|M10|M20|M30)
+- `kibana_size` (choice): Elastic Kibana size (1g|2g)
+- `enable_image_resize` (boolean): Enable CloudFront Image Resizing
 - `enable_ec2` (boolean): Enable EC2 capacity providers (default: false)
+- `api_launch_type` (choice): FARGATE or EC2
+- `api_cpu_architecture` (choice): X86_64 or ARM64
+- `frontend_launch_type` (choice): FARGATE or EC2
+- `frontend_cpu_architecture` (choice): X86_64 or ARM64
 
 **What it does**:
 

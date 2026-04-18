@@ -506,7 +506,7 @@ A: Version pinning protects you. Clients on `@v1.0.0` unaffected. Test fixes on 
 
 ## 🏷️ Namespace Configuration
 
-All workflows automatically receive a **namespace** output from `reusable-calculate-config.yml` for resource naming.
+All workflows automatically receive a **namespace** output from `calculate-config` for resource naming.
 
 ### Namespace Output
 
