@@ -424,7 +424,7 @@ runs:
 
         elif [[ "$STACK" == "third-party-mongodb" ]]; then
             TF_DIR="${INFRA_PREFIX}/third-party/mongodb"
-            STATE_KEY="infra/${PROJECT_KEY}/third-party/mongodb.tfstate"
+            STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/third-party-mongodb.tfstate"
 
         elif [[ "$STACK" == "third-party-elastic" ]]; then
             TF_DIR="${INFRA_PREFIX}/third-party/elastic"
