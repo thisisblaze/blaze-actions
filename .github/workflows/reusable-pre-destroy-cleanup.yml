@@ -194,24 +194,20 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          CANDIDATES=(
-            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-storage-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-frontend-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-frontend-origin"
-            "${NAMESPACE}-${CLIENT_KEY}-ecs-${PROJECT_KEY}-${STAGE_KEY}-image-resize"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-ecs-image-resize"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-image-resize"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-admin-spa"
-            "${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-frontend-spa"
-          )
+          echo "🔍 Scanning S3 buckets for Project=${PROJECT_KEY}, Environment=${STAGE_KEY} via Tags"
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ inputs.aws_region }}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          for BUCKET_NAME in "${CANDIDATES[@]}"; do
-             echo "Checking bucket: $BUCKET_NAME"
-             if aws s3 ls "s3://$BUCKET_NAME" >/dev/null 2>&1; then
-                echo "   Found bucket. Emptying..."
+          if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+             for BUCKET_ARN in $TAGGED_ARNS; do
+                BUCKET_NAME="${BUCKET_ARN#arn:aws:s3:::}"
+                if [[ "$BUCKET_NAME" == *"tfstate"* ]]; then continue; fi
+                
+                echo "   Found tagged bucket: $BUCKET_NAME"
                 if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                    echo "   [DRY RUN] Would empty bucket $BUCKET_NAME"
                    continue
@@ -232,8 +228,8 @@ jobs:
           EOF
                 python3 empty_bucket.py "$BUCKET_NAME"
                 rm empty_bucket.py
-             fi
-          done
+             done
+          fi
 
       - name: Cleanup ACM Certificates
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
@@ -269,47 +265,40 @@ jobs:
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
 
-          echo "🧹 CloudWatch Log Cleanup..."
+          echo "🧹 CloudWatch Log Cleanup via Tagging API..."
+          echo "🔍 Scanning CloudWatch Logs for Project=${PROJECT_KEY}, Environment=${STAGE_KEY}"
+          
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$REGION" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "logs:log-group" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          delete_log_groups() {
-              local PREFIX=$1
-              local REGION_ARG=$2
-              
-              echo "   🔍 Searching for log groups starting with '$PREFIX' in $REGION_ARG..."
-              GROUPS=$(aws logs describe-log-groups --log-group-name-prefix "$PREFIX" --region "$REGION_ARG" --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None")
+          TAGGED_ARNS_EDGE=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "logs:log-group" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-              
-              if [[ -z "$GROUPS" || "$GROUPS" == "None" ]]; then
-                  echo "      ✅ No logs found."
-                  return
-              fi
+          ALL_ARNS=$(echo "$TAGGED_ARNS $TAGGED_ARNS_EDGE" | tr ' ' '\n' | grep -v 'None' | grep . || true)
 
-              for GROUP in $GROUPS; do
-                  echo "      🗑️ Deleting $GROUP..."
-                  if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-                     echo "         [DRY RUN] Would delete log group $GROUP"
-                  else
-                     aws logs delete-log-group --log-group-name "$GROUP" --region "$REGION_ARG" || echo "         ⚠️ Failed to delete"
-                  fi
-              done
-          }
-
-          # 1. Main Region Patterns
-          PREFIXES=(
-            "/ecs/${NAMESPACE}-${PROJECT_KEY}-${STAGE_KEY}"          # Cluster / Feature Branch
-            "/ecs/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # App / Stateful
-            "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-" # App Lambdas
-            "/aws/lambda/${NAMESPACE}-${CLIENT_KEY}-${STAGE_KEY}-"   # SES Webhooks
-            "/aws/ecs/containerinsights/${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}" # Container Insights
-          )
-
-          for PREFIX in "${PREFIXES[@]}"; do
-             delete_log_groups "$PREFIX" "$REGION" || true
-          done
-
-          # 2. Edge Region (us-east-1) Patterns
-          # Edge functions often have the region prefix in the log group name when created by Lambda@Edge
-          delete_log_groups "/aws/lambda/us-east-1.${NAMESPACE}-" "us-east-1" || true
+          if [[ -n "$ALL_ARNS" ]]; then
+             for LOG_ARN in $ALL_ARNS; do
+                GROUP=$(echo "$LOG_ARN" | awk -F':log-group:' '{print $2}' | sed 's/:\*$//')
+                GRP_REGION=$(echo "$LOG_ARN" | awk -F':' '{print $4}')
+                
+                echo "      🗑️ Deleting Log Group: $GROUP (Region: $GRP_REGION)"
+                if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                   echo "         [DRY RUN] Would delete log group $GROUP"
+                else
+                   aws logs delete-log-group --log-group-name "$GROUP" --region "$GRP_REGION" || echo "         ⚠️ Failed to delete log group"
+                fi
+             done
+          else
+             echo "      ✅ No tagged logs found."
+          fi
 
       - name: Cleanup Service Discovery
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
@@ -548,10 +537,16 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
-          echo "Searching for functions starting with: $PREFIX"
+          echo "🔍 Tag-based Lambda@Edge scan — Blaze:Project=${PROJECT_KEY}, Blaze:Environment=${STAGE_KEY}"
 
-          FUNCTIONS=$(aws lambda list-functions --region us-east-1 --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" --output text)
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region us-east-1 \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "lambda:function" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          FUNCTIONS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . || true)
 
           if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
              for FUNC_NAME in $FUNCTIONS; do

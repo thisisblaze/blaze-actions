@@ -235,7 +235,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.59
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.62
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -347,7 +347,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.59
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.62
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -403,7 +403,7 @@ jobs:
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.59
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.62
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -455,27 +455,22 @@ jobs:
              exit 1
           fi
 
-          # 2. Pattern Matching
-          # Matches: blaze-dev-lambda-edge-resize-image-f2a766a9, blaze-stage-lambda-edge-normalize-params-e8267bfe, blaze-b9-support-prod-lambda-edge
-          # Pattern: ^[namespace].*[stage].*(lambda-edge|image-resize).*
-          PATTERN="^${NAMESPACE}.*${STAGE_KEY}.*(lambda-edge|image-resize).*"
-          echo "   - PATTERN:   '$PATTERN'"
-
+          # 2. Tag-based query (replacing brittle name pattern matching)
           echo "--------------------------------"
-          echo "📡 Connectivity Check (us-east-1)..."
-
-          # Fetch ALL function names first to verify access
-          ALL_FUNCS=$(aws lambda list-functions --region us-east-1 --query "Functions[].FunctionName" --output text | tr '\t' '\n')
-          TOTAL_COUNT=$(echo "$ALL_FUNCS" | grep -v "^$" | wc -l)
-
-          echo "✅ AWS Connectivity OK. Total Lambdas found in region: $TOTAL_COUNT"
-
-          # 3. Filter
-          echo "$ALL_FUNCS" | grep -E "$PATTERN" > found_lambdas.txt || true
+          echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:Environment=${STAGE_KEY}..."
+          
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region us-east-1 \
+            --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "lambda:function" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+          
+          echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . > found_lambdas.txt || true
 
           if [ ! -s found_lambdas.txt ]; then
-             echo "⚠️  No orphaned Lambda functions found matching pattern: $PATTERN"
-             echo "   (This means either they are already deleted, or the pattern is wrong)"
+             echo "⚠️  No orphaned Lambda functions found tagged with Blaze:Environment=${STAGE_KEY}"
+             echo "   (This means either they are already deleted, or not tagged)"
              exit 0
           fi
 
@@ -543,24 +538,31 @@ jobs:
 
       - name: Find and Delete Orphaned Buckets
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned buckets matching *${PREFIX}-${ENV_KEY}* (excluding tfstate)..."
-          ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].Name" --output text)
+          echo "🧹 Scanning S3 buckets for Blaze:Environment=${ENV_KEY} via Tags..."
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ needs.configuration.outputs.aws_region }}" \
+            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
           FOUND_COUNT=0
-          for bucket in $ALL_BUCKETS; do
-             if [[ "$bucket" == *"${PREFIX}-${ENV_KEY}"* ]] && [[ "$bucket" != *"tfstate"* ]]; then
-                echo "🗑️ Found orphaned bucket: $bucket"
+          if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+             for BUCKET_ARN in $TAGGED_ARNS; do
+                bucket="${BUCKET_ARN#arn:aws:s3:::}"
+                if [[ "$bucket" == *"tfstate"* ]]; then continue; fi
+                
+                echo "🗑️ Found orphaned tagged bucket: $bucket"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    aws s3 rb "s3://$bucket" --force || echo "⚠️ Failed to delete $bucket"
                 else
                    echo "ℹ️ [DRY RUN] Would delete $bucket"
                 fi
                 FOUND_COUNT=$((FOUND_COUNT+1))
-             fi
-          done
+             done
+          fi
 
           if [ "$FOUND_COUNT" -eq 0 ]; then
              echo "✅ No orphaned buckets found."
@@ -574,43 +576,49 @@ jobs:
 
       - name: Find and Delete Orphaned Log Groups
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned log groups matching *${PREFIX}-${ENV_KEY}*..."
-          ALL_LOGS=$(aws logs describe-log-groups --query "logGroups[].logGroupName" --output text)
+          echo "🧹 Scanning CloudWatch Logs for Blaze:Environment=${ENV_KEY} via Tags..."
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ needs.configuration.outputs.aws_region }}" \
+            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+            --resource-type-filters "logs:log-group" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          for log in $ALL_LOGS; do
-             if [[ "$log" == *"${PREFIX}-${ENV_KEY}"* ]]; then
-                echo "🗑️ Found orphaned log group: $log"
-                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
-                   aws logs delete-log-group --log-group-name "$log" || echo "⚠️ Failed to delete $log"
-                else
-                   echo "ℹ️ [DRY RUN] Would delete $log"
-                fi
+          TAGGED_LOGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
+
+          for log_arn in $TAGGED_LOGS; do
+             log_name=$(echo "$log_arn" | awk -F':log-group:' '{print $2}' | sed 's/:\*$//')
+             echo "🗑️ Found orphaned log group: $log_name"
+             if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                aws logs delete-log-group --log-group-name "$log_name" || echo "⚠️ Failed to delete $log_name"
+             else
+                echo "ℹ️ [DRY RUN] Would delete $log_name"
              fi
           done
 
       - name: Find and Delete Orphaned Target Groups
-        # Note: Target groups don't include namespace/client_key/project_key by our current terraform naming,
-        # they usually start with project name (blaze) and environment (dev).
-        # To be safe, we'll only match exact patterns for thisisblaze.
         env:
-          PROJECT_PREFIX: "blaze" # Assuming project_key translates to blaze in tg names
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Looking for orphaned target groups matching *${PROJECT_PREFIX}-${ENV_KEY}-*..."
-          ALL_TGS=$(aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text)
+          echo "🧹 Scanning Target Groups for Blaze:Environment=${ENV_KEY} via Tags..."
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ needs.configuration.outputs.aws_region }}" \
+            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+            --resource-type-filters "elasticloadbalancing:targetgroup" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          for tg_arn in $ALL_TGS; do
-             tg_name=$(aws elbv2 describe-target-groups --target-group-arns "$tg_arn" --query "TargetGroups[0].TargetGroupName" --output text)
-             if [[ "$tg_name" == *"${PROJECT_PREFIX}-${ENV_KEY}-"* ]]; then
-                echo "🗑️ Found orphaned target group: $tg_name ($tg_arn)"
-                if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
-                   aws elbv2 delete-target-group --target-group-arn "$tg_arn" || echo "⚠️ Failed to delete $tg_name"
-                else
-                   echo "ℹ️ [DRY RUN] Would delete $tg_name"
-                fi
+          TAGGED_TGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
+
+          for tg_arn in $TAGGED_TGS; do
+             tg_name=$(echo "$tg_arn" | awk -F'/' '{print $2}')
+             echo "🗑️ Found orphaned target group: $tg_name ($tg_arn)"
+             if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
+                aws elbv2 delete-target-group --target-group-arn "$tg_arn" || echo "⚠️ Failed to delete $tg_name"
+             else
+                echo "ℹ️ [DRY RUN] Would delete $tg_name"
              fi
           done
 
@@ -646,7 +654,7 @@ jobs:
     name: ☢️ Nuke CloudFront
     needs: [configuration]
     if: inputs.action == 'nuke-cloudfront'
-    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v2.1.59
+    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v2.1.62
     with:
       dist_id: ${{ inputs.dist_id }}
     secrets:

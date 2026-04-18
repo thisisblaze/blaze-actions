@@ -76,6 +76,10 @@
 
 ## [Unreleased]
 
+### Changed
+- chore: execute `/13-deep-cicd-maintenance` sync — pinned internal workflow actions universally to `@v2.1.62`.
+- feat(99-ops-aws): completely overhauled `cleanup-orphaned-lambdas` and other GC algorithms to exclusively use native Tag-Based discovery (`Blaze:Environment`) instead of name prefix arrays.
+
 ### Added
 - **Smart Import Reconciliation**: Replaced destructive `terraform state rm` in `01-provision-infra` with `terraform import` for Lambda@Edge and WAF to prevent `ResourceConflictException` (HTTP 409) collisions.
 - **Surgical Telemetry GC**: Overhauled `cleanup-orphaned-lambdas` logic. The GC now natively queries CloudFront `LambdaFunctionAssociations` to perfectly skip active functions instead of blindly relying on AWS deletion exceptions.

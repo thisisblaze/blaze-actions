@@ -216,7 +216,7 @@ aws s3 ls s3://blaze-b9-thisisblaze-stage-image-resize/converted/ --recursive
 
 ### Issue: Test scripts or logs show no errors but the CloudFront endpoint returns 503
 
-**Cause:** You might be checking the logs of an INACTIVE, older version of the Lambda function. When looking up Lambda functions by name (`list-functions`), AWS returns all matching functions. `test-image-resize.yml` and manual troubleshooting often mistakenly parse the first returned ARN.
+**Cause:** You might be checking the logs of an INACTIVE, older version of the Lambda function. When looking up Lambda functions by name (`list-functions`), AWS returns all matching functions. `93a-test-image-resize.yml` and manual troubleshooting often mistakenly parse the first returned ARN.
 **Fix:** Always ensure you are querying the _active_ Lambda ARN attached to the specific CloudFront distribution's cache behavior. A quick CLI fix is to sort by `LastModified`:
 
 ```bash

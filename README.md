@@ -315,7 +315,7 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 
 - Trivy, Terrascan, tfsec
 
-**terraform-tests.yml** - Terraform module tests
+**93b-test-terraform.yml** - Terraform module tests
 
 - Automated module testing
 
