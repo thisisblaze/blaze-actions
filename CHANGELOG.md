@@ -1,9 +1,15 @@
 ## [Unreleased] - 2026-04-20
 
+### Added
+- feat(93d/93e): Tag test workflows updated for V2 lowercase schema and 3-project coverage.
+
 ### Changed
+- fix(01-provision-infra): `api_launch_type` + `frontend_launch_type` defaults changed `FARGATE` → `EC2` in both `workflow_dispatch` and `workflow_call` sections. ARM64 is now the first option. Matches shared-ASG platform model.
+- fix(reusable-pre-destroy-cleanup): ECS task definition tag filter corrected from legacy `Blaze:Environment` → V2 lowercase `blaze:stage` schema. Prevents resource ghosting on teardown.
 - chore: end-of-day governance sync — 2026-04-20
 - docs: propagated Plan 146 Dual-Engine Worker documentation parity from blaze-template-deploy
 - docs: aligned AI_CONTEXT_GOVERNANCE.md version pins to v2.3.8 / v2.1.62 baseline
+
 
 ## v2.1.62 (2026-04-17)
 
