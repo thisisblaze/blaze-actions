@@ -1,3 +1,6 @@
+## v2.1.64 (2026-04-20)
+
+- fix: resolve azure/login broken SHA pin in reusable-terraform (3a84dd1)
 ## v2.1.63 (2026-04-20)
 
 - feat(security): pre-flight Cloudflare Zone ID domain validation (9e79046)
