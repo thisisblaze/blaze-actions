@@ -362,6 +362,77 @@ jobs:
             echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
           } >> "$GITHUB_ENV"
 
+      - name: "🔐 Validate Cloudflare Zone ID ↔ Domain"
+        # Pre-flight guard: verifies CLOUDFLARE_ZONE_ID resolves to the expected
+        # domain (TF_VAR_domain_root from calculate-config/blaze-env.json) before
+        # any Terraform operation. Prevents wrong-zone DNS writes caused by a
+        # misconfigured or copy-pasted secret.
+        # Skips gracefully when:
+        #   - CLOUDFLARE_API_TOKEN is absent (non-Cloudflare stacks)
+        #   - CLOUDFLARE_ZONE_ID is absent (stacks that don't use CF DNS)
+        #   - TF_VAR_domain_root is absent (stack doesn't manage DNS)
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          # Resolve expected domain from TF_VAR_domain_root (set by calculate-config)
+          EXPECTED_DOMAIN="${TF_VAR_domain_root:-}"
+
+          if [[ -z "$CF_API_TOKEN" || "$CF_API_TOKEN" == "" ]]; then
+            echo "ℹ️  No CLOUDFLARE_API_TOKEN — skipping zone validation (non-CF stack)"
+            exit 0
+          fi
+
+          if [[ -z "$CF_ZONE_ID" || "$CF_ZONE_ID" == "" ]]; then
+            echo "ℹ️  No CLOUDFLARE_ZONE_ID — skipping zone validation (CF DNS not managed by this stack)"
+            exit 0
+          fi
+
+          if [[ -z "$EXPECTED_DOMAIN" ]]; then
+            echo "ℹ️  No TF_VAR_domain_root — skipping zone validation (domain not in scope)"
+            exit 0
+          fi
+
+          echo "🔍 Validating Cloudflare Zone ID..."
+          echo "   Zone ID       : ${CF_ZONE_ID:0:8}…  (redacted)"
+          echo "   Expected domain: $EXPECTED_DOMAIN"
+
+          RESPONSE=$(curl -sf \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" 2>/dev/null || echo "CURL_FAILED")
+
+          if [[ "$RESPONSE" == "CURL_FAILED" ]]; then
+            echo "❌ Cloudflare API request failed (network error or invalid token)"
+            exit 1
+          fi
+
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success // false')
+          if [[ "$SUCCESS" != "true" ]]; then
+            ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].message // "unknown error"')
+            echo "❌ Cloudflare API returned error: $ERROR"
+            echo "   Check that CLOUDFLARE_API_TOKEN has Read access to the Zones for domain: $EXPECTED_DOMAIN"
+            exit 1
+          fi
+
+          ACTUAL_DOMAIN=$(echo "$RESPONSE" | jq -r '.result.name // ""')
+          if [[ -z "$ACTUAL_DOMAIN" ]]; then
+            echo "❌ Could not extract domain name from Cloudflare API response"
+            exit 1
+          fi
+
+          if [[ "$ACTUAL_DOMAIN" != "$EXPECTED_DOMAIN" ]]; then
+            echo "❌ CLOUDFLARE_ZONE_ID MISMATCH:"
+            echo "   Zone ID resolves to : $ACTUAL_DOMAIN"
+            echo "   Expected domain     : $EXPECTED_DOMAIN"
+            echo ""
+            echo "   Fix: ensure the correct zone ID is stored in the secret."
+            echo "   For blazecms.io → secret must be CLOUDFLARE_ZONE_ID_BLAZECMS_IO"
+            exit 1
+          fi
+
+          echo "✅ Zone ID validated: ${CF_ZONE_ID:0:8}… → $ACTUAL_DOMAIN ✓"
+
       - name: Configure Git for Private Modules
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
