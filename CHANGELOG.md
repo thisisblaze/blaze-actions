@@ -1,3 +1,22 @@
+## v2.1.63 (2026-04-20)
+
+- feat(security): pre-flight Cloudflare Zone ID domain validation (9e79046)
+- chore: end-of-day governance sync — 2026-04-20 (8dbaf22)
+- fix(01-provision-infra): default launch type EC2+ARM64 (was FARGATE) (0f88f8c)
+- fix(plan-144): fix V2 tag schema drift in pre-destroy cleanup (Blaze:Project → blaze:project) (1c2f997)
+- chore: /13-deep-cicd-maintenance sync — 2026-04-20 (fc7ce9f)
+- chore: end-of-day governance sync — 2026-04-20 (e1e028b)
+- chore(docs): Deep CI/CD Maintenance - Map Plan 144/146 additions into repository catalogs and changelogs (2558616)
+- feat(workflow): Add workers_json parsing and routing for Plan 146 Dual Engine Setup (b92622f)
+- feat(ci): Plan 144 Hardening - Case B outputs, strict resourcegroupstaggingapi ECS resolution, and precise nuke isolation scoping (8b16156)
+- fix(ci): wire Semantic Hub db_ssm_path for DB user provisioning (bbb6d1b)
+- chore: /13-deep-cicd-maintenance sweep (15a3c63)
+- fix(security): enforcing strictly pinned SHAs matching v4/v3/v2 releases across action wrappers (157ec5a)
+- fix(state): sandbox third-party-mongodb terraform state by STAGE_KEY to prevent env cross-contamination upon reprovisioning (723ea67)
+- chore: end-of-day governance sync — 2026-04-18 (83a0a8c)
+- chore: execute /13-deep-cicd-maintenance sync — bumped global workflow schema to v2.1.62 and enforced Tagging API teardown logic (942e972)
+- fix(ops): explicitly force-delete ASG before Launch Template cleanup (282b580)
+- chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased] - 2026-04-20
 
 ### Added
