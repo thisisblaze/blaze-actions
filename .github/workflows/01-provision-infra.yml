@@ -187,6 +187,11 @@ on:
         required: false
         type: string
         default: "ARM64"
+      workers_json:
+        description: "Background Workers Configuration (JSON String)"
+        required: false
+        type: string
+        default: "{}"
       azure_client_id_rev:
         required: false
         type: string
@@ -865,6 +870,7 @@ jobs:
         api_cpu_architecture=${{ inputs.api_cpu_architecture }}
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
+        workers='${{ inputs.workers_json }}'
       orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
