@@ -67,6 +67,7 @@
 - `api_cpu_architecture` (choice): X86_64 or ARM64
 - `frontend_launch_type` (choice): FARGATE or EC2
 - `frontend_cpu_architecture` (choice): X86_64 or ARM64
+- `workers_json` (string): JSON mapping payload for Dual-Engine background background workers
 
 **What it does**:
 

@@ -76,6 +76,10 @@
 
 ## [Unreleased]
 
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
 ### Changed
 - chore: execute `/13-deep-cicd-maintenance` sync — resolved Git blocker states, audited and synchronized WORKFLOW_CATALOG and REUSABLE_WORKFLOWS, updated Agent deployment triggers to target `01c-provision-app-infra.yml`, and aligned timestamps across repositories.
 
@@ -296,7 +300,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -450,7 +462,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -1000,7 +1020,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2465,7 +2493,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2487,7 +2523,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2506,7 +2550,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2544,7 +2596,15 @@
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2626,7 +2686,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2905,7 +2973,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -2925,7 +3001,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3419,7 +3503,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3446,7 +3538,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3473,7 +3573,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3497,7 +3605,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3518,7 +3634,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3544,7 +3668,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3614,7 +3746,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3665,7 +3805,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
@@ -3853,7 +4001,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### [Unreleased] - 2026-04-16
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
+
+### [Unreleased]
+
+### Added
+- feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
+- feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide. - 2026-04-16
 #### Added
 - Synchronized internal AI behavioral mapping across all .agent workflows and contexts to enforce the SCALED Multi-Tenant V2 operational definitions.
 - Replicated updated .cursorrules and docs/AI_CONTEXT_GOVERNANCE.md across all three repositories.
