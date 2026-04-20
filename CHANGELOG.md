@@ -1,3 +1,10 @@
+## [Unreleased] - 2026-04-20
+
+### Changed
+- chore: end-of-day governance sync — 2026-04-20
+- docs: propagated Plan 146 Dual-Engine Worker documentation parity from blaze-template-deploy
+- docs: aligned AI_CONTEXT_GOVERNANCE.md version pins to v2.3.8 / v2.1.62 baseline
+
 ## v2.1.62 (2026-04-17)
 
 ### Added
