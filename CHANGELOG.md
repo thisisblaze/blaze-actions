@@ -1,3 +1,6 @@
+## v2.1.66 (2026-04-20)
+
+- fix: replace broken azure/login SHA across all workflow files (7247ffa)
 ## v2.1.65 (2026-04-20)
 
 - Maintenance release
