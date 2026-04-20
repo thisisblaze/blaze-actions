@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-20
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 56 (37 main + 19 reusable)  
+**Total Workflows**: 53 main + 19 reusable = 72 total  
 **Version**: v2.1.62  
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-20
 
 ---
 
@@ -76,6 +76,30 @@
 - Imports existing ACM certificates
 
 **When to run**: Infrastructure changes
+
+---
+
+#### 02-deploy-app.yml
+
+**Purpose**: Top-level multi-cloud application deployment dispatcher  
+**Use Case**: Deploy Docker containers across AWS, GCP, and Azure
+
+**Inputs**:
+
+- `cloud_provider` (choice): aws|gcp|azure (default: aws)
+- `environment` (required): dev-mini/dev/stage/prod
+- `project` (required): Project identity (default: thisisblaze)
+- `target_services` (required): Service filter (e.g., "api", "Blaze all")
+- `branch_name` (optional): Feature branch tag
+- `skip_build` (boolean): Skip Docker build?
+- `deploy_services` (boolean): Deploy to ECS/Pages?
+- `api_launch_type` (choice): `FARGATE` (default) or `EC2`
+- `api_cpu_architecture` (choice): `X86_64` or `ARM64`
+- `skip_stabilise` (boolean): Skip ECS stabilisation wait (for stress tests)
+
+**What it does**: Delegates to `02-deploy-aws.yml`, `02-deploy-gcp.yml`, or `02-deploy-azure.yml`
+
+**When to run**: Code deployments
 
 ---
 
@@ -623,6 +647,13 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v2.1.62** (2026-04-20):
+- Added `workers_json` input to `01-provision-infra.yml` — routes Plan 146 Dual-Engine background worker config (SQS/Lambda fast + Fargate/cron heavy) into Terraform.
+- Committed `workers.tf` + updated `variables.tf` in `blaze-terraform-infra-core` `multi-site-tenant-app` module — actual IaC for Plan 146 now live.
+- WORKFLOW_CATALOG total count corrected: 53 main + 19 reusable = 72 total.
+- Added `02-deploy-app.yml` as a documented first-class entry (was missing despite being a major dispatcher).
+- Timestamps updated across all 3 repos to 2026-04-20.
+
 **v2.1.60** (2026-04-17):
 - Replaced destructive `terraform state rm` logic in `01-provision-infra.yml` with secure **Smart Import** for Lambda@Edge and WAF to prevent `ResourceConflictException` (HTTP 409) during dirty pipeline redeployments.
 - Hardened `cleanup-orphaned-lambdas` logic in `99-ops-aws.yml` with **Surgical Telemetry**. The script now physically queries CloudFront's `LambdaFunctionAssociations` to perfectly skip active bindings, eliminating AWS blocking errors from the logs.
@@ -664,6 +695,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-18  
+**Last Updated**: 2026-04-20  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

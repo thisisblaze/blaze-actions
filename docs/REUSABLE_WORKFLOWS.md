@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-20
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-20
 
 ---
 
@@ -57,13 +57,13 @@ uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
 **Stable (recommended for production)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@v1.0.0
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.62
 ```
 
 **Specific commit (maximum stability)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@a24d7b4
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@a24d7b4
 ```
 
 ---
@@ -125,14 +125,16 @@ with:
 
 ```yaml
 # Development
-@main
+@dev
 
-# Staging
-@v1
+# Stable (production)
+@v2.1.62
 
-# Production
-@v1.0.0
+# Specific commit (maximum pinning)
+@<sha>
 ```
+
+> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.1.62`).
 
 ### 4. Set Proper Permissions
 
@@ -438,7 +440,7 @@ permissions:
 
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v1.0.0
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.62
     with:
       environment: prod
       stack: app
@@ -447,7 +449,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v1.0.0
+    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.1.62
     with:
       environment: prod
       target_services: "Blaze all"
@@ -455,7 +457,7 @@ jobs:
 
   verify:
     needs: deploy
-    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v1.0.0
+    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.1.62
     with:
       environment: prod
     secrets: inherit
@@ -491,13 +493,13 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@main` for development, `@v1.0.0` for production.
+A: `@dev` for development, `@v2.1.62` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
-A: Update hub workflow once. All clients using `@main` get update immediately. Clients using `@v1.0.0` update when ready.
+A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
 
 **Q: Can I test changes before they affect production?**  
-A: Yes! Use `@dev` branch for testing, `@main` for stable, `@v1.0.0` for production.
+A: Yes — use `@dev` for local testing. When ready, release a new tag and bump all caller pins via `/13-deep-cicd-maintenance`.
 
 **Q: What if the hub workflow breaks?**  
 A: Version pinning protects you. Clients on `@v1.0.0` unaffected. Test fixes on `@dev` first.
@@ -582,6 +584,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-04-18  
+**Last Updated**: 2026-04-20  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
