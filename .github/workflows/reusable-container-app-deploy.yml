@@ -183,7 +183,7 @@ jobs:
                 fi
 
             - name: Authenticate to Azure
-              uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
+              uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
               with:
                   client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
                   tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}

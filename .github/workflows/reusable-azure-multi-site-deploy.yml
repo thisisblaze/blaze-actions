@@ -168,7 +168,7 @@ jobs:
 
         steps:
             - name: Azure Login (OIDC)
-              uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
+              uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
               with:
                   client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   tenant-id: ${{ secrets.AZURE_TENANT_ID }}

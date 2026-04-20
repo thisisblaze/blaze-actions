@@ -390,7 +390,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
+        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure.outputs.tenant_id }}
@@ -992,7 +992,7 @@ jobs:
           echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
 
       - name: Azure Login
-        uses: azure/login@a65d910e8af852a8061c627c15494091c2b5d8ec # v2.0.0
+        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
