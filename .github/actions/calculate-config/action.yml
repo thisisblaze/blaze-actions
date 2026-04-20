@@ -144,6 +144,9 @@ outputs:
   elastic_tier:
     description: "Elasticsearch tier provisioned mapping"
     value: ${{ steps.config.outputs.elastic_tier }}
+  workers_json:
+    description: "Background Workers Configuration (JSON)"
+    value: ${{ steps.config.outputs.workers_json }}
 
 runs:
   using: "composite"
@@ -310,6 +313,9 @@ runs:
         echo "cloudflare_zone_id_key=$CLOUDFLARE_ZONE_ID_KEY" >> $GITHUB_OUTPUT
         echo "dedicated_alb=$DEDICATED_ALB" >> $GITHUB_OUTPUT
         echo "dedicated_waf=$DEDICATED_WAF" >> $GITHUB_OUTPUT
+        
+        WORKERS_JSON=$(echo "$MERGED_CONFIG" | jq -c '.common.WORKERS // {}')
+        echo "workers_json=$WORKERS_JSON" >> $GITHUB_OUTPUT
 
         # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
