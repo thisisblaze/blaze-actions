@@ -132,6 +132,18 @@ outputs:
   ecs_compute_tier:
     description: "ECS Compute Node Mapping Tier"
     value: ${{ steps.config.outputs.ecs_compute_tier }}
+  cloudflare_zone_id_key:
+    description: "Cloudflare Zone ID Secret Key Mapping"
+    value: ${{ steps.config.outputs.cloudflare_zone_id_key }}
+  dedicated_alb:
+    description: "Dedicated ALB Flag"
+    value: ${{ steps.config.outputs.dedicated_alb }}
+  dedicated_waf:
+    description: "Dedicated WAF Flag"
+    value: ${{ steps.config.outputs.dedicated_waf }}
+  elastic_tier:
+    description: "Elasticsearch tier provisioned mapping"
+    value: ${{ steps.config.outputs.elastic_tier }}
 
 runs:
   using: "composite"
@@ -209,8 +221,12 @@ runs:
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
         DB_SSM_PATH=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_SSM_PATH // ""')
         DB_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_TIER // "shared"')
+        ELASTIC_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.ELASTIC_TIER // "shared"')
         ECS_COMPUTE_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.ECS_COMPUTE_TIER // "standard"')
         PROJECT_SLUG=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_SLUG // ""')
+        CLOUDFLARE_ZONE_ID_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUDFLARE_ZONE_ID_KEY // "CLOUDFLARE_ZONE_ID"')
+        DEDICATED_ALB=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_ALB // "false"')
+        DEDICATED_WAF=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_WAF // "false"')
         # Resolve templated variables in DB_SSM_PATH
         DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
         DB_SSM_PATH="${DB_SSM_PATH//\${PROJECT_KEY\}/$PROJECT_KEY}"
@@ -288,8 +304,12 @@ runs:
 
         echo "db_ssm_path=$DB_SSM_PATH" >> $GITHUB_OUTPUT
         echo "db_tier=$DB_TIER" >> $GITHUB_OUTPUT
+        echo "elastic_tier=$ELASTIC_TIER" >> $GITHUB_OUTPUT
         echo "ecs_compute_tier=$ECS_COMPUTE_TIER" >> $GITHUB_OUTPUT
         echo "project_slug=$PROJECT_SLUG" >> $GITHUB_OUTPUT
+        echo "cloudflare_zone_id_key=$CLOUDFLARE_ZONE_ID_KEY" >> $GITHUB_OUTPUT
+        echo "dedicated_alb=$DEDICATED_ALB" >> $GITHUB_OUTPUT
+        echo "dedicated_waf=$DEDICATED_WAF" >> $GITHUB_OUTPUT
 
         # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
@@ -428,7 +448,7 @@ runs:
 
         elif [[ "$STACK" == "third-party-elastic" ]]; then
             TF_DIR="${INFRA_PREFIX}/third-party/elastic"
-            STATE_KEY="infra/${PROJECT_KEY}/third-party/elastic.tfstate"
+            STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/third-party-elastic.tfstate"
             
         else
             # Auto-upgrade standard generic network/app/cdn stacks to Multi-Site V2
