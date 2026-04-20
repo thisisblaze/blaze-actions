@@ -84,24 +84,24 @@ on:
         default: false
       # Hybrid ECS Inputs
       api_launch_type:
-        description: "API Launch Type (FARGATE/EC2)"
+        description: "API Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
         type: choice
-        options: ["FARGATE", "EC2"]
-        default: "FARGATE"
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
       api_cpu_architecture:
-        description: "API CPU Architecture (X86_64/ARM64)"
+        description: "API CPU Architecture (ARM64 = default / X86_64 = fallback)"
         type: choice
-        options: ["X86_64", "ARM64"]
+        options: ["ARM64", "X86_64"]
         default: "ARM64"
       frontend_launch_type:
-        description: "Frontend Launch Type (FARGATE/EC2)"
+        description: "Frontend Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
         type: choice
-        options: ["FARGATE", "EC2"]
-        default: "FARGATE"
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
       frontend_cpu_architecture:
-        description: "Frontend CPU Architecture (X86_64/ARM64)"
+        description: "Frontend CPU Architecture (ARM64 = default / X86_64 = fallback)"
         type: choice
-        options: ["X86_64", "ARM64"]
+        options: ["ARM64", "X86_64"]
         default: "ARM64"
 
   # Enable usage by other workflows (Stress Test)
@@ -174,7 +174,7 @@ on:
       api_launch_type:
         required: false
         type: string
-        default: "FARGATE"
+        default: "EC2"
       api_cpu_architecture:
         required: false
         type: string
@@ -182,7 +182,7 @@ on:
       frontend_launch_type:
         required: false
         type: string
-        default: "FARGATE"
+        default: "EC2"
       frontend_cpu_architecture:
         required: false
         type: string
