@@ -181,7 +181,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **Database Strategy**              | **Shared Pods** (e.g. `db-pod-alpha`) utilizing native MongoDB Atlas Autoscaling (M10-M30)         |
 | **Dev Environment (Foundation)**   | `01a-provision-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
 | **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.3.7 Default**                                           |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0 Default**                                           |
 | **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
@@ -200,7 +200,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
 | `blaze-actions` | **v2.3.7** | latest stable — nuke robustness fixes. All caller workflows unified to V2 orchestrators |
-| `blaze-terraform-infra-core` | **v2.3.7** | Atlas IP access locked to VPC CIDR (security). Multi-site-app auto-provisions per-tenant Atlas DB users. |
+| `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
 ---
