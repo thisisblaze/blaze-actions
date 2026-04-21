@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-21
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 53 main + 19 reusable = 72 total  
+**Total Workflows**: 33 main + 20 reusable = 53 total  
 **Version**: v2.1.62  
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-21
 
 ---
 
@@ -103,37 +103,6 @@
 
 ---
 
-#### 04-deploy-multi-site.yml
-
-**Purpose**: Application deployment (ECS, Cloud Run, or Container Apps)
-**Use Case**: Deploy Docker containers + Admin SPA (S3/CloudFront for AWS)
-
-**Inputs**:
-
-- `environment` (required): dev-mini/dev/stage/prod
-- `cloud_provider` (required): aws|gcp|azure (default: aws)
-- `target_services` (required): Service filter (e.g., "api", "Blaze all")
-- `branch_tag` (optional): Feature branch tag
-- `skip_build` (boolean): Skip Docker build?
-- `build_all` (boolean): Force build all services?
-- `api_launch_type` (choice): API launch type — `FARGATE` (default) or `EC2`
-- `api_cpu_architecture` (choice): API CPU arch — `X86_64` (default) or `ARM64`
-
-**What it does**:
-
-- Builds Docker images (multi-arch: AMD64 + ARM64)
-- Pushes to registry (ECR/AR/ACR based on `cloud_provider`)
-- Updates service definitions
-- Deploys to target platform:
-  - **AWS API**: **Native ECS Blue/Green** (no CodeDeploy)
-  - **AWS Frontend**: Rolling deployment
-  - **AWS Admin SPA**: S3 sync + CloudFront cache invalidation (DEV/STAGE/PROD only; DEV-MINI uses Cloudflare Pages)
-  - **GCP**: Cloud Run revision rollout
-  - **Azure**: Container Apps revision rollout
-
-**When to run**: Code deployments
-
----
 
 ### Testing & Validation
 
@@ -200,20 +169,6 @@
 
 ---
 
-#### 93b-test-terraform.yml
-
-**Purpose**: Terraform module testing  
-**Use Case**: Module validation
-
-**What it does**:
-
-- Tests Terraform modules
-- Validates outputs
-- Checks formatting
-
-**When to run**: Module changes
-
----
 
 ### Operations & Utilities
 
@@ -505,22 +460,6 @@
 
 ---
 
-#### 01g-provision-db-pod.yml *(new — 2026-04-14)*
-**Purpose**: Provision the shared environment-level MongoDB Atlas DB pod (cluster + VPC peering) for multi-site environments. Runs **once per environment** before enabling `enable_db_users=true` in the multi-site-app stacks. Replaces the need for 01d/01e/01f manual DB workflows in multi-tenant setups.
-
-**Inputs**:
-- `environment` (required): `stage` | `prod`
-- `stack`: fixed as `db-pod-alpha`
-- `apply` (boolean): Run terraform apply? (default: false)
-- `enable_vpc_peering` (boolean): Enable Atlas→AWS VPC peering (requires M10+)
-
-**What it does**:
-- Provisions/refreshes the shared Atlas M10 cluster
-- Optionally enables VPC peering (Atlas CIDR → AWS VPC CIDR)
-- Writes `cluster_uri` + `atlas_project_id` to state (`infra/shared/{env}/db-pod-alpha.tfstate`)
-- These outputs are consumed by `01c` multi-site-app stacks via remote state
-
-**When to run**: Once per environment before enabling per-tenant DB users in `01c`
 ## Reusable Workflows (19)
 
 These are called by main workflows, not directly by users.
@@ -647,12 +586,12 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
-**v2.1.62** (2026-04-20):
+**v2.1.62** (2026-04-21):
 - Added `workers_json` input to `01-provision-infra.yml` — routes Plan 146 Dual-Engine background worker config (SQS/Lambda fast + Fargate/cron heavy) into Terraform.
 - Committed `workers.tf` + updated `variables.tf` in `blaze-terraform-infra-core` `multi-site-tenant-app` module — actual IaC for Plan 146 now live.
-- WORKFLOW_CATALOG total count corrected: 53 main + 19 reusable = 72 total.
+- WORKFLOW_CATALOG total count corrected: 33 main + 20 reusable = 53 total.
 - Added `02-deploy-app.yml` as a documented first-class entry (was missing despite being a major dispatcher).
-- Timestamps updated across all 3 repos to 2026-04-20.
+- Timestamps updated across all 3 repos to 2026-04-21.
 
 **v2.1.60** (2026-04-17):
 - Replaced destructive `terraform state rm` logic in `01-provision-infra.yml` with secure **Smart Import** for Lambda@Edge and WAF to prevent `ResourceConflictException` (HTTP 409) during dirty pipeline redeployments.
@@ -695,6 +634,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-20  
+**Last Updated**: 2026-04-21  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
