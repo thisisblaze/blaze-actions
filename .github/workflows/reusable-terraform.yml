@@ -930,7 +930,7 @@ jobs:
           ${{ inputs.pre_apply_script }}
 
       - name: Orphan Lambda Resources (Prevent Hang)
-        if: ${{ inputs.orphan_lambda == true }}
+        if: ${{ inputs.orphan_lambda == true && (inputs.destroy == true || inputs.destroy == 'true') }}
         continue-on-error: true
         working-directory: ${{ inputs.tf_dir }}
         run: |
