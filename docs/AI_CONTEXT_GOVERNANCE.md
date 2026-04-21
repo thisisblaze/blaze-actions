@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-21
 **Owner**: Infrastructure Team
 
 ---
@@ -178,7 +178,8 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **Core Architecture Paradigm**     | **Multi-Site V2 (The Two-Pillar Strategy)**: Day 0 Shared Foundation, Day 1 Data Pods, Day 2 Tenants|
 | **ECS API Deployment**             | **Native ECS Blue/Green** — no CodeDeploy, no `appspec.yml`, no deployment group                   |
 | **CloudFront Topologies**          | **3 Distributions per Tenant** (Admin, API, Frontend). Allows extreme Blue/Green isolation         |
-| **Database Strategy**              | **Shared Pods** (e.g. `db-pod-alpha`) utilizing native MongoDB Atlas Autoscaling (M10-M30)         |
+| **Database Strategy**              | **Strict Pod Sharding** (`db-pod-alpha`, `db-pod-beta`, Dedicated) utilizing native Atlas Autoscaling |
+| **Background Workers**             | **Dual-Engine Hybrid** — Fargate (Heavy Cron sweeps) & Lambda (Fast SQS events) via `WORKERS_JSON` |
 | **Dev Environment (Foundation)**   | `01a-provision-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
 | **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
 | **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0 Default**                                           |
@@ -199,7 +200,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.3.7** | latest stable — nuke robustness fixes. All caller workflows unified to V2 orchestrators |
+| `blaze-actions` | **v2.3.8** | latest stable — Dual-Engine workers logic. |
 | `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
@@ -242,7 +243,7 @@ When destroying a multi-site environment, ALWAYS scope by `Blaze:Project` tag. *
 | support | `vars/support/blaze-env.json` | `projects/support/packages/` |
 | thisisblaze2 | `vars/thisisblaze2/blaze-env.json` | `projects/thisisblaze2/packages/` |
 
-See: `docs/plans/134_multi_tenant_multi_domain_expansion_aws.md`
+See: `docs/plans/144_new_domain_project_onboarding.md`
 
 ## 15. Multi-Tenant Nuke Failure Patterns (2026-04-08)
 
@@ -252,6 +253,7 @@ See: `docs/plans/134_multi_tenant_multi_domain_expansion_aws.md`
 | Pattern | Symptom | Root Cause | Fix |
 | :------ | :------- | :--------- | :-- |
 | **pre_apply.sh TG state removal** | 503 on all endpoints after deploy | Script unconditionally removed `aws_lb_target_group` + `aws_lb_listener_rule` from TF state | Disabled destructive sections; added idempotent TG import in Section 4. See Plan 134 §6 |
+| **Capacity Provider Deadlocks** | Terraform destroy hangs forever on ASG/CP | `create_before_destroy` on ASGs conflicted with tied capacity providers | Enforced `random_id` on capacity providers + injected `force_delete` on ASG |
 | **IGW DependencyViolation on destroy** | `Network has some mapped public address(es)` | NAT GW EIPs still associated + EC2 instances not yet terminated when TF destroy runs | Terminate EC2s → wait `terminated` → re-run nuke. EIPs auto-release with NAT GWs |
 | **CloudFront orphan after nuke** | 3 CFs remain Enabled after destroy | Nuke timed out before CF disable propagated (~15 min needed) | Manually disable → wait Deployed → delete. Add explicit CF wait to nuke hook |
 | **SG DependencyViolation** | `sg has a dependent object` | EC2 ENIs still attached to SG during destroy | Terminate instances first, verify `terminated` state, then destroy SG |
