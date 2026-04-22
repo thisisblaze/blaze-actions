@@ -515,15 +515,22 @@ elif [[ "$STACK" == "app" || "$STACK" == "cdn" ]]; then
     DOMAIN_ROOT="${INPUT_DOMAIN_ROOT}"
     CF_ZONE="$TF_VAR_cloudflare_zone_id"
 
+    CLIENT_KEY="${INPUT_CLIENT_KEY}"
+
     # Map: record name → Terraform address
     # Extend this map when infra-core adds new managed dns_record resources
     declare -A DNS_TF_MAP
     DNS_TF_MAP["gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.gcp[0]"
     DNS_TF_MAP["api-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.api_gcp[0]"
     DNS_TF_MAP["frontend-gcp-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.frontend_gcp[0]"
-    DNS_TF_MAP["cdn-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.cdn[0]"
-    DNS_TF_MAP["frontend-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.frontend[0]"
-    DNS_TF_MAP["api-${STAGE_KEY}.${DOMAIN_ROOT}"]="module.environment_network.cloudflare_dns_record.api[0]"
+    
+    # App stack (multi-site-tenant-app) tenant-specific records
+    if [[ -n "$CLIENT_KEY" ]]; then
+      DNS_TF_MAP["api-${CLIENT_KEY}-${STAGE_KEY}.${DOMAIN_ROOT}"]="cloudflare_dns_record.api[0]"
+      DNS_TF_MAP["frontend-${CLIENT_KEY}-${STAGE_KEY}.${DOMAIN_ROOT}"]="cloudflare_dns_record.frontend[0]"
+      DNS_TF_MAP["admin-${CLIENT_KEY}-${STAGE_KEY}.${DOMAIN_ROOT}"]="cloudflare_dns_record.admin[0]"
+      DNS_TF_MAP["cdn-${CLIENT_KEY}-${STAGE_KEY}.${DOMAIN_ROOT}"]="cloudflare_dns_record.cdn[0]"
+    fi
 
     for RECORD_NAME in "${!DNS_TF_MAP[@]}"; do
       TF_ADDR="${DNS_TF_MAP[$RECORD_NAME]}"

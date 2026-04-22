@@ -29,6 +29,7 @@
 ## [Unreleased]
 
 ### Changed
+- fix(import): updated `import.sh` to correctly import tenant-specific Cloudflare DNS records (`cloudflare_dns_record.api[0]`, etc.) for the `app` stack, resolving persistent `CNAMEAlreadyExists` crashes during zero-state or clean-slate provisioning.
 - chore: archived legacy monolithic deployment scripts (`deploy-site.yml`, `deploy-azure-site.yml`, `deploy-gcp-site.yml`) and ad-hoc script `nuke-cloudfront.yml` to strictly enforce the modular Multi-Tenant V2 `reusable-*` and native nuke pipelines.
 
 ### Added
