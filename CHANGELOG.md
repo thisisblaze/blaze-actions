@@ -28,6 +28,9 @@
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
 
+### Changed
+- chore: archived legacy monolithic deployment scripts (`deploy-site.yml`, `deploy-azure-site.yml`, `deploy-gcp-site.yml`) and ad-hoc script `nuke-cloudfront.yml` to strictly enforce the modular Multi-Tenant V2 `reusable-*` and native nuke pipelines.
+
 ### Added
 - feat(ops): synchronized Deep CI/CD maintenance globally mapping all live stacks natively from v2.3.7 array drift to centralized v2.4.3 templates
 - feat(actions): corrected WORKFLOW_CATALOG mathematical counts mapping to exactly 53 workflows and cleared ghosted pipeline references sequentially
