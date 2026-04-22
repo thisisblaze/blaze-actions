@@ -1,3 +1,8 @@
+## [Unreleased]
+
+- chore: execute `/checkengines` sweep and resolve module split-brain, bumping Azure and GCP live modules natively to `v2.4.6`.
+- chore: end-of-day governance sync — 2026-04-22.
+
 ## v2.1.66 (2026-04-20)
 
 - fix: replace broken azure/login SHA across all workflow files (7247ffa)

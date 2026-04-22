@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-21
+**Last Updated**: 2026-04-22
 **Owner**: Infrastructure Team
 
 ---
@@ -30,7 +30,7 @@ The AI Agent is strictly forbidden from executing ANY autonomous command that de
 
 ### 1.5. Public Repository Sanitization
 
-**CRITICAL POLICY**: Several of our repositories (such as `blaze-actions`) are **PUBLIC**. For consistency across the ecosystem:
+**CRITICAL POLICY**: Several of our repositories (such as `blaze-actions` (This Repo)) are **PUBLIC**. For consistency across the ecosystem:
 
 - NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations) in shared workflows or documentation.
 - NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
@@ -166,8 +166,8 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | Repository                          | Role                                         | Owner         |
 | :---------------------------------- | :------------------------------------------- | :------------ |
 | `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
-| `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
-| `blaze-template-deploy` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
+| `blaze-actions` (This Repo)                     | Reusable GitHub Actions workflows            | `thisisblaze` |
+| `blaze-template-deploy` | Application deployment & infra instantiation | `thebyte9`    |
 
 ## 11. Deployment Architecture Facts (2026-03-25)
 
@@ -200,7 +200,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.3.8** | latest stable — Dual-Engine workers logic. |
+| `blaze-actions` (This Repo) | **v2.3.8** | latest stable — Dual-Engine workers logic. |
 | `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
 | Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
 
