@@ -650,19 +650,11 @@ jobs:
              fi
           done
 
-  nuke-cloudfront:
-    name: ☢️ Nuke CloudFront
-    needs: [configuration]
-    if: inputs.action == 'nuke-cloudfront'
-    uses: thisisblaze/blaze-actions/.github/workflows/nuke-cloudfront.yml@v2.1.69
-    with:
-      dist_id: ${{ inputs.dist_id }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
 
   summary:
     name: 📝 Ops Summary
-    needs: [configuration, manage-environment, cleanup-orphaned-lambdas, cleanup-orphaned-buckets, nuke-cloudfront]
+    needs: [configuration, manage-environment, cleanup-orphaned-lambdas, cleanup-orphaned-buckets]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
