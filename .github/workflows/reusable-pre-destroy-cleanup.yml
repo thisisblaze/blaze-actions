@@ -488,6 +488,145 @@ jobs:
              echo "   ✅ No orphaned CloudFront functions found."
           fi
 
+      - name: Cleanup ALB Target Groups
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🧹 Cleanup ALB Target Groups for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} in $REGION"
+          
+          pip install boto3 >/dev/null 2>&1 || true
+          cat << 'EOF' > tg_cleanup.py
+          import boto3
+          import sys
+          import time
+
+          region = sys.argv[1]
+          project = sys.argv[2]
+          stage = sys.argv[3]
+          dry_run = sys.argv[4].lower() == 'true'
+
+          tagging = boto3.client('resourcegroupstaggingapi', region_name=region)
+          elbv2 = boto3.client('elbv2', region_name=region)
+
+          tgs = []
+          for page in tagging.get_paginator('get_resources').paginate(
+              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              ResourceTypeFilters=['elasticloadbalancing:targetgroup']
+          ):
+              tgs.extend([m['ResourceARN'] for m in page['ResourceTagMappingList']])
+
+          if not tgs:
+              print("   ✅ No Target Groups found.")
+              sys.exit(0)
+
+          for tg in tgs:
+              print(f"   🗑️ Processing Target Group: {tg}")
+              if dry_run:
+                  print("      [DRY RUN] Would delete Target Group")
+                  continue
+              try:
+                  elbv2.delete_target_group(TargetGroupArn=tg)
+                  print("      ✅ Deleted")
+              except elbv2.exceptions.ResourceInUseException:
+                  print("      ⚠️ In use! Detaching from Listener Rules...")
+                  for lb in elbv2.describe_load_balancers()['LoadBalancers']:
+                      for listener in elbv2.describe_listeners(LoadBalancerArn=lb['LoadBalancerArn'])['Listeners']:
+                          for rule in elbv2.describe_rules(ListenerArn=listener['ListenerArn'])['Rules']:
+                              if rule['IsDefault']:
+                                  continue # Can't delete default rule
+                              for action in rule['Actions']:
+                                  if action.get('TargetGroupArn') == tg or (action.get('ForwardConfig') and any(t['TargetGroupArn'] == tg for t in action['ForwardConfig'].get('TargetGroups', []))):
+                                      print(f"      🗑️ Deleting Rule {rule['RuleArn']}")
+                                      elbv2.delete_rule(RuleArn=rule['RuleArn'])
+                  time.sleep(2)
+                  try:
+                      elbv2.delete_target_group(TargetGroupArn=tg)
+                      print("      ✅ Deleted after rule cleanup")
+                  except Exception as e:
+                      print(f"      ⚠️ Failed: {e}")
+              except Exception as e:
+                  print(f"      ⚠️ Failed: {e}")
+          EOF
+          python3 tg_cleanup.py "$REGION" "$PROJECT_KEY" "$STAGE_KEY" "${{ inputs.dry_run }}"
+
+      - name: Cleanup CloudFront Distributions
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all"]'), inputs.target_stack)
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+
+          echo "🧹 Cleanup CloudFront Distributions for Project=${PROJECT_KEY}, Stage=${STAGE_KEY}"
+          
+          pip install boto3 >/dev/null 2>&1 || true
+          cat << 'EOF' > cf_cleanup.py
+          import boto3
+          import sys
+          import time
+
+          project = sys.argv[1]
+          stage = sys.argv[2]
+          dry_run = sys.argv[3].lower() == 'true'
+
+          tagging = boto3.client('resourcegroupstaggingapi', region_name='us-east-1')
+          cf = boto3.client('cloudfront', region_name='us-east-1')
+
+          dists = []
+          for page in tagging.get_paginator('get_resources').paginate(
+              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              ResourceTypeFilters=['cloudfront:distribution']
+          ):
+              dists.extend([m['ResourceARN'].split('/')[-1] for m in page['ResourceTagMappingList']])
+
+          if not dists:
+              print("   ✅ No CloudFront Distributions found.")
+              sys.exit(0)
+
+          print(f"   Found {len(dists)} distributions.")
+
+          for dist in dists:
+              if dry_run:
+                  print(f"      [DRY RUN] Would disable and delete {dist}")
+                  continue
+              try:
+                  config_resp = cf.get_distribution_config(Id=dist)
+                  config = config_resp['DistributionConfig']
+                  if config['Enabled']:
+                      print(f"      🔄 Disabling {dist}...")
+                      config['Enabled'] = False
+                      cf.update_distribution(DistributionConfig=config, Id=dist, IfMatch=config_resp['ETag'])
+                  else:
+                      print(f"      🔄 {dist} already disabled.")
+              except Exception as e:
+                  print(f"      ⚠️ Error checking {dist}: {e}")
+
+          if dry_run:
+              sys.exit(0)
+
+          print("   ⏳ Waiting for distributions to deploy (max 15 mins)...")
+          pending = list(dists)
+          timeout = 60
+          while pending and timeout > 0:
+              for dist in list(pending):
+                  try:
+                      resp = cf.get_distribution(Id=dist)
+                      if resp['Distribution']['Status'] == 'Deployed':
+                          print(f"      🗑️ Deleting {dist}...")
+                          cf.delete_distribution(Id=dist, IfMatch=cf.get_distribution_config(Id=dist)['ETag'])
+                          pending.remove(dist)
+                  except Exception as e:
+                      if 'NoSuchDistribution' in str(e):
+                          pending.remove(dist)
+                      else:
+                          print(f"      ⚠️ Error checking {dist}: {e}")
+              if pending:
+                  time.sleep(15)
+                  timeout -= 1
+          EOF
+          python3 cf_cleanup.py "$PROJECT_KEY" "$STAGE_KEY" "${{ inputs.dry_run }}"
+
       - name: Cleanup Zombie Cloudflare Records
         if: env.PROJECT_KEY != ''
         env:
