@@ -1,3 +1,19 @@
+## v2.1.69 (2026-04-23)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG.md for bash syntax error fix
+- chore: update CHANGELOG for v2.1.68
+- chore: update CHANGELOG for v2.1.68
+- chore: update CHANGELOG for v2.1.67
+
+### Fixed
+
+
 ## v2.1.68 (2026-04-23)
 
 ### Added
