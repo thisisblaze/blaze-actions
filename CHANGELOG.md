@@ -1,5 +1,18 @@
 ## v2.1.68 (2026-04-23)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.67
+
+### Fixed
+
+
+## v2.1.68 (2026-04-23)
+
 - fix(ci): bump all internal nested workflow references to `v2.1.68` (from `v2.1.62`/`v2.1.66`) to ensure updated teardown and GC logic is actually executed during stress tests.
 
 ## v2.1.67 (2026-04-23)
