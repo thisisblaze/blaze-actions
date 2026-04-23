@@ -197,7 +197,7 @@ jobs:
           echo "🔍 Scanning S3 buckets for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags (V2 schema)"
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
             --region "${{ inputs.aws_region }}" \
-            --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${STAGE_KEY}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "s3" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
@@ -270,14 +270,14 @@ jobs:
           
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
             --region "$REGION" \
-            --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${STAGE_KEY}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
 
           TAGGED_ARNS_EDGE=$(aws resourcegroupstaggingapi get-resources \
             --region "us-east-1" \
-            --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${STAGE_KEY}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
@@ -655,6 +655,7 @@ jobs:
             "api-${{ env.STAGE_KEY }}.${DOMAIN}"
             "admin-${{ env.STAGE_KEY }}.${DOMAIN}"
             "cdn-${{ env.STAGE_KEY }}.${DOMAIN}"
+            "frontend-${{ env.STAGE_KEY }}.${DOMAIN}"
             "${{ env.STAGE_KEY }}.${DOMAIN}"
           )
 
@@ -689,7 +690,7 @@ jobs:
 
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
             --region us-east-1 \
-            --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${STAGE_KEY}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "lambda:function" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
@@ -914,7 +915,7 @@ jobs:
           echo "🔍 Scanning for services targeting Project=${PROJECT_KEY}, Stage=${STAGE_KEY}"
           SERVICES=$(aws resourcegroupstaggingapi get-resources \
             --region "${{ inputs.aws_region }}" \
-            --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${STAGE_KEY}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "ecs:service" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null | tr '\t' '\n' || echo "")
@@ -991,7 +992,7 @@ jobs:
              # NOTE: Must filter by BOTH blaze:project AND blaze:stage to prevent cross-project task def sweeps
              TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
                --region "${{ inputs.aws_region }}" \
-               --tag-filters "Key=blaze:project,Values=${PROJECT_KEY}" "Key=blaze:stage,Values=${{ inputs.environment }}" \
+               --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${{ inputs.environment }}" \
                --resource-type-filters "ecs:task-definition" \
                --query "ResourceTagMappingList[*].ResourceARN" \
                --output text 2>/dev/null || echo "")
