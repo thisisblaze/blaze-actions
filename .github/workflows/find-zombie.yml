@@ -1,0 +1,51 @@
+name: "Find Zombie CloudFront"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_cname:
+        description: 'CNAME to search for'
+        required: true
+        default: 'thisisblaze.uk'
+
+jobs:
+  find-zombie:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::930976658068:role/blaze-b9-github-oidc-role
+          aws-region: eu-west-1
+
+      - name: Find Zombie CF
+        run: |
+          pip install boto3
+          cat << 'EOF' > find_zombie.py
+          import boto3
+          import sys
+
+          cname_to_find = sys.argv[1]
+          cf = boto3.client('cloudfront', region_name='us-east-1')
+          tagging = boto3.client('resourcegroupstaggingapi', region_name='us-east-1')
+
+          paginator = cf.get_paginator('list_distributions')
+          for page in paginator.paginate():
+              if 'Items' not in page['DistributionList']:
+                  continue
+              for dist in page['DistributionList']['Items']:
+                  aliases = dist.get('Aliases', {}).get('Items', [])
+                  if any(cname_to_find in a for a in aliases):
+                      print(f"FOUND MATCHING DISTRIBUTION: {dist['Id']}")
+                      print(f"Aliases: {aliases}")
+                      try:
+                          tags = tagging.get_resources(ResourceARNList=[dist['ARN']])
+                          print(f"Tags: {tags}")
+                      except Exception as e:
+                          print(f"Failed to get tags: {e}")
+                      print("========================================")
+          EOF
+          python3 find_zombie.py "${{ inputs.target_cname }}"
