@@ -647,7 +647,16 @@ jobs:
           # 1. Validation records (ACM)
           # 2. Specific host records for the stage being destroyed
 
-          RECORDS=("validation.${DOMAIN}" "${{ env.STAGE_KEY }}-api.${DOMAIN}" "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" "${{ env.STAGE_KEY }}-admin.${DOMAIN}")
+          RECORDS=(
+            "validation.${DOMAIN}" 
+            "${{ env.STAGE_KEY }}-api.${DOMAIN}" 
+            "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" 
+            "${{ env.STAGE_KEY }}-admin.${DOMAIN}"
+            "api-${{ env.STAGE_KEY }}.${DOMAIN}"
+            "admin-${{ env.STAGE_KEY }}.${DOMAIN}"
+            "cdn-${{ env.STAGE_KEY }}.${DOMAIN}"
+            "${{ env.STAGE_KEY }}.${DOMAIN}"
+          )
 
           for REC_NAME in "${RECORDS[@]}"; do
              echo "   Checking $REC_NAME"

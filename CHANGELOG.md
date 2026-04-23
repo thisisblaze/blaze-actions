@@ -1,5 +1,7 @@
-## [Unreleased]
+## v2.1.67 (2026-04-23)
 
+- fix(teardown): add tag-based Garbage Collection for ALB Target Groups and CloudFront distributions to prevent 409 ghost resource conflicts during environment reprovisioning.
+- fix(teardown): expand Cloudflare DNS zombie cleanup target list to include `dev.thisisblaze.uk`, `admin-dev`, and other canonical routing patterns.
 - chore: performed deep CI/CD maintenance sweep, aligning WORKFLOW_CATALOG.md, REUSABLE_WORKFLOWS.md, and all agent workflow timestamps to the 02-deploy-app.yml standard and v2.4.6 versions.
 - chore: execute `/checkengines` sweep and resolve module split-brain, bumping Azure and GCP live modules natively to `v2.4.6`.
 - fix: resolved Node.js 20 deprecation warning by upgrading `aws-actions/configure-aws-credentials` strictly pinned SHA from `v4.0.2` to `v6.1.0` across all workflows.
