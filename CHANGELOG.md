@@ -1,6 +1,7 @@
 ## v2.1.68 (2026-04-23)
 
 - fix(ci): bump all internal nested workflow references to `v2.1.68` (from `v2.1.62`/`v2.1.66`) to ensure updated teardown and GC logic is actually executed during stress tests.
+- fix(infra): resolve orphaned `else` and `fi` blocks causing bash syntax errors in the `01-provision-infra.yml` pre-apply logic, preventing successful multi-tenant infrastructure provisioning.
 
 ## v2.1.67 (2026-04-23)
 
