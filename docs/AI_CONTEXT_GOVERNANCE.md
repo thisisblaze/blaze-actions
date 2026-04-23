@@ -243,7 +243,7 @@ When destroying a multi-site environment, ALWAYS scope by `Blaze:Project` tag. *
 | support | `vars/support/blaze-env.json` | `projects/support/packages/` |
 | thisisblaze2 | `vars/thisisblaze2/blaze-env.json` | `projects/thisisblaze2/packages/` |
 
-See: `docs/plans/144_new_domain_project_onboarding.md`
+See: `docs/plans/archive/144_new_domain_project_onboarding.md`
 
 ## 15. Multi-Tenant Nuke Failure Patterns (2026-04-08)
 
