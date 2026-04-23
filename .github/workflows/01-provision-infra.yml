@@ -578,27 +578,6 @@ jobs:
                 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
                 "$LAMBDA_POLICY_ARN" 2>/dev/null && echo "  ✅ IAM policy re-imported" || echo "  ⚠️  IAM policy re-import failed (TF may hit EntityAlreadyExists)"
             fi
-          else
-            echo "  ℹ️  No ECS cluster found — Terraform will create fresh"
-            LAMBDA_NS_2="${{ needs.configuration.outputs.namespace || 'blaze' }}"
-            LAMBDA_ROLE_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-role"
-            LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
-              --query 'Role.RoleName' --output text 2>/dev/null || echo "")
-            if [[ -n "$LAMBDA_ROLE_EXISTS" && "$LAMBDA_ROLE_EXISTS" != "None" ]]; then
-              terraform import \
-                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' \
-                "$LAMBDA_ROLE_NAME" 2>/dev/null || true
-            fi
-            LAMBDA_POLICY_NAME="${LAMBDA_NS_2}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
-            LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
-              --output json 2>/dev/null \
-              | jq -r --arg name "$LAMBDA_POLICY_NAME" '.Policies[] | select(.PolicyName==$name) | .Arn' || echo "")
-            if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
-              terraform import \
-                'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
-                "$LAMBDA_POLICY_ARN" 2>/dev/null || true
-            fi
-          fi
 
 
           # ── Smart Import: WAF Global Web ACL ──
