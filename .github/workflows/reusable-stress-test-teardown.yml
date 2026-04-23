@@ -356,6 +356,7 @@ jobs:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
+      dry_run: false
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
