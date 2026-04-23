@@ -1,6 +1,9 @@
 name: "Find Zombie CloudFront"
 
 on:
+  push:
+    paths:
+      - '.github/workflows/find-zombie.yml'
   workflow_dispatch:
     inputs:
       target_cname:
