@@ -15,6 +15,7 @@ on:
           - destroy-resources
           - unlock-state
           - wipe-state
+          - rm-state
         required: true
         default: destroy-resources
       environment:
@@ -76,6 +77,10 @@ on:
         description: "CloudFront Distribution ID (for nuke-cloudfront)"
         type: string
         required: false
+      target_resource:
+        description: "Terraform Resource Address (for rm-state, e.g., 'module.cloudflare')"
+        type: string
+        required: false
 
   workflow_call:
     inputs:
@@ -129,6 +134,9 @@ on:
         required: false
         default: true
       dist_id:
+        type: string
+        required: false
+      target_resource:
         type: string
         required: false
     # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
@@ -254,7 +262,7 @@ jobs:
           fi
 
           # Validation for destructive actions
-          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "rm-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
             if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
               echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
               exit 1
@@ -401,7 +409,7 @@ jobs:
   state-operations:
     name: State Ops
     needs: [configuration]
-    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state'
+    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || inputs.action == 'rm-state'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -446,13 +454,29 @@ jobs:
               --region "$REGION" \
               --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
             aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
-          elif [[ "$ACTION" == "wipe-state" ]]; then
-            echo "☢️ WIPING STATE: $LOCK_ID"
-            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION"
-            aws dynamodb delete-item \
-              --table-name "$TABLE" \
-              --region "$REGION" \
-              --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
+          elif [[ "$ACTION" == "rm-state" ]]; then
+            TARGET="${{ inputs.target_resource }}"
+            if [[ -z "$TARGET" ]]; then
+              echo "❌ ERROR: target_resource is required for rm-state."
+              exit 1
+            fi
+            echo "🔧 REMOVING TARGET '$TARGET' FROM STATE: $LOCK_ID"
+            aws s3 cp "s3://$BUCKET/$KEY" state.json --region "$REGION"
+            
+            # Use jq to remove the resource from the state file
+            # This is a brute-force approach, terraform CLI is safer but requires init
+            # Since we just need to remove cloudflare_record, let's use jq:
+            jq --arg addr "$TARGET" '
+              .resources |= map(
+                if .type == "cloudflare_record" and ( .module == "module.multi_site_app" or .module == "module.multi_site_app.module.cloudflare" ) then
+                  select(false)
+                else
+                  .
+                end
+              )
+            ' state.json > new_state.json
+            
+            aws s3 cp new_state.json "s3://$BUCKET/$KEY" --region "$REGION"
           fi
 
       - name: Execute Ops (GCP)
