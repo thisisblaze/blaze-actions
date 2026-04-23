@@ -649,14 +649,6 @@ jobs:
 
           RECORDS=(
             "validation.${DOMAIN}" 
-            "${{ env.STAGE_KEY }}-api.${DOMAIN}" 
-            "${{ env.STAGE_KEY }}-frontend.${DOMAIN}" 
-            "${{ env.STAGE_KEY }}-admin.${DOMAIN}"
-            "api-${{ env.STAGE_KEY }}.${DOMAIN}"
-            "admin-${{ env.STAGE_KEY }}.${DOMAIN}"
-            "cdn-${{ env.STAGE_KEY }}.${DOMAIN}"
-            "frontend-${{ env.STAGE_KEY }}.${DOMAIN}"
-            "${{ env.STAGE_KEY }}.${DOMAIN}"
           )
 
           for REC_NAME in "${RECORDS[@]}"; do
