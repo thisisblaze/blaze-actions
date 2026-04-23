@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-22
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-22
 
 ---
 
@@ -39,7 +39,7 @@ on:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
@@ -57,7 +57,7 @@ uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
 **Stable (recommended for production)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.62
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.4.6
 ```
 
 **Specific commit (maximum stability)**:
@@ -109,7 +109,7 @@ jobs:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     secrets: inherit # Pass all secrets to remote workflow
 ```
 
@@ -128,13 +128,13 @@ with:
 @dev
 
 # Stable (production)
-@v2.1.62
+@v2.4.6
 
 # Specific commit (maximum pinning)
 @<sha>
 ```
 
-> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.1.62`).
+> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.4.6`).
 
 ### 4. Set Proper Permissions
 
@@ -167,14 +167,14 @@ jobs:
 
 ## Hybrid ECS (EC2 & Fargate)
 
-The `04-deploy-multi-site` workflow supports mixed compute strategies on AWS.
+The `02-deploy-app` workflow supports mixed compute strategies on AWS.
 
 ### Inputs for Hybrid ECS
 
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: prod
       # Deployment Strategy:
@@ -201,7 +201,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -214,12 +214,12 @@ jobs:
 
 ## Admin SPA Deploy (AWS)
 
-For AWS `DEV`/`STAGE`/`PROD`, `04-deploy-multi-site` also syncs the Admin SPA build to S3 and invalidates CloudFront.
+For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to S3 and invalidates CloudFront.
 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
@@ -288,7 +288,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: dev
     secrets: inherit
@@ -305,7 +305,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: prod
     secrets: inherit
@@ -350,7 +350,7 @@ with:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     secrets: inherit # Add this line
 ```
 
@@ -440,7 +440,7 @@ permissions:
 
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.62
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.4.6
     with:
       environment: prod
       stack: app
@@ -449,7 +449,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.1.62
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.4.6
     with:
       environment: prod
       target_services: "Blaze all"
@@ -457,7 +457,7 @@ jobs:
 
   verify:
     needs: deploy
-    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.1.62
+    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.4.6
     with:
       environment: prod
     secrets: inherit
@@ -478,7 +478,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/04-deploy-multi-site.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: dev
       target_services: "api frontend"
@@ -493,7 +493,7 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.1.62` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.4.6` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
@@ -584,6 +584,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-04-20  
+**Last Updated**: 2026-04-22  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

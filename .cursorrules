@@ -37,7 +37,7 @@ GitHub Actions workflows use a strict Multi-Tenant lifecycle phase mapping:
 
 - **01a-provision-network**: Phase 1 Foundation Networking Edge.
 - **01g-provision-db-pod**: Phase 1 Foundation Data Shared pods.
-- **04-deploy-multi-site**: Phase 2 Tenant Application deployment and Tenant Edge routing.
+- **02-deploy-app**: Phase 2 Tenant Application deployment and Tenant Edge routing.
 - **99-ops-nuke**: Total teardown command for both Foundation and Tenant layers.
 
 ### 2.3 Variables
@@ -51,7 +51,7 @@ GitHub Actions workflows use a strict Multi-Tenant lifecycle phase mapping:
 - **`live/`**: Instantiations of infrastructure across explicit Pillars:
   - `01a-provision-network/`: Foundation Layer Networking.
   - `01g-provision-db-pod/`: Foundation Layer Data pods.
-  - `04-deploy-multi-site/`: Tenant Application properties and routing.
+  - `multi-site-app/`: Tenant Application properties and routing.
 
 ### 3.2 `/.github/workflows/`
 Contains all automation logic.
@@ -130,19 +130,19 @@ default_tags {
 
 > **Environment Model (2026-04-16 — Read Before Proceeding)**:
 > - **Foundation Constraints**: Ensure `01a-provision-network` alterations don't affect live Phase 2 deployments.
-> - **Tenant Constraints**: Changes against `04-deploy-multi-site` will cascade against all isolated tenants inside the Target Group pool.
+> - **Tenant Constraints**: Changes against `multi-site-app` will cascade against all isolated tenants inside the Target Group pool.
 
 ### 7.1 Validation Requirements
 
 **Before committing changes to `01a-provision-network` or `01g-provision-db-pod`:**
-- [ ] Ensure backward compatibility with `04-deploy-multi-site`.
+- [ ] Ensure backward compatibility with `multi-site-app`.
 - [ ] Confirm State IDs remain strictly mapped per module.
 
-**Before committing changes to `04-deploy-multi-site`:**
+**Before committing changes to `multi-site-app`:**
 - [ ] Apply changes systematically to Stage and Prod counterpart tenants.
 - [ ] Do NOT assume scaling logic impacts only a single active environment unless declared in parameters.
 
 ### 7.2 Anti-Patterns (DO NOT DO)
-- ❌ Committing to `01a` Foundation while modifying `04` scaling instances inside a single scope context.
+- ❌ Committing to `01a` Foundation while modifying tenant scaling instances inside a single scope context.
 - ❌ Cross-referencing deprecated monolithic AWS paths.
 - ❌ Using CodeDeploy functions (Deprecated 2026-02-27).

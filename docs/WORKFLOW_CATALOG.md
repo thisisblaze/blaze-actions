@@ -10,13 +10,13 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 33 main + 20 reusable = 53 total  
-**Version**: v2.1.62  
-**Last Updated**: 2026-04-21
+**Total Workflows**: 29 main + 20 reusable = 49 total  
+**Version**: v2.4.6  
+**Last Updated**: 2026-04-22
 
 ---
 
-## Main Workflows (31)
+## Main Workflows (29)
 
 > Note: Several new workflows (like cloud-specific `02-deploy-*` and `99-ops-*`) have been added. They follow standard input patterns.
 
@@ -361,34 +361,16 @@
 
 ---
 
-#### nuke-cloudfront.yml
 
-**Purpose**: CloudFront distribution cleanup  
-**Use Case**: Remove orphaned distributions
-
-**Inputs**:
-
-- `distribution_id` (optional): Specific distribution
-- `confirm` (boolean): Require confirmation
-
-**What it does**:
-
-- Lists CloudFront distributions
-- Disables and deletes
-- Cleans up orphaned resources
-
-**When to run**: CloudFront cleanup needed
-
----
 
 
 
 #### 02-deploy-app.yml
-**Purpose**: Generic multi-cloud app deployment entrypoint. Routes to the appropriate cloud-specific deploy workflow (`02-deploy-aws`, `02-deploy-gcp`, `02-deploy-azure`) based on `cloud_provider` input. Primary dispatcher used by `04-deploy-multi-site.yml`.
+**Purpose**: Generic multi-cloud app deployment entrypoint. Routes to the appropriate cloud-specific deploy workflow (`02-deploy-aws`, `02-deploy-gcp`, `02-deploy-azure`) based on `cloud_provider` input.
 
 ---
 #### 02-deploy-aws.yml
-**Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `04-deploy-multi-site.yml`.
+**Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `02-deploy-app.yml`.
 
 ---
 #### 02-deploy-azure.yml
@@ -435,18 +417,7 @@
 **Purpose**: Azure environment health verification — checks Container App status, DNS resolution, HTTPS endpoints.
 
 ---
-#### deploy-azure-site.yml
-**Purpose**: Reusable multi-site Azure Container Apps deployment. Called by the main Azure deploy pipeline for per-site updates.
 
----
-#### deploy-gcp-site.yml
-**Purpose**: Reusable multi-site GCP Cloud Run deployment. Wraps `reusable-docker-build.yml` and `reusable-gcp-multi-site-deploy.yml`. Handles Docker build → AR push → Cloud Run traffic shift.
-
----
-#### deploy-site.yml
-**Purpose**: AWS multi-site ECS deployment. Deploys a single site's containers (api + frontend) via native ECS rolling update.
-
----
 #### release.yml
 **Purpose**: Semantic versioning release — bumps version tag, generates CHANGELOG entry, creates GitHub Release.
 
@@ -558,7 +529,7 @@ These are called by main workflows, not directly by users.
 
 ---
 #### reusable-stress-test-deploy.yml
-**Purpose**: Stress test deploy phase. Calls `04-deploy-multi-site` with the calculated project config. Uses `project_key` from `calculate-config`.
+**Purpose**: Stress test deploy phase. Calls `02-deploy-app.yml` with the calculated project config. Uses `project_key` from `calculate-config`.
 
 ---
 #### reusable-stress-test-teardown.yml
@@ -575,7 +546,7 @@ These are called by main workflows, not directly by users.
 | :---------------------- | :--------------------- | :-------------- |
 | `00_setup_environment`  | First-time setup       | 5-10 min        |
 | `01-provision-infra`    | Infrastructure changes | 10-20 min       |
-| `04-deploy-multi-site`         | Code deployments       | 5-10 min        |
+| `02-deploy-app`         | Code deployments       | 5-10 min        |
 | `stress-test`           | Release validation     | 30-40 min       |
 | `99-ops-nuke`        | Ad-hoc operations      | 2-5 min         |
 | `90-daily-health-check` | Daily monitoring       | 2-5 min         |
@@ -585,6 +556,9 @@ These are called by main workflows, not directly by users.
 ---
 
 ## Version History
+
+**v2.4.6** (2026-04-22):
+- Deep CI/CD maintenance sync: Updated workflow catalog, resolved all references to renamed workflows (e.g. `04-deploy-multi-site` to `02-deploy-app`), removed non-existent workflows (`deploy-site`, `nuke-cloudfront`), and aligned versions to `v2.4.6`.
 
 **v2.1.62** (2026-04-21):
 - Added `workers_json` input to `01-provision-infra.yml` — routes Plan 146 Dual-Engine background worker config (SQS/Lambda fast + Fargate/cron heavy) into Terraform.
@@ -617,7 +591,7 @@ These are called by main workflows, not directly by users.
 
 - Native ECS Blue/Green (no CodeDeploy)
 - DEV-MINI environment (Cloudflare Tunnel only)
-- Admin SPA: S3 sync + CloudFront invalidation added to `04-deploy-multi-site`
+- Admin SPA: S3 sync + CloudFront invalidation added to `02-deploy-app`
 - DEV mirrors STAGE (full CloudFront + WAF + ALB + Image Resize)
 - `deploy-site.yml` blue-green migrated from CodeDeploy to Native ECS B/G
 
@@ -634,6 +608,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-21  
+**Last Updated**: 2026-04-22  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

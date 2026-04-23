@@ -1,6 +1,9 @@
 ## [Unreleased]
 
+- chore: performed deep CI/CD maintenance sweep, aligning WORKFLOW_CATALOG.md, REUSABLE_WORKFLOWS.md, and all agent workflow timestamps to the 02-deploy-app.yml standard and v2.4.6 versions.
 - chore: execute `/checkengines` sweep and resolve module split-brain, bumping Azure and GCP live modules natively to `v2.4.6`.
+- fix: resolved Node.js 20 deprecation warning by upgrading `aws-actions/configure-aws-credentials` strictly pinned SHA from `v4.0.2` to `v6.1.0` across all workflows.
+- fix: replaced outdated `04-deploy-multi-site` references in `.cursorrules` with `02-deploy-app` and `multi-site-app` standard.
 - chore: end-of-day governance sync — 2026-04-22.
 
 ## v2.1.66 (2026-04-20)

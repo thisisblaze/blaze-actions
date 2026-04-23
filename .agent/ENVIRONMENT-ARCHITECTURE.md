@@ -292,7 +292,7 @@ The platform now supports multiple projects sharing a single ECS cluster, ALB, a
 
 ---
 
-**Last Updated:** 2026-04-14  
+**Last Updated:** 2026-04-22  
 **Maintained By:** Infrastructure Team  
 **Review Frequency:** Quarterly or when architecture changes  
 **Cloud Providers:** AWS (ECS Fargate/EC2 Hybrid), GCP (Cloud Run), Azure (Container Apps)
