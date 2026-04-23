@@ -797,6 +797,25 @@ jobs:
 
                 echo "      🗑️ Explicitly deleting Auto Scaling Group: $ASG_NAME"
                 aws autoscaling delete-auto-scaling-group --auto-scaling-group-name "$ASG_NAME" --force-delete --region "$REGION" || echo "      ⚠️ Failed to delete ASG"
+                
+                # Wait for ASG to be completely removed (unblocks Launch Template deletion)
+                echo "      ⏳ Waiting for ASG to be fully deleted..."
+                timeout=180
+                elapsed=0
+                while [ $elapsed -lt $timeout ]; do
+                   ASG_CHECK=$(aws autoscaling describe-auto-scaling-groups \
+                     --auto-scaling-group-names "$ASG_NAME" \
+                     --region "$REGION" \
+                     --query "AutoScalingGroups" \
+                     --output text 2>/dev/null || echo "")
+                   if [[ -z "$ASG_CHECK" || "$ASG_CHECK" == "None" ]]; then
+                      echo "      ✅ ASG fully deleted"
+                      break
+                   fi
+                   echo "      ... still waiting for ASG deletion"
+                   sleep 15
+                   elapsed=$((elapsed+15))
+                done
              fi
           else
              echo "      ✅ ASG not found (no EC2 capacity provider)"
