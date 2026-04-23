@@ -1,5 +1,28 @@
 ## v2.1.67 (2026-04-23)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: prepare v2.1.67 release
+- chore: end-of-day governance sync — 2026-04-23
+- chore: end-of-day governance sync — 2026-04-23
+- chore: end-of-day governance sync — 2026-04-22
+- chore: bump modules to v2.4.6 to resolve split brain
+- chore: update changelog for archived legacy scripts
+- chore: archive legacy deploy and nuke scripts
+- chore: end-of-day governance sync — 2026-04-21
+- chore: end-of-day governance sync — 2026-04-21
+- chore: bump infra-core version pin v2.3.7 → v2.4.0 in governance docs
+- chore: end-of-day governance sync — 2026-04-20
+
+### Fixed
+
+
+## v2.1.67 (2026-04-23)
+
 - fix(teardown): add tag-based Garbage Collection for ALB Target Groups and CloudFront distributions to prevent 409 ghost resource conflicts during environment reprovisioning.
 - fix(teardown): expand Cloudflare DNS zombie cleanup target list to include `dev.thisisblaze.uk`, `admin-dev`, and other canonical routing patterns.
 - chore: performed deep CI/CD maintenance sweep, aligning WORKFLOW_CATALOG.md, REUSABLE_WORKFLOWS.md, and all agent workflow timestamps to the 02-deploy-app.yml standard and v2.4.6 versions.
