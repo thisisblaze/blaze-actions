@@ -1,3 +1,17 @@
+## v2.1.73 (2026-04-24)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: globally bump internal workflow references to v2.1.73 to ensure jq strict null fix is executed
+- chore: update CHANGELOG for v2.1.72
+
+### Fixed
+
+
 ## v2.1.72 (2026-04-24)
 
 ### Added
