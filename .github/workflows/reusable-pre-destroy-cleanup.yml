@@ -744,10 +744,10 @@ jobs:
           # ---------------------------------------------------------
           # 1. Find and scale down ASG
           # ---------------------------------------------------------
-          echo "   🔍 Searching for ASG matching ${PROJECT_KEY} and ${STAGE_KEY}-ecs-ec2-cp..."
+          echo "   🔍 Searching for ASG matching prefix ${RESOURCE_PREFIX}-..."
           ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
             --region "$REGION" \
-            --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${PROJECT_KEY}') && contains(AutoScalingGroupName, '${STAGE_KEY}-ecs-ec2-cp')].AutoScalingGroupName | [0]" \
+            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '${RESOURCE_PREFIX}-') && contains(AutoScalingGroupName, '-ecs-ec2-cp')].AutoScalingGroupName | [0]" \
             --output text 2>/dev/null || echo "None")
           
           if [[ "$ASG_NAME" == "null" ]]; then ASG_NAME="None"; fi
