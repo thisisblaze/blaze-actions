@@ -6,6 +6,22 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v2.1.74
+- docs: update CHANGELOG for v2.1.74 / v2.4.8 deep ci/cd sync
+- chore: update CHANGELOG for v2.1.73
+
+### Fixed
+
+- fix: revert bad v2.1.73 global find-and-replace to dev
+
+## v2.1.74 (2026-04-24)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - docs: update CHANGELOG for v2.1.74 / v2.4.8 deep ci/cd sync
 - chore: update CHANGELOG for v2.1.73
 
