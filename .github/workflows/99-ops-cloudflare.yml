@@ -23,7 +23,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.73", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -67,7 +67,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
         type: string
         required: false
       skip_lambda_destroy:
@@ -456,7 +456,7 @@ jobs:
           echo "✅ Parsed blaze-env.json for $STAGE environment"
 
       - name: Sync to Cloudflare Pages (Admin)
-        if: ${{ needs.configuration.outputs.stage_key != 'dev' }}
+        if: ${{ needs.configuration.outputs.stage_key != 'v2.1.73' }}
         run: |
           # Install Wrangler
           npm install -g wrangler
@@ -500,7 +500,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Skip DEV
-        if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
+        if: ${{ needs.configuration.outputs.stage_key == 'v2.1.73' }}
         run: |
           echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
 
@@ -663,7 +663,7 @@ jobs:
             # But let's try to be precise.
 
             # Simple Check:
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+            HTTP_CODE=$(curl -s -o /v2.1.73/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
 
             if [[ "$HTTP_CODE" == "200" ]]; then
@@ -754,10 +754,10 @@ jobs:
              check_pages_project "$PROJECT_NAME"
 
              # 2. Basic Auth Worker
-             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-dev-basic-auth)
+             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-v2.1.73-basic-auth)
              # Wait, usually it includes namespace?
-             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-dev-basic-auth
-             # Namespace=blaze, Project=thisisblaze, Stage=dev.
+             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-v2.1.73-basic-auth
+             # Namespace=blaze, Project=thisisblaze, Stage=v2.1.73.
              # So pattern is: ${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth
              # But let's also try with client-key just in case: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth
              # Or just check both?
@@ -851,7 +851,7 @@ jobs:
             INDEX=$((INDEX + 1))
             
             # Calculate age
-            CREATED_TS=$(date -d "${CREATED_AT%.*}" +%s 2>/dev/null || echo 0)
+            CREATED_TS=$(date -d "${CREATED_AT%.*}" +%s 2>/v2.1.73/null || echo 0)
             AGE_DAYS=$(( (CURRENT_TIME - CREATED_TS) / 86400 ))
             
             # Decide whether to delete
@@ -866,7 +866,7 @@ jobs:
                 
                 curl -s -X DELETE \
                   "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments/${DEPLOY_ID}" \
-                  -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
+                  -H "Authorization: Bearer ${CF_API_TOKEN}" > /v2.1.73/null
                 
                 DELETED=$((DELETED + 1))
               fi
@@ -911,7 +911,7 @@ jobs:
         run: |
           PATTERN="${{ inputs.bulk_pattern }}"
           if [ -z "$PATTERN" ]; then
-            echo "❌ bulk_pattern required (e.g., 'namespace-*-dev-*')"
+            echo "❌ bulk_pattern required (e.g., 'namespace-*-v2.1.73-*')"
             exit 1
           fi
           echo "📋 Pattern: $PATTERN"
@@ -956,7 +956,7 @@ jobs:
               echo "🗑️ Deleting: $PROJECT"
               curl -s -X DELETE \
                 "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT}" \
-                -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
+                -H "Authorization: Bearer ${CF_API_TOKEN}" > /v2.1.73/null
               sleep 1
             done
           fi

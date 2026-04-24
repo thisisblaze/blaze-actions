@@ -14,7 +14,7 @@ on:
       dynamodb_table:
         description: "DynamoDB Lock Table Name"
         required: true
-        default: "example-dev-blaze-tfstate-lock"
+        default: "example-v2.1.73-blaze-tfstate-lock"
       state_key_path:
         description: "S3 Key to Clean (e.g., infra/.../cloudflare.tfstate)"
         required: true

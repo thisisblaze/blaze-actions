@@ -43,7 +43,7 @@ variable "tag_state" {
 variable "nat_strategy" {
   type        = string
   default     = "NONE"
-  description = "NAT Gateway strategy: NONE (dev/stage), SINGLE (prod — 1 NAT GW in eu-west-1a)"
+  description = "NAT Gateway strategy: NONE (v2.1.73/stage), SINGLE (prod — 1 NAT GW in eu-west-1a)"
 
   validation {
     condition     = contains(["NONE", "SINGLE", "GATEWAY"], var.nat_strategy)

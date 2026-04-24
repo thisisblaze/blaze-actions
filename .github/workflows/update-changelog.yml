@@ -30,7 +30,7 @@ jobs:
               uses: actions/checkout@v6.0.2
               with:
                   fetch-depth: 0 # Fetch all history for changelog generation
-                  ref: dev # Update changelog on dev branch
+                  ref: v2.1.73 # Update changelog on v2.1.73 branch
 
             - name: Extract Tag Version
               id: tag
@@ -42,7 +42,7 @@ jobs:
             - name: Get Previous Tag
               id: prev_tag
               run: |
-                  PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+                  PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/v2.1.73/null || echo "")
                   echo "previous=${PREV_TAG}" >> $GITHUB_OUTPUT
                   echo "📜 Previous tag: ${PREV_TAG:-<none>}"
 
@@ -166,8 +166,8 @@ jobs:
                     echo "No changes to commit"
                   else
                     git commit -m "chore: update CHANGELOG for ${{ steps.tag.outputs.version }}"
-                    git push origin dev
-                    echo "✅ CHANGELOG committed and pushed to dev branch"
+                    git push origin v2.1.73
+                    echo "✅ CHANGELOG committed and pushed to v2.1.73 branch"
                   fi
 
             - name: Summary
@@ -177,7 +177,7 @@ jobs:
                   echo "**Version**: ${{ steps.tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
                   echo "**Previous Version**: ${{ steps.prev_tag.outputs.previous || 'Initial release' }}" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "CHANGELOG.md has been automatically updated on the \`dev\` branch." >> $GITHUB_STEP_SUMMARY
+                  echo "CHANGELOG.md has been automatically updated on the \`v2.1.73\` branch." >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
                   echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
                   echo "> Review and edit CHANGELOG.md if needed before merging to main." >> $GITHUB_STEP_SUMMARY

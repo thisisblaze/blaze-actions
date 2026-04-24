@@ -3,7 +3,7 @@ name: Lint Agent Workflows
 on:
   push:
     branches:
-      - dev
+      - v2.1.73
   pull_request:
     types: [opened, synchronize, reopened]
     paths:

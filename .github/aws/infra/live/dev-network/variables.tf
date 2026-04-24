@@ -15,7 +15,7 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "The deployment stage (dev, prod, etc.)"
+  description = "The deployment stage (v2.1.73, prod, etc.)"
   type        = string
 }
 
@@ -143,7 +143,7 @@ variable "ec2_desired_size" {
 # ──────────────────────────────────────────────────────────────────────────────
 variable "stack_name" {
   type        = string
-  default     = "dev-network"
+  default     = "v2.1.73-network"
   description = "Stack identifier for Blaze:Stack tag. Set automatically by CI."
 }
 

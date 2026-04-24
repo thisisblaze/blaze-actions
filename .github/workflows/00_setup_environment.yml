@@ -12,7 +12,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.73", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
         required: true
       task:
         description: "Setup Task"
@@ -292,13 +292,13 @@ jobs:
           TABLE_NAME="${BUCKET_NAME}-lock"
           echo "🚀 Bootstrapping AWS Backend for ${{ needs.calculate-config.outputs.stage_key }}"
           terraform init
-          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/v2.1.73/null; then
             echo "✅ Bucket exists. Importing..."
-            terraform import module.tfstate_backend.aws_s3_bucket.default "$BUCKET_NAME" 2>/dev/null || true
+            terraform import module.tfstate_backend.aws_s3_bucket.default "$BUCKET_NAME" 2>/v2.1.73/null || true
           fi
-          if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
+          if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/v2.1.73/null; then
             echo "✅ Table exists. Importing..."
-            terraform import module.tfstate_backend.aws_dynamodb_table.with_server_side_encryption "$TABLE_NAME" 2>/dev/null || true
+            terraform import module.tfstate_backend.aws_dynamodb_table.with_server_side_encryption "$TABLE_NAME" 2>/v2.1.73/null || true
           fi
           terraform apply -auto-approve
 
@@ -320,7 +320,7 @@ jobs:
           echo "   Container:       $CONTAINER_NAME"
 
           # Check Resource Group
-          if az group show --name "$RG_NAME" &>/dev/null; then
+          if az group show --name "$RG_NAME" &>/v2.1.73/null; then
             echo "✅ Resource Group exists: $RG_NAME"
           else
             echo "❌ Resource Group NOT found: $RG_NAME"
@@ -329,7 +329,7 @@ jobs:
           fi
 
           # Check Storage Account
-          if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" &>/dev/null; then
+          if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" &>/v2.1.73/null; then
             echo "✅ Storage Account exists: $SA_NAME"
           else
             echo "❌ Storage Account NOT found: $SA_NAME"
@@ -339,7 +339,7 @@ jobs:
 
           # Check Blob Container
           CONN=$(az storage account show-connection-string --name "$SA_NAME" --resource-group "$RG_NAME" --query connectionString -o tsv)
-          if az storage container show --name "$CONTAINER_NAME" --connection-string "$CONN" &>/dev/null; then
+          if az storage container show --name "$CONTAINER_NAME" --connection-string "$CONN" &>/v2.1.73/null; then
             echo "✅ Blob Container exists: $CONTAINER_NAME"
           else
             echo "❌ Blob Container NOT found: $CONTAINER_NAME"
@@ -369,7 +369,7 @@ jobs:
           echo "   Bucket:  $BUCKET_NAME"
 
           # Create GCS bucket for TF state (if not exists)
-          if ! gcloud storage buckets describe "gs://$BUCKET_NAME" --project="$PROJECT_ID" 2>/dev/null; then
+          if ! gcloud storage buckets describe "gs://$BUCKET_NAME" --project="$PROJECT_ID" 2>/v2.1.73/null; then
             echo "🆕 Creating GCS bucket: $BUCKET_NAME"
             gcloud storage buckets create "gs://$BUCKET_NAME" \
               --project="$PROJECT_ID" \
@@ -451,7 +451,7 @@ jobs:
           for IMAGE in "${IMAGE_ARRAY[@]}"; do
             REPO_NAME="${REPO_PREFIX}/${IMAGE// /}"
             echo "🔍 Checking ECR: $REPO_NAME"
-            if ! aws ecr describe-repositories --repository-names "$REPO_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
+            if ! aws ecr describe-repositories --repository-names "$REPO_NAME" --region "$AWS_REGION" >/v2.1.73/null 2>&1; then
               echo "🆕 Creating ECR: $REPO_NAME"
               aws ecr create-repository \
                 --repository-name "$REPO_NAME" \
@@ -471,7 +471,7 @@ jobs:
 
           echo "🔍 Ensuring Artifact Registry repo: $REPO_NAME"
           if ! gcloud artifacts repositories describe "$REPO_NAME" \
-            --project="$PROJECT_ID" --location="$REGION" 2>/dev/null; then
+            --project="$PROJECT_ID" --location="$REGION" 2>/v2.1.73/null; then
             echo "🆕 Creating Artifact Registry repo: $REPO_NAME"
             gcloud artifacts repositories create "$REPO_NAME" \
               --project="$PROJECT_ID" \
@@ -514,10 +514,10 @@ jobs:
           PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
           REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
           REPO_NAME="${{ needs.calculate-config.outputs.namespace }}-${{ needs.calculate-config.outputs.project_key }}"
-          REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}"
+          REGISTRY="${REGION}-docker.pkg.v2.1.73/${PROJECT_ID}/${REPO_NAME}"
 
           # Auth docker to Artifact Registry
-          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          gcloud auth configure-docker "${REGION}-docker.pkg.v2.1.73" --quiet
 
           IMAGES="${{ inputs.images }}"
           if [[ "$IMAGES" == "all" ]]; then IMAGES="mongo,elasticsearch,kibana,tunnel"; fi
@@ -596,6 +596,6 @@ jobs:
               --repository-name "$REPO_NAME" \
               --region ${{ needs.calculate-config.outputs.aws_region }} \
               --query 'sort_by(imageDetails,&imagePushedAt)[-5:].[imageTags[0],imagePushedAt]' \
-              --output table 2>/dev/null || echo "   (No images found or repository doesn't exist)"
+              --output table 2>/v2.1.73/null || echo "   (No images found or repository doesn't exist)"
             echo ""
           done

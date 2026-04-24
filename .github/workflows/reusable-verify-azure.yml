@@ -124,7 +124,7 @@ jobs:
           # 1. API Health Check
           API_URL="https://api-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/graphql"
           echo "Checking API: $API_URL"
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
+          HTTP_STATUS=$(curl -s -o /v2.1.73/null -w "%{http_code}" "$API_URL")
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "❌ API check failed! HTTP $HTTP_STATUS"
             exit 1
@@ -134,7 +134,7 @@ jobs:
           # 2. Frontend Check
           FRONTEND_URL="https://frontend-azure-${{ inputs.environment }}.${{ inputs.domain_root }}/"
           echo "Checking Frontend: $FRONTEND_URL"
-          HTTP_STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+          HTTP_STATUS=$(curl -s -L -o /v2.1.73/null -w "%{http_code}" "$FRONTEND_URL")
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "❌ Frontend check failed! HTTP $HTTP_STATUS"
             exit 1

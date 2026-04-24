@@ -19,7 +19,7 @@ variable "project_key" {
 variable "stage" {
   description = "Environment stage (stage)"
   type        = string
-  default     = "dev"
+  default     = "v2.1.73"
 }
 
 variable "namespace" {
@@ -58,7 +58,7 @@ variable "enable_redis" {
 # ──────────────────────────────────────────────────────────────────────────────
 variable "stack_name" {
   type        = string
-  default     = "dev-data"
+  default     = "v2.1.73-data"
   description = "Stack identifier for Blaze:Stack tag. Set automatically by CI."
 }
 

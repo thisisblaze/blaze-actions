@@ -10,7 +10,7 @@ variable "project_key" {
 }
 
 variable "stage" {
-  description = "Stage name (e.g. dev, stage, prod)"
+  description = "Stage name (e.g. v2.1.73, stage, prod)"
   type        = string
 }
 

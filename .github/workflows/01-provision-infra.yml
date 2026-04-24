@@ -338,7 +338,7 @@ jobs:
           GCP_REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
           GCP_PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
 
-          AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
+          AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/v2.1.73/null || echo "westeurope")
 
           case "$CLOUD_PROVIDER" in
             gcp)
@@ -439,7 +439,7 @@ jobs:
         id: existing
         run: |
           echo "Checking for existing sharp layer in us-east-1..."
-          LAYER_ARN=$(aws lambda list-layer-versions --layer-name sharp-image-processing --region us-east-1 --query 'LayerVersions[0].LayerVersionArn' --output text 2>/dev/null || echo "None")
+          LAYER_ARN=$(aws lambda list-layer-versions --layer-name sharp-image-processing --region us-east-1 --query 'LayerVersions[0].LayerVersionArn' --output text 2>/v2.1.73/null || echo "None")
           if [[ "$LAYER_ARN" != "None" && -n "$LAYER_ARN" ]]; then
             echo "Found existing layer: $LAYER_ARN"
             echo "layer_arn=$LAYER_ARN" >> $GITHUB_OUTPUT
@@ -560,35 +560,35 @@ jobs:
             LAMBDA_NS="${{ needs.configuration.outputs.namespace || 'blaze' }}"
             LAMBDA_ROLE_NAME="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-role"
             LAMBDA_ROLE_EXISTS=$(aws iam get-role --role-name "$LAMBDA_ROLE_NAME" \
-              --query 'Role.RoleName' --output text 2>/dev/null || echo "")
+              --query 'Role.RoleName' --output text 2>/v2.1.73/null || echo "")
             if [[ -n "$LAMBDA_ROLE_EXISTS" && "$LAMBDA_ROLE_EXISTS" != "None" ]]; then
               echo "  📥 Re-importing Lambda@Edge IAM role after state-rm: $LAMBDA_ROLE_NAME"
               terraform import \
                 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_role.lambda_edge[0]' \
-                "$LAMBDA_ROLE_NAME" 2>/dev/null && echo "  ✅ IAM role re-imported" || echo "  ⚠️  IAM role re-import failed (TF may hit EntityAlreadyExists)"
+                "$LAMBDA_ROLE_NAME" 2>/v2.1.73/null && echo "  ✅ IAM role re-imported" || echo "  ⚠️  IAM role re-import failed (TF may hit EntityAlreadyExists)"
             fi
 
             LAMBDA_POLICY_NAME="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-s3-write-transformed"
             LAMBDA_POLICY_ARN=$(aws iam list-policies --scope Local \
-              --output json 2>/dev/null \
+              --output json 2>/v2.1.73/null \
               | jq -r --arg name "$LAMBDA_POLICY_NAME" '.Policies[] | select(.PolicyName==$name) | .Arn' || echo "")
             if [[ -n "$LAMBDA_POLICY_ARN" ]]; then
               echo "  📥 Re-importing Lambda@Edge IAM policy after state-rm: $LAMBDA_POLICY_NAME"
               terraform import \
                 'module.environment_network.module.lambda_edge_image_resize[0].aws_iam_policy.s3_write[0]' \
-                "$LAMBDA_POLICY_ARN" 2>/dev/null && echo "  ✅ IAM policy re-imported" || echo "  ⚠️  IAM policy re-import failed (TF may hit EntityAlreadyExists)"
+                "$LAMBDA_POLICY_ARN" 2>/v2.1.73/null && echo "  ✅ IAM policy re-imported" || echo "  ⚠️  IAM policy re-import failed (TF may hit EntityAlreadyExists)"
             fi
 
 
           # ── Smart Import: WAF Global Web ACL ──
           WAF_NAME="blaze-${CLIENT_KEY_VAL}-${PROJECT_KEY_VAL}-${STAGE_KEY}-cloudfront"
-          WAF_ID=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1 --query "WebACLs[?Name=='$WAF_NAME'].Id" --output text 2>/dev/null | grep -v 'None' || echo "")
+          WAF_ID=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1 --query "WebACLs[?Name=='$WAF_NAME'].Id" --output text 2>/v2.1.73/null | grep -v 'None' || echo "")
           if [[ -n "$WAF_ID" ]]; then
             WAF_ADDR="module.environment_network.module.waf_global[0].aws_wafv2_web_acl.this[0]"
-            if ! terraform state list 2>/dev/null | grep -qF "aws_wafv2_web_acl.this"; then
+            if ! terraform state list 2>/v2.1.73/null | grep -qF "aws_wafv2_web_acl.this"; then
               echo "  📥 Importing existing WAF into state: $WAF_NAME"
               ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-              terraform import "$WAF_ADDR" "arn:aws:wafv2:us-east-1:${ACCOUNT_ID}:global/webacl/${WAF_NAME}/${WAF_ID}/${WAF_NAME}/${WAF_ID}" 2>/dev/null || true
+              terraform import "$WAF_ADDR" "arn:aws:wafv2:us-east-1:${ACCOUNT_ID}:global/webacl/${WAF_NAME}/${WAF_ID}/${WAF_NAME}/${WAF_ID}" 2>/v2.1.73/null || true
             fi
           fi
 
@@ -597,30 +597,30 @@ jobs:
           
           # Normalize
           NORM_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-normalize-params-"
-          NORM_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/dev/null | jq -r ".[] | select(startswith(\"${NORM_PREFIX}\"))" | tail -n 1)
+          NORM_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/v2.1.73/null | jq -r ".[] | select(startswith(\"${NORM_PREFIX}\"))" | tail -n 1)
           if [[ -n "$NORM_FN" ]]; then
              TF_NORM_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]"
-             if ! terraform state list 2>/dev/null | grep -qF "$TF_NORM_ADDR"; then
+             if ! terraform state list 2>/v2.1.73/null | grep -qF "$TF_NORM_ADDR"; then
                echo "  📥 Importing normalize lambda: $NORM_FN"
-               terraform import "$TF_NORM_ADDR" "$NORM_FN" 2>/dev/null || true
+               terraform import "$TF_NORM_ADDR" "$NORM_FN" 2>/v2.1.73/null || true
              fi
           fi
 
           # Resize
           RESIZE_PREFIX="${LAMBDA_NS}-${STAGE_KEY}-lambda-edge-resize-image-"
-          RESIZE_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/dev/null | jq -r ".[] | select(startswith(\"${RESIZE_PREFIX}\"))" | tail -n 1)
+          RESIZE_FN=$(aws lambda list-functions --region us-east-1 --query "sort_by(Functions, &LastModified)[*].FunctionName" --output json 2>/v2.1.73/null | jq -r ".[] | select(startswith(\"${RESIZE_PREFIX}\"))" | tail -n 1)
           if [[ -n "$RESIZE_FN" ]]; then
              TF_RESIZE_ADDR="module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]"
-             if ! terraform state list 2>/dev/null | grep -qF "$TF_RESIZE_ADDR"; then
+             if ! terraform state list 2>/v2.1.73/null | grep -qF "$TF_RESIZE_ADDR"; then
                echo "  📥 Importing resize lambda: $RESIZE_FN"
-               terraform import "$TF_RESIZE_ADDR" "$RESIZE_FN" 2>/dev/null || true
+               terraform import "$TF_RESIZE_ADDR" "$RESIZE_FN" 2>/v2.1.73/null || true
              fi
           fi
           echo "  ✅ Lambda@Edge + WAF state reconciled via Smart Import (no blind state dropping)"
           # State-rm Cloudflare ZT apps (module v2.2.3 dropped them; belt-and-suspenders
           # alongside root removed{} blocks so stale state is gone before plan runs)
-          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.frontend[0]' 2>/dev/null || true
-          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.admin[0]' 2>/dev/null || true
+          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.frontend[0]' 2>/v2.1.73/null || true
+          terraform state rm 'module.environment_network.cloudflare_zero_trust_access_application.admin[0]' 2>/v2.1.73/null || true
           echo "  ✅ ZT app state entries purged — CloudFront Functions basic auth takes over"
 
           echo "✅ Pre-apply complete"
@@ -679,7 +679,7 @@ jobs:
           echo "🔐 Syncing BLAZE_CONNECTION_STRING to GitHub Environment Secrets ($ENV_NAME)..."
 
           # Check valid token
-          if ! gh auth status >/dev/null 2>&1; then
+          if ! gh auth status >/v2.1.73/null 2>&1; then
              echo "⚠️ GitHub CLI not authenticated. Cannot update secrets."
              exit 0 # Don't fail workflow
           fi
@@ -701,7 +701,7 @@ jobs:
 
           echo "📂 Triggering Sample Data Load for Cluster: $CLUSTER_NAME..."
 
-          RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" --digest \
+          RESPONSE_CODE=$(curl -s -o /v2.1.73/null -w "%{http_code}" --digest \
             -u "${PUBLIC_KEY}:${PRIVATE_KEY}" \
             -H "Content-Type: application/json" \
             -X POST \
@@ -798,9 +798,9 @@ jobs:
             -backend-config="storage_account_name=${NAMESPACE}${CLIENT_KEY}tfstate" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=infra/${PROJECT_KEY}/${STAGE}/app.tfstate" \
-            -reconfigure -input=false -no-color > /dev/null 2>&1 || true
+            -reconfigure -input=false -no-color > /v2.1.73/null 2>&1 || true
 
-          CAE_HOSTNAME=$(terraform output -raw container_app_environment_default_domain 2>/dev/null || echo "")
+          CAE_HOSTNAME=$(terraform output -raw container_app_environment_default_domain 2>/v2.1.73/null || echo "")
 
           if [[ -z "$CAE_HOSTNAME" ]]; then
             echo "⚠️ Could not read CAE hostname from state. Skipping network re-apply."

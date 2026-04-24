@@ -188,7 +188,7 @@ jobs:
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
-          ref: dev
+          ref: v2.1.73
 
       - name: Calculate Configuration
         id: calc

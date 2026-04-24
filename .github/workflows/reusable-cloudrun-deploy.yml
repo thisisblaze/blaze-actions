@@ -45,7 +45,7 @@ on:
             image_uri:
                 required: true
                 type: string
-                description: "Full Artifact Registry URI (e.g., europe-west1-docker.pkg.dev/project/repo/image)"
+                description: "Full Artifact Registry URI (e.g., europe-west1-docker.pkg.v2.1.73/project/repo/image)"
             # Cloud Run config
             cpu:
                 required: false
@@ -196,7 +196,7 @@ jobs:
               id: svc
               run: |
                   # Cloud Run service name: {namespace}-{client}-{project}-{stage}-{service}
-                  # e.g., blaze-b9-thisisblaze-dev-api
+                  # e.g., blaze-b9-thisisblaze-v2.1.73-api
                   BRANCH_TAG="${{ inputs.branch_name }}"
                   if [[ -n "$BRANCH_TAG" ]]; then
                     SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${BRANCH_TAG}-${{ inputs.service_name }}"

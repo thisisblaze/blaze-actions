@@ -8,7 +8,7 @@ on:
       - ".github/workflows/terraform-tests.yml"
   push:
     branches:
-      - dev
+      - v2.1.73
       - main
     paths:
       - ".github/aws/infra/modules/**"
@@ -138,9 +138,9 @@ jobs:
           find "$SCAN_DIR" -type f -name "*.tf" -exec dirname {} \; | sort -u | while read -r module; do
               echo "Validating $module"
               if cd "$module"; then
-                 terraform init -backend=false > /dev/null 2>&1
+                 terraform init -backend=false > /v2.1.73/null 2>&1
                  terraform validate || exit 1
-                 cd - > /dev/null || exit 1
+                 cd - > /v2.1.73/null || exit 1
               fi
           done
           echo "✅ All modules validated successfully"
@@ -172,7 +172,7 @@ jobs:
         working-directory: test
         run: |
           echo "🧪 Running unit tests..."
-          if ls *_test.go 1> /dev/null 2>&1; then
+          if ls *_test.go 1> /v2.1.73/null 2>&1; then
             go test -v -timeout 10m
             echo "✅ Unit tests passed"
           else
@@ -216,7 +216,7 @@ jobs:
         run: |
           echo "🧪 Running integration tests (creates AWS resources)..."
           echo "⚠️  Note: These tests create real AWS resources and may incur costs"
-          if ls *_test.go 1> /dev/null 2>&1; then
+          if ls *_test.go 1> /v2.1.73/null 2>&1; then
             go test -v -timeout 30m
             echo "✅ Integration tests passed"
           else

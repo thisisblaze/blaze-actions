@@ -43,7 +43,7 @@ locals {
 
 # ── Memorystore Redis ──
 module "redis" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/memorystore-redis?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/memorystore-redis?ref=v2.4.8"
   count  = var.enable_redis ? 1 : 0
 
   context        = {}
@@ -61,7 +61,7 @@ module "redis" {
 
 # ── Cloud SQL PostgreSQL ──
 module "cloud_sql" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/cloud-sql?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/data/cloud-sql?ref=v2.4.8"
   count  = var.enable_cloud_sql ? 1 : 0
 
   context        = {}
@@ -74,7 +74,7 @@ module "cloud_sql" {
   ha_enabled          = var.cloud_sql_ha
   disk_size           = var.cloud_sql_disk_size
   deletion_protection = var.cloud_sql_deletion_protection
-  backup_enabled      = var.stage != "dev"
+  backup_enabled      = var.stage != "v2.1.73"
 
   database_name     = var.cloud_sql_database_name
   database_user     = var.cloud_sql_user

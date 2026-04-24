@@ -92,7 +92,7 @@ locals {
 
 
 module "label" {
-  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.4.6"
+  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.4.8"
   client    = var.client_key
   project   = var.project_key
   stage     = var.stage
@@ -103,7 +103,7 @@ module "label" {
 # APPLICATION MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v2.4.8"
 
   context     = module.label.context
   client_key  = var.client_key
@@ -160,7 +160,7 @@ module "app" {
   domain_root         = var.domain_root
   enable_cloudfront   = false # Network stack manages CloudFront with image resize
   enable_frontend_cdn = false # Delegated to stage-network (CloudFront Upfront)
-  enable_assets_cdn   = false # DISABLED - Network stack manages cdn-dev with image resize
+  enable_assets_cdn   = false # DISABLED - Network stack manages cdn-v2.1.73 with image resize
 
   cloudfront_acm_certificate_arn = local.cloudfront_certificate_arn != "" ? local.cloudfront_certificate_arn : var.cloudfront_acm_certificate_arn
 
@@ -209,7 +209,7 @@ data "aws_lb_target_group" "fe_green" {
 # CLOUDFLARE PAGES PROJECT (Admin)
 # --------------------------------------------------------------------------------
 module "pages_project_admin" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.4.8"
 
   account_id        = var.cloudflare_account_id
   project_name      = "${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-admin"

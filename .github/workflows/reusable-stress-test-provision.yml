@@ -188,7 +188,7 @@ jobs:
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
-          ref: dev
+          ref: v2.1.73
 
       - name: Calculate Configuration
         id: calc
@@ -213,7 +213,7 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "network"
       apply: true
-      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      enable_ec2: ${{ inputs.environment == 'v2.1.73-mini' }}
       azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
       azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
       azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
@@ -230,7 +230,7 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-tunnel:
-    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
+    if: always() && inputs.environment == 'v2.1.73-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
@@ -295,7 +295,7 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "app"
       apply: true
-      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
+      enable_tunnel: ${{ inputs.environment == 'v2.1.73-mini' }}
       enable_ec2: ${{ contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage') }}
       api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
       frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}

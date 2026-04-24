@@ -48,7 +48,7 @@ jobs:
         id: current_version
         run: |
           # Get latest tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/v2.1.73/null || echo "v1.0.0")
           echo "current=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Current version: $LATEST_TAG"
 
@@ -132,7 +132,7 @@ jobs:
 
           [skip ci]" || echo "No changes to commit"
 
-          git push origin dev
+          git push origin v2.1.73
 
       - name: Create Git Tag
         if: inputs.dry_run == false
@@ -155,7 +155,7 @@ jobs:
           gh release create "$NEXT" \
             --title "Release $NEXT" \
             --notes "$CHANGELOG" \
-            --target dev
+            --target v2.1.73
 
           echo "Created GitHub release: $NEXT"
 

@@ -18,7 +18,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.73", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -62,7 +62,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
         type: string
         required: false
       skip_lambda_destroy:
@@ -479,7 +479,7 @@ jobs:
           SERVICES=$(gcloud run services list \
             --project="$PROJECT" --region="$REGION" \
             --filter="metadata.name~^${PREFIX}" \
-            --format="value(metadata.name)" 2>/dev/null || true)
+            --format="value(metadata.name)" 2>/v2.1.73/null || true)
 
           if [[ -z "$SERVICES" ]]; then
             echo "ℹ️  No Cloud Run services found matching prefix."
@@ -498,7 +498,7 @@ jobs:
           echo ""
           echo "🗑️ Checking Artifact Registry repo: $REPO"
           if gcloud artifacts repositories describe "$REPO" \
-            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
+            --project="$PROJECT" --location="$REGION" >/v2.1.73/null 2>&1; then
             echo "   Deleting repository..."
             gcloud artifacts repositories delete "$REPO" \
               --project="$PROJECT" --location="$REGION" \
@@ -534,42 +534,42 @@ jobs:
 
           # 1. Delete all Container Apps in the RG
           echo "   Listing Container Apps..."
-          APPS=$(az containerapp list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+          APPS=$(az containerapp list --resource-group "$RG" --query "[].name" -o tsv 2>/v2.1.73/null || true)
 
           if [[ -z "$APPS" ]]; then
             echo "   ℹ️  No Container Apps found."
           else
             for APP in $APPS; do
               echo "   🗑️ Deleting Container App: $APP"
-              az containerapp delete --name "$APP" --resource-group "$RG" --yes --no-wait 2>/dev/null || echo "   ⚠️ Failed to delete $APP"
+              az containerapp delete --name "$APP" --resource-group "$RG" --yes --no-wait 2>/v2.1.73/null || echo "   ⚠️ Failed to delete $APP"
             done
             echo "   ✅ Container Apps cleanup complete."
           fi
 
           # 2. Delete Container App Environments
           echo "   Listing Container App Environments..."
-          ENVS=$(az containerapp env list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+          ENVS=$(az containerapp env list --resource-group "$RG" --query "[].name" -o tsv 2>/v2.1.73/null || true)
 
           if [[ -z "$ENVS" ]]; then
             echo "   ℹ️  No Container App Environments found."
           else
             for ENV in $ENVS; do
               echo "   🗑️ Deleting CAE: $ENV"
-              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes --no-wait 2>/dev/null || echo "   ⚠️ Failed to delete $ENV"
+              az containerapp env delete --name "$ENV" --resource-group "$RG" --yes --no-wait 2>/v2.1.73/null || echo "   ⚠️ Failed to delete $ENV"
             done
             echo "   ✅ CAE cleanup complete."
           fi
 
           # 3. Delete Action Groups (Application Insights auto-creates these)
           echo "   Listing Action Groups..."
-          AGS=$(az monitor action-group list --resource-group "$RG" --query "[].name" -o tsv 2>/dev/null || true)
+          AGS=$(az monitor action-group list --resource-group "$RG" --query "[].name" -o tsv 2>/v2.1.73/null || true)
 
           if [[ -z "$AGS" ]]; then
             echo "   ℹ️  No Action Groups found."
           else
             for AG in $AGS; do
               echo "   🗑️ Deleting Action Group: $AG"
-              az monitor action-group delete --name "$AG" --resource-group "$RG" 2>/dev/null || echo "   ⚠️ Failed to delete $AG"
+              az monitor action-group delete --name "$AG" --resource-group "$RG" 2>/v2.1.73/null || echo "   ⚠️ Failed to delete $AG"
             done
             echo "   ✅ Action Groups cleanup complete."
           fi
@@ -639,10 +639,10 @@ jobs:
         echo "🔪 REMOVING ORPHANED CODEDEPLOY STATE (IAM role deleted before deployment group)..."
         # CodeDeploy API refuses to delete deployment groups when their IAM role
         # no longer exists. Remove them from state so destroy can proceed.
-        terraform state rm "module.app.module.api_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
-        terraform state rm "module.app.module.api_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
-        terraform state rm "module.app.module.frontend_service.aws_codedeploy_deployment_group.this[0]" 2>/dev/null || true
-        terraform state rm "module.app.module.frontend_service.aws_codedeploy_app.this[0]" 2>/dev/null || true
+        terraform state rm "module.app.module.api_service.aws_codedeploy_deployment_group.this[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.app.module.api_service.aws_codedeploy_app.this[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_deployment_group.this[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.app.module.frontend_service.aws_codedeploy_app.this[0]" 2>/v2.1.73/null || true
         echo "✅ Orphaned CodeDeploy state removed."
 
   nuke-destroy-tenant-app:
@@ -708,13 +708,13 @@ jobs:
         echo "🔪 REMOVING ALL TENANT APP STATE (SSM network params are deleted before tenant-app destroy runs —"
         echo "   terraform plan -destroy fails reading data sources that no longer exist in Parameter Store)."
         echo "   Strategy: rm all state entries so the destroy plan is a clean no-op and exits 0."
-        STATE_LIST=$(terraform state list 2>/dev/null || true)
+        STATE_LIST=$(terraform state list 2>/v2.1.73/null || true)
         if [[ -z "$STATE_LIST" ]]; then
           echo "ℹ️  State is already empty — nothing to remove."
         else
           echo "$STATE_LIST" | while read ADDR; do
             echo "   Removing: $ADDR"
-            terraform state rm "$ADDR" 2>/dev/null || true
+            terraform state rm "$ADDR" 2>/v2.1.73/null || true
           done
           echo "✅ Tenant app state cleared — destroy plan will be a clean no-op."
         fi
@@ -994,7 +994,7 @@ jobs:
       destroy: true
       pre_apply_script: |
         echo "🔪 Removing deletion protection from Cloud SQL..."
-        terraform state list 2>/dev/null | grep 'google_sql_database_instance' | while read RESOURCE; do
+        terraform state list 2>/v2.1.73/null | grep 'google_sql_database_instance' | while read RESOURCE; do
           echo "   Patching: $RESOURCE (deletion_protection=false)"
           # Use gcloud to disable deletion protection if needed
         done
@@ -1321,23 +1321,23 @@ jobs:
         # ----- ORPHAN LAMBDA@EDGE -----
         # Lambda@Edge replicas take hours to delete. We must remove it from state to proceed.
         echo "🔪 ORPHANING LAMBDA@EDGE FUNCTIONS FROM STATE..."
-        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" 2>/dev/null || true
-        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" 2>/dev/null || true
-        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].random_id.suffix" 2>/dev/null || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.origin_response[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].aws_lambda_function.viewer_request[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.environment_network.module.lambda_edge_image_resize[0].random_id.suffix" 2>/v2.1.73/null || true
         echo "✅ Lambda@Edge orphaned."
 
         # ----- DNS VALIDATION CLEANUP (FIX DESTROY BUG) -----
         # The for_each loop over cloudflare_dns_record.validation depends on unknown 
         # acm outputs during destroy, causing a terraform plan failure.
         echo "🔪 REMOVING DNS VALIDATION RECORDS FROM STATE..."
-        terraform state rm 'module.environment_network.cloudflare_dns_record.validation' 2>/dev/null || true
-        terraform state rm 'module.environment_network.aws_route53_record.validation' 2>/dev/null || true
+        terraform state rm 'module.environment_network.cloudflare_dns_record.validation' 2>/v2.1.73/null || true
+        terraform state rm 'module.environment_network.aws_route53_record.validation' 2>/v2.1.73/null || true
         echo "✅ DNS Validation records removed from state."
 
         echo "🔪 REMOVING ECS CAPACITY PROVIDERS FROM STATE (already cleaned up externally)..."
-        terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-        terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/dev/null || true
-        terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/dev/null || true
+        terraform state rm "module.graviton_cp.aws_ecs_capacity_provider.ec2[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.ec2_capacity_provider[0].aws_ecs_capacity_provider.ec2[0]" 2>/v2.1.73/null || true
+        terraform state rm "module.environment_network.module.cluster.aws_ecs_cluster_capacity_providers.main[0]" 2>/v2.1.73/null || true
         echo "✅ Capacity providers orphaned."
 
         echo "🔪 PATCHING MODULE SOURCE TO BYPASS FOR_EACH EVALUATION ERROR..."
@@ -1355,9 +1355,9 @@ jobs:
         # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
         # This prevents destroy from hanging on ECS managed termination protection.
         echo "🔍 Checking for EC2 ASGs to clean up..."
-        ASG_NAME=$(terraform state list 2>/dev/null | grep 'aws_autoscaling_group' | head -1)
+        ASG_NAME=$(terraform state list 2>/v2.1.73/null | grep 'aws_autoscaling_group' | head -1)
         if [ -n "$ASG_NAME" ]; then
-          ASG_ID=$(terraform state show "$ASG_NAME" 2>/dev/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
+          ASG_ID=$(terraform state show "$ASG_NAME" 2>/v2.1.73/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
           if [ -n "$ASG_ID" ]; then
             echo "🛑 Scaling down ASG: $ASG_ID"
             aws autoscaling update-auto-scaling-group \

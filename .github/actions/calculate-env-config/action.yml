@@ -4,7 +4,7 @@ description: "Calculates configuration variables and paths for Terraform runs (M
 inputs:
   environment:
     required: true
-    description: "Target environment (e.g., dev, stage, prod)"
+    description: "Target environment (e.g., v2.1.73, stage, prod)"
   cloud_provider:
     required: false
     default: ""
@@ -100,7 +100,7 @@ runs:
         fi
 
         ENV_INPUT="${{ inputs.environment }}"
-        # Normalize to lowercase (DEV -> dev)
+        # Normalize to lowercase (DEV -> v2.1.73)
         ENV_KEY=$(echo "$ENV_INPUT" | tr '[:upper:]' '[:lower:]')
 
         echo "📥 Loading Config for [$ENV_KEY]..."
@@ -119,8 +119,8 @@ runs:
            echo "$key=$val" >> "$GITHUB_ENV"
         done
 
-        # 3. Export Environment Specific Vars from PROJECT config (dev/stage/prod)
-        if jq -e ".$ENV_KEY" $PROJECT_CONFIG > /dev/null 2>&1; then
+        # 3. Export Environment Specific Vars from PROJECT config (v2.1.73/stage/prod)
+        if jq -e ".$ENV_KEY" $PROJECT_CONFIG > /v2.1.73/null 2>&1; then
             for key in $(jq -r ".$ENV_KEY | keys[]" $PROJECT_CONFIG); do
                val=$(jq -r ".$ENV_KEY.$key" $PROJECT_CONFIG)
                echo "$key=$val" >> "$GITHUB_ENV"
@@ -226,7 +226,7 @@ runs:
           "network")
             # SAFETY: Prevent targeting 'network' with a specific branch tag
             # Feature branches share the Host Network. Targeting 'network' with a tag
-            # would resolve to the Host Network State (dev/network.tfstate), creating a risk
+            # would resolve to the Host Network State (v2.1.73/network.tfstate), creating a risk
             # of accidental destruction or state corruption of the shared environment.
             if [[ -n "$BRANCH_TAG" ]]; then
                 echo "❌ SAFETY BLOCK: You cannot run the 'network' stack for a Feature Branch."
@@ -259,7 +259,7 @@ runs:
             fi
             ;;
           "app" | "application-layer")
-            if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
+            if [[ "$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "stage" ]]; then
               # Auto-upgrade DEV and STAGE to Multi-Site V2 Tenant App
               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
               if [[ -n "$BRANCH_TAG" ]]; then
@@ -325,14 +325,14 @@ runs:
             STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
             ;;
           *)
-            # Default: assume dev network (split stack)
+            # Default: assume v2.1.73 network (split stack)
             if [[ "$STAGE_KEY" == "prod" || "$STAGE_KEY" == "stage" ]]; then
               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-network"
               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/network.tfstate"
             else
               # Dev now uses split stack
-              TF_DIR="${INFRA_PREFIX}/dev-network"
-              STATE_KEY="infra/${PROJECT_KEY}/dev/network.tfstate"
+              TF_DIR="${INFRA_PREFIX}/v2.1.73-network"
+              STATE_KEY="infra/${PROJECT_KEY}/v2.1.73/network.tfstate"
             fi
             ;;
         esac

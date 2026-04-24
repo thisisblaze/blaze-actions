@@ -29,7 +29,7 @@ on:
       stage_filter:
         required: false
         type: string
-        description: "Optional stage filter to only manage services for a specific stage handle (e.g. 'dev' or 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names."
+        description: "Optional stage filter to only manage services for a specific stage handle (e.g. 'v2.1.73' or 'v2.1.73-bz-01'). Matches '-{stage_filter}-' within ECS service names."
       environment:
         required: false
         type: string
@@ -143,7 +143,7 @@ jobs:
 
           # List all services (get names only)
           # Use max-items 100 to capture most services
-          SERVICES_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --max-items 100 --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/dev/null || echo "")
+          SERVICES_ARNS=$(aws ecs list-services --cluster "$CLUSTER" --max-items 100 --query "serviceArns" --output text --region "${{ inputs.aws_region }}" 2>/v2.1.73/null || echo "")
 
           if [[ -z "$SERVICES_ARNS" || "$SERVICES_ARNS" == "None" ]]; then
              echo "⚠️ No services found in cluster $CLUSTER"
@@ -235,7 +235,7 @@ jobs:
                   --service "$SVC" \
                   --desired-count 0 \
                   --region "${{ inputs.aws_region }}" \
-                  > /dev/null
+                  > /v2.1.73/null
                 echo "   ✅ Stopped $SVC"
                 ;;
               "start")
@@ -244,7 +244,7 @@ jobs:
                   --service "$SVC" \
                   --desired-count 1 \
                   --region "${{ inputs.aws_region }}" \
-                  > /dev/null
+                  > /v2.1.73/null
                 echo "   ✅ Started $SVC"
                 ;;
               "scale")
@@ -257,7 +257,7 @@ jobs:
                   --service "$SVC" \
                   --desired-count "$DESIRED_COUNT" \
                   --region "${{ inputs.aws_region }}" \
-                  > /dev/null
+                  > /v2.1.73/null
                 echo "   ✅ Scaled $SVC to $DESIRED_COUNT"
                 ;;
               "restart")
@@ -267,7 +267,7 @@ jobs:
                   --service "$SVC" \
                   --force-new-deployment \
                   --region "${{ inputs.aws_region }}" \
-                  > /dev/null
+                  > /v2.1.73/null
                 echo "   ✅ Restarted $SVC"
                 ;;
               *)

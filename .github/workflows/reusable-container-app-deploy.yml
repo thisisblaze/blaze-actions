@@ -199,9 +199,9 @@ jobs:
                   RESOURCE_GROUP="${BASE_NAME}-rg"
                   CONTAINER_APP="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
 
-                  # Handle feature branches if needed (though typically we deploy to dev/stage/prod stacks)
+                  # Handle feature branches if needed (though typically we deploy to v2.1.73/stage/prod stacks)
                   if [[ -n "${{ inputs.branch_name }}" ]]; then
-                    echo "⚠️ Feature branch deployment to Azure Container Apps is sharing the 'dev' stack resources."
+                    echo "⚠️ Feature branch deployment to Azure Container Apps is sharing the 'v2.1.73' stack resources."
                   fi
 
                   echo "resource_group=$RESOURCE_GROUP" >> "$GITHUB_OUTPUT"

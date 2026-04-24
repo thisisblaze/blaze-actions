@@ -47,7 +47,7 @@ provider "google-beta" {
 
 # ── Environment Network Module ──
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/networking/environment-network?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/networking/environment-network?ref=v2.4.8"
 
   gcp_project_id = var.gcp_project_id
   gcp_region     = var.gcp_region
@@ -56,7 +56,7 @@ module "environment_network" {
   project_key    = var.project_key
   stage          = var.stage
 
-  # Network CIDRs (offset from dev/stage)
+  # Network CIDRs (offset from v2.1.73/stage)
   private_subnet_cidr = var.private_subnet_cidr
   public_subnet_cidr  = var.public_subnet_cidr
   pods_cidr           = var.pods_cidr

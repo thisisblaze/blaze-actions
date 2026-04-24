@@ -17,7 +17,7 @@ on:
       stage_filter:
         required: false
         type: string
-        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
+        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'v2.1.73-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
       force_delete:
         required: false
         type: boolean
@@ -166,7 +166,7 @@ jobs:
              echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
              echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
           elif [[ "$CLUSTER" =~ ^([^-]+)-([^-]+)-(.+)-cluster$ ]]; then
-             # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
+             # Fallback for 3-part names (e.g. blaze-thisisblaze-v2.1.73-cluster)
              # Assuming: namespace-project-stage (where client might be same as project or omitted)
              NAMESPACE="${BASH_REMATCH[1]}"
              PROJECT_KEY="${BASH_REMATCH[2]}"
@@ -200,7 +200,7 @@ jobs:
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "s3" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/v2.1.73/null || echo "")
 
           if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
              for BUCKET_ARN in $TAGGED_ARNS; do
@@ -212,7 +212,7 @@ jobs:
                    echo "   [DRY RUN] Would empty bucket $BUCKET_NAME"
                    continue
                 fi
-                pip install boto3 >/dev/null 2>&1 || true
+                pip install boto3 >/v2.1.73/null 2>&1 || true
                 
                 cat <<EOF > empty_bucket.py
           import boto3
@@ -273,14 +273,14 @@ jobs:
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/v2.1.73/null || echo "")
 
           TAGGED_ARNS_EDGE=$(aws resourcegroupstaggingapi get-resources \
             --region "us-east-1" \
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/v2.1.73/null || echo "")
 
           ALL_ARNS=$(echo "$TAGGED_ARNS $TAGGED_ARNS_EDGE" | tr ' ' '\n' | grep -v 'None' | grep . || true)
 
@@ -399,7 +399,7 @@ jobs:
              ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
              POLICY_ARN="arn:aws:iam::${ACCOUNT_ID}:policy/${POLICY_NAME}"
              echo "   🔍 Checking Policy: $POLICY_NAME"
-             if aws iam get-policy --policy-arn "$POLICY_ARN" >/dev/null 2>&1; then
+             if aws iam get-policy --policy-arn "$POLICY_ARN" >/v2.1.73/null 2>&1; then
                 echo "      🗑️ Deleting Policy: $POLICY_ARN"
                 if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                    echo "         [DRY RUN] Would delete Policy"
@@ -414,7 +414,7 @@ jobs:
           # B. DELETE ROLES
           for ROLE in "${ROLES[@]}"; do
              echo "   🔍 Checking Role: $ROLE"
-             if aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
+             if aws iam get-role --role-name "$ROLE" >/v2.1.73/null 2>&1; then
                 echo "      🗑️ Deleting Role: $ROLE"
                 if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                    echo "         [DRY RUN] Would delete Role and detach policies"
@@ -462,13 +462,13 @@ jobs:
           PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
           echo "Searching for CloudFront functions starting with: $PREFIX"
 
-          FUNCTIONS=$(aws cloudfront list-functions --query "FunctionList.Items[?starts_with(Name, '$PREFIX')].Name" --output text 2>/dev/null || echo "")
+          FUNCTIONS=$(aws cloudfront list-functions --query "FunctionList.Items[?starts_with(Name, '$PREFIX')].Name" --output text 2>/v2.1.73/null || echo "")
 
           if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
              for FUNC_NAME in $FUNCTIONS; do
                 echo "   🔄 Checking CloudFront function: $FUNC_NAME"
                 
-                ETAG=$(aws cloudfront describe-function --name "$FUNC_NAME" --query "ETag" --output text 2>/dev/null || echo "")
+                ETAG=$(aws cloudfront describe-function --name "$FUNC_NAME" --query "ETag" --output text 2>/v2.1.73/null || echo "")
                 
                 if [[ -n "$ETAG" ]]; then
                    if [[ "${{ inputs.dry_run }}" == "true" ]]; then
@@ -497,7 +497,7 @@ jobs:
 
           echo "🧹 Cleanup ALB Target Groups for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} in $REGION"
           
-          pip install boto3 >/dev/null 2>&1 || true
+          pip install boto3 >/v2.1.73/null 2>&1 || true
           cat << 'EOF' > tg_cleanup.py
           import boto3
           import sys
@@ -560,7 +560,7 @@ jobs:
 
           echo "🧹 Cleanup CloudFront Distributions for Project=${PROJECT_KEY}, Stage=${STAGE_KEY}"
           
-          pip install boto3 >/dev/null 2>&1 || true
+          pip install boto3 >/v2.1.73/null 2>&1 || true
           cat << 'EOF' > cf_cleanup.py
           import boto3
           import sys
@@ -663,7 +663,7 @@ jobs:
                    echo "         [DRY RUN] Would delete Cloudflare record"
                 else
                    curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$REC_ID" \
-                      -H "Authorization: Bearer $CF_API_TOKEN" >/dev/null
+                      -H "Authorization: Bearer $CF_API_TOKEN" >/v2.1.73/null
                 fi
              else
                 echo "      ✅ Not found"
@@ -685,7 +685,7 @@ jobs:
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "lambda:function" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/v2.1.73/null || echo "")
 
           FUNCTIONS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . || true)
 
@@ -748,7 +748,7 @@ jobs:
           ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
             --region "$REGION" \
             --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${PROJECT_KEY}') && contains(AutoScalingGroupName, '${STAGE_KEY}-ecs-ec2-cp')].AutoScalingGroupName | [0]" \
-            --output text 2>/dev/null || echo "None")
+            --output text 2>/v2.1.73/null || echo "None")
           
           if [[ "$ASG_NAME" == "null" ]]; then ASG_NAME="None"; fi
           echo "   🔍 Evaluated ASG: $ASG_NAME"
@@ -760,7 +760,7 @@ jobs:
                 echo "      [DRY RUN] Would scale ASG $ASG_NAME to 0 and wait"
              else
                 echo "      🛡️ Force-disabling scale-in protection on all ASG instances..."
-                 INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "$ASG_NAME" --region "$REGION" --query "AutoScalingGroups[0].Instances[*].InstanceId" --output text 2>/dev/null || echo "")
+                 INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "$ASG_NAME" --region "$REGION" --query "AutoScalingGroups[0].Instances[*].InstanceId" --output text 2>/v2.1.73/null || echo "")
                  if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
                     aws autoscaling set-instance-protection --instance-ids $INSTANCE_IDS --auto-scaling-group-name "$ASG_NAME" --no-protected-from-scale-in --region "$REGION" || echo "      ⚠️ Failed to disable scale-in protection"
                  fi
@@ -785,7 +785,7 @@ jobs:
                      --auto-scaling-group-names "$ASG_NAME" \
                      --region "$REGION" \
                      --query "AutoScalingGroups[0].Instances | length(@)" \
-                     --output text 2>/dev/null || echo "0")
+                     --output text 2>/v2.1.73/null || echo "0")
                    if [[ "$INSTANCE_COUNT" == "0" ]]; then
                       echo "      ✅ All instances drained"
                       break
@@ -807,7 +807,7 @@ jobs:
                      --auto-scaling-group-names "$ASG_NAME" \
                      --region "$REGION" \
                      --query "AutoScalingGroups" \
-                     --output text 2>/dev/null || echo "")
+                     --output text 2>/v2.1.73/null || echo "")
                    if [[ -z "$ASG_CHECK" || "$ASG_CHECK" == "None" ]]; then
                       echo "      ✅ ASG fully deleted"
                       break
@@ -830,7 +830,7 @@ jobs:
             --capacity-providers "$CP_NAME" \
             --region "$REGION" \
             --query "capacityProviders[0].name" \
-            --output text 2>/dev/null || echo "None")
+            --output text 2>/v2.1.73/null || echo "None")
 
           if [[ -n "$CP_EXISTS" && "$CP_EXISTS" != "None" && "$CP_EXISTS" != "FARGATE" ]]; then
              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
@@ -842,7 +842,7 @@ jobs:
                   --clusters "$CLUSTER" \
                   --region "$REGION" \
                   --query "clusters[0].capacityProviders" \
-                  --output json 2>/dev/null || echo "[]")
+                  --output json 2>/v2.1.73/null || echo "[]")
 
                 # If aws cli outputs "null" (even with whitespace), jq's type=="array" safely handles it
                 FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" 'if type=="array" then [.[] | select(. != $cp)] else [] end')
@@ -891,7 +891,7 @@ jobs:
               --filters "Name=launch-template-name,Values=*${PROJECT_KEY}*${STAGE_KEY}-ecs-ec2-cp-lt*" \
               --region "$REGION" \
               --query "LaunchTemplates[0].[LaunchTemplateId, LaunchTemplateName]" \
-              --output text 2>/dev/null || echo "None None")
+              --output text 2>/v2.1.73/null || echo "None None")
 
           LT_ID=$(echo "$LT_INFO" | awk '{print $1}')
           LT_NAME=$(echo "$LT_INFO" | awk '{print $2}')
@@ -930,7 +930,7 @@ jobs:
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "ecs:service" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null | tr '\t' '\n' || echo "")
+            --output text 2>/v2.1.73/null | tr '\t' '\n' || echo "")
 
           if [[ -z "$SERVICES" || "$SERVICES" == "None" ]]; then
              echo "✅ No active services found"
@@ -962,13 +962,13 @@ jobs:
                 continue
              fi
              
-             aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+             aws ecs update-service --cluster "$CLUSTER" --service "$SVC_NAME" --desired-count 0 --region "${{ inputs.aws_region }}" >/v2.1.73/null 2>&1 || true
              
              # Wait for tasks to stop (Simplified)
              timeout=300
              elapsed=0
              while [ $elapsed -lt $timeout ]; do
-                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/dev/null || echo "0")
+                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --desired-status RUNNING --region "${{ inputs.aws_region }}" --query "length(taskArns)" --output text 2>/v2.1.73/null || echo "0")
                 if [[ "$RUNNING_TASKS" == "0" ]]; then
                    break
                 fi
@@ -978,16 +978,16 @@ jobs:
 
              # Force Stop if needed
              if [[ $elapsed -ge $timeout ]]; then
-                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/dev/null || echo "")
+                RUNNING_TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC_NAME" --region "${{ inputs.aws_region }}" --query "taskArns[]" --output text 2>/v2.1.73/null || echo "")
                 if [[ -n "$RUNNING_TASKS" && "$RUNNING_TASKS" != "None" ]]; then
                    for TASK in $RUNNING_TASKS; do
-                      aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+                      aws ecs stop-task --cluster "$CLUSTER" --task "$TASK" --region "${{ inputs.aws_region }}" >/v2.1.73/null 2>&1 || true
                    done
                    sleep 30
                 fi
              fi
              
-             aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || true
+             aws ecs delete-service --cluster "$CLUSTER" --service "$SVC_NAME" --force --region "${{ inputs.aws_region }}" >/v2.1.73/null 2>&1 || true
              echo "   ✅ Deleted $SVC_NAME"
              DELETED_SERVICES="${DELETED_SERVICES}${SVC_NAME} "
           done <<< "$SERVICES"
@@ -1007,7 +1007,7 @@ jobs:
                --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${{ inputs.environment }}" \
                --resource-type-filters "ecs:task-definition" \
                --query "ResourceTagMappingList[*].ResourceARN" \
-               --output text 2>/dev/null || echo "")
+               --output text 2>/v2.1.73/null || echo "")
 
              FAMILIES=""
              for ARN in $TAGGED_ARNS; do
@@ -1026,14 +1026,14 @@ jobs:
                    echo "      Cleaning task defs for $FAMILY..."
                    
                    # Get all revisions
-                   TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/dev/null || echo "")
+                   TASK_DEF_ARNS=$(aws ecs list-task-definitions --family-prefix "$FAMILY" --region "${{ inputs.aws_region }}" --query "taskDefinitionArns[]" --output text 2>/v2.1.73/null || echo "")
                    if [[ -n "$TASK_DEF_ARNS" && "$TASK_DEF_ARNS" != "None" ]]; then
                       if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                          echo "         [DRY RUN] Would delete and deregister task definitions for $FAMILY"
                       else
                          for ARN in $TASK_DEF_ARNS; do
-                            aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/dev/null 2>&1 || \
-                            aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/dev/null || true
+                            aws ecs delete-task-definitions --task-definitions "$ARN" --region "${{ inputs.aws_region }}" >/v2.1.73/null 2>&1 || \
+                            aws ecs deregister-task-definition --task-definition "$ARN" --region "${{ inputs.aws_region }}" >/v2.1.73/null || true
                          done
                          echo "         ✅ Swept $FAMILY"
                       fi
@@ -1048,7 +1048,7 @@ jobs:
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
 
-          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=*${STAGE_KEY}-vpc" --region "$REGION" --query "Vpcs[0].VpcId" --output text 2>/dev/null || echo "None")
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=*${STAGE_KEY}-vpc" --region "$REGION" --query "Vpcs[0].VpcId" --output text 2>/v2.1.73/null || echo "None")
           if [[ "$VPC_ID" == "None" || -z "$VPC_ID" ]]; then
              echo "   ✅ VPC not found. Skipping network cleanup."
              exit 0
@@ -1057,15 +1057,15 @@ jobs:
           echo "🧹 Cleaning up Network Dependencies (NACLs & ENIs) for VPC: $VPC_ID"
 
           # 1. Reset Custom Network ACLs to Default
-          DEFAULT_NACL=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=true" --region "$REGION" --query "NetworkAcls[0].NetworkAclId" --output text 2>/dev/null || echo "None")
+          DEFAULT_NACL=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=true" --region "$REGION" --query "NetworkAcls[0].NetworkAclId" --output text 2>/v2.1.73/null || echo "None")
           
           if [[ "$DEFAULT_NACL" != "None" ]]; then
-             CUSTOM_NACLS=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=false" --region "$REGION" --query "NetworkAcls[].NetworkAclId" --output text 2>/dev/null || echo "")
+             CUSTOM_NACLS=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=false" --region "$REGION" --query "NetworkAcls[].NetworkAclId" --output text 2>/v2.1.73/null || echo "")
              
              if [[ -n "$CUSTOM_NACLS" && "$CUSTOM_NACLS" != "None" ]]; then
                 for NACL in $CUSTOM_NACLS; do
                    echo "   🔄 Resetting Subnet Associations for Custom NACL: $NACL"
-                   ASSOCS=$(aws ec2 describe-network-acls --network-acl-ids "$NACL" --region "$REGION" --query "NetworkAcls[0].Associations[].NetworkAclAssociationId" --output text 2>/dev/null || echo "")
+                   ASSOCS=$(aws ec2 describe-network-acls --network-acl-ids "$NACL" --region "$REGION" --query "NetworkAcls[0].Associations[].NetworkAclAssociationId" --output text 2>/v2.1.73/null || echo "")
                    for ASSOC in $ASSOCS; do
                       if [[ "${{ inputs.dry_run }}" == "true" ]]; then
                          echo "      [DRY RUN] Would replace network acl association $ASSOC with default $DEFAULT_NACL"
@@ -1083,7 +1083,7 @@ jobs:
           fi
 
           # 2. Force delete dangling ENIs
-          ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Status=='available'].NetworkInterfaceId" --output text 2>/dev/null || echo "")
+          ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Status=='available'].NetworkInterfaceId" --output text 2>/v2.1.73/null || echo "")
           if [[ -n "$ENIS" && "$ENIS" != "None" ]]; then
              for ENI in $ENIS; do
                 echo "   🗑️ Deleting available dangling ENI: $ENI"
@@ -1096,7 +1096,7 @@ jobs:
           fi
           
           # 3. Handle stuck 'in-use' ENIs (Detach then Delete)
-          STUCK_ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Attachment!=null].[NetworkInterfaceId,Attachment.AttachmentId]" --output text 2>/dev/null || echo "")
+          STUCK_ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Attachment!=null].[NetworkInterfaceId,Attachment.AttachmentId]" --output text 2>/v2.1.73/null || echo "")
           if [[ -n "$STUCK_ENIS" && "$STUCK_ENIS" != "None" ]]; then
              while read -r ENI ATT; do
                 if [[ -z "$ENI" ]]; then continue; fi

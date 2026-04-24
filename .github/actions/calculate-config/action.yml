@@ -52,7 +52,7 @@ outputs:
     description: "Terraform State Key"
     value: ${{ steps.config.outputs.state_key }}
   stage_key:
-    description: "Stage Key (dev/stage/prod)"
+    description: "Stage Key (v2.1.73/stage/prod)"
     value: ${{ steps.config.outputs.stage_key }}
   should_build:
     description: "Should Build Images?"
@@ -320,7 +320,7 @@ runs:
         # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
         if [[ "$CLUSTER_TIER" == "auto" ]]; then
-           if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
+           if [[ "$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini" ]]; then
               CLUSTER_TIER="flex"
            else
               CLUSTER_TIER="M10"
@@ -474,7 +474,7 @@ runs:
             # Tenant Multi-Site Applications (e.g., client-001)
             elif [[ "$STACK" == "tenant-app" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
-               if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+               if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini") ]]; then
                   STATE_KEY="infra/${PROJECT_KEY}/features/${INPUT_PROJECT}-${{ inputs.branch_name }}.tfstate"
                else
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
@@ -482,7 +482,7 @@ runs:
 
             # Dedicated DB Stack (per-project DB like thisisblaze-db)
             elif [[ "$STACK" == "dedicated-db" ]]; then
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
+               if [[ "$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${INPUT_PROJECT}-db"
                else
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${INPUT_PROJECT}-db"
@@ -518,8 +518,8 @@ runs:
                fi
 
                # multi-site stacks are NOT scoped per-env — dirs are named globally.
-               # dev, dev-mini, and multi-site all use the unprefixed stack name.
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" || "$STAGE_KEY" == "multi-site" ]]; then
+               # v2.1.73, v2.1.73-mini, and multi-site all use the unprefixed stack name.
+               if [[ "$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini" || "$STAGE_KEY" == "multi-site" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${STACK_DIR}"
                else
                   # For stage/prod, prefix the env: stage-multi-site-app or stage-multi-site-app-support
@@ -532,17 +532,17 @@ runs:
 
             # Legacy Single-Site Fallback
             else
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
+               if [[ "$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "stage" ]]; then
                   # We should no longer auto-upgrade here since it happens above, but keep for safety of other unknown stacks
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
-                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini") ]]; then
                      STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}-tenant.tfstate"
                   else
                      STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/tenant-app.tfstate"
                   fi
                else
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-app"
-                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
+                  if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "v2.1.73" || "$STAGE_KEY" == "v2.1.73-mini") ]]; then
                      STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}.tfstate"
                   else
                      STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/app.tfstate"
@@ -564,7 +564,7 @@ runs:
         echo "lock_table=$LOCK_TABLE" >> $GITHUB_OUTPUT
 
         # Get Account ID (Optional)
-        if command -v aws >/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
+        if command -v aws >/v2.1.73/null && aws sts get-caller-identity >/v2.1.73/null 2>&1; then
            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
         else
            ACCOUNT_ID=""

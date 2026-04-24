@@ -62,7 +62,7 @@ data "terraform_remote_state" "app" {
 
 # ── Label ──
 module "label" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.4.8"
 
   namespace  = var.namespace
   stage      = var.stage
@@ -100,11 +100,11 @@ resource "google_project_service" "run" {
 }
 
 # ─────────────────────────────────────────────────────────────
-# CLOUD ARMOR (WAF) — Basic rate limiting for dev
+# CLOUD ARMOR (WAF) — Basic rate limiting for v2.1.73
 # ─────────────────────────────────────────────────────────────
 
 module "cloud_armor" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/security/cloud-armor?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/security/cloud-armor?ref=v2.4.8"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
@@ -121,7 +121,7 @@ module "cloud_armor" {
 # ─────────────────────────────────────────────────────────────
 
 module "image_resize" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/image-resize?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/compute/image-resize?ref=v2.4.8"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
@@ -151,7 +151,7 @@ module "image_resize" {
 # ─────────────────────────────────────────────────────────────
 
 module "global_lb" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v2.4.8"
 
   context        = module.label.context
   gcp_project_id = var.gcp_project_id
@@ -223,12 +223,12 @@ module "global_lb" {
     }
   ]
 
-  # Dev: Enable SSL for gcp-dev sub-domain (AWS parity)
-  managed_ssl_domains  = var.domain_root != "" ? ["gcp-dev.${var.domain_root}", "api-gcp-dev.${var.domain_root}"] : []
+  # Dev: Enable SSL for gcp-v2.1.73 sub-domain (AWS parity)
+  managed_ssl_domains  = var.domain_root != "" ? ["gcp-v2.1.73.${var.domain_root}", "api-gcp-v2.1.73.${var.domain_root}"] : []
   enable_http_redirect = true
 
   enable_logging  = true
-  log_sample_rate = 1.0 # Full logging in dev
+  log_sample_rate = 1.0 # Full logging in v2.1.73
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -263,7 +263,7 @@ output "cloud_armor_policy" {
 resource "cloudflare_record" "lb_dns" {
   count   = var.domain_root != "" ? 1 : 0
   zone_id = var.cloudflare_zone_id
-  name    = "gcp-dev" # gcp-dev.thisisblaze.uk
+  name    = "gcp-v2.1.73" # gcp-v2.1.73.thisisblaze.uk
   type    = "A"
   content = module.global_lb.lb_ip_address
   proxied = false # Google manages SSL — no Cloudflare proxy allowed
@@ -273,7 +273,7 @@ resource "cloudflare_record" "lb_dns" {
 resource "cloudflare_record" "api_dns" {
   count   = var.domain_root != "" ? 1 : 0
   zone_id = var.cloudflare_zone_id
-  name    = "api-gcp-dev"
+  name    = "api-gcp-v2.1.73"
   type    = "A"
   content = module.global_lb.lb_ip_address
   proxied = false

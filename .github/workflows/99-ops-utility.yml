@@ -18,7 +18,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.73", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -62,7 +62,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
         type: string
         required: false
       skip_lambda_destroy:
@@ -415,7 +415,7 @@ jobs:
           echo "🔍 Collecting active runs (in_progress + queued + pending)..."
           RUNS_IP=$(gh run list --repo "${{ github.repository }}" --status in_progress ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
           RUNS_QU=$(gh run list --repo "${{ github.repository }}" --status queued ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
-          RUNS_PE=$(gh run list --repo "${{ github.repository }}" --status pending ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50 2>/dev/null || echo '[]')
+          RUNS_PE=$(gh run list --repo "${{ github.repository }}" --status pending ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50 2>/v2.1.73/null || echo '[]')
           RUNS=$(jq -s 'add | unique_by(.databaseId)' <(echo "$RUNS_IP") <(echo "$RUNS_QU") <(echo "$RUNS_PE"))
 
           echo "Found $(echo "$RUNS" | jq 'length') active runs"

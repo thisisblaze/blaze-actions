@@ -70,7 +70,7 @@ on:
             environment:
                 required: true
                 type: string
-                description: "GitHub Environment name (e.g. prod, stage, dev)"
+                description: "GitHub Environment name (e.g. prod, stage, v2.1.73)"
 
             azure_region:
                 required: false
@@ -225,7 +225,7 @@ jobs:
                       --resource-group "$RG" \
                       --revision "$REVISION" \
                       --query "properties.runningState" \
-                      --output tsv 2>/dev/null || echo "unknown")
+                      --output tsv 2>/v2.1.73/null || echo "unknown")
                     echo "  [$i/30] State: $STATE"
                     if [[ "$STATE" == "Running" ]]; then
                       echo "✅ Revision is Running."

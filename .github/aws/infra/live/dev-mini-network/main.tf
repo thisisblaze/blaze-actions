@@ -59,7 +59,7 @@ provider "aws" {
 }
 
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.4.8"
 
   providers = {
     aws           = aws
@@ -135,7 +135,7 @@ module "environment_network" {
 # EC2 CAPACITY PROVIDER (Hybrid ECS — Feb 2026)
 # --------------------------------------------------------------------------------
 module "ec2_capacity_provider" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.4.6"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.4.8"
   count  = var.enable_ec2 ? 1 : 0
 
   # Identity (context provides label defaults, but these are required)
@@ -166,7 +166,7 @@ module "ec2_capacity_provider" {
 }
 
 module "log_bucket" {
-  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.4.6"
+  source  = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/s3?ref=v2.4.8"
   name    = "logs"
   context = module.environment_network.context
 }
@@ -192,7 +192,7 @@ moved {
 }
 
 # 3. Security Group (Module -> Resource)
-# dev-network used module "security_group", inside it "aws_security_group.this"
+# v2.1.73-network used module "security_group", inside it "aws_security_group.this"
 # new module uses resource "aws_security_group.ecs_sg"
 moved {
   from = module.security_group.aws_security_group.this
@@ -200,7 +200,7 @@ moved {
 }
 
 # 4. EFS (Module -> Resource)
-# dev-network used module "efs", inside it "aws_efs_file_system.main"
+# v2.1.73-network used module "efs", inside it "aws_efs_file_system.main"
 # new module uses resource "aws_efs_file_system.main"
 moved {
   from = module.efs.aws_efs_file_system.main
@@ -241,22 +241,22 @@ moved {
 
 # Applications: moved into module (resource type unchanged in v5)
 moved {
-  from = cloudflare_zero_trust_access_application.frontend_dev
+  from = cloudflare_zero_trust_access_application.frontend_v2.1.73
   to   = module.environment_network.cloudflare_zero_trust_access_application.frontend[0]
 }
 
 moved {
-  from = cloudflare_zero_trust_access_application.admin_dev
+  from = cloudflare_zero_trust_access_application.admin_v2.1.73
   to   = module.environment_network.cloudflare_zero_trust_access_application.admin[0]
 }
 
 # Policies: removed from state (now inline in application resource)
 removed {
-  from = cloudflare_zero_trust_access_policy.frontend_dev_allow
+  from = cloudflare_zero_trust_access_policy.frontend_v2.1.73_allow
   lifecycle { destroy = false }
 }
 
 removed {
-  from = cloudflare_zero_trust_access_policy.admin_dev_allow
+  from = cloudflare_zero_trust_access_policy.admin_v2.1.73_allow
   lifecycle { destroy = false }
 }

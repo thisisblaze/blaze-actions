@@ -10,7 +10,7 @@ variable "client_key" {
 
 variable "stage" {
   type    = string
-  default = "dev"
+  default = "v2.1.73"
 }
 
 variable "project_key" {

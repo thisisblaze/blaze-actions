@@ -136,12 +136,12 @@ jobs:
             - name: Read Front Door Endpoint from TF State
               id: tf_outputs
               env:
-                  STAGE: ${{ inputs.environment == 'PROD' && 'prod' || inputs.environment == 'STAGE' && 'stage' || 'dev' }}
+                  STAGE: ${{ inputs.environment == 'PROD' && 'prod' || inputs.environment == 'STAGE' && 'stage' || 'v2.1.73' }}
               run: |
                   STAGE_LC="${STAGE,,}"
-                  NAMESPACE=$(jq -r '.common.NAMESPACE // "blaze"' vars/blaze-env.json 2>/dev/null || echo "blaze")
-                  CLIENT_KEY=$(jq -r '.common.CLIENT_KEY // "b9"' vars/blaze-env.json 2>/dev/null || echo "b9")
-                  PROJECT_KEY=$(jq -r '.common.PROJECT_KEY // "thisisblaze"' vars/blaze-env.json 2>/dev/null || echo "thisisblaze")
+                  NAMESPACE=$(jq -r '.common.NAMESPACE // "blaze"' vars/blaze-env.json 2>/v2.1.73/null || echo "blaze")
+                  CLIENT_KEY=$(jq -r '.common.CLIENT_KEY // "b9"' vars/blaze-env.json 2>/v2.1.73/null || echo "b9")
+                  PROJECT_KEY=$(jq -r '.common.PROJECT_KEY // "thisisblaze"' vars/blaze-env.json 2>/v2.1.73/null || echo "thisisblaze")
 
                   NETWORK_STACK=".github/azure/infra/live/${STAGE_LC}-network"
 
@@ -158,7 +158,7 @@ jobs:
                     --container-name "$CONTAINER" \
                     --name "$STATE_KEY" \
                     --auth-mode login \
-                    --output tsv 2>/dev/null || echo "{}")
+                    --output tsv 2>/v2.1.73/null || echo "{}")
 
                   FD_ENDPOINT=$(echo "$STATE_JSON" | jq -r '.outputs.front_door_endpoint_hostname.value // ""')
                   FD_CUSTOM=$(echo "$STATE_JSON" | jq -r '.outputs.front_door_custom_domain_hostname.value // ""')
@@ -187,7 +187,7 @@ jobs:
                   fi
 
                   echo "🌐 Testing Front Door endpoint: https://${FD_ENDPOINT}/"
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${FD_ENDPOINT}/" || echo "000")
+                  HTTP_STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${FD_ENDPOINT}/" || echo "000")
 
                   echo "HTTP Status: $HTTP_STATUS"
                   if [[ "$HTTP_STATUS" =~ ^(200|301|302|307|308|404)$ ]]; then
@@ -217,7 +217,7 @@ jobs:
                   fi
 
                   echo "🌐 Checking custom domain: https://${CUSTOM_DOMAIN}/graphql"
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${CUSTOM_DOMAIN}/graphql" || echo "000")
+                  HTTP_STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${CUSTOM_DOMAIN}/graphql" || echo "000")
                   echo "HTTP Status: $HTTP_STATUS"
 
                   if [[ "$HTTP_STATUS" =~ ^(200|301|302|404|503)$ ]]; then
@@ -242,7 +242,7 @@ jobs:
                   BLOB_ENDPOINT="https://${STORAGE_NAME}.blob.core.windows.net"
                   echo "📦 Checking Blob Storage CORS at ${BLOB_ENDPOINT}"
 
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+                  HTTP_STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" \
                     -H "Origin: https://test.local" \
                     -H "Access-Control-Request-Method: GET" \
                     --connect-timeout 10 --max-time 15 \
@@ -275,7 +275,7 @@ jobs:
                   fi
 
                   echo "🖼️ Testing image resize: $TEST_URL"
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 15 --max-time 30 "$TEST_URL" || echo "000")
+                  HTTP_STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" --connect-timeout 15 --max-time 30 "$TEST_URL" || echo "000")
                   echo "HTTP Status: $HTTP_STATUS"
 
                   if [[ "$HTTP_STATUS" =~ ^(200|302|404)$ ]]; then
@@ -296,7 +296,7 @@ jobs:
                   fi
 
                   echo "🛡️ Sending SQLi probe to WAF — expecting 403..."
-                  HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+                  HTTP_STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" \
                     --connect-timeout 10 --max-time 30 \
                     "https://${FD_ENDPOINT}/api/test?id=1' OR '1'='1" || echo "000")
                   echo "HTTP Status: $HTTP_STATUS"

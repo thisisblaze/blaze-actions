@@ -14,7 +14,7 @@ provider "cloudflare" {
 # CLOUDFLARE TUNNEL (DEV HOST ONLY)
 # ---------------------------------------------------------
 # ⚠️  IMPORTANT: This resource is for DEV **HOST** environment ONLY.
-#     Feature Branches manage their own tunnels in dev-app/main.tf.
+#     Feature Branches manage their own tunnels in v2.1.73-app/main.tf.
 #     STAGE and PROD use Application Load Balancer (ALB) instead.
 # ---------------------------------------------------------
 
@@ -42,7 +42,7 @@ locals {
 }
 
 module "tunnel" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/tunnel?ref=v2.4.6"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/tunnel?ref=v2.4.8"
 
   account_id = var.cloudflare_account_id
   name       = "${var.namespace}-${var.project_key}-${var.stage}-tunnel-${substr(random_id.tunnel_secret.hex, 0, 6)}"
@@ -52,7 +52,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 }
 
 module "tunnel_dns" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-record?ref=v2.4.6"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/dns-record?ref=v2.4.8"
 
   zone_id = var.cloudflare_zone_id
 
@@ -69,11 +69,11 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # ---------------------------------------------------------
 # PAGES CUSTOM DOMAIN (DEV HOST ONLY)
 # ---------------------------------------------------------
-# Purpose: Bind the Admin Pages project to admin-dev.thisisblaze.uk
+# Purpose: Bind the Admin Pages project to admin-v2.1.73.thisisblaze.uk
 # ---------------------------------------------------------
 
 module "admin_pages_project" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.4.6"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.4.8"
 
   account_id   = var.cloudflare_account_id
   project_name = "${var.namespace}-${var.client_key}-${var.project_key}-${var.stage}-admin"
@@ -85,7 +85,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 
 
 module "admin_pages_domain" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-domain?ref=v2.4.6"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-domain?ref=v2.4.8"
 
   account_id   = var.cloudflare_account_id
   project_name = module.admin_pages_project.name
@@ -98,10 +98,10 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # BASIC AUTH WORKER (FRONTEND ONLY)
 # ---------------------------------------------------------
 # Purpose: Protect frontend with HTTP Basic Auth
-# API and Kibana remain public for development/testing
+# API and Kibana remain public for v2.1.73elopment/testing
 # ---------------------------------------------------------
 module "basic_auth_worker" {
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/worker-basic-auth?ref=v2.4.6"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/worker-basic-auth?ref=v2.4.8"
 
   account_id = var.cloudflare_account_id
   zone_id    = var.cloudflare_zone_id

@@ -3,7 +3,7 @@ name: 05 ✅ CI (No Cloud)
 on:
   pull_request:
   push:
-    branches: [dev, main]
+    branches: [v2.1.73, main]
   workflow_dispatch:
 
 permissions:
