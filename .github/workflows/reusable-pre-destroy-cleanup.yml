@@ -844,6 +844,7 @@ jobs:
                   --query "clusters[0].capacityProviders" \
                   --output json 2>/dev/null || echo "[]")
 
+                if [[ "$CURRENT_CPS" == "null" || -z "$CURRENT_CPS" ]]; then CURRENT_CPS="[]"; fi
                 FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
                 
                 # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
