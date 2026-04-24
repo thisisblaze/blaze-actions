@@ -575,6 +575,9 @@ jobs:
           REGION="${{ needs.config.outputs.aws_region || 'eu-west-1' }}"
           BLAZE_ENV="${{ inputs.environment }}"
           BLAZE_PROJECT="${{ needs.config.outputs.project_key }}"
+          NAMESPACE="${{ needs.config.outputs.namespace || 'blaze' }}"
+          CLIENT_KEY="${{ needs.config.outputs.client_key || 'b9' }}"
+          RESOURCE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${BLAZE_PROJECT}-${BLAZE_ENV}"
 
           # ── Find VPC: tag-first (Blaze tags), then Name tag fallback ────────
           # v1.4.94+: Blaze:Architecture+Project+Environment tags used first.
@@ -633,7 +636,7 @@ jobs:
           if [[ -z "$ASG_NAMES" || "$ASG_NAMES" == "None" ]]; then
             ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
               --region "$REGION" \
-              --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${NAMESPACE}')].AutoScalingGroupName" \
+              --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '${RESOURCE_PREFIX}-')].AutoScalingGroupName" \
               --output text 2>/dev/null || echo "")
           fi
           if [[ -n "$ASG_NAMES" && "$ASG_NAMES" != "None" ]]; then
@@ -660,8 +663,8 @@ jobs:
             --output text 2>/dev/null || echo "")
           for CLUSTER_ARN in $ECS_CLUSTERS; do
             CLUSTER_NAME=$(echo "$CLUSTER_ARN" | awk -F'/' '{print $NF}')
-            # Only touch clusters in our namespace
-            [[ "$CLUSTER_NAME" != *"$NAMESPACE"* ]] && continue
+            # Only touch clusters in our environment
+            [[ "$CLUSTER_NAME" != *"${RESOURCE_PREFIX}"* ]] && continue
             echo "   → Cluster: $CLUSTER_NAME"
             SVC_ARNS=$(aws ecs list-services --cluster "$CLUSTER_ARN" \
               --region "$REGION" --query 'serviceArns[]' --output text 2>/dev/null || echo "")
