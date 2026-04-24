@@ -557,6 +557,12 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v2.1.74 & v2.4.8** (2026-04-24):
+- Deep CI/CD maintenance sync: Resolved checkengines workflow parity errors.
+- Hardened teardown scripts: Enforced native `jq` type safety (`type=="array"`) to elegantly handle AWS CLI `null` capacityProviders during ECS cluster deletion.
+- ALB naming collision fix: Enforced strict `trimsuffix("-")` to prevent AWS validation errors when 32-character project prefixes truncate at a hyphen.
+- Global Tag Normalization: Systematically bumped all nested internal workflow tags to `v2.1.74` and terraform core refs to `v2.4.8` to definitively seal the pipeline from referencing stale, buggy logic during the stress tests.
+
 **v2.4.6** (2026-04-22):
 - Deep CI/CD maintenance sync: Updated workflow catalog, resolved all references to renamed workflows (e.g. `04-deploy-multi-site` to `02-deploy-app`), removed non-existent workflows (`deploy-site`, `nuke-cloudfront`), and aligned versions to `v2.4.6`.
 

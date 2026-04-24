@@ -18,7 +18,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.73", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.74", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -232,7 +232,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.73
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.74
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -344,7 +344,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.73
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}

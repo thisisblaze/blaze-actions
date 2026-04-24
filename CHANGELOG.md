@@ -199,6 +199,14 @@
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
 
+### Added
+- feat(ci): executed `/13-deep-cicd-maintenance` global synchronization suite.
+- feat(ci): enforced complete structural workflow parity across `blaze-actions` and `blaze-template-deploy`, bumping tags to `@v2.1.74`.
+- feat(ci): hardened teardown scripts with native `jq` type safety (`type=="array"`) to elegantly handle AWS CLI `null` capacityProviders during ECS cluster deletion.
+- feat(infra): enforced strict `trimsuffix("-")` to prevent AWS validation errors when 32-character ALB project prefixes truncate at a hyphen.
+- feat(ci): systematically bumped all nested internal workflow tags to `v2.1.74` and terraform core refs to `v2.4.8` to definitively seal the pipeline from referencing stale, buggy logic.
+
+
 ### Changed
 - fix(import): updated `import.sh` to correctly import tenant-specific Cloudflare DNS records (`cloudflare_dns_record.api[0]`, etc.) for the `app` stack, resolving persistent `CNAMEAlreadyExists` crashes during zero-state or clean-slate provisioning.
 - chore: archived legacy monolithic deployment scripts (`deploy-site.yml`, `deploy-azure-site.yml`, `deploy-gcp-site.yml`) and ad-hoc script `nuke-cloudfront.yml` to strictly enforce the modular Multi-Tenant V2 `reusable-*` and native nuke pipelines.
