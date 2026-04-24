@@ -398,6 +398,45 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
+  post-destroy-app-wait:
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.destroy-app.result == 'success' }}
+    name: "⏳ Wait for ECS Service Purge"
+    needs: [config, destroy-app]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
+      
+      - name: Wait for ECS Services to transition to INACTIVE
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
+        run: |
+          echo "⏳ Waiting 60 seconds to ensure AWS fully purges ECS Services from the control plane..."
+          echo "   (This prevents 'Unable to Start a service that is still Draining' upon immediate reprovisioning)"
+          sleep 60
+          
+          REGION="${{ needs.config.outputs.aws_region || 'eu-west-1' }}"
+          NAMESPACE="${{ needs.config.outputs.namespace || 'blaze' }}"
+          
+          # Poll clusters in our namespace
+          ECS_CLUSTERS=$(aws ecs list-clusters --region "$REGION" --query 'clusterArns[]' --output text 2>/dev/null || echo "")
+          for CLUSTER_ARN in $ECS_CLUSTERS; do
+            CLUSTER_NAME=$(echo "$CLUSTER_ARN" | awk -F'/' '{print $NF}')
+            [[ "$CLUSTER_NAME" != *"$NAMESPACE"* ]] && continue
+            
+            echo "   Checking cluster: $CLUSTER_NAME"
+            SVC_ARNS=$(aws ecs list-services --cluster "$CLUSTER_ARN" --region "$REGION" --query 'serviceArns[]' --output text 2>/dev/null || echo "")
+            if [[ -n "$SVC_ARNS" && "$SVC_ARNS" != "None" ]]; then
+              echo "   ⚠️  Found lingering services: $SVC_ARNS"
+              aws ecs wait services-inactive --cluster "$CLUSTER_ARN" --services $SVC_ARNS --region "$REGION" 2>/dev/null || true
+            fi
+          done
+          echo "✅ All targeted ECS services confirmed INACTIVE."
+
   destroy-data-pod:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.db_pod_exists == 'true' }}
     name: "🧨 Destroy Data Pod"
