@@ -613,8 +613,8 @@ jobs:
             echo "   ℹ️  No ASGs found"
           fi
 
-          # ── Step 0b: Scale all ECS services to 0 (drain task ENIs) ──────
-          echo "🗑️  Scaling ECS services to 0..."
+          # ── Step 0b: Scale all ECS services to 0 and FORCE STOP tasks ──────
+          echo "🗑️  Scaling ECS services to 0 and stopping tasks..."
           ECS_CLUSTERS=$(aws ecs list-clusters \
             --region "$REGION" \
             --query 'clusterArns[]' \
@@ -632,10 +632,17 @@ jobs:
                 --desired-count 0 --region "$REGION" 2>/dev/null \
                 && echo "     ✅ $SVC_NAME → 0" || true
             done
+            
+            echo "   → Force stopping all tasks in $CLUSTER_NAME..."
+            TASK_ARNS=$(aws ecs list-tasks --cluster "$CLUSTER_ARN" --region "$REGION" --query 'taskArns[]' --output text 2>/dev/null || echo "")
+            for TASK_ARN in $TASK_ARNS; do
+              aws ecs stop-task --cluster "$CLUSTER_ARN" --task "$TASK_ARN" --reason "Forced Teardown" --region "$REGION" 2>/dev/null \
+                && echo "     ✅ Stopped task $(echo "$TASK_ARN" | awk -F'/' '{print $NF}')" || true
+            done
           done
           if [[ -n "$ECS_CLUSTERS" && "$ECS_CLUSTERS" != "None" ]]; then
-            echo "   ⏳ Waiting 20s for ECS tasks to drain..."
-            sleep 20
+            echo "   ⏳ Waiting 30s for ECS tasks to drain completely..."
+            sleep 30
           fi
 
           # ── Step 0c: Delete Load Balancers (CRITICAL — holds lb_sg + subnet ENIs) ─
