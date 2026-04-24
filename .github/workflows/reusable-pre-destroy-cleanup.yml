@@ -844,8 +844,8 @@ jobs:
                   --query "clusters[0].capacityProviders" \
                   --output json 2>/dev/null || echo "[]")
 
-                if [[ "$CURRENT_CPS" == "null" || -z "$CURRENT_CPS" ]]; then CURRENT_CPS="[]"; fi
-                FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" '[.[] | select(. != $cp)]')
+                # If aws cli outputs "null" (even with whitespace), jq's type=="array" safely handles it
+                FILTERED_CPS=$(echo "$CURRENT_CPS" | jq -r --arg cp "$CP_NAME" 'if type=="array" then [.[] | select(. != $cp)] else [] end')
                 
                 # If filtering leaves nothing (or just FARGATE implicit), fallback to default FARGATE/SPOT
                 # This is crucial because `put-cluster-capacity-providers` requires at least one provider strategy if clearing others.
