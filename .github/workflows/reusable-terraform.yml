@@ -355,7 +355,7 @@ jobs:
             echo "MONGODB_ATLAS_PUBLIC_KEY=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "MONGODB_ATLAS_PRIVATE_KEY=$MONGODB_ATLAS_PRIVATE_KEY"
             echo "MONGODB_ATLAS_PROJECT_ID=$MONGODB_ATLAS_PROJECT_ID"
-            echo "EC_API_KEY=$EC_API_KEY"
+            echo "TF_VAR_ec_api_key=$EC_API_KEY"
             echo "ARM_USE_OIDC=${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}"
             echo "ARM_CLIENT_ID=$ARM_CLIENT_ID"
             echo "ARM_TENANT_ID=$ARM_TENANT_ID"
