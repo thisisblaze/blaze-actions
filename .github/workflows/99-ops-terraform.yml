@@ -21,7 +21,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -489,12 +489,12 @@ jobs:
           if [[ "$ACTION" == "unlock-state" ]]; then
             echo "🔓 Unlocking GCS State: gs://$BUCKET/$KEY"
             # GCS backend uses a .tflock object
-            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/v2.1.73/null || echo "ℹ️ No lock file found"
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
             echo "✅ State unlocked."
           elif [[ "$ACTION" == "wipe-state" ]]; then
             echo "☢️ WIPING GCS STATE: gs://$BUCKET/$KEY"
-            gsutil rm "gs://$BUCKET/$KEY" 2>/v2.1.73/null || echo "ℹ️ State file not found"
-            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/v2.1.73/null || echo "ℹ️ No lock file found"
+            gsutil rm "gs://$BUCKET/$KEY" 2>/dev/null || echo "ℹ️ State file not found"
+            gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
             echo "✅ State wiped."
           fi
 

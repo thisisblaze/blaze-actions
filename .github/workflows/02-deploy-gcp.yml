@@ -300,7 +300,7 @@ jobs:
               CLOUD_REGION="$GCP_REGION"
               ;;
             azure)
-              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/v2.1.73/null || echo "westeurope")
+              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
               CLOUD_REGION="$AZURE_REGION"
               ;;
             *)
@@ -425,7 +425,7 @@ jobs:
 
           # 2. Check ECR Repository
           echo "Checking ECR Repository: $REPO_NAME"
-          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/v2.1.73/null 2>&1; then
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
              echo "::error::❌ ECR Repository '$REPO_NAME' NOT FOUND."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
              exit 1
@@ -450,7 +450,7 @@ jobs:
 
           # Check Artifact Registry
           if gcloud artifacts repositories describe "$REPO" \
-            --project="$PROJECT" --location="$REGION" >/v2.1.73/null 2>&1; then
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
             echo "✅ Artifact Registry repository found."
           else
             echo "::error::❌ Artifact Registry repository '$REPO' NOT FOUND."
@@ -512,7 +512,7 @@ jobs:
           echo "-------------------------------------"
 
           # 1. Check Resource Group
-          if az group show --name "$RG_NAME" >/v2.1.73/null 2>&1; then
+          if az group show --name "$RG_NAME" >/dev/null 2>&1; then
             echo "✅ Resource Group found."
           else
             echo "::error::❌ Resource Group '$RG_NAME' NOT FOUND."
@@ -521,7 +521,7 @@ jobs:
           fi
 
           # 2. Check ACR
-          if az acr show --name "$ACR_NAME" >/v2.1.73/null 2>&1; then
+          if az acr show --name "$ACR_NAME" >/dev/null 2>&1; then
             echo "✅ Azure Container Registry found."
           else
             echo "::error::❌ ACR '$ACR_NAME' NOT FOUND."

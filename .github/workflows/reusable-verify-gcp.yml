@@ -166,7 +166,7 @@ jobs:
               local url=$1
               local expected_desc=$2
               local code
-              code=$(curl -skL --max-time 15 -o /v2.1.73/null -w "%{http_code}" "$url" 2>/v2.1.73/null || echo "000")
+              code=$(curl -skL --max-time 15 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
               if [ "$code" = "000" ]; then
                 echo "| $url | timeout | ❌ Unreachable |"
                 ALL_REACHABLE=false
@@ -236,14 +236,14 @@ jobs:
           "
 
           # Convert PPM to JPEG using ImageMagick (available on GitHub runners)
-          convert tests/sample.ppm tests/sample.jpg 2>/v2.1.73/null || \
+          convert tests/sample.ppm tests/sample.jpg 2>/dev/null || \
             python3 -c "
           # Minimal JFIF JPEG fallback — copy PPM as raw if convert unavailable
           import subprocess, os
           # Try ffmpeg as fallback
           subprocess.run(['ffmpeg', '-y', '-i', 'tests/sample.ppm', 'tests/sample.jpg'], 
                         capture_output=True, check=True)
-          " 2>/v2.1.73/null || {
+          " 2>/dev/null || {
             echo "⚠️ No image converter available, using PPM directly"
             cp tests/sample.ppm tests/sample.jpg
           }
@@ -254,7 +254,7 @@ jobs:
 
           # Step 3: Invalidate CloudFront cache for /convert/test/* paths (clears cached 404s)
           aws cloudfront create-invalidation --distribution-id "$DIST_ID" \
-            --paths "/convert/test/*" --region us-east-1 > /v2.1.73/null
+            --paths "/convert/test/*" --region us-east-1 > /dev/null
           echo "✅ CloudFront cache invalidated for /convert/test/*"
 
           # Step 4: Wait for invalidation + S3 consistency propagation
@@ -307,8 +307,8 @@ jobs:
             for attempt in $(seq 1 $max_attempts); do
               echo "Testing $name (attempt $attempt/$max_attempts)..."
               
-              STATUS=$(curl -o /v2.1.73/null -s -w "%{http_code}" -m 15 --retry 2 --retry-delay 5 "$url" || echo "000")
-              TIME=$(curl -o /v2.1.73/null -s -w "%{time_total}s" -m 15 --retry 2 --retry-delay 5 "$url" 2>/v2.1.73/null || echo "timeout")
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" -m 15 --retry 2 --retry-delay 5 "$url" || echo "000")
+              TIME=$(curl -o /dev/null -s -w "%{time_total}s" -m 15 --retry 2 --retry-delay 5 "$url" 2>/dev/null || echo "timeout")
               
               # Check if status is valid
               for valid_code in $valid_codes; do

@@ -222,7 +222,7 @@ jobs:
 
           if [[ -n "$TF_VARS_JSON" ]]; then
             # Validate JSON first
-            if ! echo "$TF_VARS_JSON" | jq . > /v2.1.73/null 2>&1; then
+            if ! echo "$TF_VARS_JSON" | jq . > /dev/null 2>&1; then
               echo "❌ ERROR: Invalid JSON received in terraform_vars!"
               echo "Received (first 200 chars): $(echo "$TF_VARS_JSON" | head -c 200)"
               exit 1
@@ -264,7 +264,7 @@ jobs:
             mkdir -p ~/.ssh
             echo "${DEPLOY_KEY}" > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
-            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/v2.1.73/null
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
             git config --global url."git@github.com:".insteadOf "https://github.com/"
           else
             echo "⚠️ No GH_PAT or DEPLOY_KEY found. Using GITHUB_TOKEN (cross-repo private modules may fail)."
@@ -310,16 +310,16 @@ jobs:
               aws dynamodb delete-item \
                 --table-name "${TABLE_NAME}" \
                 --key "{\"LockID\": {\"S\": \"${LOCK_ID}\"}}" \
-                --region "${REGION}" 2>/v2.1.73/null || true
+                --region "${REGION}" 2>/dev/null || true
               
               # 2. Remove MD5 digest entry (this is usually the culprit for checksum mismatches)
               aws dynamodb delete-item \
                 --table-name "${TABLE_NAME}" \
                 --key "{\"LockID\": {\"S\": \"${LOCK_ID}-md5\"}}" \
-                --region "${REGION}" 2>/v2.1.73/null || true
+                --region "${REGION}" 2>/dev/null || true
               
               # 3. Remove S3 side tflock
-              aws s3 rm "s3://${BUCKET}/${STATE_KEY}.tflock" --region "${REGION}" 2>/v2.1.73/null || true
+              aws s3 rm "s3://${BUCKET}/${STATE_KEY}.tflock" --region "${REGION}" 2>/dev/null || true
               
               echo "✅ Purge complete. Ready for retry."
           }
@@ -487,9 +487,9 @@ jobs:
           # Same repair function as init (duplicated because steps are independent shells)
           repair_checksum_lock() {
               echo "⚠️ state inconsistency detected during execution. Attempting repair..."
-              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" --region "$REGION" 2>/v2.1.73/null || true
-              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID-md5\"}}" --region "$REGION" 2>/v2.1.73/null || true
-              aws s3 rm "s3://$BUCKET/$STATE_KEY.tflock" --region "$REGION" 2>/v2.1.73/null || true
+              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" --region "$REGION" 2>/dev/null || true
+              aws dynamodb delete-item --table-name "$TABLE_NAME" --key "{\"LockID\": {\"S\": \"$LOCK_ID-md5\"}}" --region "$REGION" 2>/dev/null || true
+              aws s3 rm "s3://$BUCKET/$STATE_KEY.tflock" --region "$REGION" 2>/dev/null || true
           }
 
           run_terraform() {

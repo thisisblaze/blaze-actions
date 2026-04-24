@@ -194,7 +194,7 @@ jobs:
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
-          ref: v2.1.73
+          ref: dev
 
       - name: Calculate Configuration
         id: calc
@@ -287,7 +287,7 @@ jobs:
             --cluster "$CLUSTER_NAME" \
             --region "$REGION" \
             --query 'serviceArns' \
-            --output text 2>/v2.1.73/null | tr '\t' '\n' || echo "")
+            --output text 2>/dev/null | tr '\t' '\n' || echo "")
 
           SITE_ARNS=$(echo "$ALL_ARNS" | grep -E '/.*-site-[0-9]+$' || echo "")
 
@@ -319,7 +319,7 @@ jobs:
               --services "$SVC" \
               --region "$REGION" \
               --query 'services[0].status' \
-              --output text 2>/v2.1.73/null || echo "MISSING")
+              --output text 2>/dev/null || echo "MISSING")
 
             if [[ "$STATUS" != "ACTIVE" ]]; then
               echo "⚠️  $SVC — status=$STATUS, skipping"
@@ -332,7 +332,7 @@ jobs:
               --service "$SVC" \
               --force-new-deployment \
               --region "$REGION" \
-              --output text > /v2.1.73/null 2>&1 \
+              --output text > /dev/null 2>&1 \
               && { echo "✅ $SVC — new deployment triggered"; PASSED=$((PASSED + 1)); } \
               || { echo "❌ $SVC — update-service failed"; FAILED=$((FAILED + 1)); }
 

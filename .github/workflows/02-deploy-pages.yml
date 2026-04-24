@@ -300,7 +300,7 @@ jobs:
               CLOUD_REGION="$GCP_REGION"
               ;;
             azure)
-              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/v2.1.73/null || echo "westeurope")
+              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
               CLOUD_REGION="$AZURE_REGION"
               ;;
             *)
@@ -424,7 +424,7 @@ jobs:
 
           # 2. Check ECR Repository
           echo "Checking ECR Repository: $REPO_NAME"
-          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/v2.1.73/null 2>&1; then
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
              echo "::error::❌ ECR Repository '$REPO_NAME' NOT FOUND."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
              exit 1
@@ -449,7 +449,7 @@ jobs:
 
           # Check Artifact Registry
           if gcloud artifacts repositories describe "$REPO" \
-            --project="$PROJECT" --location="$REGION" >/v2.1.73/null 2>&1; then
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
             echo "✅ Artifact Registry repository found."
           else
             echo "::warning::Artifact Registry repository '$REPO' not found — will be created on first push."
@@ -509,7 +509,7 @@ jobs:
           echo "-------------------------------------"
 
           # 1. Check Resource Group
-          if az group show --name "$RG_NAME" >/v2.1.73/null 2>&1; then
+          if az group show --name "$RG_NAME" >/dev/null 2>&1; then
             echo "✅ Resource Group found."
           else
             echo "::error::❌ Resource Group '$RG_NAME' NOT FOUND."
@@ -518,7 +518,7 @@ jobs:
           fi
 
           # 2. Check ACR
-          if az acr show --name "$ACR_NAME" >/v2.1.73/null 2>&1; then
+          if az acr show --name "$ACR_NAME" >/dev/null 2>&1; then
             echo "✅ Azure Container Registry found."
           else
             echo "::error::❌ ACR '$ACR_NAME' NOT FOUND."
@@ -647,7 +647,7 @@ jobs:
           PROJECT_ID=$(curl -s -X GET \
             "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            | jq -r '.result.name' 2>/v2.1.73/null || echo "")
+            | jq -r '.result.name' 2>/dev/null || echo "")
 
           if [ "$PROJECT_ID" != "$PROJECT_NAME" ]; then
             echo "⚠️  Project ($PROJECT_NAME) not found. Typically it should be created via Terraform first."

@@ -23,7 +23,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -663,7 +663,7 @@ jobs:
             # But let's try to be precise.
 
             # Simple Check:
-            HTTP_CODE=$(curl -s -o /v2.1.73/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/workers/scripts/$script_name" \
               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
 
             if [[ "$HTTP_CODE" == "200" ]]; then
@@ -851,7 +851,7 @@ jobs:
             INDEX=$((INDEX + 1))
             
             # Calculate age
-            CREATED_TS=$(date -d "${CREATED_AT%.*}" +%s 2>/v2.1.73/null || echo 0)
+            CREATED_TS=$(date -d "${CREATED_AT%.*}" +%s 2>/dev/null || echo 0)
             AGE_DAYS=$(( (CURRENT_TIME - CREATED_TS) / 86400 ))
             
             # Decide whether to delete
@@ -866,7 +866,7 @@ jobs:
                 
                 curl -s -X DELETE \
                   "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments/${DEPLOY_ID}" \
-                  -H "Authorization: Bearer ${CF_API_TOKEN}" > /v2.1.73/null
+                  -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
                 
                 DELETED=$((DELETED + 1))
               fi
@@ -956,7 +956,7 @@ jobs:
               echo "🗑️ Deleting: $PROJECT"
               curl -s -X DELETE \
                 "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PROJECT}" \
-                -H "Authorization: Bearer ${CF_API_TOKEN}" > /v2.1.73/null
+                -H "Authorization: Bearer ${CF_API_TOKEN}" > /dev/null
               sleep 1
             done
           fi

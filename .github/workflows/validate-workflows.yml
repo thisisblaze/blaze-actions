@@ -8,7 +8,7 @@ on:
     push:
         branches:
             - main
-            - v2.1.73
+            - dev
         paths:
             - ".github/workflows/**"
             - ".github/actions/**"

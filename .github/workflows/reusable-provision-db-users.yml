@@ -111,26 +111,26 @@ jobs:
           echo "Fetching cluster information from SSM..."
 
           # Elastic cluster info lives at the base path (not project-scoped; one cluster per env)
-          ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
-          ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
-          ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
+          ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+          ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+          ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
 
           # MongoDB host: try injected db_ssm_path first, then project-scoped path, then fallback to base path
           if [[ -n "${{ inputs.db_ssm_path }}" ]]; then
             echo "   ℹ️  Semantic DB Path provided: ${{ inputs.db_ssm_path }}"
-            MONGO_HOST=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
+            MONGO_HOST=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
           fi
 
           if [[ -z "$MONGO_HOST" ]]; then
-            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
+            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
           fi
 
           if [[ -z "$MONGO_HOST" ]]; then
             echo "   ℹ️  Project-scoped SSM path empty, trying base path..."
-            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/v2.1.73/null || echo "")
+            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
           fi
 
           echo "::add-mask::$ELASTIC_ADMIN_PASS"

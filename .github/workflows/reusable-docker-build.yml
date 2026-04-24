@@ -265,7 +265,7 @@ jobs:
           fi
           
           # Test access to the private scope
-          if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /v2.1.73/null 2>&1; then
+          if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /dev/null 2>&1; then
             echo "❌ ERROR: The NPM_TOKEN is invalid, expired, or lacks access to private @blaze-cms packages."
             echo "   This usually happens if the token was revoked or created without read access."
             echo "   => Please generate a new NPM Classic Token and update the NPM_TOKEN repository secret."
@@ -398,7 +398,7 @@ jobs:
           fi
           
           # Test access to the private scope
-          if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /v2.1.73/null 2>&1; then
+          if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /dev/null 2>&1; then
             echo "❌ ERROR: The NPM_TOKEN is invalid, expired, or lacks access to private @blaze-cms packages."
             echo "   This usually happens if the token was revoked or created without read access."
             echo "   => Please generate a new NPM Classic Token and update the NPM_TOKEN repository secret."

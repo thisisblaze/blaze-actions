@@ -17,8 +17,8 @@ on:
         description: "Environment to deploy to"
         type: choice
         options:
-          - v2.1.73
-          - v2.1.73-mini
+          - dev
+          - dev-mini
           - stage
           - prod
           - multi-site
@@ -302,7 +302,7 @@ jobs:
               CLOUD_REGION="$GCP_REGION"
               ;;
             azure)
-              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/v2.1.73/null || echo "westeurope")
+              AZURE_REGION=$(jq -r '.common.AZURE_REGION // "westeurope"' vars/blaze-env.json 2>/dev/null || echo "westeurope")
               CLOUD_REGION="$AZURE_REGION"
               ;;
             *)
@@ -423,7 +423,7 @@ jobs:
              exit 1
           fi
 
-          ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/v2.1.73/null || echo "MISSING")
+          ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null || echo "MISSING")
           if [ "$ECS_STATUS" != "ACTIVE" ]; then
              echo "::error::❌ ECS Cluster '$CLUSTER_NAME' NOT FOUND or INACTIVE (Status: $ECS_STATUS)."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
@@ -442,7 +442,7 @@ jobs:
           fi
 
           # Check if the repository exists (we don't need output, just exit code)
-          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/v2.1.73/null 2>&1; then
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
              echo "::error::❌ ECR Repository '$REPO_NAME' NOT FOUND."
              echo "::error::👉 Action Required: Run '01 - Provision Infrastructure' (Stack: app)."
              exit 1
@@ -467,7 +467,7 @@ jobs:
 
           # Check Artifact Registry
           if gcloud artifacts repositories describe "$REPO" \
-            --project="$PROJECT" --location="$REGION" >/v2.1.73/null 2>&1; then
+            --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
             echo "✅ Artifact Registry repository found."
           else
             echo "::warning::Artifact Registry repository '$REPO' not found — will be created on first push."
@@ -527,7 +527,7 @@ jobs:
           echo "-------------------------------------"
 
           # 1. Check Resource Group
-          if az group show --name "$RG_NAME" >/v2.1.73/null 2>&1; then
+          if az group show --name "$RG_NAME" >/dev/null 2>&1; then
             echo "✅ Resource Group found."
           else
             echo "::error::❌ Resource Group '$RG_NAME' NOT FOUND."
@@ -536,7 +536,7 @@ jobs:
           fi
 
           # 2. Check ACR
-          if az acr show --name "$ACR_NAME" >/v2.1.73/null 2>&1; then
+          if az acr show --name "$ACR_NAME" >/dev/null 2>&1; then
             echo "✅ Azure Container Registry found."
           else
             echo "::error::❌ ACR '$ACR_NAME' NOT FOUND."
@@ -960,12 +960,12 @@ jobs:
             --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
             --resource-type-filters "cloudfront:distribution" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           CF_DIST_ID="None"
           for CF_ARN in $TAGGED_CF_ARNS; do
              DIST_ID="${CF_ARN##*distribution/}"
-             CF_ALIASES=$(aws cloudfront get-distribution --id "$DIST_ID" --query "Distribution.DistributionConfig.Aliases.Items" --output text 2>/v2.1.73/null || echo "")
+             CF_ALIASES=$(aws cloudfront get-distribution --id "$DIST_ID" --query "Distribution.DistributionConfig.Aliases.Items" --output text 2>/dev/null || echo "")
              if [[ "$CF_ALIASES" == *"$ADMIN_DOMAIN"* ]]; then
                CF_DIST_ID="$DIST_ID"
                break

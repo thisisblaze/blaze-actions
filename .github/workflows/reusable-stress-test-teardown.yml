@@ -200,7 +200,7 @@ jobs:
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
-          ref: v2.1.73
+          ref: dev
 
       - name: Calculate Configuration
         id: calc
@@ -258,7 +258,7 @@ jobs:
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
-          ref: v2.1.73
+          ref: dev
       
       - name: Check App State
         id: check-app
@@ -480,7 +480,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   destroy-tunnel:
-    if: ${{ inputs.environment == 'v2.1.73-mini' && inputs.mode != 'quick-test' && needs.check-states.outputs.tunnel_exists == 'true' }}
+    if: ${{ inputs.environment == 'dev-mini' && inputs.mode != 'quick-test' && needs.check-states.outputs.tunnel_exists == 'true' }}
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-states]
@@ -549,7 +549,7 @@ jobs:
               "Name=tag:Blaze:Environment,Values=${BLAZE_ENV}" \
             --region "$REGION" \
             --query 'Vpcs[0].VpcId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
             echo "⚠️  Tag-based VPC not found — falling back to Name tag lookup"
@@ -558,7 +558,7 @@ jobs:
               --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
               --region "$REGION" \
               --query 'Vpcs[0].VpcId' \
-              --output text 2>/v2.1.73/null || echo "")
+              --output text 2>/dev/null || echo "")
           fi
 
           if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
@@ -590,12 +590,12 @@ jobs:
           ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
             --region "$REGION" \
             --query "AutoScalingGroups[?contains(VPCZoneIdentifier, '${VPC_ID}')].AutoScalingGroupName" \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           if [[ -z "$ASG_NAMES" || "$ASG_NAMES" == "None" ]]; then
             ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups \
               --region "$REGION" \
               --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${NAMESPACE}')].AutoScalingGroupName" \
-              --output text 2>/v2.1.73/null || echo "")
+              --output text 2>/dev/null || echo "")
           fi
           if [[ -n "$ASG_NAMES" && "$ASG_NAMES" != "None" ]]; then
             for ASG_NAME in $ASG_NAMES; do
@@ -603,11 +603,11 @@ jobs:
               aws autoscaling suspend-processes \
                 --auto-scaling-group-name "$ASG_NAME" \
                 --scaling-processes Launch Terminate ReplaceUnhealthy AZRebalance \
-                --region "$REGION" 2>/v2.1.73/null && echo "   ✅ Suspended" || true
+                --region "$REGION" 2>/dev/null && echo "   ✅ Suspended" || true
               aws autoscaling update-auto-scaling-group \
                 --auto-scaling-group-name "$ASG_NAME" \
                 --min-size 0 --desired-capacity 0 \
-                --region "$REGION" 2>/v2.1.73/null && echo "   ✅ Scaled to 0" || true
+                --region "$REGION" 2>/dev/null && echo "   ✅ Scaled to 0" || true
             done
           else
             echo "   ℹ️  No ASGs found"
@@ -618,18 +618,18 @@ jobs:
           ECS_CLUSTERS=$(aws ecs list-clusters \
             --region "$REGION" \
             --query 'clusterArns[]' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for CLUSTER_ARN in $ECS_CLUSTERS; do
             CLUSTER_NAME=$(echo "$CLUSTER_ARN" | awk -F'/' '{print $NF}')
             # Only touch clusters in our namespace
             [[ "$CLUSTER_NAME" != *"$NAMESPACE"* ]] && continue
             echo "   → Cluster: $CLUSTER_NAME"
             SVC_ARNS=$(aws ecs list-services --cluster "$CLUSTER_ARN" \
-              --region "$REGION" --query 'serviceArns[]' --output text 2>/v2.1.73/null || echo "")
+              --region "$REGION" --query 'serviceArns[]' --output text 2>/dev/null || echo "")
             for SVC_ARN in $SVC_ARNS; do
               SVC_NAME=$(echo "$SVC_ARN" | awk -F'/' '{print $NF}')
               aws ecs update-service --cluster "$CLUSTER_ARN" --service "$SVC_ARN" \
-                --desired-count 0 --region "$REGION" 2>/v2.1.73/null \
+                --desired-count 0 --region "$REGION" 2>/dev/null \
                 && echo "     ✅ $SVC_NAME → 0" || true
             done
           done
@@ -645,25 +645,25 @@ jobs:
           LB_ARNS=$(aws elbv2 describe-load-balancers \
             --region "$REGION" \
             --query "LoadBalancers[?VpcId=='${VPC_ID}'].LoadBalancerArn" \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for LB_ARN in $LB_ARNS; do
             LB_NAME=$(aws elbv2 describe-load-balancers \
               --load-balancer-arns "$LB_ARN" --region "$REGION" \
-              --query 'LoadBalancers[0].LoadBalancerName' --output text 2>/v2.1.73/null)
+              --query 'LoadBalancers[0].LoadBalancerName' --output text 2>/dev/null)
             echo "   → Deleting LB: $LB_NAME ($LB_ARN)"
             aws elbv2 delete-load-balancer --load-balancer-arn "$LB_ARN" \
-              --region "$REGION" 2>/v2.1.73/null \
+              --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $LB_NAME"
           done
           # Also clean up classic ELBs
           CLB_NAMES=$(aws elb describe-load-balancers \
             --region "$REGION" \
             --query "LoadBalancerDescriptions[?VPCId=='${VPC_ID}'].LoadBalancerName" \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for CLB_NAME in $CLB_NAMES; do
             echo "   → Deleting CLB: $CLB_NAME"
             aws elb delete-load-balancer --load-balancer-name "$CLB_NAME" \
-              --region "$REGION" 2>/v2.1.73/null \
+              --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || true
           done
           if [[ -n "$LB_ARNS" || -n "$CLB_NAMES" ]]; then
@@ -677,14 +677,14 @@ jobs:
             --filters "Name=vpc-id,Values=$VPC_ID" "Name=instance-state-name,Values=running,stopping,pending" \
             --region "$REGION" \
             --query 'Reservations[*].Instances[*].InstanceId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           if [[ -n "$INSTANCE_IDS" && "$INSTANCE_IDS" != "None" ]]; then
             echo "   → Found: $INSTANCE_IDS"
-            aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region "$REGION" 2>/v2.1.73/null \
+            aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
               && echo "   ✅ Termination initiated" || echo "   ⚠️  Could not terminate"
             echo "   ⏳ Waiting for confirmed termination..."
             aws ec2 wait instance-terminated \
-              --instance-ids $INSTANCE_IDS --region "$REGION" 2>/v2.1.73/null \
+              --instance-ids $INSTANCE_IDS --region "$REGION" 2>/dev/null \
               && echo "   ✅ Instances terminated" \
               || echo "   ⚠️  Wait timed out — proceeding"
           else
@@ -705,12 +705,12 @@ jobs:
               --filters "Name=vpc-id,Values=$VPC_ID" "Name=interface-type,Values=trunk" \
               --region "$REGION" \
               --query 'length(NetworkInterfaces)' \
-              --output text 2>/v2.1.73/null || echo "0")
+              --output text 2>/dev/null || echo "0")
             ECS_ENI_COUNT=$(aws ec2 describe-network-interfaces \
               --filters "Name=vpc-id,Values=$VPC_ID" "Name=description,Values=arn:aws:ecs:*" \
               --region "$REGION" \
               --query 'length(NetworkInterfaces)' \
-              --output text 2>/v2.1.73/null || echo "0")
+              --output text 2>/dev/null || echo "0")
             TRUNK_ENI_COUNT="${TRUNK_ENI_COUNT//None/0}"
             ECS_ENI_COUNT="${ECS_ENI_COUNT//None/0}"
             TOTAL=$((TRUNK_ENI_COUNT + ECS_ENI_COUNT))
@@ -734,10 +734,10 @@ jobs:
             --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=available,pending" \
             --region "$REGION" \
             --query 'NatGateways[*].NatGatewayId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for NGW_ID in $NGW_IDS; do
             echo "   → Deleting NAT GW: $NGW_ID"
-            aws ec2 delete-nat-gateway --nat-gateway-id "$NGW_ID" --region "$REGION" 2>/v2.1.73/null \
+            aws ec2 delete-nat-gateway --nat-gateway-id "$NGW_ID" --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $NGW_ID"
           done
           if [[ -n "$NGW_IDS" && "$NGW_IDS" != "None" && "$NGW_IDS" != "" ]]; then
@@ -759,7 +759,7 @@ jobs:
             --filter "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'NatGateways[*].NatGatewayAddresses[*].AllocationId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for EIP in $NGW_EIPS; do
             [[ -n "$EIP" && "$EIP" != "None" ]] && ALLOC_IDS+=("$EIP")
           done
@@ -769,7 +769,7 @@ jobs:
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'Reservations[*].Instances[*].NetworkInterfaces[*].Association.AllocationId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for EIP in $EC2_EIPS; do
             [[ -n "$EIP" && "$EIP" != "None" ]] && ALLOC_IDS+=("$EIP")
           done
@@ -779,13 +779,13 @@ jobs:
             [[ -z "$ALLOC" || "$ALLOC" == "None" || -z "$NIC" || "$NIC" == "None" ]] && continue
             NIC_VPC=$(aws ec2 describe-network-interfaces \
               --network-interface-ids "$NIC" --region "$REGION" \
-              --query 'NetworkInterfaces[0].VpcId' --output text 2>/v2.1.73/null || echo "")
+              --query 'NetworkInterfaces[0].VpcId' --output text 2>/dev/null || echo "")
             [[ "$NIC_VPC" == "$VPC_ID" ]] && ALLOC_IDS+=("$ALLOC")
           done < <(aws ec2 describe-addresses \
             --filters "Name=domain,Values=vpc" \
             --region "$REGION" \
             --query 'Addresses[?NetworkInterfaceId!=null].[AllocationId,NetworkInterfaceId]' \
-            --output text 2>/v2.1.73/null || true)
+            --output text 2>/dev/null || true)
 
           # Deduplicate
           ALLOC_IDS=($(printf '%s\n' "${ALLOC_IDS[@]}" | sort -u))
@@ -794,17 +794,17 @@ jobs:
           for ALLOC_ID in "${ALLOC_IDS[@]}"; do
             ASSOC_ID=$(aws ec2 describe-addresses \
               --allocation-ids "$ALLOC_ID" --region "$REGION" \
-              --query 'Addresses[0].AssociationId' --output text 2>/v2.1.73/null || echo "")
+              --query 'Addresses[0].AssociationId' --output text 2>/dev/null || echo "")
             if [[ -n "$ASSOC_ID" && "$ASSOC_ID" != "None" ]]; then
               echo "   → Disassociating EIP $ALLOC_ID (assoc: $ASSOC_ID)..."
-              aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/v2.1.73/null || true
+              aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/dev/null || true
               echo "     ⏳ Waiting 10s for disassociation to propagate..."
               sleep 10
             fi
             echo "   → Releasing EIP: $ALLOC_ID"
             RELEASED=false
             for ATTEMPT in 1 2 3; do
-              if aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/v2.1.73/null; then
+              if aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null; then
                 echo "   ✅ Released (attempt $ATTEMPT)"
                 RELEASED=true
                 break
@@ -826,7 +826,7 @@ jobs:
                 --filters "Name=attachment.vpc-id,Values=$VPC_ID" \
                 --region "$REGION" \
                 --query 'InternetGateways[0].InternetGatewayId' \
-                --output text 2>/v2.1.73/null || echo "")
+                --output text 2>/dev/null || echo "")
               if [[ -z "$IGW_ID" || "$IGW_ID" == "None" ]]; then
                 echo "   ✅ No IGW found (already detached or never existed)"
                 break
@@ -836,7 +836,7 @@ jobs:
                 --filters "Name=domain,Values=vpc" \
                 --region "$REGION" \
                 --query 'Addresses[?AssociationId!=null] | length(@)' \
-                --output text 2>/v2.1.73/null || echo "0")
+                --output text 2>/dev/null || echo "0")
               if [[ "${REMAINING_EIPS:-0}" -eq 0 ]]; then
                 echo "   ✅ All EIPs released — IGW unmapped (${IGW_WAIT}s)"
                 break
@@ -853,17 +853,17 @@ jobs:
             echo "   → ENI: $ENI_ID (status=$STATUS)"
             if [[ -n "$ATTACH_ID" && "$ATTACH_ID" != "None" && "$STATUS" == "in-use" ]]; then
               echo "     Force-detaching attachment $ATTACH_ID..."
-              aws ec2 detach-network-interface --attachment-id "$ATTACH_ID" --force --region "$REGION" 2>/v2.1.73/null \
+              aws ec2 detach-network-interface --attachment-id "$ATTACH_ID" --force --region "$REGION" 2>/dev/null \
                 && echo "     ✅ Detached — waiting 8s..." && sleep 8 \
                 || echo "     ⚠️  Detach failed (will retry delete anyway)"
             fi
-            aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/v2.1.73/null \
+            aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/dev/null \
               && echo "     ✅ Deleted" || echo "     ⚠️  Could not delete $ENI_ID"
           done < <(aws ec2 describe-network-interfaces \
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'NetworkInterfaces[*].[NetworkInterfaceId,Attachment.AttachmentId,Status]' \
-            --output text 2>/v2.1.73/null || true)
+            --output text 2>/dev/null || true)
 
           # ── Step 4a: Revoke ALL SG rules (all SGs first — breaks circular refs) ──
           # CRITICAL FIX (v1.4.93): The previous single-pass loop failed because
@@ -874,20 +874,20 @@ jobs:
             --filters "Name=vpc-id,Values=$VPC_ID" \
             --region "$REGION" \
             --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           for SG_ID in $SG_IDS; do
             echo "   → Revoking rules for SG: $SG_ID"
             INGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
-              --query 'SecurityGroups[0].IpPermissions' --output json 2>/v2.1.73/null || echo "[]")
+              --query 'SecurityGroups[0].IpPermissions' --output json 2>/dev/null || echo "[]")
             if [[ "$INGRESS" != "[]" && "$INGRESS" != "null" ]]; then
               aws ec2 revoke-security-group-ingress --group-id "$SG_ID" --region "$REGION" \
-                --ip-permissions "$INGRESS" 2>/v2.1.73/null && echo "     ✅ Ingress revoked" || true
+                --ip-permissions "$INGRESS" 2>/dev/null && echo "     ✅ Ingress revoked" || true
             fi
             EGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
-              --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/v2.1.73/null || echo "[]")
+              --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/dev/null || echo "[]")
             if [[ "$EGRESS" != "[]" && "$EGRESS" != "null" ]]; then
               aws ec2 revoke-security-group-egress --group-id "$SG_ID" --region "$REGION" \
-                --ip-permissions "$EGRESS" 2>/v2.1.73/null && echo "     ✅ Egress revoked" || true
+                --ip-permissions "$EGRESS" 2>/dev/null && echo "     ✅ Egress revoked" || true
             fi
           done
           echo "   ✅ All SG rules revoked"
@@ -896,7 +896,7 @@ jobs:
           echo "🗑️  Pass 2/2 — Deleting all Security Groups..."
           for SG_ID in $SG_IDS; do
             echo "   → Deleting SG: $SG_ID"
-            aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/v2.1.73/null \
+            aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/dev/null \
               && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID"
           done
 
@@ -998,7 +998,7 @@ jobs:
 
             ACTUAL_MD5=$(aws s3api head-object \
               --bucket "$BUCKET" --key "$KEY" --region "$REGION" \
-              --query 'ETag' --output text 2>/v2.1.73/null | tr -d '"' || echo "")
+              --query 'ETag' --output text 2>/dev/null | tr -d '"' || echo "")
 
             if [[ -z "$ACTUAL_MD5" || "$ACTUAL_MD5" == "None" || "$ACTUAL_MD5" == "null" ]]; then
               echo "   ℹ️  $KEY — not in S3 (skipping)"
@@ -1011,7 +1011,7 @@ jobs:
             STORED_MD5=$(aws dynamodb get-item \
               --region "$REGION" --table-name "$LOCK_TABLE" \
               --key "{\"LockID\":{\"S\":\"${LOCK_ID}\"}}" \
-              --query 'Item.Digest.S' --output text 2>/v2.1.73/null || echo "")
+              --query 'Item.Digest.S' --output text 2>/dev/null || echo "")
 
             if [[ "$STORED_MD5" == "$ACTUAL_MD5" ]]; then
               echo "   ✅ $KEY — digest already correct ($ACTUAL_MD5)"
@@ -1025,7 +1025,7 @@ jobs:
             aws dynamodb put-item \
               --region "$REGION" --table-name "$LOCK_TABLE" \
               --item "{\"LockID\":{\"S\":\"${LOCK_ID}\"},\"Digest\":{\"S\":\"${ACTUAL_MD5}\"}}" \
-              2>/v2.1.73/null \
+              2>/dev/null \
               && echo "     ✅ Updated" \
               || echo "     ⚠️  Could not write — next provision may hit mismatch"
           }
@@ -1051,7 +1051,7 @@ jobs:
             --capacity-providers "$CP_NAME" \
             --region "$REGION" \
             --query 'capacityProviders[0].status' \
-            --output text 2>/v2.1.73/null || echo "NONE")
+            --output text 2>/dev/null || echo "NONE")
 
           if [[ "$CP_STATUS" == "NONE" || "$CP_STATUS" == "None" || -z "$CP_STATUS" ]]; then
             echo "   ℹ️  CP not found — nothing to clean up"
@@ -1064,7 +1064,7 @@ jobs:
           CLUSTER_NAME="${NAMESPACE}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
           CLUSTER_ARN=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" \
             --region "$REGION" --query 'clusters[0].clusterArn' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           if [[ -n "$CLUSTER_ARN" && "$CLUSTER_ARN" != "None" ]]; then
             echo "   → Detaching CP from cluster: $CLUSTER_NAME"
@@ -1072,14 +1072,14 @@ jobs:
               --cluster "$CLUSTER_ARN" \
               --capacity-providers FARGATE FARGATE_SPOT \
               --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1,base=1 \
-              --region "$REGION" 2>/v2.1.73/null \
+              --region "$REGION" 2>/dev/null \
               && echo "   ✅ Detached from cluster" || echo "   ⚠️  Detach failed (proceeding to delete)"
             sleep 10
           fi
 
           aws ecs delete-capacity-provider \
             --capacity-provider "$CP_NAME" \
-            --region "$REGION" 2>/v2.1.73/null \
+            --region "$REGION" 2>/dev/null \
             && echo "   ✅ CP deletion initiated: $CP_NAME" \
             || echo "   ⚠️  Could not delete CP (provision pre_apply will handle it)"
 
@@ -1087,7 +1087,7 @@ jobs:
           for WAIT in $(seq 1 36); do
             CP_STATUS=$(aws ecs describe-capacity-providers \
               --capacity-providers "$CP_NAME" --region "$REGION" \
-              --query 'capacityProviders[0].status' --output text 2>/v2.1.73/null || echo "NONE")
+              --query 'capacityProviders[0].status' --output text 2>/dev/null || echo "NONE")
             [[ "$CP_STATUS" == "NONE" || "$CP_STATUS" == "None" || -z "$CP_STATUS" ]] \
               && echo "   ✅ CP fully deleted (after $((WAIT * 5))s)" && break
             echo "   ⌛ CP still $CP_STATUS — waiting 5s ($((WAIT * 5))s elapsed)..."

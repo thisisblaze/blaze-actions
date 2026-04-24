@@ -21,7 +21,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "v2.1.73-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -464,7 +464,7 @@ jobs:
             --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "lambda:function" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
           
           echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . > found_lambdas.txt || true
 
@@ -480,8 +480,8 @@ jobs:
 
           echo "🌐 Querying CloudFront for Active Lambda Deployments globally..."
           # Fetch all active Lambda@Edge bindings across all distributions in the AWS account to prevent false-positives
-          ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/v2.1.73/null | tr '\t' '\n' || true)
-          ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/v2.1.73/null | tr '\t' '\n' || true)
+          ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
+          ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
           
           ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u || true)
           ACTIVE_COUNT=$(echo "$ACTIVE_LAMBDAS" | grep -v "^$" | wc -l | tr -d ' ' || echo "0")
@@ -538,7 +538,7 @@ jobs:
 
       - name: Find and Delete Orphaned Buckets
         env:
-          ENV_KEY: ${{ inputs.environment == 'v2.1.73-mini' && 'v2.1.73-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
         run: |
           echo "🧹 Scanning S3 buckets for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -546,7 +546,7 @@ jobs:
             --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
             --resource-type-filters "s3" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           FOUND_COUNT=0
           if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
@@ -576,7 +576,7 @@ jobs:
 
       - name: Find and Delete Orphaned Log Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'v2.1.73-mini' && 'v2.1.73-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
         run: |
           echo "🧹 Scanning CloudWatch Logs for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -584,7 +584,7 @@ jobs:
             --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           TAGGED_LOGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
 
@@ -600,7 +600,7 @@ jobs:
 
       - name: Find and Delete Orphaned Target Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'v2.1.73-mini' && 'v2.1.73-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
         run: |
           echo "🧹 Scanning Target Groups for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -608,7 +608,7 @@ jobs:
             --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
             --resource-type-filters "elasticloadbalancing:targetgroup" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/v2.1.73/null || echo "")
+            --output text 2>/dev/null || echo "")
 
           TAGGED_TGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
 
@@ -625,12 +625,12 @@ jobs:
       - name: Find and Delete Orphaned CloudFront Functions
         env:
           PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
-          ENV_KEY: ${{ inputs.environment == 'v2.1.73-mini' && 'v2.1.73-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
         run: |
           echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
           # Deduplicate: list-functions can return duplicate entries causing describe-function
           # to crash with NoSuchFunctionExists on the second pass of an already-deleted function.
-          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text 2>/v2.1.73/null | tr '\t' '\n' | sort -u || echo "")
+          ALL_FUNCS=$(aws cloudfront list-functions --query "FunctionList.Items[].Name" --output text 2>/dev/null | tr '\t' '\n' | sort -u || echo "")
 
           for func in $ALL_FUNCS; do
              [[ -z "$func" ]] && continue
@@ -638,7 +638,7 @@ jobs:
                 echo "🗑️ Found orphaned function: $func"
                 if [ "$CONFIRM_MODE" == "EXECUTE" ]; then
                    # Guard: verify still exists before describe (handles duplicates / race conditions)
-                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text 2>/v2.1.73/null || echo "")
+                   ETAG=$(aws cloudfront describe-function --name "$func" --query "ETag" --output text 2>/dev/null || echo "")
                    if [[ -z "$ETAG" || "$ETAG" == "None" ]]; then
                       echo "ℹ️ $func already deleted or not found — skipping"
                       continue

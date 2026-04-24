@@ -127,7 +127,7 @@ jobs:
 
           # Count findings
           if [ -f "semgrep.sarif" ]; then
-            FINDINGS=$(jq -r '.runs[0].results | length // 0' semgrep.sarif 2>/v2.1.73/null || echo "0")
+            FINDINGS=$(jq -r '.runs[0].results | length // 0' semgrep.sarif 2>/dev/null || echo "0")
             echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
             echo "has_findings=$([ "$FINDINGS" -gt 0 ] && echo "true" || echo "false")" >> "$GITHUB_OUTPUT"
           else
