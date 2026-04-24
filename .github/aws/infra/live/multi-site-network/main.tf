@@ -45,12 +45,12 @@ module "environment_network" {
   namespace   = var.namespace
   aws_region  = var.aws_region
 
-  # ── 3-AZ CIDR — 10.3.x.x (non-colliding: v2.1.73=10.0, stage=10.1, prod=10.2)
+  # ── 3-AZ CIDR — 10.3.x.x (non-colliding: dev=10.0, stage=10.1, prod=10.2)
   vpc_cidr              = "10.3.0.0/16"
   private_subnets_cidrs = ["10.3.1.0/24", "10.3.2.0/24", "10.3.3.0/24"]
   public_subnets_cidrs  = ["10.3.101.0/24", "10.3.102.0/24", "10.3.103.0/24"]
 
-  # NAT Gateway: 1 in eu-west-1a for prod, none for v2.1.73/stage (cost saving)
+  # NAT Gateway: 1 in eu-west-1a for prod, none for dev/stage (cost saving)
   # Containers run in public subnets with assign_public_ip when no NAT
   nat_strategy = var.nat_strategy
 
@@ -109,7 +109,7 @@ module "graviton_cp" {
   # Cluster
   cluster_name = module.environment_network.cluster_name
 
-  # Networking — private subnets (with NAT for prod, public for v2.1.73/stage)
+  # Networking — private subnets (with NAT for prod, public for dev/stage)
   vpc_id          = module.environment_network.vpc_id
   subnet_ids      = module.environment_network.app_subnets
   vpc_cidr_blocks = ["10.3.0.0/16"]

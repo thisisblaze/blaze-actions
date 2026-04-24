@@ -28,7 +28,7 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "Deployment stage (v2.1.73, stage, prod)"
+  description = "Deployment stage (dev, stage, prod)"
   type        = string
   default     = "stage"
 }
@@ -39,7 +39,7 @@ variable "tag_managed_by" {
   default     = "terraform"
 }
 
-# ── Network CIDRs (offset from v2.1.73) ──
+# ── Network CIDRs (offset from dev) ──
 
 variable "private_subnet_cidr" {
   description = "CIDR for the private (application) subnet"

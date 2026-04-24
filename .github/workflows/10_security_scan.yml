@@ -6,9 +6,9 @@ name: 🔒 Security Scan
 
 on:
   pull_request:
-    branches: [main, master, v2.1.73]
+    branches: [main, master, dev]
   push:
-    branches: [main, master, v2.1.73]
+    branches: [main, master, dev]
   schedule:
     - cron: "0 0 * * 0" # Weekly deep scan on Sunday
 
@@ -244,7 +244,7 @@ jobs:
     timeout-minutes: 10
     needs: secrets
     # Only run on default branch - Scorecard only supports default branch
-    if: github.ref == 'refs/heads/v2.1.73' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6.0.2

@@ -29,7 +29,7 @@ on:
       stage_filter:
         required: false
         type: string
-        description: "Optional stage filter to only manage services for a specific stage handle (e.g. 'v2.1.73' or 'v2.1.73-bz-01'). Matches '-{stage_filter}-' within ECS service names."
+        description: "Optional stage filter to only manage services for a specific stage handle (e.g. 'dev' or 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names."
       environment:
         required: false
         type: string

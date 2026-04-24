@@ -5,7 +5,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 variable "stack_name" {
   type        = string
-  default     = "v2.1.73-app"
+  default     = "dev-app"
   description = "Stack identifier for Blaze:Stack tag. Set automatically by CI."
 }
 

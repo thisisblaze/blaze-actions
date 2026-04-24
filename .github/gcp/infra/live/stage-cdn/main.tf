@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────
 # CDN + GLOBAL LOAD BALANCER (GCP STAGE)
 # ─────────────────────────────────────────────────────────────
-# Same as v2.1.73-cdn but with:
+# Same as dev-cdn but with:
 #   - WAF with OWASP rules enabled
 #   - Managed SSL certificate
 #   - HTTP→HTTPS redirect

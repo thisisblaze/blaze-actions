@@ -74,7 +74,7 @@ module "cloud_sql" {
   ha_enabled          = var.cloud_sql_ha
   disk_size           = var.cloud_sql_disk_size
   deletion_protection = var.cloud_sql_deletion_protection
-  backup_enabled      = var.stage != "v2.1.73"
+  backup_enabled      = var.stage != "dev"
 
   database_name     = var.cloud_sql_database_name
   database_user     = var.cloud_sql_user

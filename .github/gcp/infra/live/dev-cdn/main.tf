@@ -100,7 +100,7 @@ resource "google_project_service" "run" {
 }
 
 # ─────────────────────────────────────────────────────────────
-# CLOUD ARMOR (WAF) — Basic rate limiting for v2.1.73
+# CLOUD ARMOR (WAF) — Basic rate limiting for dev
 # ─────────────────────────────────────────────────────────────
 
 module "cloud_armor" {
@@ -223,12 +223,12 @@ module "global_lb" {
     }
   ]
 
-  # Dev: Enable SSL for gcp-v2.1.73 sub-domain (AWS parity)
-  managed_ssl_domains  = var.domain_root != "" ? ["gcp-v2.1.73.${var.domain_root}", "api-gcp-v2.1.73.${var.domain_root}"] : []
+  # Dev: Enable SSL for gcp-dev sub-domain (AWS parity)
+  managed_ssl_domains  = var.domain_root != "" ? ["gcp-dev.${var.domain_root}", "api-gcp-dev.${var.domain_root}"] : []
   enable_http_redirect = true
 
   enable_logging  = true
-  log_sample_rate = 1.0 # Full logging in v2.1.73
+  log_sample_rate = 1.0 # Full logging in dev
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -263,7 +263,7 @@ output "cloud_armor_policy" {
 resource "cloudflare_record" "lb_dns" {
   count   = var.domain_root != "" ? 1 : 0
   zone_id = var.cloudflare_zone_id
-  name    = "gcp-v2.1.73" # gcp-v2.1.73.thisisblaze.uk
+  name    = "gcp-dev" # gcp-dev.thisisblaze.uk
   type    = "A"
   content = module.global_lb.lb_ip_address
   proxied = false # Google manages SSL — no Cloudflare proxy allowed
@@ -273,7 +273,7 @@ resource "cloudflare_record" "lb_dns" {
 resource "cloudflare_record" "api_dns" {
   count   = var.domain_root != "" ? 1 : 0
   zone_id = var.cloudflare_zone_id
-  name    = "api-gcp-v2.1.73"
+  name    = "api-gcp-dev"
   type    = "A"
   content = module.global_lb.lb_ip_address
   proxied = false

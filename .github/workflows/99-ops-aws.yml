@@ -65,7 +65,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
         type: string
         required: false
       skip_lambda_destroy:
@@ -538,7 +538,7 @@ jobs:
 
       - name: Find and Delete Orphaned Buckets
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
           echo "🧹 Scanning S3 buckets for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -576,7 +576,7 @@ jobs:
 
       - name: Find and Delete Orphaned Log Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
           echo "🧹 Scanning CloudWatch Logs for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -600,7 +600,7 @@ jobs:
 
       - name: Find and Delete Orphaned Target Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
           echo "🧹 Scanning Target Groups for Blaze:Environment=${ENV_KEY} via Tags..."
           TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -625,7 +625,7 @@ jobs:
       - name: Find and Delete Orphaned CloudFront Functions
         env:
           PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'v2.1.73' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
           echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
           # Deduplicate: list-functions can return duplicate entries causing describe-function

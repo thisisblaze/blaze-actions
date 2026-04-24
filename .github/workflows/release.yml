@@ -132,7 +132,7 @@ jobs:
 
           [skip ci]" || echo "No changes to commit"
 
-          git push origin v2.1.73
+          git push origin dev
 
       - name: Create Git Tag
         if: inputs.dry_run == false
@@ -155,7 +155,7 @@ jobs:
           gh release create "$NEXT" \
             --title "Release $NEXT" \
             --notes "$CHANGELOG" \
-            --target v2.1.73
+            --target dev
 
           echo "Created GitHub release: $NEXT"
 

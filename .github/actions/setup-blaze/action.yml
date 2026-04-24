@@ -85,11 +85,11 @@ runs:
       shell: bash
       if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       run: |
-        if ! command -v aws &> /v2.1.73/null; then
+        if ! command -v aws &> /dev/null; then
           echo "Installing AWS CLI..."
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip -q awscliv2.zip
-          if command -v sudo &> /v2.1.73/null; then
+          if command -v sudo &> /dev/null; then
             sudo ./aws/install --update
           else
              ./aws/install --update --install-dir /usr/local/aws-cli --bin-dir /usr/local/bin || echo "Could not install AWS CLI with standard paths, proceeding anyway..."
@@ -156,8 +156,8 @@ runs:
       id: gcp-registry
       shell: bash
       run: |
-        gcloud auth configure-docker ${{ inputs.gcp-project-id && format('{0}-docker.pkg.v2.1.73', steps.gcp-auth.outputs.project_id) || 'docker.pkg.v2.1.73' }}
-        echo "registry=${{ inputs.gcp-project-id }}-docker.pkg.v2.1.73" >> $GITHUB_OUTPUT
+        gcloud auth configure-docker ${{ inputs.gcp-project-id && format('{0}-docker.pkg.dev', steps.gcp-auth.outputs.project_id) || 'docker.pkg.dev' }}
+        echo "registry=${{ inputs.gcp-project-id }}-docker.pkg.dev" >> $GITHUB_OUTPUT
 
     - name: Login to Azure Container Registry
       if: inputs.ecr == 'true' && inputs.cloud-provider == 'azure'

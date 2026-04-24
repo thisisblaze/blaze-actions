@@ -17,7 +17,7 @@ on:
       stage_filter:
         required: false
         type: string
-        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'v2.1.73-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
+        description: "Optional stage filter to only cleanup services for a specific stage handle (e.g. 'dev-bz-01'). Matches '-{stage_filter}-' within ECS service names. When set, namespace + task definition cleanup is skipped (shared cluster safety)."
       force_delete:
         required: false
         type: boolean
@@ -166,7 +166,7 @@ jobs:
              echo "STAGE_KEY=$STAGE_KEY" >> $GITHUB_ENV
              echo "Parsed (Standard): Namespace='$NAMESPACE', Client='$CLIENT_KEY', Project='$PROJECT_KEY', Stage='$STAGE_KEY'"
           elif [[ "$CLUSTER" =~ ^([^-]+)-([^-]+)-(.+)-cluster$ ]]; then
-             # Fallback for 3-part names (e.g. blaze-thisisblaze-v2.1.73-cluster)
+             # Fallback for 3-part names (e.g. blaze-thisisblaze-dev-cluster)
              # Assuming: namespace-project-stage (where client might be same as project or omitted)
              NAMESPACE="${BASH_REMATCH[1]}"
              PROJECT_KEY="${BASH_REMATCH[2]}"

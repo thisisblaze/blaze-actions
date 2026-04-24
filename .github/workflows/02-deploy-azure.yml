@@ -546,7 +546,7 @@ jobs:
       dockerfile: packages/api/Dockerfile.api
       context: .
       image_name: ${{ inputs.cloud_provider == 'gcp' && 
-        format('{0}-docker.pkg.v2.1.73/{1}/{2}/api', 
+        format('{0}-docker.pkg.dev/{1}/{2}/api', 
         needs.configuration.outputs.cloud_region, 
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) || inputs.cloud_provider 
@@ -595,7 +595,7 @@ jobs:
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
       image_name: ${{ inputs.cloud_provider == 'gcp' && 
-        format('{0}-docker.pkg.v2.1.73/{1}/{2}/frontend', 
+        format('{0}-docker.pkg.dev/{1}/{2}/frontend', 
         needs.configuration.outputs.cloud_region, 
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.gcp_docker_repo) || inputs.cloud_provider 
@@ -648,7 +648,7 @@ jobs:
       dockerfile: packages/admin/Dockerfile.admin
       context: .
       image_name: ${{ inputs.cloud_provider == 'gcp' && 
-        format('{0}-docker.pkg.v2.1.73/{1}/{2}-{3}-web/{3}/admin', 
+        format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', 
         needs.configuration.outputs.cloud_region, 
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.namespace, 

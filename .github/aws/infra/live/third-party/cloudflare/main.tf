@@ -14,7 +14,7 @@ provider "cloudflare" {
 # CLOUDFLARE TUNNEL (DEV HOST ONLY)
 # ---------------------------------------------------------
 # ⚠️  IMPORTANT: This resource is for DEV **HOST** environment ONLY.
-#     Feature Branches manage their own tunnels in v2.1.73-app/main.tf.
+#     Feature Branches manage their own tunnels in dev-app/main.tf.
 #     STAGE and PROD use Application Load Balancer (ALB) instead.
 # ---------------------------------------------------------
 
@@ -69,7 +69,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # ---------------------------------------------------------
 # PAGES CUSTOM DOMAIN (DEV HOST ONLY)
 # ---------------------------------------------------------
-# Purpose: Bind the Admin Pages project to admin-v2.1.73.thisisblaze.uk
+# Purpose: Bind the Admin Pages project to admin-dev.thisisblaze.uk
 # ---------------------------------------------------------
 
 module "admin_pages_project" {
@@ -98,7 +98,7 @@ source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/
 # BASIC AUTH WORKER (FRONTEND ONLY)
 # ---------------------------------------------------------
 # Purpose: Protect frontend with HTTP Basic Auth
-# API and Kibana remain public for v2.1.73elopment/testing
+# API and Kibana remain public for development/testing
 # ---------------------------------------------------------
 module "basic_auth_worker" {
 source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/worker-basic-auth?ref=v2.4.8"

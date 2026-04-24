@@ -30,7 +30,7 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "Deployment stage (v2.1.73, stage, prod)"
+  description = "Deployment stage (dev, stage, prod)"
   type        = string
   default     = "stage"
 }

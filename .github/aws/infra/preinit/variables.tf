@@ -10,7 +10,7 @@ variable "project_key" {
 
 variable "stage" {
   type        = string
-  description = "Stage (e.g. v2.1.73, stage, prod)"
+  description = "Stage (e.g. dev, stage, prod)"
 }
 
 variable "namespace" {

@@ -30,9 +30,9 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "Deployment stage (v2.1.73, stage, prod)"
+  description = "Deployment stage (dev, stage, prod)"
   type        = string
-  default     = "v2.1.73"
+  default     = "dev"
 }
 
 # ── Memorystore Redis ──
@@ -40,7 +40,7 @@ variable "stage" {
 variable "enable_redis" {
   description = "Enable Memorystore Redis (equivalent to ElastiCache)"
   type        = bool
-  default     = false # Disabled by default in v2.1.73 (cost saving)
+  default     = false # Disabled by default in dev (cost saving)
 }
 
 variable "redis_tier" {
@@ -66,7 +66,7 @@ variable "redis_version" {
 variable "enable_cloud_sql" {
   description = "Enable Cloud SQL PostgreSQL"
   type        = bool
-  default     = false # Disabled by default in v2.1.73
+  default     = false # Disabled by default in dev
 }
 
 variable "cloud_sql_version" {
@@ -78,11 +78,11 @@ variable "cloud_sql_version" {
 variable "cloud_sql_tier" {
   description = "Cloud SQL machine type (e.g. db-f1-micro, db-custom-1-3840)"
   type        = string
-  default     = "db-f1-micro" # Smallest for v2.1.73
+  default     = "db-f1-micro" # Smallest for dev
 }
 
 variable "cloud_sql_ha" {
-  description = "Enable high availability (Regional) — use ZONAL for v2.1.73"
+  description = "Enable high availability (Regional) — use ZONAL for dev"
   type        = bool
   default     = false
 }
@@ -96,7 +96,7 @@ variable "cloud_sql_disk_size" {
 variable "cloud_sql_deletion_protection" {
   description = "Prevent accidental deletion"
   type        = bool
-  default     = false # Allow deletion in v2.1.73
+  default     = false # Allow deletion in dev
 }
 
 variable "cloud_sql_database_name" {

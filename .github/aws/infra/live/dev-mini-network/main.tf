@@ -192,7 +192,7 @@ moved {
 }
 
 # 3. Security Group (Module -> Resource)
-# v2.1.73-network used module "security_group", inside it "aws_security_group.this"
+# dev-network used module "security_group", inside it "aws_security_group.this"
 # new module uses resource "aws_security_group.ecs_sg"
 moved {
   from = module.security_group.aws_security_group.this
@@ -200,7 +200,7 @@ moved {
 }
 
 # 4. EFS (Module -> Resource)
-# v2.1.73-network used module "efs", inside it "aws_efs_file_system.main"
+# dev-network used module "efs", inside it "aws_efs_file_system.main"
 # new module uses resource "aws_efs_file_system.main"
 moved {
   from = module.efs.aws_efs_file_system.main
@@ -241,22 +241,22 @@ moved {
 
 # Applications: moved into module (resource type unchanged in v5)
 moved {
-  from = cloudflare_zero_trust_access_application.frontend_v2.1.73
+  from = cloudflare_zero_trust_access_application.frontend_dev
   to   = module.environment_network.cloudflare_zero_trust_access_application.frontend[0]
 }
 
 moved {
-  from = cloudflare_zero_trust_access_application.admin_v2.1.73
+  from = cloudflare_zero_trust_access_application.admin_dev
   to   = module.environment_network.cloudflare_zero_trust_access_application.admin[0]
 }
 
 # Policies: removed from state (now inline in application resource)
 removed {
-  from = cloudflare_zero_trust_access_policy.frontend_v2.1.73_allow
+  from = cloudflare_zero_trust_access_policy.frontend_dev_allow
   lifecycle { destroy = false }
 }
 
 removed {
-  from = cloudflare_zero_trust_access_policy.admin_v2.1.73_allow
+  from = cloudflare_zero_trust_access_policy.admin_dev_allow
   lifecycle { destroy = false }
 }

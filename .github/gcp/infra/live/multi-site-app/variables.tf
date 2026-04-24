@@ -27,7 +27,7 @@ variable "sites" {
   description = "Map of site_key => site configuration."
   type = map(object({
     domain          = string
-    image           = optional(string, "us-docker.pkg.v2.1.73/cloudrun/container/hello")
+    image           = optional(string, "us-docker.pkg.dev/cloudrun/container/hello")
     cpu             = optional(string, "1")
     memory          = optional(string, "512Mi")
     container_port  = optional(number, 8080)

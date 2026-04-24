@@ -15,7 +15,7 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "The deployment stage (v2.1.73, prod, etc.)"
+  description = "The deployment stage (dev, prod, etc.)"
   type        = string
 }
 

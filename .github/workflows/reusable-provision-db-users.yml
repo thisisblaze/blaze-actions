@@ -18,7 +18,7 @@ on:
       stage_key:
         required: true
         type: string
-        description: "Stage key (e.g., v2.1.73, stage, prod)"
+        description: "Stage key (e.g., dev, stage, prod)"
       namespace:
         required: true
         type: string
@@ -164,7 +164,7 @@ jobs:
           
           CLUSTER_TIER="${{ vars.CLUSTER_TIER }}"
           if [[ -z "$CLUSTER_TIER" || "$CLUSTER_TIER" == "auto" ]]; then
-            if [[ "${{ inputs.environment }}" == "v2.1.73"* ]]; then
+            if [[ "${{ inputs.environment }}" == "dev"* ]]; then
               CLUSTER_TIER="flex"
             else
               CLUSTER_TIER="M10"

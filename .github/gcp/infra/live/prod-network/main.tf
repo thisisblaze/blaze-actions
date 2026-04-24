@@ -56,7 +56,7 @@ module "environment_network" {
   project_key    = var.project_key
   stage          = var.stage
 
-  # Network CIDRs (offset from v2.1.73/stage)
+  # Network CIDRs (offset from dev/stage)
   private_subnet_cidr = var.private_subnet_cidr
   public_subnet_cidr  = var.public_subnet_cidr
   pods_cidr           = var.pods_cidr

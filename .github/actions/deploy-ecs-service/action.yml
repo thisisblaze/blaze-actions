@@ -12,7 +12,7 @@ inputs:
     description: "Target Environment (DEV, STAGE, PROD)"
     required: true
   stage_key:
-    description: "Stage Key (v2.1.73, stage, prod)"
+    description: "Stage Key (dev, stage, prod)"
     required: true
   branch_name:
     description: "Feature Branch Tag"
@@ -176,8 +176,8 @@ runs:
         HOST_TAG="$HOST_TAG"
 
         # Calculate STAGE_KEY consistently
-        # - Host:    v2.1.73
-        # - Feature: v2.1.73-bz-01
+        # - Host:    dev
+        # - Feature: dev-bz-01
         if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
            STAGE_KEY="${BASE_STAGE}-${HOST_TAG}"
            export HOST_TAG_SUFFIX="-${HOST_TAG}"
@@ -197,9 +197,9 @@ runs:
         # Feature branches vary by *service name*, not by *cluster/role*.
         CLUSTER_STAGE="$STAGE_KEY"
         ROLE_STAGE="$STAGE_KEY"
-        if [[ "$BASE_STAGE" == "v2.1.73" ]]; then
-          CLUSTER_STAGE="v2.1.73"
-          ROLE_STAGE="v2.1.73"
+        if [[ "$BASE_STAGE" == "dev" ]]; then
+          CLUSTER_STAGE="dev"
+          ROLE_STAGE="dev"
         fi
 
         # Resolve SHARED_HOST_PROJECT early to calculate the correct cluster
@@ -255,7 +255,7 @@ runs:
            # Apply environment-specific overrides
            ENV_KEY="$BASE_STAGE"
            echo "   Loading environment-specific overrides for: $ENV_KEY"
-           if echo "$MERGED_CONFIG" | jq -e ".${ENV_KEY}" >/v2.1.73/null 2>&1; then
+           if echo "$MERGED_CONFIG" | jq -e ".${ENV_KEY}" >/dev/null 2>&1; then
               for key in $(echo "$MERGED_CONFIG" | jq -r ".${ENV_KEY} | keys[]"); do
                  if [[ ! "$key" =~ ^__ ]]; then
                     value=$(echo "$MERGED_CONFIG" | jq -r ".${ENV_KEY}.${key}")
@@ -280,7 +280,7 @@ runs:
            echo "🔐 Fetching Tunnel Token..."
            PLATFORM="$CLOUD_PLATFORM"
            # Matched with calculate-config: {client}-{stage}-{namespace}-tfstate (Convention)
-           # Default to v2.1.73 host state if feature branch
+           # Default to dev host state if feature branch
            # NOTE: This assumes a convention where the bucket name includes the namespace suffix if provided
            # If namespace is 'blaze', bucket is: client-stage-blaze-tfstate
            
@@ -289,16 +289,16 @@ runs:
            BUCKET_NAMESPACE="${NAMESPACE:-blaze}" # Default to blaze if empty (though input default handles this)
            
            # 2. Determine State Bucket Stage
-           # Tunnel state usually lives in the host environment (v2.1.73/stage/prod), not feature specific buckets?
+           # Tunnel state usually lives in the host environment (dev/stage/prod), not feature specific buckets?
            # Actually, code below shows feature branch logic.
            
            if [[ -n "$HOST_TAG" && "$HOST_TAG" != "" ]]; then
               # Feature Branch:
-              # State is in the features/ key within the HOST bucket (usually v2.1.73)
-               BUCKET_STAGE="v2.1.73" # Features usually on DEV host? Or should this be $BASE_STAGE?
+              # State is in the features/ key within the HOST bucket (usually dev)
+               BUCKET_STAGE="dev" # Features usually on DEV host? Or should this be $BASE_STAGE?
                # Safest assumption for now matching previous behavior:
-               # previous was: ${CLIENT_KEY}-v2.1.73-blaze-tfstate
-               # So we stick to v2.1.73/base_stage logic?
+               # previous was: ${CLIENT_KEY}-dev-blaze-tfstate
+               # So we stick to dev/base_stage logic?
                # If BASE_STAGE is passed (e.g. stage), we should use it.
                BUCKET_STAGE="${BASE_STAGE}"
            else
@@ -317,7 +317,7 @@ runs:
            # AWS CLI + JQ approach (no Terraform dependency)
             STATE_PATH="s3://${CF_BUCKET}/${CF_KEY}"
             echo "📂 Reading state from $STATE_PATH"
-            RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - 2>/v2.1.73/null | jq -r '.outputs.tunnel_token.value // empty')
+            RAW_TOKEN=$(aws s3 cp "$STATE_PATH" - 2>/dev/null | jq -r '.outputs.tunnel_token.value // empty')
             
             # Fallback: Try legacy provisioning path (infra/live/{stage}-tunnel/terraform.tfstate)
             if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
@@ -325,7 +325,7 @@ runs:
                LEGACY_KEY="infra/live/${BUCKET_STAGE}-tunnel/terraform.tfstate"
                LEGACY_PATH="s3://${CF_BUCKET}/${LEGACY_KEY}"
                echo "📂 Reading state from $LEGACY_PATH"
-               RAW_TOKEN=$(aws s3 cp "$LEGACY_PATH" - 2>/v2.1.73/null | jq -r '.outputs.tunnel_token.value // empty')
+               RAW_TOKEN=$(aws s3 cp "$LEGACY_PATH" - 2>/dev/null | jq -r '.outputs.tunnel_token.value // empty')
             fi
            
            if [[ -z "$RAW_TOKEN" ]] || [[ "$RAW_TOKEN" == "null" ]]; then
@@ -349,7 +349,7 @@ runs:
            exit 1
         fi
         
-        ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/v2.1.73/null || echo "MISSING")
+        ECS_STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER_NAME" --query 'clusters[0].status' --output text 2>/dev/null || echo "MISSING")
         if [ "$ECS_STATUS" != "ACTIVE" ]; then
            echo "❌ 🛑 ERROR: ECS Cluster '$CLUSTER_NAME' does not exist or is inactive (Status: $ECS_STATUS)."
            echo "   It appears the core infrastructure (VPC, Subnets, ECS) is missing."
@@ -359,7 +359,7 @@ runs:
 
         # Exec role: tied to the HOST cluster owner (SHARED_HOST_PROJECT), not the sub-project
         # thisisblaze-sub-projects (support, etc.) share the host exec-role:
-        #   blaze-b9-thisisblaze-v2.1.73-exec-role
+        #   blaze-b9-thisisblaze-dev-exec-role
         ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${ROLE_STAGE}-exec-role"
         echo "⏳ Expected IAM Role: $ROLE_NAME"
 
@@ -395,7 +395,7 @@ runs:
         # ---------------------------------------------------------
         export EXECUTION_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
         export TASK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${TASK_ROLE_NAME}"
-        # Service discovery namespace is tied to the shared cluster stage (v2.1.73/stage/prod),
+        # Service discovery namespace is tied to the shared cluster stage (dev/stage/prod),
         # not the feature tag.
         export NAMESPACE_NAME="${PROJECT_KEY}-${BASE_STAGE}.local"
 
@@ -406,14 +406,14 @@ runs:
           echo "✅ Using provided MONGODB_URI (external MongoDB, e.g. Atlas)."
           # For sub-projects sharing the host Atlas cluster, fetch their own project-scoped
           # Atlas connection string from: /{namespace}/{client}/{project}/{stage}/BLAZE_CONNECTION_STRING
-          # This mirrors the convention used for the host project (e.g. /blaze/b9/thisisblaze/v2.1.73/...).
+          # This mirrors the convention used for the host project (e.g. /blaze/b9/thisisblaze/dev/...).
           if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
             SUB_SSM="/${NAMESPACE}/${CLIENT_KEY}/${PROJECT_KEY}/${BASE_STAGE}/BLAZE_CONNECTION_STRING"
             echo "ℹ️  Sub-project: reading Atlas URI from SSM: $SUB_SSM"
             SUB_MONGODB_URI=$(aws ssm get-parameter \
               --name "$SUB_SSM" \
               --with-decryption \
-              --query 'Parameter.Value' --output text 2>/v2.1.73/null || true)
+              --query 'Parameter.Value' --output text 2>/dev/null || true)
             if [[ -n "$SUB_MONGODB_URI" ]]; then
               MONGODB_URI="$SUB_MONGODB_URI"
               echo "✅ Using sub-project Atlas URI from SSM."
@@ -423,8 +423,8 @@ runs:
           fi
         else
           if [[ -z "${MONGO_PASS:-}" ]]; then
-            echo "⚠️  Neither MONGODB_URI nor MONGO_PASS provided. Using default in-cluster MongoDB credentials for v2.1.73."
-            export MONGO_PASS="blaze-default-v2.1.73-pass-123!"
+            echo "⚠️  Neither MONGODB_URI nor MONGO_PASS provided. Using default in-cluster MongoDB credentials for dev."
+            export MONGO_PASS="blaze-default-dev-pass-123!"
           else
             echo "✅ Using in-cluster MongoDB via service discovery."
           fi
@@ -440,13 +440,13 @@ runs:
 
         # Public URLs (Host header scheme)
         # Host:
-        #   - frontend-v2.1.73.${DOMAIN_ROOT}
-        #   - api-v2.1.73.${DOMAIN_ROOT}
-        #   - admin-v2.1.73.${DOMAIN_ROOT}
+        #   - frontend-dev.${DOMAIN_ROOT}
+        #   - api-dev.${DOMAIN_ROOT}
+        #   - admin-dev.${DOMAIN_ROOT}
         # Feature (bz-01):
-        #   - frontend-v2.1.73-bz-01.${DOMAIN_ROOT}
-        #   - api-v2.1.73-bz-01.${DOMAIN_ROOT}
-        #   - admin-v2.1.73-bz-01.${DOMAIN_ROOT}
+        #   - frontend-dev-bz-01.${DOMAIN_ROOT}
+        #   - api-dev-bz-01.${DOMAIN_ROOT}
+        #   - admin-dev-bz-01.${DOMAIN_ROOT}
         # Incorporate PROJECT_SLUG if present
         SLUG_SUFFIX=""
         if [[ -n "${PROJECT_SLUG:-}" ]]; then
@@ -521,7 +521,7 @@ runs:
                         "Key=blaze:project,Values=$PROJECT_KEY" \
                         "Key=blaze:stage,Values=$STAGE_KEY" \
           --query 'ResourceTagMappingList[0].ResourceARN' \
-          --output text 2>/v2.1.73/null)
+          --output text 2>/dev/null)
           
         if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
            echo "❌ Service not found via Tagging API mapping."
@@ -542,8 +542,8 @@ runs:
         echo "✅ Found Service target: $TARGET_SERVICE"
 
         # CONTAINER_NAME = the last hyphen-separated segment(s) that identify the container
-        # For standard: blaze-b9-thisisblaze-v2.1.73-api     → CONTAINER_NAME=api
-        # For multi-site: blaze-b9-support-v2.1.73-support-api → CONTAINER_NAME=support-api
+        # For standard: blaze-b9-thisisblaze-dev-api     → CONTAINER_NAME=api
+        # For multi-site: blaze-b9-support-dev-support-api → CONTAINER_NAME=support-api
         # Strategy: strip the known namespace prefix from TARGET_SERVICE to get the container suffix
         _STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
         if [[ "$TARGET_SERVICE" == ${_STAGE_PREFIX}* ]]; then
@@ -574,7 +574,7 @@ runs:
           --cluster "$CLUSTER_NAME" \
           --services "$TARGET_SERVICE" \
           --query 'services[0].status' \
-          --output text 2>/v2.1.73/null || echo "NOT_FOUND")
+          --output text 2>/dev/null || echo "NOT_FOUND")
 
         if [[ "$SERVICE_STATUS" == "INACTIVE" ]]; then
            echo "⚠️  Service $TARGET_SERVICE is INACTIVE (stopped/scaled to 0)"
@@ -597,7 +597,7 @@ runs:
                 --cluster "$CLUSTER_NAME" \
                 --services "$TARGET_SERVICE" \
                 --query 'services[0].status' \
-                --output text 2>/v2.1.73/null || echo "NOT_FOUND")
+                --output text 2>/dev/null || echo "NOT_FOUND")
               
               # Service is gone or doesn't exist anymore
               if [[ "$CURRENT_STATUS" == "NOT_FOUND" ]] || [[ -z "$CURRENT_STATUS" ]]; then

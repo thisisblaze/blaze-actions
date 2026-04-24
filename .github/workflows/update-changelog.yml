@@ -30,7 +30,7 @@ jobs:
               uses: actions/checkout@v6.0.2
               with:
                   fetch-depth: 0 # Fetch all history for changelog generation
-                  ref: v2.1.73 # Update changelog on dev branch
+                  ref: dev # Update changelog on dev branch
 
             - name: Extract Tag Version
               id: tag
@@ -166,7 +166,7 @@ jobs:
                     echo "No changes to commit"
                   else
                     git commit -m "chore: update CHANGELOG for ${{ steps.tag.outputs.version }}"
-                    git push origin v2.1.73
+                    git push origin dev
                     echo "✅ CHANGELOG committed and pushed to dev branch"
                   fi
 
@@ -177,7 +177,7 @@ jobs:
                   echo "**Version**: ${{ steps.tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
                   echo "**Previous Version**: ${{ steps.prev_tag.outputs.previous || 'Initial release' }}" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "CHANGELOG.md has been automatically updated on the \`v2.1.73\` branch." >> $GITHUB_STEP_SUMMARY
+                  echo "CHANGELOG.md has been automatically updated on the \`dev\` branch." >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
                   echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
                   echo "> Review and edit CHANGELOG.md if needed before merging to main." >> $GITHUB_STEP_SUMMARY

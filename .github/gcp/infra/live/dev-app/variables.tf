@@ -30,9 +30,9 @@ variable "namespace" {
 }
 
 variable "stage" {
-  description = "Deployment stage (v2.1.73, stage, prod)"
+  description = "Deployment stage (dev, stage, prod)"
   type        = string
-  default     = "v2.1.73"
+  default     = "dev"
 }
 
 # ── API Service ──

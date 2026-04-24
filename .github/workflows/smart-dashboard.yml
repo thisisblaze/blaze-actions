@@ -65,7 +65,7 @@ jobs:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Generate Cost Baseline
-        continue-on-error: true # Don't fail if Infracost errors (e.g. key missing in v2.1.73)
+        continue-on-error: true # Don't fail if Infracost errors (e.g. key missing in dev)
         run: |
           infracost breakdown --path . --format json --out-file infracost.json
           # Convert to markdown snippet for dashboard

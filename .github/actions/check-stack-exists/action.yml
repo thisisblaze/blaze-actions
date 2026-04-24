@@ -60,7 +60,7 @@ runs:
       run: |
         if aws s3api head-object \
           --bucket "${{ inputs.bucket }}" \
-          --key "${{ inputs.state_key }}" 2>/v2.1.73/null; then
+          --key "${{ inputs.state_key }}" 2>/dev/null; then
           echo "📦 State file found: s3://${{ inputs.bucket }}/${{ inputs.state_key }}"
           aws s3 cp "s3://${{ inputs.bucket }}/${{ inputs.state_key }}" state.tfstate
           RESOURCE_COUNT=$(jq '.resources | length' state.tfstate)
@@ -81,7 +81,7 @@ runs:
       id: check-gcp
       shell: bash
       run: |
-        if gcloud storage cat "gs://${{ inputs.bucket }}/${{ inputs.state_key }}" > state.tfstate 2>/v2.1.73/null; then
+        if gcloud storage cat "gs://${{ inputs.bucket }}/${{ inputs.state_key }}" > state.tfstate 2>/dev/null; then
           echo "📦 State file found: gs://${{ inputs.bucket }}/${{ inputs.state_key }}"
           RESOURCE_COUNT=$(jq '.resources | length' state.tfstate)
           if [ "$RESOURCE_COUNT" -gt 0 ]; then

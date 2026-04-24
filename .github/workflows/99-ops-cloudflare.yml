@@ -67,7 +67,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
         type: string
         required: false
       skip_lambda_destroy:
@@ -456,7 +456,7 @@ jobs:
           echo "✅ Parsed blaze-env.json for $STAGE environment"
 
       - name: Sync to Cloudflare Pages (Admin)
-        if: ${{ needs.configuration.outputs.stage_key != 'v2.1.73' }}
+        if: ${{ needs.configuration.outputs.stage_key != 'dev' }}
         run: |
           # Install Wrangler
           npm install -g wrangler
@@ -500,7 +500,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Skip DEV
-        if: ${{ needs.configuration.outputs.stage_key == 'v2.1.73' }}
+        if: ${{ needs.configuration.outputs.stage_key == 'dev' }}
         run: |
           echo "ℹ️  Skipping Cloudflare Pages sync for DEV (Admin is not deployed to Pages in DEV)"
 
@@ -754,10 +754,10 @@ jobs:
              check_pages_project "$PROJECT_NAME"
 
              # 2. Basic Auth Worker
-             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-v2.1.73-basic-auth)
+             # Naming: blaze-{project}-{stage}-basic-auth (from screenshot: blaze-thisisblaze-dev-basic-auth)
              # Wait, usually it includes namespace?
-             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-v2.1.73-basic-auth
-             # Namespace=blaze, Project=thisisblaze, Stage=v2.1.73.
+             # Let's try constructing it. The screenshot showed: blaze-thisisblaze-dev-basic-auth
+             # Namespace=blaze, Project=thisisblaze, Stage=dev.
              # So pattern is: ${NAMESPACE}-${PROJECT}-${STAGE}-basic-auth
              # But let's also try with client-key just in case: ${NAMESPACE}-${CLIENT}-${PROJECT}-${STAGE}-basic-auth
              # Or just check both?
@@ -911,7 +911,7 @@ jobs:
         run: |
           PATTERN="${{ inputs.bulk_pattern }}"
           if [ -z "$PATTERN" ]; then
-            echo "❌ bulk_pattern required (e.g., 'namespace-*-v2.1.73-*')"
+            echo "❌ bulk_pattern required (e.g., 'namespace-*-dev-*')"
             exit 1
           fi
           echo "📋 Pattern: $PATTERN"

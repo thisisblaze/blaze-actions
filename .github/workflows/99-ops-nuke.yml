@@ -62,7 +62,7 @@ on:
         type: boolean
         default: true
       bulk_pattern:
-        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-v2.1.73-*')"
+        description: "Project Name Pattern (for bulk ops, e.g., 'blaze-*-dev-*')"
         type: string
         required: false
       skip_lambda_destroy:

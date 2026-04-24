@@ -34,7 +34,7 @@ on:
       stage_key:
         required: false
         type: string
-        description: "Stage key (v2.1.73, stage, prod) - calculated from environment"
+        description: "Stage key (dev, stage, prod) - calculated from environment"
       branch_name:
         required: false
         type: string

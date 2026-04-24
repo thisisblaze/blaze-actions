@@ -266,7 +266,7 @@ jobs:
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
-          state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'v2.1.73' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
+          state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
           aws_region: ${{ needs.config.outputs.aws_region }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -375,9 +375,9 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.74
     with:
       action: "destroy"
-      tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'v2.1.73' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
+      tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'v2.1.73' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
+      state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -541,7 +541,7 @@ jobs:
           # v1.4.94+: Blaze:Architecture+Project+Environment tags used first.
           # Fallback: Name tag convention blaze-b9-{project}-{env}-vpc (all stacks).
           # NOTE: CIDR-based fallback removed (v1.4.95) — CIDR is not unique across
-          # environments (e.g. v2.1.73 and multi-site may share the same CIDR range).
+          # environments (e.g. dev and multi-site may share the same CIDR range).
           VPC_ID=$(aws ec2 describe-vpcs \
             --filters \
               "Name=tag:Blaze:Architecture,Values=two-pillar-v2" \
