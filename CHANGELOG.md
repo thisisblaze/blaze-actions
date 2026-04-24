@@ -1,3 +1,19 @@
+## v2.1.71 (2026-04-24)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: add find zombie workflow
+- chore: update CHANGELOG for v2.1.70
+
+### Fixed
+
+- fix: restrict pre-destroy cleanup to appropriate target_stacks
+- fix: add push trigger to run find-zombie
+
 ## v2.1.70 (2026-04-23)
 
 ### Added
