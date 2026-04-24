@@ -220,7 +220,9 @@ jobs:
           # (like Cloudflare tokens, MongoDB keys, etc.). This dual approach ensures essential
           # variables are always available even if JSON parsing fails.
 
-          if [[ -n "$TF_VARS_JSON" ]]; then
+          # Safely check if JSON is practically empty
+          CLEAN_JSON=$(echo "$TF_VARS_JSON" | tr -d '[:space:]')
+          if [[ -n "$CLEAN_JSON" && "$CLEAN_JSON" != "null" && "$CLEAN_JSON" != "''" ]]; then
             # Validate JSON first
             if ! echo "$TF_VARS_JSON" | jq . > /dev/null 2>&1; then
               echo "❌ ERROR: Invalid JSON received in terraform_vars!"
