@@ -513,7 +513,7 @@ jobs:
 
           tgs = []
           for page in tagging.get_paginator('get_resources').paginate(
-              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              TagFilters=[{'Key': 'Blaze:Project', 'Values': [project]}, {'Key': 'Blaze:Environment', 'Values': [stage]}],
               ResourceTypeFilters=['elasticloadbalancing:targetgroup']
           ):
               tgs.extend([m['ResourceARN'] for m in page['ResourceTagMappingList']])
@@ -575,7 +575,7 @@ jobs:
 
           dists = []
           for page in tagging.get_paginator('get_resources').paginate(
-              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              TagFilters=[{'Key': 'Blaze:Project', 'Values': [project]}, {'Key': 'Blaze:Environment', 'Values': [stage]}],
               ResourceTypeFilters=['cloudfront:distribution']
           ):
               dists.extend([m['ResourceARN'].split('/')[-1] for m in page['ResourceTagMappingList']])
