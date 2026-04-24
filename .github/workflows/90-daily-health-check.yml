@@ -8,7 +8,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "v2.1.73-mini", "stage", "prod"]
+        options: ["v2.1.74", "v2.1.74-mini", "stage", "prod"]
         default: "v2.1.74"
         required: true
       cloud_provider:
