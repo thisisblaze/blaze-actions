@@ -360,6 +360,7 @@ jobs:
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
+      target_stack: "all"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
