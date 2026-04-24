@@ -452,7 +452,7 @@ jobs:
           done
 
       - name: Cleanup CloudFront Functions
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["network", "all", "multi-site-network"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -489,7 +489,7 @@ jobs:
           fi
 
       - name: Cleanup ALB Target Groups
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["network", "all", "multi-site-network"]'), inputs.target_stack)
         run: |
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
@@ -553,7 +553,7 @@ jobs:
           python3 tg_cleanup.py "$REGION" "$PROJECT_KEY" "$STAGE_KEY" "${{ inputs.dry_run }}"
 
       - name: Cleanup CloudFront Distributions
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != '' && contains(fromJson('["app", "cdn", "all", "multi-site-app", "tenant-app"]'), inputs.target_stack)
         run: |
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
@@ -671,7 +671,7 @@ jobs:
           done
 
       - name: Cleanup Lambda@Edge
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["network", "all", "multi-site-network"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -705,7 +705,7 @@ jobs:
           fi
 
       - name: Cleanup CodeDeploy Apps
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.STAGE_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.STAGE_KEY != '' && contains(fromJson('["app", "cdn", "all", "multi-site-app", "tenant-app"]'), inputs.target_stack)
         run: |
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region }}"
@@ -729,7 +729,7 @@ jobs:
           fi
 
       - name: Cleanup EC2 Capacity Provider
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["network", "all", "multi-site-network"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -875,7 +875,7 @@ jobs:
           fi
 
       - name: Cleanup Launch Templates
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != '' && contains(fromJson('["network", "all", "multi-site-network"]'), inputs.target_stack)
         run: |
           NAMESPACE="${{ env.NAMESPACE }}"
           CLIENT_KEY="${{ env.CLIENT_KEY }}"
@@ -909,7 +909,7 @@ jobs:
           fi
 
       - name: Cleanup ECS Services
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && contains(fromJson('["app", "cdn", "network", "all", "multi-site-app", "multi-site-network", "tenant-app"]'), inputs.target_stack)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && contains(fromJson('["app", "cdn", "all", "multi-site-app", "tenant-app"]'), inputs.target_stack)
         id: cleanup
         run: |
           set -e
