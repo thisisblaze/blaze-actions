@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ""
+      build_command:
+        description: 'Optional build command to run before zipping the artifact (e.g. composer install or shopware-cli project build)'
+        required: false
+        type: string
+        default: ""
     secrets:
       AWS_ROLE_ARN:
         required: true
@@ -40,6 +45,10 @@ jobs:
 
       - name: Create Deployment Bundle
         run: |
+          if [ -n "${{ inputs.build_command }}" ]; then
+            echo "Running custom build command: ${{ inputs.build_command }}"
+            eval "${{ inputs.build_command }}"
+          fi
           echo "Packaging application source code and .ebextensions..."
           zip -r build.zip . -x "*.git*" ".github/*" ".agent/*" "tests/*"
           echo "Build bundle created."
