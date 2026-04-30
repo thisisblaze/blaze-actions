@@ -267,6 +267,17 @@
 - fix(ops): explicitly force-delete ASG before Launch Template cleanup (282b580)
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(ci): executed `/13-deep-cicd-maintenance` global synchronization suite.
@@ -374,6 +385,17 @@
 
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -598,12 +620,34 @@
 
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -760,12 +804,34 @@
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -1318,12 +1384,34 @@
 ---
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -2791,12 +2879,34 @@
 - chore: end-of-day governance sync — 2026-03-29
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -2821,12 +2931,34 @@
 - chore: end-of-day governance sync — 2026-03-27
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -2848,12 +2980,34 @@
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -2894,12 +3048,34 @@
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -2984,12 +3160,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3271,12 +3469,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: inject timeout-minutes and pin github action shas globally
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3299,12 +3519,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3801,12 +4043,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use GITHUB_WORKSPACE for pre-apply script path
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3836,12 +4100,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3871,12 +4157,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Context**: Maintained agent workflows sweep 2026-03-16.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3903,12 +4211,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3932,12 +4262,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -3966,12 +4318,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -4044,12 +4418,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -4103,12 +4499,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
@@ -4299,12 +4717,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+### Added
+- Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
+- Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
+
+### Fixed
+- Fixed missing third-party secrets to teardown and provision steps.
+- Fixed teardown post-destroy ECS wait to strictly filter by resource prefix.
+- Fixed teardown to ensure ECS cluster and ASG cleanup are strictly scoped to resource prefix to prevent cross-project impact.
+- Fixed V2 tag schema usage for target group and cloudfront cleanup scripts.
+- Passed `MONGODB_ATLAS_PROJECT_ID` to ensure reuse of a single MongoDB Atlas project.
+
 
 ### Added
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.

@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-21
+**Last Updated**: 2026-04-30
 **Owner**: Infrastructure Team
 
 ---
@@ -10,13 +10,13 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 29 main + 20 reusable = 49 total  
+**Total Workflows**: 30 main + 20 reusable = 50 total  
 **Version**: v2.4.6  
-**Last Updated**: 2026-04-22
+**Last Updated**: 2026-04-30
 
 ---
 
-## Main Workflows (29)
+## Main Workflows (30)
 
 > Note: Several new workflows (like cloud-specific `02-deploy-*` and `99-ops-*`) have been added. They follow standard input patterns.
 
@@ -68,6 +68,12 @@
 - `frontend_launch_type` (choice): FARGATE or EC2
 - `frontend_cpu_architecture` (choice): X86_64 or ARM64
 - `workers_json` (string): JSON mapping payload for Dual-Engine background background workers
+- `enable_tunnel` (boolean): Deploy Cloudflare Tunnel
+- `enable_vpc_peering` (boolean): Enable VPC Peering
+- `azure_client_id_rev` (string): Azure Client ID
+- `azure_tenant_id_rev` (string): Azure Tenant ID
+- `azure_subscription_id_rev` (string): Azure Subscription ID
+
 
 **What it does**:
 
@@ -87,15 +93,22 @@
 **Inputs**:
 
 - `cloud_provider` (choice): aws|gcp|azure (default: aws)
+- `wif_audience` (optional): WIF Audience
 - `environment` (required): dev-mini/dev/stage/prod
 - `project` (required): Project identity (default: thisisblaze)
 - `target_services` (required): Service filter (e.g., "api", "Blaze all")
 - `branch_name` (optional): Feature branch tag
-- `skip_build` (boolean): Skip Docker build?
+- `build_images` (boolean): Build Docker images?
 - `deploy_services` (boolean): Deploy to ECS/Pages?
+- `override_image_tag` (string): Override image tag
 - `api_launch_type` (choice): `FARGATE` (default) or `EC2`
 - `api_cpu_architecture` (choice): `X86_64` or `ARM64`
-- `skip_stabilise` (boolean): Skip ECS stabilisation wait (for stress tests)
+- `frontend_launch_type` (choice): `FARGATE` (default) or `EC2`
+- `frontend_cpu_architecture` (choice): `X86_64` or `ARM64`
+- `skip_stability_wait` (boolean): Skip ECS stabilisation wait (for stress tests)
+- `azure_client_id_rev` (string): Azure Client ID
+- `azure_tenant_id_rev` (string): Azure Tenant ID
+- `azure_subscription_id_rev` (string): Azure Subscription ID
 
 **What it does**: Delegates to `02-deploy-aws.yml`, `02-deploy-gcp.yml`, or `02-deploy-azure.yml`
 
@@ -105,6 +118,22 @@
 
 
 ### Testing & Validation
+
+#### terraform-tests.yml
+
+**Purpose**: Run integration tests that create real AWS resources
+**Use Case**: CI Terraform validation
+
+**Inputs**:
+
+- `run_integration` (boolean)
+
+**What it does**:
+- Creates AWS resources for integration testing
+
+**When to run**: On PRs modifying modules
+
+---
 
 #### stress-test (decomposed into reusable-stress-test-*.yml)
 
@@ -172,7 +201,7 @@
 
 ### Operations & Utilities
 
-#### 99-ops-nuke.yml
+#### 99-ops-utility.yml
 
 **Purpose**: Multi-purpose operational tasks  
 **Use Case**: Ad-hoc operations
@@ -280,6 +309,22 @@
 ---
 
 ### Debugging & Fixes
+
+#### find-zombie.yml
+
+**Purpose**: Find Zombie CloudFront
+**Use Case**: CNAME search
+
+**Inputs**:
+
+- `target_cname` (required): CNAME to search for
+
+**What it does**:
+- Finds zombie cloudfront distributions
+
+**When to run**: As needed
+
+---
 
 #### debug-lock.yml
 
@@ -614,6 +659,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-22  
+**Last Updated**: 2026-04-30  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

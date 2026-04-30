@@ -201,7 +201,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.1.74
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -219,7 +219,7 @@ For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.1.74
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
