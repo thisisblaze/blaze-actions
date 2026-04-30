@@ -662,3 +662,4 @@ These are called by main workflows, not directly by users.
 **Last Updated**: 2026-04-30  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
+| **Reusable EB Deploy** | `.github/workflows/reusable-elastic-beanstalk-deploy.yml` | Packages code and pushes Application Versions to AWS Elastic Beanstalk via S3. |
