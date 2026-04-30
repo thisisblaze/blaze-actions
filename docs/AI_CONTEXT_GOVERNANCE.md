@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-22
+**Last Updated**: 2026-04-30
 **Owner**: Infrastructure Team
 
 ---
@@ -30,7 +30,7 @@ The AI Agent is strictly forbidden from executing ANY autonomous command that de
 
 ### 1.5. Public Repository Sanitization
 
-**CRITICAL POLICY**: Several of our repositories (such as `blaze-actions` (This Repo)) are **PUBLIC**. For consistency across the ecosystem:
+**CRITICAL POLICY**: Several of our repositories (such as `blaze-actions`) are **PUBLIC**. For consistency across the ecosystem:
 
 - NEVER write or commit actual company URLs (e.g. `*.thisisblaze.uk` or client-specific variations) in shared workflows or documentation.
 - NEVER include real AWS Account IDs, ARNs, or exact server IP addresses in documentation.
@@ -60,9 +60,8 @@ _(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-c
 **Action**:
 
 1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
-2.  View the **Territory**: `docs/graphs/aws_resource_topology.mermaid` (AWS), `.gcp/live/` (GCP), `.azure/live/` (Azure)
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
-4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS/GCP/Azure) Blaze stack."
+4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS) Blaze stack."
 
 ### B. During Execution (Navigation)
 
@@ -89,8 +88,6 @@ _(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly
 | Provider | Storage                   | Logs/Ephemeral            | Persistent Data                             |
 | :------- | :------------------------ | :------------------------ | :------------------------------------------ |
 | AWS      | S3 Lifecycle Rules        | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — "Data Loss Check" required  |
-| GCP      | GCS Lifecycle             | ✅ 30-90 day retention OK | ⚠️ `force_destroy_storage = false` for Prod |
-| Azure    | Storage Account Lifecycle | ✅ 30-90 day retention OK | ⚠️ RESTRICTED — lock policies required      |
 
 ## 5. Operational Workflows (Standard Procedures)
 
@@ -116,9 +113,8 @@ Consult these approved workflows for specific operational tasks:
 
 To prevent runaway costs in non-production environments, all Agents MUST verify the following constraints when analyzing or modifying **Stage/Dev** infrastructure:
 
-| Rule                | AWS                                  | GCP                                         | Azure                       |
+| Rule                | AWS                                  |
 | :------------------ | :----------------------------------- | :------------------------------------------ | :-------------------------- |
-| Compute Scaling     | `ec2_max_size` MUST be `1`           | `min_instances` MUST be `0` (scale-to-zero) | `min_replicas` MUST be `0`  |
 | NAT Strategy        | `NONE` (Public IPs) or `INSTANCE`    | Cloud NAT (shared, low cost)                | VNet Integration (built-in) |
 | Deletion Protection | `enable_deletion_protection = false` | `force_destroy_storage = true` (Dev only)   | Resource locks removed      |
 | VPC Connector       | N/A                                  | `e2-micro`, max 3 instances                 | N/A                         |
@@ -166,8 +162,8 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | Repository                          | Role                                         | Owner         |
 | :---------------------------------- | :------------------------------------------- | :------------ |
 | `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
-| `blaze-actions` (This Repo)                     | Reusable GitHub Actions workflows            | `thisisblaze` |
-| `blaze-template-deploy` | Application deployment & infra instantiation | `thebyte9`    |
+| `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
+| `shopware-km` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
 ## 11. Deployment Architecture Facts (2026-03-25)
 
