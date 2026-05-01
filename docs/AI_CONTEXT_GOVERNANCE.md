@@ -1,12 +1,12 @@
-**Last Updated**: 2026-04-30
+**Last Updated**: 2026-04-22
 **Owner**: Infrastructure Team
 
 ---
 
-# AI Context Governance: The Blaze Standard
+# AI Context Governance: Shopware KM Standard
 
 > [!TIP]
-> **Status: SCALED (Multi-Tenant V2)**. All agents must enforce and operate within the Phase 1 Foundation / Phase 2 Tenant orchestrated layers.
+> **Status: SCALED (Elastic Beanstalk Environment)**. All agents must enforce and operate within the Elastic Beanstalk architectural boundaries.
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
@@ -165,21 +165,19 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
 | `shopware-km` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
-## 11. Deployment Architecture Facts (2026-03-25)
+## 11. Deployment Architecture Facts (2026-04-30)
 
 **Status: MANDATORY — agents must not assume older patterns**
 
 | Fact                               | Detail                                                                                             |
 | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
-| **Core Architecture Paradigm**     | **Multi-Site V2 (The Two-Pillar Strategy)**: Day 0 Shared Foundation, Day 1 Data Pods, Day 2 Tenants|
-| **ECS API Deployment**             | **Native ECS Blue/Green** — no CodeDeploy, no `appspec.yml`, no deployment group                   |
-| **CloudFront Topologies**          | **3 Distributions per Tenant** (Admin, API, Frontend). Allows extreme Blue/Green isolation         |
-| **Database Strategy**              | **Strict Pod Sharding** (`db-pod-alpha`, `db-pod-beta`, Dedicated) utilizing native Atlas Autoscaling |
-| **Background Workers**             | **Dual-Engine Hybrid** — Fargate (Heavy Cron sweeps) & Lambda (Fast SQS events) via `WORKERS_JSON` |
-| **Dev Environment (Foundation)**   | `01a-provision-network` Foundation utilizes VPC `10.4.0.0/16` and decoupled Dual ALBs                        |
-| **VPC CIDRs**                      | PILLAR 1: DEV=10.0.0.0/16, STAGE=10.1.0.0/16, PROD=10.2.0.0/16. PILLAR 2 (V2): DEV=10.4.0.0/16, STAGE=10.5.0.0/16, PROD=10.6.0.0/16 |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0 Default**                                           |
-| **CodeDeploy**                     | **REMOVED**. No `aws deploy create-deployment` calls. If you see one — it is a bug                 |
+| **Core Architecture Paradigm**     | **Single-Tenant Elastic Beanstalk**: Dedicated AWS Beanstalk environment per stage (dev, stage, prod) |
+| **Application Deployment**         | **AWS Elastic Beanstalk** — Application Versions are zipped and deployed via GitHub Actions        |
+| **Database Strategy**              | **Dedicated Services** — Standalone RDS (MySQL) and ElastiCache (Redis) per environment            |
+| **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the Elastic Beanstalk Security Group  |
+| **Background Workers**             | **Elastic Beanstalk Worker Tier** or native cron within the instances                              |
+| **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.100.0.0/16` for Dev)                      |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0+**                                                         |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
 
@@ -188,105 +186,68 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 
 | Pattern | Symptom | Root Cause | Fix |
 | :------ | :------- | :--------- | :-- |
-| **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `multi-site` in all `environment:` keys and `workflow_dispatch` options |
-| **ECS EC2 capacity provider bootstrap** | Terraform planning hangs on `data "aws_ecs_capacity_provider"` lookup | SSM parameter `blaze-b9-thisisblaze-stage-ecs-ec2-cp` missing or wrong; dead-code SSM data sources block plan | Fix SSM parameter value; remove dead-code data sources from `multi-site-tenant-app` module |
+| **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `shopware` in all `environment:` keys and `workflow_dispatch` options |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
 ## 13. Current Version Pins (2026-04-16)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` (This Repo) | **v2.3.8** | latest stable — Dual-Engine workers logic. |
+| `blaze-actions` | **v2.3.8** | latest stable — Dual-Engine workers logic. |
 | `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
-| Terraform AWS Provider | **v6.0.x** | Migrated 2026-03-23 |
-
----
-
-
-## 14. Multi-Project Registry (April 2026+)
+| Terraform AWS Provider | **## 14. Shopware Project Configuration (April 2026+)
 
 > [!IMPORTANT]
-> The Blaze platform now supports multiple projects on a single shared ECS cluster. All AI agents MUST be aware of the active project registry before modifying any resource.
+> The Shopware KM platform utilizes isolated Elastic Beanstalk environments per stage. All AI agents MUST be aware of the active environment configuration before modifying any resource.
 
-| `PROJECT_KEY`  | `DOMAIN_ROOT`      | `PROJECT_SLUG` | Infra                    | Status        |
-|:--------------|:------------------|:--------------|:------------------------|:--------------|
-| `thisisblaze` | `thisisblaze.uk`  | *(empty)*      | Shared cluster (multi-site) | ✅ Active  |
-| `support`     | `thisisblaze.uk`  | `support`      | Shared cluster (multi-site) | 🔧 Phase 3 |
-| `thisisblaze2`| `thisisblaze2.uk` | *(empty)*      | Shared cluster*            | 📋 Planned |
+### Environment Variable Files
 
-_* `thisisblaze2` requires a separate Cloudflare zone + ACM cert when the domain is registered._
+Configuration overrides and infrastructure settings are explicitly defined in:
+- `vars/dev.env`
+- `vars/stage.env`
+- `vars/prod.env`
 
-### `PROJECT_SLUG` Definition
+These files determine `vpc_cidr`, `eb_instance_type`, and database cluster sizes.
 
-`PROJECT_SLUG` is the suffix appended to domain names for sub-projects on a shared zone:
-- `thisisblaze`: no slug (primary project, no suffix) → `frontend-dev.thisisblaze.uk`
-- `support`: slug = `support` → `frontend-dev-support.thisisblaze.uk`
-- DNS pattern (settled April 2026): `{service}-{env}-{slug}.{domain}` — service first, env second, slug last. Prod drops env. Primary project drops slug.
+### Elastic Beanstalk Deployment Rule
 
-### ECS Cluster Sharing Rule
-
-All projects share **ONE ECS cluster per environment**. Blast-radius events (cluster failure, capacity starvation) affect all projects simultaneously. Scale testing for one project must account for headroom required by others.
-
-### Blast-Radius Safety for Nuke Operations
-
-When destroying a multi-site environment, ALWAYS scope by `Blaze:Project` tag. **Never destroy the `multi-site-network` stack** without confirming ALL projects' services are down. See: `docs/guides/teardown_guide.md`.
-
-### Config File Locations
-
-| Project | blaze-env.json | Project overrides |
-|:--------|:---------------|:------------------|
-| thisisblaze | `vars/thisisblaze/blaze-env.json` | `projects/thisisblaze/packages/` |
-| support | `vars/support/blaze-env.json` | `projects/support/packages/` |
-| thisisblaze2 | `vars/thisisblaze2/blaze-env.json` | `projects/thisisblaze2/packages/` |
-
-See: `docs/plans/archive/144_new_domain_project_onboarding.md`
-
-## 15. Multi-Tenant Nuke Failure Patterns (2026-04-08)
-
-> [!CAUTION]
-> Discovered during Plan 134 dev environment nuke-and-reprovision cycle.
-
-| Pattern | Symptom | Root Cause | Fix |
-| :------ | :------- | :--------- | :-- |
-| **pre_apply.sh TG state removal** | 503 on all endpoints after deploy | Script unconditionally removed `aws_lb_target_group` + `aws_lb_listener_rule` from TF state | Disabled destructive sections; added idempotent TG import in Section 4. See Plan 134 §6 |
-| **Capacity Provider Deadlocks** | Terraform destroy hangs forever on ASG/CP | `create_before_destroy` on ASGs conflicted with tied capacity providers | Enforced `random_id` on capacity providers + injected `force_delete` on ASG |
-| **IGW DependencyViolation on destroy** | `Network has some mapped public address(es)` | NAT GW EIPs still associated + EC2 instances not yet terminated when TF destroy runs | Terminate EC2s → wait `terminated` → re-run nuke. EIPs auto-release with NAT GWs |
-| **CloudFront orphan after nuke** | 3 CFs remain Enabled after destroy | Nuke timed out before CF disable propagated (~15 min needed) | Manually disable → wait Deployed → delete. Add explicit CF wait to nuke hook |
-| **SG DependencyViolation** | `sg has a dependent object` | EC2 ENIs still attached to SG during destroy | Terminate instances first, verify `terminated` state, then destroy SG |
-| **PROJECT_SLUG must always be present** | DNS interpolation breaks for primary project | CI/CD reads `PROJECT_SLUG`; absent = undefined | Primary: `PROJECT_SLUG: ""`. Sub-projects: `PROJECT_SLUG: "support"`. Field MUST exist in `vars/{project}/blaze-env.json` |
+Each environment maintains its own isolated Elastic Beanstalk application. Ensure `.ebextensions` and `.platform` hooks are correctly verified before triggering deployments.
 
 ---
 
-## 16. Terraform State Isolation Rule (2026-04-13)
+## 15. Terraform State Isolation Rule (2026-04-30)
 
 > [!CAUTION]
 > **MANDATORY FOR ALL AGENTS AND DEVELOPERS.** Violation = immediate pipeline risk.
 
-**Every environment MUST have its own isolated Terraform state key. No two environments (dev, dev-mini, stage, prod, or any future ephemeral env) may share the same `.tfstate` file.**
+**Every environment MUST have its own isolated Terraform state key. No two environments (dev, stage, prod) may share the same `.tfstate` file.**
 
 ### Required State Key Pattern
 
+For Shopware KM, the pattern is strictly:
 ```
-infra/{project_key}/{environment}/{stack_name}.tfstate
+shopware-km/{environment}/terraform.tfstate
 ```
 
 | Token | Rule |
 |-------|------|
-| `{project_key}` | MUST use `var.project_key` — never hardcoded |
-| `{environment}` | MUST use `var.stage` — `dev`, `dev-mini`, `stage`, `prod` |
-| `{stack_name}` | Descriptive purpose (`network`, `third-party-mongodb`, `thisisblaze-db`, `multi-site-app`) |
+| `{environment}` | MUST use `var.stage` — `dev`, `stage`, `prod` |
 
-### Known Violations (being fixed in Plan P5.2)
+### Backend Bucket Configuration
 
-| Stack | Current (Wrong) Key | Correct Key |
-|-------|---------------------|-------------|
-| `01d` MongoDB (stage+prod) | `infra/thisisblaze/third-party/mongodb.tfstate` | `infra/thisisblaze/stage/third-party-mongodb.tfstate` / `…/prod/…` |
+The AWS S3 backend bucket must follow this exact format:
+```
+thisisblaze-{environment}-shopware-terraform-state
+```
+
+And the DynamoDB lock table:
+```
+thisisblaze-{environment}-shopware-terraform-locks
+```
 
 ### Enforcement
 
-- Any new `backend "s3" {}` block without both `${project_key}` and `${stage}` in the key **must be rejected in code review**.
-- When creating a new stack directory, always copy the pattern from a correctly-isolated stack (e.g. `multi-site-network/main.tf`).
-- See: `docs/plans/april_2026_roadmap.md` § Priority 5 for the full fix plan.
+- Any new `backend "s3" {}` block without `${stage}` correctly interpolated in both the bucket name and state key **must be rejected in code review**.
 
 ---
 

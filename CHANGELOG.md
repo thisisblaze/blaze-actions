@@ -674,7 +674,13 @@
 - feat(workflow): Introduced `WORKERS_JSON` extraction inside `calculate-config`, bridging project environment mapping strictly to backend multi-tenant deployment actions.
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
+
 ### [Unreleased]
+- **CI/CD Maintenance**: Deep synchronization executed (Engine 6 & 8 checks passed).
+- **Architecture**: Enforced Single-Tenant Elastic Beanstalk paradigm in AI prompts.
+- **Hygiene**: Purged deploy temp directories globally.
+- **Workflows**: Structurally aligned 90-daily-health-check.yml across Actions and Module Hub.
+
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
