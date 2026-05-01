@@ -432,7 +432,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v1
         with:

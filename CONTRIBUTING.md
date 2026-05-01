@@ -66,7 +66,7 @@ git push origin fix/update-workflow-name
 
 ```yaml
 # ❌ Bad
-- uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
 # ✅ Good
 - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
