@@ -1,5 +1,19 @@
 ## v2.1.76 (2026-05-01)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.75
+
+### Fixed
+
+- fix: resolve multiline bash parsing bug in build_command
+
+## v2.1.76 (2026-05-01)
+
 ### Fixed
 
 - fix: resolved a critical bash parsing bug in `reusable-elastic-beanstalk-deploy.yml` where multiline `build_command` inputs were incorrectly evaluated by `[ -n ]`, causing silent deployment failures. Multiline commands are now securely executed via a temporary script dump.
