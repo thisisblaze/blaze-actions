@@ -1,3 +1,21 @@
+## v2.1.75 (2026-05-01)
+
+### Added
+
+- feat: add build_command input to eb deploy workflow
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-04-30
+- chore: end-of-day governance sync — 2026-04-30
+- chore: update CHANGELOG for v2.1.74
+
+### Fixed
+
+- fix: bump actions/checkout to v6.0.2 to resolve Node.js 20 deprecation
+- fix: pass MONGODB_ATLAS_PROJECT_ID to ensure we reuse a single MongoDB Atlas project
+- fix: pass missing third-party secrets to teardown and provision steps
+
 ## v2.1.74 (2026-04-24)
 
 ### Added
