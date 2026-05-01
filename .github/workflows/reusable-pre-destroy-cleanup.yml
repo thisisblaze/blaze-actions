@@ -194,13 +194,22 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          echo "🔍 Scanning S3 buckets for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags (V2 schema)"
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+          echo "🔍 Scanning S3 buckets for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags"
+          TAGGED_ARNS_V2=$(aws resourcegroupstaggingapi get-resources \
             --region "${{ inputs.aws_region }}" \
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "s3" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
+            
+          TAGGED_ARNS_V1=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ inputs.aws_region }}" \
+            --tag-filters "Key=Project,Values=${PROJECT_KEY}" "Key=Stage,Values=${STAGE_KEY}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          TAGGED_ARNS=$(echo "$TAGGED_ARNS_V1 $TAGGED_ARNS_V2" | tr ' ' '\n' | grep -v 'None' | sort -u | tr '\n' ' ' || true)
 
           if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
              for BUCKET_ARN in $TAGGED_ARNS; do
@@ -266,23 +275,37 @@ jobs:
           REGION="${{ inputs.aws_region }}"
 
           echo "🧹 CloudWatch Log Cleanup via Tagging API..."
-          echo "🔍 Scanning CloudWatch Logs for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags (V2 schema)"
+          echo "🔍 Scanning CloudWatch Logs for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags"
           
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+          TAGGED_ARNS_V2=$(aws resourcegroupstaggingapi get-resources \
             --region "$REGION" \
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
 
-          TAGGED_ARNS_EDGE=$(aws resourcegroupstaggingapi get-resources \
+          TAGGED_ARNS_EDGE_V2=$(aws resourcegroupstaggingapi get-resources \
             --region "us-east-1" \
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "logs:log-group" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
+            
+          TAGGED_ARNS_V1=$(aws resourcegroupstaggingapi get-resources \
+            --region "$REGION" \
+            --tag-filters "Key=Project,Values=${PROJECT_KEY}" "Key=Stage,Values=${STAGE_KEY}" \
+            --resource-type-filters "logs:log-group" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          ALL_ARNS=$(echo "$TAGGED_ARNS $TAGGED_ARNS_EDGE" | tr ' ' '\n' | grep -v 'None' | grep . || true)
+          TAGGED_ARNS_EDGE_V1=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Project,Values=${PROJECT_KEY}" "Key=Stage,Values=${STAGE_KEY}" \
+            --resource-type-filters "logs:log-group" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          ALL_ARNS=$(echo "$TAGGED_ARNS_V1 $TAGGED_ARNS_V2 $TAGGED_ARNS_EDGE_V1 $TAGGED_ARNS_EDGE_V2" | tr ' ' '\n' | grep -v 'None' | grep . || true)
 
           if [[ -n "$ALL_ARNS" ]]; then
              for LOG_ARN in $ALL_ARNS; do
@@ -517,6 +540,14 @@ jobs:
               ResourceTypeFilters=['elasticloadbalancing:targetgroup']
           ):
               tgs.extend([m['ResourceARN'] for m in page['ResourceTagMappingList']])
+              
+          for page in tagging.get_paginator('get_resources').paginate(
+              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              ResourceTypeFilters=['elasticloadbalancing:targetgroup']
+          ):
+              tgs.extend([m['ResourceARN'] for m in page['ResourceTagMappingList']])
+          
+          tgs = list(set(tgs))
 
           if not tgs:
               print("   ✅ No Target Groups found.")
@@ -579,6 +610,14 @@ jobs:
               ResourceTypeFilters=['cloudfront:distribution']
           ):
               dists.extend([m['ResourceARN'].split('/')[-1] for m in page['ResourceTagMappingList']])
+              
+          for page in tagging.get_paginator('get_resources').paginate(
+              TagFilters=[{'Key': 'Project', 'Values': [project]}, {'Key': 'Stage', 'Values': [stage]}],
+              ResourceTypeFilters=['cloudfront:distribution']
+          ):
+              dists.extend([m['ResourceARN'].split('/')[-1] for m in page['ResourceTagMappingList']])
+              
+          dists = list(set(dists))
 
           if not dists:
               print("   ✅ No CloudFront Distributions found.")
@@ -678,16 +717,21 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
 
-          echo "🔍 Tag-based Lambda@Edge scan — blaze:project=${PROJECT_KEY}, blaze:stage=${STAGE_KEY} (V2 schema)"
-
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+          TAGGED_ARNS_V2=$(aws resourcegroupstaggingapi get-resources \
             --region us-east-1 \
             --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
             --resource-type-filters "lambda:function" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
+            
+          TAGGED_ARNS_V1=$(aws resourcegroupstaggingapi get-resources \
+            --region us-east-1 \
+            --tag-filters "Key=Project,Values=${PROJECT_KEY}" "Key=Stage,Values=${STAGE_KEY}" \
+            --resource-type-filters "lambda:function" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
 
-          FUNCTIONS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . || true)
+          FUNCTIONS=$(echo "$TAGGED_ARNS_V1 $TAGGED_ARNS_V2" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | sort -u | grep . || true)
 
           if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
              for FUNC_NAME in $FUNCTIONS; do
