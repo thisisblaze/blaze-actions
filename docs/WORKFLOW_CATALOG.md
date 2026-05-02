@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 30 main + 20 reusable = 50 total  
-**Version**: v2.4.6  
-**Last Updated**: 2026-04-30
+**Total Workflows**: 38 main + 20 reusable = 58 total  
+**Version**: v2.5.7  
+**Last Updated**: 2026-05-02
 
 ---
 
@@ -602,6 +602,11 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v2.5.7** (2026-05-02):
+- Deep CI/CD maintenance sync: Updated workflow catalog with missing workflows (e.g. `reusable-elastic-beanstalk-deploy.yml`)
+- Hardened elastic-beanstalk module deployment across CI environments by explicitly setting resource to prevent inconsistent final plan bug.
+- Bumped global versions to `@v2.5.7` to definitively seal the pipeline from referencing stale refs.
+
 **v2.1.74 & v2.4.8** (2026-04-24):
 - Deep CI/CD maintenance sync: Resolved checkengines workflow parity errors.
 - Hardened teardown scripts: Enforced native `jq` type safety (`type=="array"`) to elegantly handle AWS CLI `null` capacityProviders during ECS cluster deletion.
@@ -659,7 +664,7 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-04-30  
+**Last Updated**: 2026-05-02  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
 | **Reusable EB Deploy** | `.github/workflows/reusable-elastic-beanstalk-deploy.yml` | Packages code and pushes Application Versions to AWS Elastic Beanstalk via S3. |
