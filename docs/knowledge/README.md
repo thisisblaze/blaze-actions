@@ -1,5 +1,5 @@
 ---
-Last Updated: 2026-04-24
+Last Updated: 2026-05-02
 Owner: Infrastructure Team
 ---
 
@@ -37,3 +37,4 @@ When creating a new file in this directory, please use this structure:
 - [GCP WIF Terraform Backend Auth](./gcp-wif-terraform-access-token.md) - Resolving `403` and `iam.serviceAccounts.getAccessToken` permission errors during Terraform GCS backend initialization.
 - [AWS ECS Capacity Provider Reconciliation](./aws-ecs-capacity-provider-reconciliation.md) - Handling AWS `ResourceInUseException` and detaching Capacity Providers safely via CLI toggle.
 - [GitHub Actions Nested Relative Paths](./github-actions-nested-relative-paths.md) - Fixing `workflow was not found` cross-repo issues.
+- [GitHub Actions Allowed Infra Users](./github-actions-allowed-infra-users.md) - Implementing `ALLOWED_INFRA_USERS` access control.

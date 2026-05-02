@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Added
+
+- docs(knowledge): added guide on how to implement `ALLOWED_INFRA_USERS` access control for external repositories.
+
 ## v2.1.76 (2026-05-01)
 
 ### Added
