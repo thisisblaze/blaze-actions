@@ -1,3 +1,19 @@
+## v2.5.7 (2026-05-02)
+
+### Added
+
+- feat: publish deployed Elastic Beanstalk version to SSM Parameter Store
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-02
+- chore: end-of-day governance sync — 2026-05-01
+- chore: update CHANGELOG for v2.1.76
+
+### Fixed
+
+- fix: pre-destroy cleanup should check both standard and Blaze tag schemas
+
 ## [Unreleased]
 
 ### Added
