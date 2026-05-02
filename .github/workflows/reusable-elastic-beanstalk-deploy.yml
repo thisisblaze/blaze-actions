@@ -85,5 +85,13 @@ jobs:
             --application-name "$APP_NAME" \
             --environment-name "$ENV_NAME" \
             --version-label "$VERSION_LABEL"
+            
+          # Publish Version to SSM for Terraform to consume
+          echo "Publishing VERSION_LABEL to SSM Parameter Store..."
+          aws ssm put-parameter \
+            --name "/eb/${APP_NAME}/latest_version" \
+            --value "$VERSION_LABEL" \
+            --type "String" \
+            --overwrite
           
           echo "Deployment initiated. Please check the AWS Console for health status."
