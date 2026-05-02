@@ -25,7 +25,7 @@ if is_ci:
 else:
     # Running locally on developer laptop
     REPOS = {
-        "deploy": "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy",
+        "deploy": os.environ.get("BLAZE_SPOKE_DIR", "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy"),
         "actions": "/Users/marek/Workspace/thisisblaze/blaze-actions",
         "infra": "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core"
     }
