@@ -26,6 +26,11 @@ on:
         required: false
         type: string
         default: ""
+      php_version:
+        description: 'Optional PHP version to set up before running build commands (e.g. "8.4")'
+        required: false
+        type: string
+        default: ""
     secrets:
       AWS_ROLE_ARN:
         required: true
@@ -36,6 +41,13 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v6.0.2
+
+      - name: Setup PHP
+        if: inputs.php_version != ''
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.php_version }}
+          tools: composer:v2
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6.1.0
