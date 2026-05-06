@@ -14,6 +14,13 @@
 
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
+## [2026-05-06] — Deep CI/CD Maintenance & Module Version Sync
+
+### Changed
+- chore(maintenance): bump all AWS + GCP live stack Terraform module refs to `v2.5.10` (from `v2.4.8`/`v2.5.9`). Eliminates Engine 4 split-brain drift across all environments.
+- chore(maintenance): bump all internal `blaze-actions` action + workflow pin refs from `@v2.1.74`/`@dev` to `@v2.1.76` (canonical stable).
+- chore: end-of-day governance sync — 2026-05-06
+
 ## [Unreleased]
 
 ### Added
