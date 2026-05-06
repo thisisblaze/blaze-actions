@@ -1,3 +1,9 @@
+## v2.1.77 (2026-05-06)
+
+### Added
+
+- feat(ci): add `php_version` optional input to `reusable-elastic-beanstalk-deploy.yml` — installs PHP via `shivammathur/setup-php@v2` before running `build_command` when set (e.g. `"8.4"`). No-op when omitted.
+
 ## v2.5.7 (2026-05-02)
 
 ### Added
