@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-05-07
 **Owner**: Infrastructure Team
 
 ---
@@ -6,7 +6,7 @@
 # AI Context Governance: Shopware KM Standard
 
 > [!TIP]
-> **Status: SCALED (Elastic Beanstalk Environment)**. All agents must enforce and operate within the Elastic Beanstalk architectural boundaries.
+> **Status: SCALED (ECS Fargate Environment)**. All agents must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
@@ -40,7 +40,7 @@ The AI Agent is strictly forbidden from executing ANY autonomous command that de
 
 **CRITICAL POLICY**: Generic tags like `Stage`, `Client`, and `Project` are heavily overloaded by legacy tools and other CI/CDs. 
 When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags:
-- `Blaze:Architecture=two-pillar-v2`
+- `Shopware:Architecture=Shopware 6.7.x`
 - `Blaze:Provisioner=blaze-actions`
 
 "Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking these exact tags or Terraform State is strictly forbidden.
