@@ -51,7 +51,7 @@ data "terraform_remote_state" "network" {
 # LABEL MODULE (Required by EC2 Capacity Provider)
 # --------------------------------------------------------------------------------
 module "label" {
-  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.5.11"
+  source    = "github.com/thisisblaze/blaze-terraform-infra-core//modules/common/label?ref=v2.5.12"
   client    = var.client_key
   project   = var.project_key
   stage     = var.stage
@@ -62,7 +62,7 @@ module "label" {
 # ENVIRONMENT APP MODULE
 # --------------------------------------------------------------------------------
 module "app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v2.5.11"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/environment-app?ref=v2.5.12"
 
   stage       = "prod"
   platform    = var.platform # New input for S3 naming
@@ -133,7 +133,7 @@ module "app" {
 # CLOUDFLARE PAGES PROJECT (Admin)
 # --------------------------------------------------------------------------------
 module "pages_project_admin" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.5.11"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/cloudflare/pages-project?ref=v2.5.12"
 
   account_id = var.cloudflare_account_id
 
