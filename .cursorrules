@@ -142,7 +142,13 @@ default_tags {
 - [ ] Apply changes systematically to Stage and Prod counterpart tenants.
 - [ ] Do NOT assume scaling logic impacts only a single active environment unless declared in parameters.
 
+**Before committing changes to `.github/workflows/`:**
+- [ ] Run `actionlint -shellcheck '' .github/workflows/*.yml` locally — zero errors required.
+- [ ] `05_ci_no_cloud.yml` runs actionlint as a blocking gate on all 54 workflow files. Any GHA expression error will fail the PR.
+- [ ] Do NOT use `|| true` to suppress actionlint — fix the root cause instead.
+
 ### 7.2 Anti-Patterns (DO NOT DO)
 - ❌ Committing to `01a` Foundation while modifying tenant scaling instances inside a single scope context.
 - ❌ Cross-referencing deprecated monolithic AWS paths.
 - ❌ Using CodeDeploy functions (Deprecated 2026-02-27).
+- ❌ Suppressing `actionlint` with `|| true` — fix real GHA expression errors instead.

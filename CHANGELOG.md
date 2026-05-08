@@ -1,3 +1,16 @@
+## [Unreleased] — 2026-05-08
+
+### Fixed
+
+- fix(ci): `reusable-stress-test-teardown.yml:968` — added `destroy-app` to `destroy-network` `needs:` list. It was referenced in the job's `if:` condition but was not in the `needs:` chain, causing an `actionlint [expression]` error.
+- fix(ci): `reusable-terraform.yml` — declared missing `orphan_lambda_namespace` input (`type: string, default: "blaze"`). Was used in Orphan Lambda step but never declared in `workflow_call` inputs.
+
+### Changed
+
+- fix(ci): `05_ci_no_cloud.yml` — actionlint now scans all 54 workflow files (was 3 hardcoded). Shellcheck integration disabled (`-shellcheck ''`) to reduce noise. `|| true` removed — linter now exits 1 on any GHA expression error, blocking PRs.
+- chore: `.cursorrules` §7.1 — added workflow validation checklist covering actionlint requirements and anti-pattern documentation.
+- chore: `.gitignore` — added `actionlint` binary.
+
 ## v2.1.77 (2026-05-08)
 
 ### Changed
