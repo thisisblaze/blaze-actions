@@ -70,6 +70,11 @@ on:
         required: false
         type: boolean
         default: false
+      orphan_lambda_namespace:
+        description: "Namespace prefix for Lambda@Edge IAM resource names (e.g. 'blaze'). Used when orphan_lambda=true to re-import IAM roles/policies."
+        required: false
+        type: string
+        default: "blaze"
       enable_vpc_peering:
         description: "Enable Atlas VPC peering (Plan 135). Sets TF_VAR_enable_vpc_peering=true for MongoDB DB stacks. Requires non-flex cluster (M10+)."
         required: false

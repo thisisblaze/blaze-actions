@@ -965,7 +965,7 @@ jobs:
     if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped') }}
     name: "🧨 Destroy Network"
 
-    needs: [config, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
+    needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.1.74
     with:
       action: "destroy"

@@ -23,7 +23,23 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6.0.2
-      - name: Run actionlint
+      - name: Run actionlint (all workflows)
         run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint .github/workflows/05_ci_no_cloud.yml .github/workflows/sync-secrets-from-ssm.yml .github/workflows/02-deploy-app.yml
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "## 🧩 actionlint Results" >> "$GITHUB_STEP_SUMMARY"
+          # -shellcheck '' disables shellcheck integration (style noise); actionlint still checks
+          # all GitHub Actions-specific expression/type errors natively.
+          ISSUES=$(./actionlint -shellcheck '' \
+            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}{{"\n"}}{{end}}' \
+            .github/workflows/*.yml 2>&1)
+          EXIT=$?
+          if [ -z "$ISSUES" ] && [ $EXIT -eq 0 ]; then
+            echo "✅ No issues found across all workflow files." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$ISSUES"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "$ISSUES" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ Issues found — merge is blocked until fixed." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
