@@ -1,4 +1,4 @@
-**Last Updated**: 2026-04-30
+**Last Updated**: 2026-05-08
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 38 main + 20 reusable = 58 total  
-**Version**: v2.5.7  
-**Last Updated**: 2026-05-02
+**Total Workflows**: 38 main + 21 reusable = 59 total  
+**Version**: v2.1.77  
+**Last Updated**: 2026-05-08
 
 ---
 
@@ -417,6 +417,12 @@
 #### 02-deploy-aws.yml
 **Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `02-deploy-app.yml`.
 
+**Key inputs** (passed through from `02-deploy-app.yml`):
+- `php_version` (optional): PHP version to set up before build (e.g. `"8.4"`). If set, uses `shivammathur/setup-php@v2`.
+- `build_command` (optional): Shell command to run before image packaging (e.g. `composer install`).
+- `api_launch_type` (choice): `FARGATE` (default) or `EC2`
+- `api_cpu_architecture` (choice): `X86_64` or `ARM64`
+
 ---
 #### 02-deploy-azure.yml
 **Purpose**: Azure Container Apps deployment entrypoint. Builds image, pushes to ACR, rolls out new revision.
@@ -557,6 +563,24 @@ These are called by main workflows, not directly by users.
 **Purpose**: No-op placeholder workflow. Used as a safe target for conditional `needs:` chains when a step is skipped.
 
 ---
+
+#### reusable-elastic-beanstalk-deploy.yml
+**Purpose**: Packages application code and pushes an Application Version to AWS Elastic Beanstalk via S3. Supports optional PHP setup and pre-package build commands.
+
+**Inputs**:
+- `environment` (required): GitHub environment name (for OIDC)
+- `application_name` (required): Elastic Beanstalk application name
+- `environment_name` (required): Elastic Beanstalk environment name
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+- `s3_bucket` (optional): S3 bucket for bundle upload; uses EB default if omitted
+- `build_command` (optional): Shell command to run before zipping artifact (e.g. `composer install --no-dev`)
+- `php_version` (optional): PHP version to set up before build (e.g. `"8.4"`)
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: Runs optional PHP setup → optional build command → zips source (excluding `.git`, `.github`, `.agent`, `tests`) → uploads bundle to S3 → creates EB Application Version → deploys to EB environment → (optionally) writes version label to SSM Parameter Store.
+
+---
 #### reusable-verify-aws.yml
 **Purpose**: AWS environment health verification. Checks ECS service counts, ALB target health, and HTTPS endpoint responses.
 
@@ -601,6 +625,11 @@ These are called by main workflows, not directly by users.
 ---
 
 ## Version History
+
+**v2.1.77** (2026-05-08):
+- Deep CI/CD maintenance sync: Added `php_version` + `build_command` inputs to `02-deploy-aws.yml` catalog entry.
+- Moved dangling `reusable-elastic-beanstalk-deploy.yml` table row into proper Reusable section with full input documentation.
+- Fixed total workflow count to 59 (38 main + 21 reusable).
 
 **v2.5.7** (2026-05-02):
 - Deep CI/CD maintenance sync: Updated workflow catalog with missing workflows (e.g. `reusable-elastic-beanstalk-deploy.yml`)
@@ -664,7 +693,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-05-02  
+**Last Updated**: 2026-05-08  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
-| **Reusable EB Deploy** | `.github/workflows/reusable-elastic-beanstalk-deploy.yml` | Packages code and pushes Application Versions to AWS Elastic Beanstalk via S3. |

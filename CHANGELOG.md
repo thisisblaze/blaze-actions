@@ -1,3 +1,11 @@
+## v2.1.77 (2026-05-08)
+
+### Changed
+
+- docs: Deep CI/CD Maintenance — WORKFLOW_CATALOG.md: added `php_version`+`build_command` inputs to `02-deploy-aws.yml`, moved misplaced EB table row into Reusable section with full input docs, fixed total count to 59, bumped version header to v2.1.77
+- docs: REUSABLE_WORKFLOWS.md: added `reusable-elastic-beanstalk-deploy.yml` calling pattern section with full YAML example and input reference, updated stable version pin references to v2.1.77
+- chore: bump both docs timestamps to 2026-05-08
+
 ## v2.1.77 (2026-05-06)
 
 ### Added

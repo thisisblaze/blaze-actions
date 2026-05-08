@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-08
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-08
 
 ---
 
@@ -487,13 +487,36 @@ jobs:
 
 ---
 
+## Elastic Beanstalk Deploy
+
+For legacy EB environments, use `reusable-elastic-beanstalk-deploy.yml` to package and deploy an application version.
+
+```yaml
+jobs:
+  deploy-eb:
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.77
+    with:
+      environment: prod                          # GitHub environment (for OIDC)
+      application_name: my-app                   # EB Application name
+      environment_name: my-app-prod              # EB Environment name
+      aws_region: eu-west-1
+      build_command: "composer install --no-dev" # Optional pre-package build
+      php_version: "8.4"                         # Optional PHP setup
+      s3_bucket: ""                              # Optional; uses EB default if blank
+    secrets: inherit
+```
+
+**What it does**: Checks out code → sets up PHP (if `php_version` set) → runs `build_command` (if set) → zips source excluding `.git/.github/.agent/tests` → uploads bundle to S3 → creates EB Application Version → deploys to EB environment.
+
+---
+
 ## FAQ
 
 **Q: Can I call workflows from other organizations?**  
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.5.7` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.1.77` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
@@ -584,6 +607,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-05-02  
+**Last Updated**: 2026-05-08  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
