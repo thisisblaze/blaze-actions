@@ -1,3 +1,29 @@
+## v2.1.78 (2026-05-09)
+
+### Added
+
+- feat: publish deployed Elastic Beanstalk version to SSM Parameter Store
+
+### Changed
+
+- docs: add prod safety boundary to orphan rule
+- chore: end-of-day governance sync — 2026-05-08
+- chore: end-of-day governance sync — 2026-05-07
+- chore: update CHANGELOG for v2.1.77
+- chore: end-of-day governance sync — 2026-05-06
+- chore: end-of-day governance sync — 2026-05-05
+- chore: end-of-day governance sync — 2026-05-02
+- docs: sync timestamps for deep cicd maintenance
+- docs: bump workflow catalog versions to v2.5.7 for deep cicd maintenance sync
+- chore: update CHANGELOG for v2.5.7
+- chore: end-of-day governance sync — 2026-05-02
+- chore: end-of-day governance sync — 2026-05-01
+- chore: update CHANGELOG for v2.1.76
+
+### Fixed
+
+- fix: pre-destroy cleanup should check both standard and Blaze tag schemas
+
 ## [Unreleased]
 
 ## [v2.1.78] — 2026-05-09 (Plan 151)
