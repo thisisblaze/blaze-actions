@@ -1355,12 +1355,24 @@ jobs:
         # The nuke workflow must assume the Terraform state is corrupted and perform explicit, 
         # stateless AWS CLI purges based on resource names/tags before dropping the state bucket.
         echo "🔍 Checking for EC2 ASGs to clean up..."
+        
+        # ASGs are typically tagged with Project and Stage by null-label
         TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
           --region "$aws_region" \
-          --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+          --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
           --resource-type-filters "autoscaling:autoScalingGroup" \
           --query 'ResourceTagMappingList[*].ResourceARN' \
           --output text 2>/dev/null || echo "")
+
+        # Fallback to Blaze prefixed tags if empty
+        if [[ -z "$TAGGED_ASG_ARNS" || "$TAGGED_ASG_ARNS" == "None" ]]; then
+          TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$aws_region" \
+            --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+            --resource-type-filters "autoscaling:autoScalingGroup" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+        fi
 
         if [[ -n "$TAGGED_ASG_ARNS" && "$TAGGED_ASG_ARNS" != "None" ]]; then
           for ASG_ARN in $TAGGED_ASG_ARNS; do
@@ -1369,25 +1381,25 @@ jobs:
             aws autoscaling update-auto-scaling-group \
               --auto-scaling-group-name "$ASG" \
               --min-size 0 --max-size 0 --desired-capacity 0 \
-              --region "$aws_region" 2>/dev/null || echo "   ⚠️  Could not scale $ASG"
-
-            echo "   → Force-Deleting ASG: $ASG"
+              --region "$aws_region" >/dev/null 2>&1 || echo "   ⚠️  Could not zero capacity for $ASG"
+              
+            echo "   → Force deleting ASG: $ASG"
             aws autoscaling delete-auto-scaling-group \
               --auto-scaling-group-name "$ASG" \
               --force-delete \
-              --region "$aws_region" 2>/dev/null || echo "   ⚠️  Could not delete $ASG or it is already deleted."
+              --region "$aws_region" >/dev/null 2>&1 || echo "   ⚠️  Could not force delete $ASG"
           done
-          echo "⏳ Waiting 15s for ASGs to terminate..."
-          sleep 15
         else
           echo "   ℹ️  No ASGs found matching tags."
         fi
 
         # ----- CLOUDFRONT CLEANUP (Plan 155 Phase 2) -----
         echo "🔍 Checking for orphaned CloudFront distributions to clean up..."
+        
+        # CloudFront may be tagged with Project and Stage or Blaze:Project and Blaze:Environment
         TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
           --region "us-east-1" \
-          --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+          --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
           --resource-type-filters "cloudfront:distribution" \
           --query 'ResourceTagMappingList[*].ResourceARN' \
           --output text 2>/dev/null || echo "")
