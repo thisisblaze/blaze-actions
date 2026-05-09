@@ -278,6 +278,7 @@ jobs:
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
       admin_bucket: ${{ steps.config.outputs.admin_bucket }}
       project_slug: ${{ steps.config.outputs.project_slug }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -955,12 +956,22 @@ jobs:
           # Sync to S3
           aws s3 sync packages/admin/dist "s3://$EXPECTED_BUCKET" --delete
 
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           # Find CloudFront Distribution ID bounded organically by Tags
-          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
-            --resource-type-filters "cloudfront:distribution" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --tag-filters "Key=Blaze:Environment,Values=${{ needs.configuration.outputs.stage_key }}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           CF_DIST_ID="None"
           for CF_ARN in $TAGGED_CF_ARNS; do

@@ -322,6 +322,7 @@ jobs:
       has_data: ${{ steps.check-dirs.outputs.has_data }}
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -457,14 +458,25 @@ jobs:
 
           # 2. Tag-based query (replacing brittle name pattern matching)
           echo "--------------------------------"
-          echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:Environment=${STAGE_KEY}..."
           
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --region us-east-1 \
-            --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" \
-            --resource-type-filters "lambda:function" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:StackID=${STACK_ID}..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region us-east-1 \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "lambda:function" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:Environment=${STAGE_KEY}..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region us-east-1 \
+              --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+              --resource-type-filters "lambda:function" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
           
           echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . > found_lambdas.txt || true
 
@@ -540,13 +552,24 @@ jobs:
         env:
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Scanning S3 buckets for Blaze:Environment=${ENV_KEY} via Tags..."
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --region "${{ needs.configuration.outputs.aws_region }}" \
-            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
-            --resource-type-filters "s3" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "🧹 Scanning S3 buckets for Blaze:StackID=${STACK_ID} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "s3" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            echo "🧹 Scanning S3 buckets for Blaze:Environment=${ENV_KEY} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+              --resource-type-filters "s3" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           FOUND_COUNT=0
           if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
@@ -578,13 +601,24 @@ jobs:
         env:
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Scanning CloudWatch Logs for Blaze:Environment=${ENV_KEY} via Tags..."
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --region "${{ needs.configuration.outputs.aws_region }}" \
-            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
-            --resource-type-filters "logs:log-group" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "🧹 Scanning CloudWatch Logs for Blaze:StackID=${STACK_ID} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "logs:log-group" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            echo "🧹 Scanning CloudWatch Logs for Blaze:Environment=${ENV_KEY} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+              --resource-type-filters "logs:log-group" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           TAGGED_LOGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
 
@@ -602,13 +636,24 @@ jobs:
         env:
           ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
         run: |
-          echo "🧹 Scanning Target Groups for Blaze:Environment=${ENV_KEY} via Tags..."
-          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --region "${{ needs.configuration.outputs.aws_region }}" \
-            --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
-            --resource-type-filters "elasticloadbalancing:targetgroup" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "🧹 Scanning Target Groups for Blaze:StackID=${STACK_ID} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "elasticloadbalancing:targetgroup" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            echo "🧹 Scanning Target Groups for Blaze:Environment=${ENV_KEY} via Tags..."
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "${{ needs.configuration.outputs.aws_region }}" \
+              --tag-filters "Key=Blaze:Environment,Values=${ENV_KEY}" \
+              --resource-type-filters "elasticloadbalancing:targetgroup" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           TAGGED_TGS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | grep -v 'None' | grep . || true)
 
