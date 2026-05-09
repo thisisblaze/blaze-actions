@@ -2,14 +2,13 @@
 
 ### Added
 
-- No new features in this release
+- **`WORKFLOW_CATALOG.md`**: 3 new reusable workflows documented — `reusable-backup-snapshot.yml` (Plan 151 L14 + Plan 152), `reusable-dev-sleep-schedule.yml` (Plan 151 L4 FinOps), `reusable-ecs-health-snapshot.yml` (Plan 151 L7 observability). Total: 38 main + 24 reusable = 62 workflows.
 
 ### Changed
 
-- chore: update CHANGELOG for v2.1.79
-- chore: update CHANGELOG for v2.1.78
-
-### Fixed
+- **Engine 8 parity fix**: `90-daily-health-check.yml` self-pins bumped `@v2.1.74→@v2.1.80` — SHA hash now identical across all 3 repos.
+- **WORKFLOW_CATALOG.md**: Header version `v2.1.77→v2.1.80`, count `59→62`, Last Updated `2026-05-08→2026-05-09`.
+- **All GitHub Actions tags**: `@v2.1.74→@v2.1.80` sweep complete across blaze-template-deploy (54+ workflows) and blaze-terraform-infra-core.
 
 
 ## v2.1.79 (2026-05-09)
