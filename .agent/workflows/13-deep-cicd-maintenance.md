@@ -4,7 +4,7 @@ expected_output: Synchronized operations code, workflows, and action timings acr
 exclusions: Do NOT modify the terraform modules or stack topologies during CI/CD maintenance.
 ---
 
-**Last Updated**: 2026-04-22
+**Last Updated**: 2026-05-09
 
 # Deep CI/CD Maintenance Sync
 
@@ -56,8 +56,7 @@ Any file that receives a material update to its content during this sync MUST ha
    - You are **forbidden** from writing a python or bash script to find and replace dates globally.
    - For each file you identified, you must briefly verify its claims against the codebase.
    - If the instructions or architecture described in a file have changed recently, fix the content, then update the timestamp string to today's date (`YYYY-MM-DD`).
-   - If the file is genuinely perfectly up to date, you may update the timestamp manually to certify it was audited today.
-   - Treat "Last Updated: 2026-04-24
+   - Treat "Last Updated: 2026-05-09" as a hard requirement for all modified files.
 
 ## Phase 4: Global Changelog Compilation
 

@@ -75,7 +75,7 @@ Based on the exact provider only load the following:
 
 For **AWS**, also check which environments are active:
 ```bash
-gh run list --workflow="01-provision-infra.yml" --repo thebyte9/blaze-template-deploy --limit 5
+gh run list --workflow="01a-provision-network.yml" --repo thebyte9/blaze-template-deploy --limit 5
 ```
 
 ### 3. Frugal Reading

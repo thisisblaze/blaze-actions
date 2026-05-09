@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-05-09
 **Owner**: Infrastructure Team
 
 ---
@@ -243,6 +243,7 @@ jobs:
     with:
       environment: dev
       dry_run: false
+      stack_id: "your-stack-uuid" # Recommended: Use STACK_ID from calculate-config
     secrets: inherit
 
   destroy:

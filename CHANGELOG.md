@@ -6,6 +6,7 @@
 
 ### Changed
 
+- chore: end-of-day governance sync — 2026-05-09
 - **Engine 8 parity fix**: `90-daily-health-check.yml` self-pins bumped `@v2.1.74→@v2.1.80` — SHA hash now identical across all 3 repos.
 - **WORKFLOW_CATALOG.md**: Header version `v2.1.77→v2.1.80`, count `59→62`, Last Updated `2026-05-08→2026-05-09`.
 - **All GitHub Actions tags**: `@v2.1.74→@v2.1.80` sweep complete across blaze-template-deploy (54+ workflows) and blaze-terraform-infra-core.

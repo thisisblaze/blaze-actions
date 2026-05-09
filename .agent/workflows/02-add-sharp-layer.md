@@ -120,12 +120,11 @@ module "label_image_resize" {
 ### Step 3: Run Provision Workflow
 
 ```bash
-gh workflow run "01-provision-infra.yml" \
+gh workflow run "01a-provision-network.yml" \
   --repo thebyte9/blaze-template-deploy \
   --ref main \
   -f environment=STAGE \
   -f project=thisisblaze \
-  -f stack=network \
   -f apply=false  # Dry run first!
 ```
 
@@ -147,11 +146,10 @@ gh workflow run "01-provision-infra.yml" \
 Re-run with `apply=true`:
 
 ```bash
-gh workflow run "01-provision-infra.yml" \
+gh workflow run "01a-provision-network.yml" \
   --repo thebyte9/blaze-template-deploy \
   --ref main \
   -f environment=STAGE \
-  -f stack=network \
   -f apply=true
 ```
 
@@ -407,7 +405,7 @@ aws logs describe-log-groups --region <EDGE_REGION> --query "logGroups[?contains
 
 ---
 
-**Last Updated:** 2026-04-22
+**Last Updated:** 2026-05-09
 **Automation Status:** ✅ Fully Automated  
 **Build Time:** 8-35 seconds  
 **Success Rate:** 100%

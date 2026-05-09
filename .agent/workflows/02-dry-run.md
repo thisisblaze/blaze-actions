@@ -36,11 +36,15 @@ Flag if any `main.tf` in the target env uses a different `ref=` value.
 For each stack (network → app → data):
 
 ```bash
-gh workflow run "01 ⚙️ Provision Infrastructure" \
+gh workflow run "01a-provision-network.yml" \
   --repo thebyte9/blaze-template-deploy \
   -f environment=<env> \
-  -f layer=<layer> \
-  -f run_apply=false
+  -f apply=false
+
+gh workflow run "01c-provision-app-infra.yml" \
+  --repo thebyte9/blaze-template-deploy \
+  -f environment=<env> \
+  -f apply=false
 ```
 
 Wait for completion:

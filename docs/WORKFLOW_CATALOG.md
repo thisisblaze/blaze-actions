@@ -523,8 +523,8 @@ These are called by main workflows, not directly by users.
 ### reusable-pre-destroy-cleanup.yml
 
 **Purpose**: Essential cleanup before infrastructure destroy to prevent hangs.
-**Use Case**: Removes EC2 Capacity Providers, Launch Templates, and Logs.
-**Inputs**: cluster_name, aws_region, force_delete  
+**Use Case**: Removes EC2 Capacity Providers, Launch Templates, CloudFront, Target Groups, and Logs surgically.
+**Inputs**: cluster_name, aws_region, force_delete, stack_id
 **Outputs**: cleanup_status
 
 ---
