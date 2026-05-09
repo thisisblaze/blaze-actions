@@ -1352,23 +1352,35 @@ jobs:
         fi
 
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
-        # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
-        # This prevents destroy from hanging on ECS managed termination protection.
+        # The nuke workflow must assume the Terraform state is corrupted and perform explicit, 
+        # stateless AWS CLI purges based on resource names/tags before dropping the state bucket.
         echo "🔍 Checking for EC2 ASGs to clean up..."
-        ASG_NAME=$(terraform state list 2>/dev/null | grep 'aws_autoscaling_group' | head -1)
-        if [ -n "$ASG_NAME" ]; then
-          ASG_ID=$(terraform state show "$ASG_NAME" 2>/dev/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
-          if [ -n "$ASG_ID" ]; then
-            echo "🛑 Scaling down ASG: $ASG_ID"
+        TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+          --region "$aws_region" \
+          --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+          --resource-type-filters "autoscaling:autoScalingGroup" \
+          --query 'ResourceTagMappingList[*].ResourceARN' \
+          --output text 2>/dev/null || echo "")
+
+        if [[ -n "$TAGGED_ASG_ARNS" && "$TAGGED_ASG_ARNS" != "None" ]]; then
+          for ASG_ARN in $TAGGED_ASG_ARNS; do
+            ASG="${ASG_ARN##*autoScalingGroupName/}"
+            echo "   → Zeroing ASG capacity: $ASG"
             aws autoscaling update-auto-scaling-group \
-              --auto-scaling-group-name "$ASG_ID" \
-              --min-size 0 --max-size 0 --desired-capacity 0 || true
-            echo "⏳ Waiting 30s for instance drain..."
-            sleep 30
-          fi
-          echo "✅ EC2 ASG cleanup complete."
+              --auto-scaling-group-name "$ASG" \
+              --min-size 0 --max-size 0 --desired-capacity 0 \
+              --region "$aws_region" 2>/dev/null || echo "   ⚠️  Could not scale $ASG"
+
+            echo "   → Force-Deleting ASG: $ASG"
+            aws autoscaling delete-auto-scaling-group \
+              --auto-scaling-group-name "$ASG" \
+              --force-delete \
+              --region "$aws_region" 2>/dev/null || echo "   ⚠️  Could not delete $ASG or it is already deleted."
+          done
+          echo "⏳ Waiting 15s for ASGs to terminate..."
+          sleep 15
         else
-          echo "ℹ️  No ASG found in state — skipping EC2 cleanup."
+          echo "   ℹ️  No ASGs found matching tags."
         fi
 
   nuke-cleanup-dns:
