@@ -332,6 +332,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_tenant_app: ${{ steps.check-dirs.outputs.has_tenant_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -1356,19 +1357,36 @@ jobs:
         # stateless AWS CLI purges based on resource names/tags before dropping the state bucket.
         echo "🔍 Checking for EC2 ASGs to clean up..."
         
-        # ASGs are typically tagged with Project and Stage by null-label
-        TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
-          --region "$aws_region" \
-          --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
-          --resource-type-filters "autoscaling:autoScalingGroup" \
-          --query 'ResourceTagMappingList[*].ResourceARN' \
-          --output text 2>/dev/null || echo "")
-
-        # Fallback to Blaze prefixed tags if empty
-        if [[ -z "$TAGGED_ASG_ARNS" || "$TAGGED_ASG_ARNS" == "None" ]]; then
+        STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+          echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+          TAG_FILTERS="\"Key=Blaze:StackID,Values=$STACK_ID\""
+        else
+          echo "   ⚠️ No Stack UUID found. Falling back to Project/Stage heuristic."
+          # ASGs are typically tagged with Project and Stage by null-label
           TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
             --region "$aws_region" \
-            --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+            --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
+            --resource-type-filters "autoscaling:autoScalingGroup" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          # Fallback to Blaze prefixed tags if empty
+          if [[ -z "$TAGGED_ASG_ARNS" || "$TAGGED_ASG_ARNS" == "None" ]]; then
+            TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$aws_region" \
+              --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+              --resource-type-filters "autoscaling:autoScalingGroup" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
+        fi
+
+        # If STACK_ID is used, query specifically for it
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+           TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$aws_region" \
+            --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
             --resource-type-filters "autoscaling:autoScalingGroup" \
             --query 'ResourceTagMappingList[*].ResourceARN' \
             --output text 2>/dev/null || echo "")
@@ -1396,13 +1414,32 @@ jobs:
         # ----- CLOUDFRONT CLEANUP (Plan 155 Phase 2) -----
         echo "🔍 Checking for orphaned CloudFront distributions to clean up..."
         
-        # CloudFront may be tagged with Project and Stage or Blaze:Project and Blaze:Environment
-        TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
-          --region "us-east-1" \
-          --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
-          --resource-type-filters "cloudfront:distribution" \
-          --query 'ResourceTagMappingList[*].ResourceARN' \
-          --output text 2>/dev/null || echo "")
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+          echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+        else
+          # CloudFront may be tagged with Project and Stage or Blaze:Project and Blaze:Environment
+          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$TAGGED_CF_ARNS" || "$TAGGED_CF_ARNS" == "None" ]]; then
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "us-east-1" \
+              --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
+        fi
 
         if [[ -n "$TAGGED_CF_ARNS" && "$TAGGED_CF_ARNS" != "None" ]]; then
           CF_IDS=""
