@@ -1383,6 +1383,83 @@ jobs:
           echo "   ℹ️  No ASGs found matching tags."
         fi
 
+        # ----- CLOUDFRONT CLEANUP (Plan 155 Phase 2) -----
+        echo "🔍 Checking for orphaned CloudFront distributions to clean up..."
+        TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+          --region "us-east-1" \
+          --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+          --resource-type-filters "cloudfront:distribution" \
+          --query 'ResourceTagMappingList[*].ResourceARN' \
+          --output text 2>/dev/null || echo "")
+
+        if [[ -n "$TAGGED_CF_ARNS" && "$TAGGED_CF_ARNS" != "None" ]]; then
+          CF_IDS=""
+          for CF_ARN in $TAGGED_CF_ARNS; do
+            CF_ID="${CF_ARN##*distribution/}"
+            CF_IDS="$CF_IDS $CF_ID"
+            
+            echo "   → Fetching config for CF Distribution: $CF_ID"
+            CONFIG_JSON=$(aws cloudfront get-distribution-config --id "$CF_ID" 2>/dev/null || echo "")
+            if [[ -n "$CONFIG_JSON" ]]; then
+              ETAG=$(echo "$CONFIG_JSON" | jq -r '.ETag')
+              ENABLED=$(echo "$CONFIG_JSON" | jq -r '.DistributionConfig.Enabled')
+              
+              if [[ "$ENABLED" == "true" ]]; then
+                echo "   → Disabling CF Distribution: $CF_ID"
+                # Update the config to Enabled=false
+                UPDATED_CONFIG=$(echo "$CONFIG_JSON" | jq '.DistributionConfig.Enabled = false | del(.ETag)')
+                
+                # Write to temp file because aws cli expects file:// for complex JSON
+                TMP_CONFIG="/tmp/cf_config_${CF_ID}.json"
+                echo "$UPDATED_CONFIG" > "$TMP_CONFIG"
+                
+                aws cloudfront update-distribution \
+                  --id "$CF_ID" \
+                  --if-match "$ETAG" \
+                  --distribution-config "file://$TMP_CONFIG" >/dev/null 2>&1 || echo "   ⚠️  Could not disable $CF_ID"
+                rm -f "$TMP_CONFIG"
+              else
+                echo "   ℹ️  CF Distribution $CF_ID is already disabled."
+              fi
+            else
+              echo "   ⚠️  Could not fetch config for $CF_ID"
+            fi
+          done
+
+          echo "⏳ Waiting for distributions to deploy (disabling)... max 15 mins."
+          TIMEOUT=60 # 60 * 15s = 15 mins
+          for CF_ID in $CF_IDS; do
+            PENDING=true
+            while [[ "$PENDING" == "true" && $TIMEOUT -gt 0 ]]; do
+              STATUS=$(aws cloudfront get-distribution --id "$CF_ID" --query 'Distribution.Status' --output text 2>/dev/null || echo "Missing")
+              if [[ "$STATUS" == "Deployed" ]]; then
+                echo "   ✅ $CF_ID is Deployed."
+                PENDING=false
+              elif [[ "$STATUS" == "Missing" ]]; then
+                echo "   ℹ️  $CF_ID no longer exists."
+                PENDING=false
+              else
+                echo "   ... $CF_ID is $STATUS. Waiting 15s..."
+                sleep 15
+                TIMEOUT=$((TIMEOUT-1))
+              fi
+            done
+            
+            if [[ $TIMEOUT -eq 0 ]]; then
+              echo "   ⚠️  Timeout waiting for $CF_ID to deploy."
+            else
+              echo "   → Deleting CF Distribution: $CF_ID"
+              ETAG=$(aws cloudfront get-distribution-config --id "$CF_ID" --query 'ETag' --output text 2>/dev/null || echo "")
+              if [[ -n "$ETAG" ]]; then
+                aws cloudfront delete-distribution --id "$CF_ID" --if-match "$ETAG" 2>/dev/null || echo "   ⚠️  Could not delete $CF_ID"
+                echo "   ✅ Deleted $CF_ID"
+              fi
+            fi
+          done
+        else
+          echo "   ℹ️  No CloudFront distributions found matching tags."
+        fi
+
   nuke-cleanup-dns:
     name: 🧹 Nuke Cleanup - DNS
     needs: [configuration, nuke-destroy-network]
@@ -1418,30 +1495,24 @@ jobs:
             "cdn-${STAGE}.${DOMAIN_ROOT}"
             "admin-${STAGE}.${DOMAIN_ROOT}"
             "api-direct-${STAGE}.${DOMAIN_ROOT}"
-            # Tunnel Stack Targets (fix 400 Bad Request / 409 Conflict)
             "kibana-${STAGE}.${DOMAIN_ROOT}"
             "gibana-${STAGE}.${DOMAIN_ROOT}"
             "grafana-${STAGE}.${DOMAIN_ROOT}"
             "prometheus-${STAGE}.${DOMAIN_ROOT}"
             "alertmanager-${STAGE}.${DOMAIN_ROOT}"
-            # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
-            # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
-            # We won't delete root wildcard automatically.
           )
 
-          echo "🎯 Targets:"
+          echo "🎯 Explicit Targets:"
           printf '%s\n' "${TARGETS[@]}"
 
           for RECORD_NAME in "${TARGETS[@]}"; do
             echo "---------------------------------------------------"
             echo "🔍 Checking: $RECORD_NAME"
 
-            # List records matching name
             RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$RECORD_NAME" \
               -H "Authorization: Bearer $CF_API_TOKEN" \
               -H "Content-Type: application/json")
 
-            # Extract IDs
             IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
 
             if [[ -z "$IDS" || "$IDS" == "null" ]]; then
@@ -1463,6 +1534,39 @@ jobs:
               done
             fi
           done
+
+          echo "---------------------------------------------------"
+          echo "🌐 Dynamic DNS Flush for Stage: $STAGE"
+          echo "Fetching first 500 records to find residual environment records..."
+          
+          ALL_RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?per_page=500" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json")
+            
+          if [[ $(echo "$ALL_RECORDS" | jq -r '.success') == "true" ]]; then
+            echo "$ALL_RECORDS" | jq -c '.result[]?' | while IFS= read -r record; do
+              R_ID=$(echo "$record" | jq -r '.id')
+              R_NAME=$(echo "$record" | jq -r '.name')
+              R_TYPE=$(echo "$record" | jq -r '.type')
+              
+              # Match any record ending with -${STAGE}.${DOMAIN_ROOT} or exactly ${STAGE}.${DOMAIN_ROOT}
+              if [[ "$R_NAME" == *"-${STAGE}.${DOMAIN_ROOT}" ]] || [[ "$R_NAME" == "${STAGE}.${DOMAIN_ROOT}" ]] || [[ "$R_NAME" == "*.${STAGE}.${DOMAIN_ROOT}" ]]; then
+                echo "   🗑️ Deleting orphaned record: $R_NAME ($R_TYPE, $R_ID)"
+                DEL_RES=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$R_ID" \
+                  -H "Authorization: Bearer $CF_API_TOKEN" \
+                  -H "Content-Type: application/json")
+                
+                if [[ $(echo "$DEL_RES" | jq -r '.success') == "true" ]]; then
+                   echo "      ✅ Deleted."
+                else
+                   echo "      ❌ Failed to delete."
+                   echo "$DEL_RES" | jq -r '.errors'
+                fi
+              fi
+            done
+          else
+            echo "   ⚠️  Failed to fetch all records."
+          fi
 
   summary:
     name: 📝 Ops Summary
