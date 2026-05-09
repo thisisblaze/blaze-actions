@@ -1,3 +1,11 @@
+## [Unreleased] — 2026-05-09 — /13-deep-cicd-maintenance
+
+### Changed
+- chore(maintenance): bump all `blaze-template-deploy` Terraform module refs from `v2.4.8` → `v2.5.12` across all 58 live stacks (AWS + GCP). Eliminates Engine 4 split-brain drift detected by `/checkengines`.
+- chore(parity): copy `90-daily-health-check.yml` byte-for-byte from `blaze-actions` to `blaze-template-deploy` and `blaze-terraform-infra-core`. Resolves Engine 8 structural parity failure.
+- docs(stackid): propagate `Blaze:StackID` UUID tag architecture (Plan 155) into `README.md` (new §🆔 Environment Isolation section) and `docs/AI_CONTEXT_GOVERNANCE.md` (§1.6 Signature Tag Rule expanded).
+- chore: clean up `scratch_fix_versions.py` temporary script.
+
 ## v2.1.80 (2026-05-09)
 
 ### Added

@@ -133,6 +133,10 @@ b9-dev-blaze-tfstate                    # Terraform State Bucket
 ${namespace}-${client_key}-${project_key}-${stage_key}-${resource}
 ```
 
+### 🆔 Environment Isolation (Blaze:StackID)
+
+As of Plan 155, all resources provisioned by these workflows are also stamped with a revolutionary UUID tag solution: `Blaze:StackID`. This precise UUID acts as a definitive signature for an environment instance, enabling strictly isolated, stateless purges (`99-ops-nuke.yml`) without risking cross-environment resource deletion. It completely replaces legacy, name-based regex or generic tagging (`Stage`, `Client`) for orphan resource tracking.
+
 ### Custom Namespace
 
 To use a custom namespace, set it in your environment configuration:

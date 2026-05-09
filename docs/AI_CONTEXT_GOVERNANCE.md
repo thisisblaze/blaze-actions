@@ -39,11 +39,12 @@ The AI Agent is strictly forbidden from executing ANY autonomous command that de
 ### 1.6. The Signature Tag Rule
 
 **CRITICAL POLICY**: Generic tags like `Stage`, `Client`, and `Project` are heavily overloaded by legacy tools and other CI/CDs. 
-When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags:
+When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags. We employ a revolutionary UUID tag solution for stateless purges and precise environment isolation (Plan 155):
+- `Blaze:StackID={UUID}`: This is the definitive, globally unique identifier injected into all resources belonging to a specific environment instance. It guarantees precise environment nuking isolation and resilience against orphaned resources.
 - `Shopware:Architecture=Shopware 6.7.x`
 - `Blaze:Provisioner=blaze-actions`
 
-"Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking these exact tags or Terraform State is strictly forbidden.
+"Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking the `Blaze:StackID` or these exact tags/Terraform State is strictly forbidden.
 
 ## 2. The Golden Rule of Context
 
