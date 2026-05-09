@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-05-09
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 38 main + 21 reusable = 59 total  
-**Version**: v2.1.77  
-**Last Updated**: 2026-05-08
+**Total Workflows**: 38 main + 24 reusable = 62 total  
+**Version**: v2.1.80  
+**Last Updated**: 2026-05-09
 
 ---
 
@@ -609,6 +609,50 @@ These are called by main workflows, not directly by users.
 **Purpose**: Stress test verification phase. Runs URL health checks and ECS service validation after deployment.
 
 ---
+#### reusable-backup-snapshot.yml
+**Purpose**: Multi-service backup snapshot workflow (Plan 151 L14 + Plan 152 Phase 4). Runs four sequential backup jobs: RDS MySQL snapshot, S3 CRR sync verification, SSM parameter inventory export, and DocumentDB cluster snapshot.
+
+**Inputs**:
+- `environment` (required): Target environment (dev/stage/prod)
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: Creates an RDS manual snapshot → Verifies S3 replication sync → Exports SSM parameter inventory → Creates a DocumentDB cluster snapshot. Each job is idempotent and named by date to prevent collisions.
+
+**Caller**: `98-backup-snapshot.yml`
+
+---
+#### reusable-dev-sleep-schedule.yml
+**Purpose**: FinOps dev environment sleep/wake schedule (Plan 151 L4). Scales down ECS services to 0 and stops RDS in the correct dependency order (ECS first, then RDS), or reverses the order for wake-up (RDS first, then ECS).
+
+**Inputs**:
+- `environment` (required): Target environment (typically `dev`)
+- `action` (required): `sleep` or `wake`
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: `sleep` — gracefully stops all ECS services (waits for stability), then stops the RDS instance. `wake` — starts RDS, waits for available state, then scales ECS services back to 1. Achieves ~55% compute cost saving on non-production environments.
+
+**Caller**: `04-dev-sleep-schedule.yml` (scheduled Mon–Fri: sleep 20:03 UTC, wake 06:50 UTC)
+
+---
+#### reusable-ecs-health-snapshot.yml
+**Purpose**: Single-click ECS incident health snapshot (Plan 151 L7). Produces a consolidated report covering ECS service states, container health checks, stopped task failure reasons, and endpoint availability.
+
+**Inputs**:
+- `environment` (required): Target environment
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+- `endpoint_url` (optional): HTTPS endpoint to probe for availability
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: Queries ECS cluster → Lists all services and running/stopped tasks → Extracts `stoppedReason` for failed containers → Tails CloudWatch logs for recent errors → Probes the endpoint URL and reports HTTP status. Outputs a structured markdown summary as a GitHub Step Summary.
+
+**Caller**: `03-ecs-health-snapshot.yml`
+
+---
 ## Quick Reference
 
 | Workflow                | Common Use             | Typical Runtime |
@@ -625,6 +669,12 @@ These are called by main workflows, not directly by users.
 ---
 
 ## Version History
+
+**v2.1.80** (2026-05-09):
+- Plan 151 + Plan 152 delivery: Added 3 new reusable workflows to catalog (`reusable-backup-snapshot`, `reusable-dev-sleep-schedule`, `reusable-ecs-health-snapshot`).
+- Bumped all action pins `@v2.1.74` → `@v2.1.80` across all 3 repos (Engine 8 parity restored).
+- Fixed `@dev` refs in `03-ecs-health-snapshot.yml` and `04-dev-sleep-schedule.yml` callers → `@v2.1.80`.
+- Total workflow count: 38 main + 24 reusable = 62 total.
 
 **v2.1.77** (2026-05-08):
 - Deep CI/CD maintenance sync: Added `php_version` + `build_command` inputs to `02-deploy-aws.yml` catalog entry.
@@ -693,6 +743,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-05-08  
+**Last Updated**: 2026-05-09  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
