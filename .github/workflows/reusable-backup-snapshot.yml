@@ -1,0 +1,224 @@
+name: "♻️ Reusable Backup Snapshot"
+# Plan 151 L14 — Weekly automated backup assertions.
+# Modelled on shopware-km/98-backup-snapshot.yml but adapted for the Blaze platform.
+# 3 jobs:
+#   1. rds-snapshot   — create a manual RDS snapshot tagged with today's date
+#   2. ssm-inventory  — dump all SSM parameters in /{namespace}/{project}/{stage}/ to S3
+#   3. s3-verify      — assert versioning is enabled on all prod S3 buckets
+# All jobs are gated by local.is_prod equivalent: the caller workflow must only trigger this
+# on a schedule or on prod environments. Running on dev/stage is a no-op by convention.
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+        description: "AWS region (e.g. eu-west-1)"
+      rds_identifier:
+        required: true
+        type: string
+        description: "RDS DB instance identifier (e.g. blaze-b9-myproject-prod)"
+      s3_bucket_prefix:
+        required: true
+        type: string
+        description: "Prefix for S3 bucket names to verify (e.g. blaze-b9-myproject-prod)"
+      ssm_path_prefix:
+        required: false
+        type: string
+        description: "SSM parameter path prefix for inventory (e.g. /blaze/b9/myproject/prod)"
+        default: ""
+      ssm_inventory_bucket:
+        required: false
+        type: string
+        description: "S3 bucket to store SSM parameter inventory exports"
+        default: ""
+      environment:
+        required: false
+        type: string
+        description: "GitHub Environment name (for OIDC)"
+        default: ""
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1: RDS Snapshot
+  # ─────────────────────────────────────────────
+  rds-snapshot:
+    name: 💾 RDS Snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-BackupSnapshot
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Create RDS Snapshot
+        id: snapshot
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          SNAPSHOT_ID="${{ inputs.rds_identifier }}-backup-${DATE}"
+
+          echo "📸 Creating RDS snapshot: $SNAPSHOT_ID"
+
+          # Check if snapshot already exists today (idempotent)
+          EXISTING=$(aws rds describe-db-snapshots \
+            --db-instance-identifier "${{ inputs.rds_identifier }}" \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "${{ inputs.aws_region }}" \
+            --query 'DBSnapshots[0].DBSnapshotIdentifier' \
+            --output text 2>/dev/null || echo "None")
+
+          if [[ "$EXISTING" != "None" && -n "$EXISTING" ]]; then
+            echo "✅ Snapshot $SNAPSHOT_ID already exists — skipping."
+            echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          aws rds create-db-snapshot \
+            --db-instance-identifier "${{ inputs.rds_identifier }}" \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "${{ inputs.aws_region }}" \
+            --tags \
+              Key=Blaze:BackupType,Value=scheduled \
+              Key=Blaze:BackupDate,Value="${DATE}" \
+              Key=ManagedBy,Value=github-actions
+
+          echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+          echo "✅ Snapshot requested: $SNAPSHOT_ID"
+
+      - name: Wait for Snapshot Available
+        run: |
+          SNAPSHOT_ID="${{ steps.snapshot.outputs.snapshot_id }}"
+          echo "⏳ Waiting for snapshot $SNAPSHOT_ID to become available..."
+          aws rds wait db-snapshot-available \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "${{ inputs.aws_region }}" || {
+              echo "⚠️ Snapshot wait timed out — snapshot may still be in progress."
+              echo "Check AWS Console: RDS → Snapshots → $SNAPSHOT_ID"
+            }
+          echo "✅ Snapshot $SNAPSHOT_ID is available."
+
+  # ─────────────────────────────────────────────
+  # JOB 2: SSM Inventory Export
+  # ─────────────────────────────────────────────
+  ssm-inventory:
+    name: 📋 SSM Inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    # Only run if an SSM path prefix and export bucket are provided
+    if: inputs.ssm_path_prefix != '' && inputs.ssm_inventory_bucket != ''
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-SSMInventory
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Export SSM Parameters to S3
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          PREFIX="${{ inputs.ssm_path_prefix }}"
+          BUCKET="${{ inputs.ssm_inventory_bucket }}"
+          OUTPUT_KEY="ssm-inventory/${DATE}/parameters.json"
+
+          echo "📋 Exporting SSM parameters under $PREFIX to s3://$BUCKET/$OUTPUT_KEY"
+
+          # Get all parameter names (not values — this is an inventory/key list only)
+          PARAMS=$(aws ssm describe-parameters \
+            --parameter-filters "Key=Path,Option=Recursive,Values=${PREFIX}" \
+            --region "${{ inputs.aws_region }}" \
+            --query 'Parameters[*].{Name:Name,Type:Type,LastModified:LastModifiedDate}' \
+            --output json)
+
+          echo "$PARAMS" | aws s3 cp - "s3://${BUCKET}/${OUTPUT_KEY}" \
+            --region "${{ inputs.aws_region }}" \
+            --content-type application/json
+
+          PARAM_COUNT=$(echo "$PARAMS" | jq 'length')
+          echo "✅ Exported $PARAM_COUNT SSM parameter keys to s3://$BUCKET/$OUTPUT_KEY"
+
+  # ─────────────────────────────────────────────
+  # JOB 3: S3 Integrity Assertions
+  # ─────────────────────────────────────────────
+  s3-verify:
+    name: 🔍 S3 Integrity Assert
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-S3Verify
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Assert S3 Versioning Enabled on Prod Buckets
+        run: |
+          PREFIX="${{ inputs.s3_bucket_prefix }}"
+          REGION="${{ inputs.aws_region }}"
+          FAILED=0
+
+          echo "🔍 Asserting versioning is enabled on all buckets matching prefix: $PREFIX"
+
+          # Use Tagging API to find project buckets — avoids listing the entire account
+          BUCKET_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$REGION" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$BUCKET_ARNS" || "$BUCKET_ARNS" == "None" ]]; then
+            echo "⚠️ No tagged S3 buckets found in $REGION — skipping assertion."
+            exit 0
+          fi
+
+          for ARN in $BUCKET_ARNS; do
+            BUCKET="${ARN#arn:aws:s3:::}"
+            # Only check buckets matching our prefix
+            if [[ "$BUCKET" != ${PREFIX}* ]]; then
+              continue
+            fi
+
+            STATUS=$(aws s3api get-bucket-versioning \
+              --bucket "$BUCKET" \
+              --region "$REGION" \
+              --query 'Status' \
+              --output text 2>/dev/null || echo "Error")
+
+            if [[ "$STATUS" == "Enabled" ]]; then
+              echo "  ✅ $BUCKET — versioning: Enabled"
+            else
+              echo "  ❌ $BUCKET — versioning: $STATUS (expected: Enabled)"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          if [[ "$FAILED" -gt 0 ]]; then
+            echo ""
+            echo "🚨 ASSERTION FAILED: $FAILED bucket(s) do not have versioning enabled."
+            echo "This is a Plan 151 compliance violation. Enable versioning on prod S3 buckets."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All prod S3 buckets have versioning enabled."

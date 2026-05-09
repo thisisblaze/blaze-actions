@@ -186,6 +186,61 @@ jobs:
              echo "STAGE_KEY=" >> $GITHUB_ENV
           fi
 
+      - name: Cleanup S3 CRR Configs (Pre-Bucket-Empty)
+        # Plan 151 L5/L13: CRR replication config MUST be deleted BEFORE bucket contents.
+        # AWS will block bucket deletion if a replication config referencing it still exists.
+        # Ordering: delete-bucket-replication → object_versions.delete() → bucket destroy.
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+
+          echo "🔗 Scanning for S3 CRR configs to remove before bucket emptying..."
+
+          TAGGED_ARNS_V2=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ inputs.aws_region }}" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          TAGGED_ARNS_V1=$(aws resourcegroupstaggingapi get-resources \
+            --region "${{ inputs.aws_region }}" \
+            --tag-filters "Key=Project,Values=${PROJECT_KEY}" "Key=Stage,Values=${STAGE_KEY}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          TAGGED_ARNS=$(echo "$TAGGED_ARNS_V1 $TAGGED_ARNS_V2" | tr ' ' '\n' | grep -v 'None' | sort -u || true)
+
+          for BUCKET_ARN in $TAGGED_ARNS; do
+            BUCKET_NAME="${BUCKET_ARN#arn:aws:s3:::}"
+            if [[ "$BUCKET_NAME" == *"tfstate"* ]]; then continue; fi
+
+            # Check if a replication config exists on this bucket
+            HAS_CRR=$(aws s3api get-bucket-replication \
+              --bucket "$BUCKET_NAME" \
+              --region "${{ inputs.aws_region }}" \
+              --query 'ReplicationConfiguration.Role' \
+              --output text 2>/dev/null || echo "None")
+
+            if [[ "$HAS_CRR" != "None" && -n "$HAS_CRR" ]]; then
+              echo "   🔗 Found CRR config on $BUCKET_NAME"
+              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "   [DRY RUN] Would delete-bucket-replication on $BUCKET_NAME"
+              else
+                echo "   🗑️ Removing replication config from $BUCKET_NAME..."
+                aws s3api delete-bucket-replication \
+                  --bucket "$BUCKET_NAME" \
+                  --region "${{ inputs.aws_region }}" && \
+                  echo "   ✅ CRR config removed from $BUCKET_NAME" || \
+                  echo "   ⚠️ Failed to remove CRR config from $BUCKET_NAME (may not exist)"
+              fi
+            else
+              echo "   ✅ No CRR config on $BUCKET_NAME — skipping."
+            fi
+          done
+
       - name: Cleanup S3 Buckets
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.CLIENT_KEY != ''
         run: |
@@ -239,6 +294,7 @@ jobs:
                 rm empty_bucket.py
              done
           fi
+
 
       - name: Cleanup ACM Certificates
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''

@@ -1,4 +1,14 @@
-## [Unreleased] — 2026-05-08
+## [Unreleased]
+
+## [v2.1.78] — 2026-05-09 (Plan 151)
+
+### Added
+
+- feat(backup): `reusable-backup-snapshot.yml` — new 3-job reusable backup workflow: RDS snapshot creation, SSM parameter inventory export to S3, and S3 versioning integrity assertions (Plan 151 L14).
+
+### Fixed
+
+- fix(pre-destroy): `reusable-pre-destroy-cleanup.yml` — added `Cleanup S3 CRR Configs` step that runs `delete-bucket-replication` BEFORE `object_versions.delete()`. Prevents destroy failures on stacks with S3 Cross-Region Replication enabled (Plan 151 L5/L13 prerequisite).
 
 ### Fixed
 
