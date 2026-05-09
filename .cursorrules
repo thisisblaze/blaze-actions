@@ -84,6 +84,13 @@ default_tags {
 }
 ```
 
+### 4.3 Orphaned Resource Rule (Semi-Golden Rule) ⚡
+**Prefer destroy-then-clean-create over `terraform import` for orphaned AWS resources.**
+- When Terraform hits `AlreadyExists` on a resource not in state, **delete the orphan from AWS first** (`aws <service> delete-<resource>` via CLI), then let Terraform create it cleanly.
+- Only use `terraform import` / `import {}` blocks as a last resort (e.g. resources that cannot be destroyed without downtime, or resources with non-recoverable data).
+- Rationale: import blocks carry hidden risks (cross-VPC mismatches, stale config drift, plan noise). A clean create is always predictable. Destroy + create is fast and leaves no residue.
+- ⚠️ **SCOPE: `dev`, `stage`, `softlive`/`beta` ONLY.** NEVER delete orphaned resources in `prod` without explicit human approval. If the environment is `prod` and live, STOP and ask.
+
 ## 5. Deployment Strategy
 
 > **Environment Model (2026-02-27)**:
@@ -152,3 +159,4 @@ default_tags {
 - ❌ Cross-referencing deprecated monolithic AWS paths.
 - ❌ Using CodeDeploy functions (Deprecated 2026-02-27).
 - ❌ Suppressing `actionlint` with `|| true` — fix real GHA expression errors instead.
+- ❌ Using `terraform import` or `import {}` blocks for orphaned resources that can be safely deleted — delete the zombie from AWS first, then let Terraform create cleanly.
