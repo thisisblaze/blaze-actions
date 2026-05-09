@@ -1,10 +1,12 @@
 name: "♻️ Reusable Backup Snapshot"
 # Plan 151 L14 — Weekly automated backup assertions.
 # Modelled on shopware-km/98-backup-snapshot.yml but adapted for the Blaze platform.
-# 3 jobs:
-#   1. rds-snapshot   — create a manual RDS snapshot tagged with today's date
-#   2. ssm-inventory  — dump all SSM parameters in /{namespace}/{project}/{stage}/ to S3
-#   3. s3-verify      — assert versioning is enabled on all prod S3 buckets
+# Plan 152 Phase 4 — Added DocumentDB snapshot job (Job 4).
+# 4 jobs:
+#   1. rds-snapshot    — create a manual RDS snapshot tagged with today's date
+#   2. ssm-inventory   — dump all SSM parameters in /{namespace}/{project}/{stage}/ to S3
+#   3. s3-verify       — assert versioning is enabled on all prod S3 buckets
+#   4. docdb-snapshot  — create a manual DocumentDB cluster snapshot (optional, skipped if no cluster identifier)
 # All jobs are gated by local.is_prod equivalent: the caller workflow must only trigger this
 # on a schedule or on prod environments. Running on dev/stage is a no-op by convention.
 
@@ -32,6 +34,11 @@ on:
         required: false
         type: string
         description: "S3 bucket to store SSM parameter inventory exports"
+        default: ""
+      docdb_cluster_identifier:
+        required: false
+        type: string
+        description: "DocumentDB cluster identifier to snapshot (e.g. myproject-prod-docdb). Leave empty to skip."
         default: ""
       environment:
         required: false
@@ -222,3 +229,124 @@ jobs:
 
           echo ""
           echo "✅ All prod S3 buckets have versioning enabled."
+
+  # ─────────────────────────────────────────────
+  # JOB 4: DocumentDB Snapshot (optional)
+  # ─────────────────────────────────────────────
+  docdb-snapshot:
+    name: 🗄️ DocumentDB Snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    # No-op when docdb_cluster_identifier is not provided
+    if: inputs.docdb_cluster_identifier != ''
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-DocDBSnapshot
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Create DocumentDB Cluster Snapshot
+        id: docdb_snap
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          CLUSTER_ID="${{ inputs.docdb_cluster_identifier }}"
+          SNAPSHOT_ID="${CLUSTER_ID}-backup-${DATE}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "📸 Creating DocumentDB snapshot: $SNAPSHOT_ID"
+
+          # Idempotent: skip if today's snapshot already exists
+          EXISTING=$(aws docdb describe-db-cluster-snapshots \
+            --db-cluster-identifier "$CLUSTER_ID" \
+            --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "$REGION" \
+            --query 'DBClusterSnapshots[0].DBClusterSnapshotIdentifier' \
+            --output text 2>/dev/null || echo "None")
+
+          if [[ "$EXISTING" != "None" && -n "$EXISTING" && "$EXISTING" != "" ]]; then
+            echo "✅ Snapshot $SNAPSHOT_ID already exists for today — skipping."
+            echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Verify cluster exists and is in an available state
+          CLUSTER_STATUS=$(aws docdb describe-db-clusters \
+            --db-cluster-identifier "$CLUSTER_ID" \
+            --region "$REGION" \
+            --query 'DBClusters[0].Status' \
+            --output text 2>/dev/null || echo "None")
+
+          if [[ "$CLUSTER_STATUS" == "None" || -z "$CLUSTER_STATUS" ]]; then
+            echo "⚠️ DocumentDB cluster '$CLUSTER_ID' not found in $REGION — skipping snapshot."
+            exit 0
+          fi
+
+          if [[ "$CLUSTER_STATUS" != "available" ]]; then
+            echo "⚠️ Cluster $CLUSTER_ID is in state '$CLUSTER_STATUS' (expected: available) — skipping."
+            exit 0
+          fi
+
+          echo "   Cluster $CLUSTER_ID is available — proceeding with snapshot."
+
+          aws docdb create-db-cluster-snapshot \
+            --db-cluster-identifier "$CLUSTER_ID" \
+            --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "$REGION" \
+            --tags \
+              Key=Blaze:BackupType,Value=scheduled \
+              Key=Blaze:BackupDate,Value="${DATE}" \
+              Key=ManagedBy,Value=github-actions
+
+          echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+          echo "✅ DocumentDB snapshot requested: $SNAPSHOT_ID"
+
+      - name: Wait for DocumentDB Snapshot Available
+        run: |
+          SNAPSHOT_ID="${{ steps.docdb_snap.outputs.snapshot_id }}"
+          REGION="${{ inputs.aws_region }}"
+
+          if [[ -z "$SNAPSHOT_ID" ]]; then
+            echo "ℹ️ No snapshot ID — snapshot was skipped (already existed or cluster absent)."
+            exit 0
+          fi
+
+          echo "⏳ Waiting for DocumentDB snapshot $SNAPSHOT_ID to become available..."
+          echo "   Note: DocDB snapshots typically take 3–10 minutes."
+
+          # Poll with timeout (aws docdb has no native wait command for cluster snapshots)
+          MAX_WAIT=25  # minutes
+          INTERVAL=30  # seconds
+          ELAPSED=0
+
+          while true; do
+            STATUS=$(aws docdb describe-db-cluster-snapshots \
+              --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
+              --region "$REGION" \
+              --query 'DBClusterSnapshots[0].Status' \
+              --output text 2>/dev/null || echo "None")
+
+            echo "   [$((ELAPSED/60))m elapsed] Snapshot status: $STATUS"
+
+            if [[ "$STATUS" == "available" ]]; then
+              echo "✅ Snapshot $SNAPSHOT_ID is available."
+              break
+            fi
+
+            if [[ "$STATUS" == "None" || "$STATUS" == "failed" ]]; then
+              echo "🚨 Snapshot $SNAPSHOT_ID entered status '$STATUS' — aborting."
+              exit 1
+            fi
+
+            ELAPSED=$((ELAPSED + INTERVAL))
+            if [[ $ELAPSED -ge $((MAX_WAIT * 60)) ]]; then
+              echo "⚠️ Snapshot wait timed out after ${MAX_WAIT}m — snapshot may still be in progress."
+              echo "Check AWS Console: DocumentDB → Snapshots → $SNAPSHOT_ID"
+              exit 0  # Non-fatal: snapshot creation was already initiated
+            fi
+
+            sleep $INTERVAL
+          done

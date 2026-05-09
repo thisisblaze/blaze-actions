@@ -53,6 +53,17 @@
 
 ## [Unreleased]
 
+## [v2.1.80] — 2026-05-09 (Plan 152 Phase 4)
+
+### Added
+
+- feat(backup): `reusable-backup-snapshot.yml` — new Job 4: `docdb-snapshot` (Plan 152 Phase 4).
+  - New optional input: `docdb_cluster_identifier` (default `""` — skips job when empty, fully backwards-compatible).
+  - **Idempotent**: checks for existing snapshot with today's date (`${cluster-id}-backup-YYYY-MM-DD`) before creating — safe to re-run.
+  - **Cluster state guard**: skips snapshot if cluster is not in `available` state (e.g. backup window conflict, maintenance).
+  - **Polled wait**: custom `sleep 30` poll loop (DocDB has no native `wait` CLI command) — times out gracefully at 25 minutes without failing the workflow (snapshot creation already initiated).
+  - Tagged with `Blaze:BackupType=scheduled`, `Blaze:BackupDate=YYYY-MM-DD`, `ManagedBy=github-actions` — consistent with RDS snapshot tagging.
+
 ## [v2.1.79] — 2026-05-09 (Plan 152 Phase 3)
 
 ### Added
