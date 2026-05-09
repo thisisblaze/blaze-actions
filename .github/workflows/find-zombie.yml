@@ -22,7 +22,7 @@ jobs:
       contents: read
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::930976658068:role/blaze-b9-github-oidc-role
           aws-region: eu-west-1
