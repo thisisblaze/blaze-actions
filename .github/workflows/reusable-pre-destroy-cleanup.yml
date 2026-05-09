@@ -1142,6 +1142,69 @@ jobs:
              fi
           fi
 
+      - name: Disable DocumentDB Deletion Protection (Pre-Destroy)
+        # Plan 152 Phase 3: DocumentDB deletion_protection blocks terraform destroy on prod clusters.
+        # Must be disabled BEFORE terraform destroy runs — Terraform cannot modify deletion_protection
+        # on a cluster that is being destroyed in the same plan (circular dependency).
+        # Uses tag-based discovery (Blaze:Project + Blaze:Environment) to find clusters safely.
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region }}"
+
+          echo "🗄️ Scanning for DocumentDB clusters tagged Blaze:Project=${PROJECT_KEY}, Blaze:Environment=${STAGE_KEY}..."
+
+          # Discover clusters by tag (governance-safe — no string-prefix regex)
+          CLUSTER_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$REGION" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT_KEY}" "Key=Blaze:Environment,Values=${STAGE_KEY}" \
+            --resource-type-filters "rds:cluster" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$CLUSTER_ARNS" || "$CLUSTER_ARNS" == "None" ]]; then
+            echo "   ✅ No DocumentDB clusters found for ${PROJECT_KEY}/${STAGE_KEY} — skipping."
+            exit 0
+          fi
+
+          for CLUSTER_ARN in $CLUSTER_ARNS; do
+            # Extract cluster identifier from ARN: arn:aws:rds:region:account:cluster:id
+            CLUSTER_ID="${CLUSTER_ARN##*:cluster:}"
+
+            # Verify it is a DocDB cluster (not an RDS Aurora cluster sharing the same tags)
+            ENGINE=$(aws docdb describe-db-clusters \
+              --db-cluster-identifier "$CLUSTER_ID" \
+              --query 'DBClusters[0].Engine' \
+              --output text 2>/dev/null || echo "None")
+
+            if [[ "$ENGINE" != "docdb" ]]; then
+              echo "   ℹ️  $CLUSTER_ID is engine='$ENGINE' — not a DocumentDB cluster, skipping."
+              continue
+            fi
+
+            DELETION_PROTECTION=$(aws docdb describe-db-clusters \
+              --db-cluster-identifier "$CLUSTER_ID" \
+              --query 'DBClusters[0].DeletionProtection' \
+              --output text 2>/dev/null || echo "False")
+
+            if [[ "$DELETION_PROTECTION" == "True" ]]; then
+              echo "   🔓 Cluster $CLUSTER_ID has deletion_protection=true — disabling..."
+              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "   [DRY RUN] Would run: aws docdb modify-db-cluster --db-cluster-identifier $CLUSTER_ID --no-deletion-protection"
+              else
+                aws docdb modify-db-cluster \
+                  --db-cluster-identifier "$CLUSTER_ID" \
+                  --no-deletion-protection \
+                  --region "$REGION" && \
+                  echo "   ✅ Deletion protection disabled on $CLUSTER_ID" || \
+                  echo "   ⚠️ Failed to disable deletion protection on $CLUSTER_ID"
+              fi
+            else
+              echo "   ✅ Cluster $CLUSTER_ID deletion_protection already disabled — skipping."
+            fi
+          done
+
       - name: Cleanup Network Dependencies (ENIs & NACLs)
         if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && contains(fromJson('["network", "multi-site-network", "all"]'), inputs.target_stack)
         run: |

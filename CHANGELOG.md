@@ -53,6 +53,17 @@
 
 ## [Unreleased]
 
+## [v2.1.79] — 2026-05-09 (Plan 152 Phase 3)
+
+### Added
+
+- feat(pre-destroy): `reusable-pre-destroy-cleanup.yml` — `Disable DocumentDB Deletion Protection` step (Plan 152 Phase 3).
+  - Discovers DocumentDB clusters via tag-based lookup (`Blaze:Project` + `Blaze:Environment`) — no hardcoded name patterns.
+  - Verifies engine is `docdb` before acting (skips Aurora/RDS clusters that share tags safely).
+  - Disables `deletion_protection` before `terraform destroy` runs — required because Terraform cannot modify deletion protection on a cluster being destroyed in the same plan.
+  - Full `dry_run` support — shows what would be modified without touching live infrastructure.
+  - Safe no-op when no DocumentDB cluster exists for the project/environment.
+
 ## [v2.1.78] — 2026-05-09 (Plan 151)
 
 ### Added
