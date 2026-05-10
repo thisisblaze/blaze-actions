@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-05-10
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-05-10
 
 ---
 
@@ -495,7 +495,7 @@ For legacy EB environments, use `reusable-elastic-beanstalk-deploy.yml` to packa
 ```yaml
 jobs:
   deploy-eb:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.77
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.80
     with:
       environment: prod                          # GitHub environment (for OIDC)
       application_name: my-app                   # EB Application name
@@ -517,7 +517,7 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.1.77` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.1.80` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
@@ -608,6 +608,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-05-08  
+**Last Updated**: 2026-05-10  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
