@@ -1,3 +1,8 @@
+## [Unreleased] — 2026-05-10
+
+### Changed
+- chore(modules/2026-05-10): bump all GCP live stack Terraform module refs `v2.5.12` → `v2.6.2` (31 files). GCP stacks now at full parity with AWS stacks on `v2.6.2`.
+
 ## [Unreleased] — 2026-05-09 — /13-deep-cicd-maintenance
 
 ### Changed
