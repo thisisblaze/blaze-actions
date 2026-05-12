@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-10
+**Last Updated**: 2026-05-12
 **Owner**: Infrastructure Team
 
 ---
@@ -166,19 +166,19 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
 | `shopware-km` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
 
-## 11. Deployment Architecture Facts (2026-04-30)
+## 11. Deployment Architecture Facts (2026-05-12)
 
 **Status: MANDATORY — agents must not assume older patterns**
 
 | Fact                               | Detail                                                                                             |
 | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
-| **Core Architecture Paradigm**     | **Single-Tenant Elastic Beanstalk**: Dedicated AWS Beanstalk environment per stage (dev, stage, prod) |
-| **Application Deployment**         | **AWS Elastic Beanstalk** — Application Versions are zipped and deployed via GitHub Actions        |
-| **Database Strategy**              | **Dedicated Services** — Standalone RDS (MySQL) and ElastiCache (Redis) per environment            |
-| **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the Elastic Beanstalk Security Group  |
-| **Background Workers**             | **Elastic Beanstalk Worker Tier** or native cron within the instances                              |
-| **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.100.0.0/16` for Dev)                      |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0+**                                                         |
+| **Core Architecture Paradigm**     | **ECS Fargate (ARM64 Graviton2)** — Blue/Green deployment via ALB listener swap. Elastic Beanstalk is **deprecated fallback only**. |
+| **Application Deployment**         | **AWS ECS Fargate** — Docker image built on `ubuntu-24.04-arm`, pushed to ECR, deployed via task definition update + ALB swap |
+| **Database Strategy**              | **Dedicated Services** — Standalone RDS MySQL (`db.t4g.small`) and ElastiCache Redis per environment |
+| **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the ECS Task Security Group           |
+| **Background Workers**             | **ECS Sidecar containers** — `shopware-worker` and `shopware-scheduler` as essential=false sidecars in the same task definition |
+| **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.98.0.0/16` for Dev, `10.3.0.0/16` for Prod) |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.6.2**                                                          |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
 
@@ -190,16 +190,18 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `shopware` in all `environment:` keys and `workflow_dispatch` options |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-04-16)
+## 13. Current Version Pins (2026-05-12)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.3.8** | latest stable — Dual-Engine workers logic. |
-| `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
-| Terraform AWS Provider | **## 14. Shopware Project Configuration (April 2026+)
+| `blaze-actions` | **v2.1.80** | Latest stable — DR drill, StackID hardening, DocDB backup, actionlint sweep. |
+| `blaze-terraform-infra-core` | **v2.6.2** | Blaze:StackID tagging docs, Engine 8 parity fix. All AWS + GCP live stacks bumped 2026-05-12. |
+| Terraform AWS Provider | **v6.0+** | Required for ECS Fargate ARM64 task definitions. |
+
+## 14. Shopware Project Configuration (2026-05-12)
 
 > [!IMPORTANT]
-> The Shopware KM platform utilizes isolated Elastic Beanstalk environments per stage. All AI agents MUST be aware of the active environment configuration before modifying any resource.
+> The Shopware KM platform uses **ECS Fargate (ARM64 Graviton2)** per stage. Elastic Beanstalk is a **deprecated fallback** — present in `03-debug-eb.yml` for emergency use only. All primary deployments are ECS.
 
 ### Environment Variable Files
 
@@ -208,11 +210,11 @@ Configuration overrides and infrastructure settings are explicitly defined in:
 - `vars/stage.env`
 - `vars/prod.env`
 
-These files determine `vpc_cidr`, `eb_instance_type`, and database cluster sizes.
+These files determine `vpc_cidr`, `ecs_task_cpu`, `ecs_task_memory`, `rds_instance_class`, and `cpu_architecture`.
 
-### Elastic Beanstalk Deployment Rule
+### ECS Fargate Deployment Rule
 
-Each environment maintains its own isolated Elastic Beanstalk application. Ensure `.ebextensions` and `.platform` hooks are correctly verified before triggering deployments.
+Each environment runs isolated ECS clusters (`{namespace}-{env}-cluster`). Blue/Green is managed via ALB target group swap in `02-deploy-app.yml`. Container entrypoint handles `theme:compile`, Redis flush, and `cache:clear` on every startup.
 
 ---
 
