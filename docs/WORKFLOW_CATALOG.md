@@ -675,6 +675,7 @@ These are called by main workflows, not directly by users.
 - Bumped all action pins `@v2.1.74` → `@v2.1.80` across all 3 repos (Engine 8 parity restored).
 - Fixed `@dev` refs in `03-ecs-health-snapshot.yml` and `04-dev-sleep-schedule.yml` callers → `@v2.1.80`.
 - Total workflow count: 38 main + 24 reusable = 62 total.
+- **2026-05-12**: Added `/12-best-practice-audit` agent workflow + `docs/learning/REFERENCE_SOURCE_LIBRARY.md` (5-domain, 9 priority checks, knowledge base freshness step).
 
 **v2.1.77** (2026-05-08):
 - Deep CI/CD maintenance sync: Added `php_version` + `build_command` inputs to `02-deploy-aws.yml` catalog entry.
@@ -743,6 +744,15 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-05-09  
+## Agent Intelligence
+
+| Resource | Description |
+| :--- | :--- |
+| [`docs/learning/REFERENCE_SOURCE_LIBRARY.md`](learning/REFERENCE_SOURCE_LIBRARY.md) | 5-domain reference library: GH Actions patterns, OIDC, Terraform CI/CD, deployment, access control. Cross-links all `docs/knowledge/` smart fixes. |
+| [`.agent/workflows/12-best-practice-audit.md`](../.agent/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
+
+---
+
+**Last Updated**: 2026-05-12  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

@@ -1,5 +1,9 @@
 ## [Unreleased] — 2026-05-12
 
+### Agent Tooling
+- **`docs/learning/REFERENCE_SOURCE_LIBRARY.md`** — New curated 5-domain reference source library. Domains: GH Actions reusable workflow patterns, AWS OIDC, Terraform CI/CD, deployment patterns, access control. Cross-references all `docs/knowledge/*.md` smart fixes with 🔴/🟡/🟢 relevance tiers. 9 priority audit checks defined.
+- **`.agent/workflows/12-best-practice-audit.md`** — New read-only monthly audit workflow. Checks OIDC role scoping, actionlint coverage, SHA pinning, concurrency groups, secret inheritance, timeout-minutes, check-access gating, and pre-destroy cleanup. Includes knowledge base freshness check. Produces `docs/reports/YYYY-MM-DD-best-practice-audit.md`.
+
 ### Governance
 - chore: end-of-day governance sync — 2026-05-12. Governance files verified (14/14 ✅).
 
