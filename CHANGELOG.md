@@ -1,4 +1,9 @@
-## [Unreleased] — 2026-05-10
+## [Unreleased] — 2026-05-12
+
+### Governance
+- chore: end-of-day governance sync — 2026-05-12. No code changes. Governance files verified (14/14 ✅). AWS live stacks still on `v2.5.12` — bump to `v2.6.2` scheduled for next blaze-actions maintenance session.
+
+
 
 ### Changed
 - chore(modules/2026-05-10): bump all GCP live stack Terraform module refs `v2.5.12` → `v2.6.2` (31 files). GCP stacks now at full parity with AWS stacks on `v2.6.2`.
