@@ -35,7 +35,7 @@ provider "aws" {
 # NETWORK + CLUSTER
 # ──────────────────────────────────────────────────────────────────────────────
 module "environment_network" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.5.12"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.6.2"
 
   providers = { aws = aws }
 
@@ -97,7 +97,7 @@ module "environment_network" {
 # EC2 ARM64 CAPACITY PROVIDER (Graviton ASG — standard tier sites)
 # ──────────────────────────────────────────────────────────────────────────────
 module "graviton_cp" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.5.12"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/ec2-capacity-provider?ref=v2.6.2"
 
   # Identity
   client_key  = var.client_key

@@ -1,5 +1,5 @@
 module "github_oidc" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/security/github-oidc?ref=v2.5.12"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/security/github-oidc?ref=v2.6.2"
 
   github_org  = "thebyte9"
   github_repo = "blaze-template-deploy"
