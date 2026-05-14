@@ -7,7 +7,7 @@ terraform {
 provider "aws" { region = var.aws_region }
 
 module "tfstate_backend" {
-  source    = "git::https://github.com/thisisblaze/blaze-terraform-infra-core.git//modules/aws/storage/tfstate-backend?ref=v2.6.2"
+  source    = "git::https://github.com/thisisblaze/blaze-terraform-infra-core.git//modules/aws/storage/tfstate-backend?ref=v2.6.3"
   namespace = var.client_key
   stage     = var.stage
   name      = "blaze"
