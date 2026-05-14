@@ -1,4 +1,4 @@
-## [Unreleased] — 2026-05-14
+## [v2.1.81] — 2026-05-14 (Plan 158)
 
 ### Infrastructure
 - **GCP live stacks**: All `blaze-actions/.github/gcp/infra/live/**` Terraform module refs bumped `v2.6.2 → v2.6.3` (`dev-network`, `dev-data`, `multi-site-app`). Picks up `blaze-terraform-infra-core` v2.6.3 security release (S3 versioning default fix, RDS backup defaults, `prevent_destroy` on stateful services).
