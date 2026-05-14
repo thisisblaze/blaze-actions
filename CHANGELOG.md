@@ -1,4 +1,16 @@
-## [Unreleased] — 2026-05-12
+## [Unreleased] — 2026-05-14
+
+### Infrastructure
+- **GCP live stacks**: All `blaze-actions/.github/gcp/infra/live/**` Terraform module refs bumped `v2.6.2 → v2.6.3` (`dev-network`, `dev-data`, `multi-site-app`). Picks up `blaze-terraform-infra-core` v2.6.3 security release (S3 versioning default fix, RDS backup defaults, `prevent_destroy` on stateful services).
+
+### Fixed
+- **`99-ops-nuke.yml`**: bumped `check-access` action pin to `v2.1.80`, fixed broken `uses:` in `02-deploy-pages`, added `timeout-minutes: 35`.
+- **`02-deploy-app.yml`**: security hardening — resolved broken `uses:` reference.
+
+### Governance
+- chore: end-of-day governance sync — 2026-05-14. All 3 repos 14/14 ✅.
+
+
 
 ### Agent Tooling
 - **`docs/learning/REFERENCE_SOURCE_LIBRARY.md`** — New curated 5-domain reference source library. Domains: GH Actions reusable workflow patterns, AWS OIDC, Terraform CI/CD, deployment patterns, access control. Cross-references all `docs/knowledge/*.md` smart fixes with 🔴/🟡/🟢 relevance tiers. 9 priority audit checks defined.
