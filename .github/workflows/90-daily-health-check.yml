@@ -186,6 +186,10 @@ jobs:
   # ------------------------------------------------------------------
   # JOB 3: DRIFT DETECTION (Prod Network)
   # ------------------------------------------------------------------
+  # ⚠️ FREEZE: Do NOT bump @v2.1.74 pins below — this is an intentional chaos-test
+  # pattern that tests provisioning against a known-stable version (not latest).
+  # Bumping to the current release tag causes a GitHub Actions self-referencing
+  # loop that results in startup_failure. These pins are deliberately stable.
   drift-check-network:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
@@ -231,7 +235,7 @@ jobs:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74  # ⚠️ FREEZE: see above
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
       aws_region: ${{ needs.configuration.outputs.aws_region }}
