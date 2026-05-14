@@ -1,3 +1,33 @@
+## v2.1.81 (2026-05-14)
+
+### Added
+
+- feat: complete Plan 155 StackID hardening in pre-destroy cleanup and ops-nuke
+
+### Changed
+
+- chore: prepare v2.1.81 release
+- chore: end-of-day governance sync — 2026-05-14
+- chore: end-of-day governance sync — 2026-05-14
+- chore: bump all infra-core refs v2.6.2 → v2.6.3 (Plan 151 security release)
+- chore: end-of-day governance sync — 2026-05-13
+- docs: update CHANGELOG + WORKFLOW_CATALOG for /12-best-practice-audit
+- chore: end-of-day governance sync — 2026-05-12
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync 2026-05-10 — date bump
+- chore: end-of-day governance sync — 2026-05-09
+- chore: /13-deep-cicd-maintenance — Engine 4 v2.4.8→v2.5.12, Engine 8 parity, Blaze:StackID docs — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09 (allstop) + reusable-dev-sleep-schedule.yml Plan 151 L4
+- chore: update CHANGELOG for v2.1.80
+- chore: update CHANGELOG for v2.1.79
+- chore: update CHANGELOG for v2.1.78
+
+### Fixed
+
+
 ## [v2.1.81] — 2026-05-14 (Plan 158)
 
 ### Infrastructure
