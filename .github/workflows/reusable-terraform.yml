@@ -109,6 +109,11 @@ on:
       azure_subscription_id_rev:
         required: false
         type: string
+      stack_id:
+        description: "Stack UUID (STACK_ID from blaze-env.json via calculate-config). Injected as TF_VAR_stack_id → Blaze:StackID tag on all resources. Enables precise tag-based destroy isolation (pre-destroy-cleanup, verify-destroy-complete)."
+        required: false
+        type: string
+        default: ""
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -835,12 +840,17 @@ jobs:
         # v1.4.94: Provides TF_VAR_stack_name + TF_VAR_blaze_run_id for all stacks.
         # stack_name = last path component of tf_dir (e.g. "multi-site-network")
         # blaze_run_id = GITHUB_RUN_ID (enables per-run cost attribution + surgical cleanup)
+        # v1.5.0 (L25): TF_VAR_stack_id injected from calculate-config output →
+        #   propagates STACK_ID UUID from blaze-env.json → Terraform variable → Blaze:StackID tag
+        #   on all AWS resources. Enables precise tag-based destroy isolation.
         run: |
           STACK_NAME=$(basename "${{ inputs.tf_dir }}")
           echo "TF_VAR_stack_name=${STACK_NAME}" >> "$GITHUB_ENV"
           echo "TF_VAR_blaze_run_id=${{ github.run_id }}" >> "$GITHUB_ENV"
+          echo "TF_VAR_stack_id=${{ inputs.stack_id }}" >> "$GITHUB_ENV"
           echo "   🏷️  Blaze:Stack   = ${STACK_NAME}"
           echo "   🏷️  Blaze:RunId   = ${{ github.run_id }}"
+          echo "   🏷️  Blaze:StackID = ${{ inputs.stack_id }}"
 
       - name: Inject AWS Account ID
         # Resolves the AWS account ID via STS and exports as:

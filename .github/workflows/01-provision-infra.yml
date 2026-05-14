@@ -309,6 +309,7 @@ jobs:
       azure_client_id: ${{ steps.resolve-azure.outputs.client_id }}
       azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
       azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -651,6 +652,7 @@ jobs:
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
+      stack_id: ${{ needs.configuration.outputs.stack_id }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration

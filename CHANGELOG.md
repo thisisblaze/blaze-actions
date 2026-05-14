@@ -3,6 +3,10 @@
 ### Infrastructure
 - **GCP live stacks**: All `blaze-actions/.github/gcp/infra/live/**` Terraform module refs bumped `v2.6.2 → v2.6.3` (`dev-network`, `dev-data`, `multi-site-app`). Picks up `blaze-terraform-infra-core` v2.6.3 security release (S3 versioning default fix, RDS backup defaults, `prevent_destroy` on stateful services).
 
+### Added (Plan 158 — L25: Blaze:StackID Tag Propagation)
+- **`reusable-terraform.yml`**: New optional `stack_id` workflow_call input. Injected as `TF_VAR_stack_id` in the "Inject Blaze Signature Tag Vars" step — propagates `STACK_ID` UUID from `blaze-env.json` into the Terraform environment. Logged as `🏷️ Blaze:StackID` for visibility in run logs.
+- **`01-provision-infra.yml`**: `stack_id` threaded from `calculate-config` outputs → `configuration` job outputs → `provision` job `with:` block → `reusable-terraform.yml` input. No new secrets or manual config required.
+
 ### Fixed
 - **`99-ops-nuke.yml`**: bumped `check-access` action pin to `v2.1.80`, fixed broken `uses:` in `02-deploy-pages`, added `timeout-minutes: 35`.
 - **`02-deploy-app.yml`**: security hardening — resolved broken `uses:` reference.
