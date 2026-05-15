@@ -355,7 +355,7 @@ jobs:
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
-            echo "TF_VAR_atlas_project_id=$MONGODB_ATLAS_PROJECT_ID"
+            [[ -n "$MONGODB_ATLAS_PROJECT_ID" ]] && echo "TF_VAR_atlas_project_id=$MONGODB_ATLAS_PROJECT_ID" || true
             echo "TF_VAR_atlas_org_id=$MONGODB_ATLAS_ORG_ID"
             echo "MONGODB_ATLAS_PUBLIC_KEY=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "MONGODB_ATLAS_PRIVATE_KEY=$MONGODB_ATLAS_PRIVATE_KEY"
