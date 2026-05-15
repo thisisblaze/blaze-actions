@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-14
+**Last Updated**: 2026-05-15
 **Owner**: Infrastructure Team
 
 ---
@@ -190,11 +190,11 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `shopware` in all `environment:` keys and `workflow_dispatch` options |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-05-14)
+## 13. Current Version Pins (2026-05-15)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.1.80** | Latest stable — DR drill, StackID hardening, DocDB backup, actionlint sweep. Plan 158: `stack_id` input wired through `01-provision-infra.yml` → `reusable-terraform.yml` → `TF_VAR_stack_id`. |
+| `blaze-actions` | **v2.1.85** | Latest stable — nuke hardening: IGW CLI-delete (v2.1.84 P1), Atlas GROUP_NOT_FOUND guard (v2.1.84 P1), CF DNS catch-all state rm (v2.1.85 P2), VPC force-delete fallback (v2.1.85 P3). All 25 workflows at @v2.1.85. |
 | `blaze-terraform-infra-core` | **v2.6.4** | Plan 158: Blaze:StackID tag propagated to all resources via label module. All live stacks bumped 2026-05-14. |
 | Terraform AWS Provider | **v6.0+** | Required for ECS Fargate ARM64 task definitions. |
 
