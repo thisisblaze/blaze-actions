@@ -1,3 +1,11 @@
+## [v2.1.84] - 2026-05-15
+
+### Fixed
+
+- **[P1] IGW DependencyViolation on VPC destroy** (`reusable-terraform.yml`): After removing the Internet Gateway from Terraform state (`state rm`), now also CLI-detaches and deletes the physical AWS IGW via `aws ec2 detach-internet-gateway` + `delete-internet-gateway`. Previously the physical IGW remained attached, causing `DependencyViolation` when Terraform attempted to delete the VPC. Root cause: 2026-05-15 nuke failure on `vpc-0d27e5f9065a0b113` (10.2.0.0/16).
+- **[P1] Atlas `GROUP_NOT_FOUND` state guard** (`mongodb/pre-destroy.sh`): Added a pre-flight project existence check before any Atlas API calls. If the Atlas project returns 404/GROUP_NOT_FOUND (reprovisioned externally or deleted out-of-band), all `mongodbatlas_*` and `cloudflare_dns_record` resources are purged from state so `terraform destroy` exits cleanly instead of failing. Root cause: 2026-05-15 stage nuke failed on orphaned project `6a065298a1c2b19656835825`.
+
+
 ## v2.1.83 (2026-05-15)
 
 ### Added
