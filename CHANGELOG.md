@@ -1,14 +1,10 @@
-## v2.1.85 (2026-05-15)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.1.84
+## [v2.1.85] - 2026-05-15
 
 ### Fixed
+
+- **[P2] Cloudflare DNS catch-all `state rm` on destroy** (`reusable-terraform.yml`): The existing purge step only covered `module.environment_network.cloudflare_dns_record.*` (network stack pattern). Added a catch-all dynamic sweep that removes every `cloudflare_dns_record.*` address from state regardless of module path or map key — covering the multi-site-app pattern `cloudflare_dns_record.site["thisisblaze-frontend"]` that caused the 2026-05-15 stage nuke failure.
+- **[P2] Data stack warning at safety gate** (`99-nuke-env.yml`): MongoDB Atlas and Elastic Cloud warning is now printed at workflow start inside the Safety Gate step, not buried in the job summary at the end.
+- **[P3] VPC force-delete fallback in verify-destroy-complete** (`99-nuke-env.yml`): After all Terraform destroy jobs, scans for any VPCs tagged `Blaze:Environment` that survived the nuke and force-deletes them (IGWs, subnets, SGs, VPC). Runs with `continue-on-error: true`. Covers crash-interrupted nuke scenarios like the 2026-05-15 laptop crash event.
 
 
 ## v2.1.84 (2026-05-15)
