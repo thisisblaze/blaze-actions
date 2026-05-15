@@ -1,3 +1,10 @@
+## v2.1.82-ops (2026-05-15)
+
+### Operations
+- ops(stage/2026-05-15): `01c - Provision App Infra` stage/thisisblaze ✅ `Apply complete! Resources: 3 added, 22 changed, 0 destroyed.` (run #25893833780). Full stack provisioned via 5-layer import script fix chain.
+- ops(stage/2026-05-15): `import-existing-resources.sh` — enabled root-scope CF DNS imports (Step 4.5), added `get_cf_module_for_domain()` for correct `site_cdn`/`admin_cdn`/`assets_cdn` routing (Step 4.4), stale CF CNAME cleanup.
+- ops(stage/2026-05-15): `stage-multi-site-app/pre_apply.sh` — removed dead Section 5 CF DNS block (domain-resolution bug + `set -u` crash on undefined vars).
+
 ## v2.1.82 (2026-05-14)
 
 ### Added
