@@ -1,3 +1,19 @@
+## v2.1.84 (2026-05-15)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.84
+- chore: update CHANGELOG for v2.1.83
+- chore: end-of-day governance sync — 2026-05-14
+- chore: update CHANGELOG for v2.1.82
+
+### Fixed
+
+
 ## [v2.1.84] - 2026-05-15
 
 ### Fixed
