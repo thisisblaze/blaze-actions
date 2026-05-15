@@ -55,6 +55,42 @@ if [ -z "$PROJECT_ID" ] || [ -z "$PUBLIC_KEY" ] || [ -z "$PRIVATE_KEY" ]; then
   exit 0
 fi
 
+# ── Stale Project Guard ────────────────────────────────────────────────────────
+# If the Atlas project was reprovisioned (new ID) or deleted externally, the
+# project ID in Terraform state will return GROUP_NOT_FOUND (404).
+# In that case, purge the orphaned Atlas + Cloudflare state entries so that
+# `terraform destroy` is a clean no-op instead of a hard failure.
+# Root cause of the 2026-05-15 stage nuke failure.
+echo "🔍 Verifying Atlas project still exists: $PROJECT_ID"
+PROJECT_CHECK_HTTP=$(curl -s \
+  --digest -u "${PUBLIC_KEY}:${PRIVATE_KEY}" \
+  "https://cloud.mongodb.com/api/atlas/v2/groups/${PROJECT_ID}" \
+  -H "Accept: application/vnd.atlas.2023-01-01+json" \
+  -w "%{http_code}" -o /tmp/project_check.json 2>/dev/null)
+
+PROJECT_ERROR_CODE=$(jq -r '.errorCode // empty' /tmp/project_check.json 2>/dev/null || echo "")
+
+if [[ "$PROJECT_CHECK_HTTP" == "404" || "$PROJECT_ERROR_CODE" == "GROUP_NOT_FOUND" ]]; then
+  echo "⚠️  Atlas project $PROJECT_ID not found (HTTP $PROJECT_CHECK_HTTP — ${PROJECT_ERROR_CODE:-unknown})."
+  echo "   Project was likely reprovisioned or deleted externally. Purging orphaned state..."
+
+  # Purge all Atlas resources from state — dynamic match covers cluster, project, users, peering
+  terraform state list 2>/dev/null | grep -E 'mongodbatlas_' | while read -r ADDR; do
+    terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Could not remove: $ADDR"
+  done
+
+  # Purge any stale Cloudflare DNS records (map-keyed, e.g. site["thisisblaze-frontend"])
+  terraform state list 2>/dev/null | grep -E 'cloudflare_dns_record\.' | while read -r ADDR; do
+    terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed CF: $ADDR" || echo "  ⚠️  Could not remove CF: $ADDR"
+  done
+
+  echo "✅ Orphaned state purged — destroy will be a clean no-op"
+  exit 0
+fi
+
+echo "✅ Atlas project exists (HTTP $PROJECT_CHECK_HTTP) — proceeding with termination protection check"
+# ── End Stale Project Guard ────────────────────────────────────────────────────
+
 echo "🔍 Checking if cluster '$CLUSTER_NAME' exists..."
 
 # Check if cluster exists

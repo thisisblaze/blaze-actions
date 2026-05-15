@@ -1035,10 +1035,44 @@ jobs:
           done
 
           # VPC Internet Gateway — prevent DependencyViolation if ENIs linger
+          # Step 1: Remove from Terraform state so TF skips it in the plan
           echo "  🧹 Removing Internet Gateways from state (dynamic match) to prevent DependencyViolation..."
           terraform state list 2>/dev/null | grep -E 'aws_internet_gateway\.this' | while read -r ADDR; do
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Failed to remove: $ADDR"
           done
+
+          # Step 2: CLI-detach and delete any IGW still physically attached to the VPC.
+          # state rm above removes TF's knowledge of the IGW, but the AWS resource itself
+          # remains attached — causing DependencyViolation when TF attempts to delete the VPC.
+          # Fix: resolve VPC ID from state outputs, then force-detach via AWS CLI.
+          REGION="${{ inputs.aws_region }}"
+          VPC_ID=$(terraform output -raw vpc_id 2>/dev/null || echo "")
+          if [[ -n "$VPC_ID" && "$VPC_ID" != "null" ]]; then
+            echo "  🔍 Checking for physically attached IGWs on VPC: $VPC_ID"
+            IGW_IDS=$(aws ec2 describe-internet-gateways \
+              --region "$REGION" \
+              --filters "Name=attachment.vpc-id,Values=${VPC_ID}" \
+              --query 'InternetGateways[*].InternetGatewayId' \
+              --output text 2>/dev/null || echo "")
+            for IGW_ID in $IGW_IDS; do
+              echo "  🔌 Detaching IGW: $IGW_ID from VPC: $VPC_ID"
+              aws ec2 detach-internet-gateway \
+                --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" \
+                --vpc-id "$VPC_ID" 2>/dev/null \
+                && echo "  ✅ Detached: $IGW_ID" || echo "  ⚠️  Detach failed (may already be detached): $IGW_ID"
+              echo "  🗑️  Deleting IGW: $IGW_ID"
+              aws ec2 delete-internet-gateway \
+                --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" 2>/dev/null \
+                && echo "  ✅ Deleted: $IGW_ID" || echo "  ⚠️  Delete failed (may already be gone): $IGW_ID"
+            done
+            if [[ -z "$IGW_IDS" ]]; then
+              echo "  ✅ No physically attached IGWs found — VPC is clean"
+            fi
+          else
+            echo "  ℹ️  No vpc_id output available — skipping IGW CLI cleanup"
+          fi
 
           echo "✅ Stale network resources purged"
 
