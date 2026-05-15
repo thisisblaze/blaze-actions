@@ -1,3 +1,17 @@
+## v2.1.83 (2026-05-15)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-14
+- chore: update CHANGELOG for v2.1.82
+
+### Fixed
+
+
 ## v2.1.82-ops (2026-05-15)
 
 ### Operations
