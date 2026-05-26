@@ -170,7 +170,7 @@ done
 
 ## Technical Deep Dive
 
-See: `/Users/marek/.gemini/antigravity/brain/.../terraform-lock-analysis.md`
+See: `<appDataDir>/brain/.../terraform-lock-analysis.md`
 
 **Key Bug (Fixed 2026-01-13):**
 

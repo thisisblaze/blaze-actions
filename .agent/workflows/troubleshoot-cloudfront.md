@@ -336,9 +336,9 @@ terraform destroy -auto-approve
 
 ## Resources
 
-- [CloudFront Audit](file:///Users/marek/.gemini/antigravity/brain/.../cloudfront-image-resize-audit.md)
-- [Implementation Plan](file:///Users/marek/.gemini/antigravity/brain/.../implementation_plan.md)
-- [Fixes Summary](file:///Users/marek/.gemini/antigravity/brain/.../fixes-summary.md)
+- [CloudFront Audit](<appDataDir>/brain/.../cloudfront-image-resize-audit.md)
+- [Implementation Plan](<appDataDir>/brain/.../implementation_plan.md)
+- [Fixes Summary](<appDataDir>/brain/.../fixes-summary.md)
 
 ---
 

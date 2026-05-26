@@ -374,6 +374,15 @@ schedule:
 
 ## Troubleshooting
 
+### Issue: "Invalid Attribute Value Match" (Regex Failure)
+
+**Cause**: The Terraform Cloudflare Provider enforces strict regex matching on the `api_token` (`^[a-zA-Z0-9_-]{40}$`). If `create_dns_records="false"` and the token is left blank during dry-runs or disconnected applies, the provider initialization will crash before execution begins.
+
+**Solution**: 
+Supply a valid-looking dummy token to satisfy provider initialization.
+1. Use `abcdefghijklmnopqrstuvwxyz0123456789ABCD` (40 chars)
+2. Ensure it is mapped to `CLOUDFLARE_API_TOKEN` in the environment variables or `terraform.tfvars`.
+
 ### Issue: "Permission denied (HTTP 403)"
 
 **Cause**: `CLOUDFLARE_API_TOKEN` lacks required permissions

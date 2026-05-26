@@ -1,3 +1,10 @@
+## [v2.1.86] - 2026-05-26
+
+### Changed
+
+- **docs**: Added Cloudflare provider validation failure troubleshooting (dummy token requirement `abcdefghijklmnopqrstuvwxyz0123456789ABCD` for disconnected applies) to `cloudflare-operations.md`.
+- **chore(ai)**: Migrated to Google Antigravity 2.0 (Environment Agnostic) standard — `.antigravity/` consolidated into `.agent/`, `.antigravityignore` renamed to `.agentignore`, hardcoded IDE paths eradicated, `AI_CONTEXT_GOVERNANCE.md` upgraded.
+
 ## [v2.1.85] - 2026-05-15
 
 ### Fixed
@@ -5039,7 +5046,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`cleanup-orphaned-buckets` ops action** (`99-ops-utility.yml`): New action to find and force-delete orphaned S3 buckets matching the project prefix (excludes tfstate). Accepts `DRY_RUN` or `EXECUTE` confirmation.
 - **Orphaned Resource Cleanup — Extended** (`99-ops-utility.yml`): Added cleanup steps for orphaned CloudWatch Log Groups, ALB Target Groups, and CloudFront Functions within the `cleanup-orphaned-buckets` action to resolve Terraform `AlreadyExists` conflicts after partial environment destroy.
-- **`gh-actions-troubleshooter` Antigravity Skill**: Created global Antigravity skill at `~/.gemini/antigravity/skills/gh-actions-troubleshooter/` implementing local-first PDCA diagnostic cycle, `get_failed_logs.sh`, `run_local_act.sh` (with `--doctor` check), and curated `ERROR_PATTERNS.txt` reference library.
+- **`gh-actions-troubleshooter` Antigravity Skill**: Created global Antigravity skill at `~/.gemini/config/skills/gh-actions-troubleshooter/` implementing local-first PDCA diagnostic cycle, `get_failed_logs.sh`, `run_local_act.sh` (with `--doctor` check), and curated `ERROR_PATTERNS.txt` reference library.
 
 ### Fixed
 

@@ -134,4 +134,4 @@ terraform apply
 - **Troubleshooting**: [blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md)
 - **Architecture**: [blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md)
 - **Lambda README**: [blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md)
-- **Walkthrough**: [Session Artifacts walkthrough.md](file:///Users/marek/.gemini/antigravity/brain/d4c2c52b-4949-4c22-99cf-51e966c76706/walkthrough.md)
+- **Walkthrough**: [Session Artifacts walkthrough.md](<appDataDir>/brain/d4c2c52b-4949-4c22-99cf-51e966c76706/walkthrough.md)

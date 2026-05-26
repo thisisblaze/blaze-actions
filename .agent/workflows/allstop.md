@@ -29,7 +29,7 @@ For EACH of the 3 repos, verify ALL of these files exist:
 | `.github/copilot-instructions.md`      | ✅         |
 | `.github/PULL_REQUEST_TEMPLATE.md`     | ✅         |
 | `.github/dependabot.yml`               | ✅         |
-| `.antigravityignore`                   | ✅         |
+| `.agentignore`                   | ✅         |
 | `.cursorignore`                        | ✅         |
 | `.gitignore`                           | ✅         |
 | `CONTRIBUTING.md`                      | ✅         |

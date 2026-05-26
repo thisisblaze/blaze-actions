@@ -3,10 +3,12 @@
 
 ---
 
-# AI Context Governance: Shopware KM Standard
+# AI Context Governance: Google Antigravity 2.0 Standard
 
 > [!TIP]
-> **Status: SCALED (ECS Fargate Environment)**. All agents must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
+> **Status: SCALED (ECS Fargate Environment & Environment Agnostic)**. All agents (including Google Antigravity 2.0) must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
+> 
+> **Antigravity 2.0 Standard**: This ecosystem is environment-agnostic. Workflows, context, and MCP tools rely strictly on the `.agent/` directory paradigm. Do not assume execution originates from a specific IDE or local GUI. The agent operates identically across headless CLI, background pipelines, and interactive IDE sessions.
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**

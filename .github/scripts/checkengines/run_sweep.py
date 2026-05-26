@@ -25,9 +25,9 @@ if is_ci:
 else:
     # Running locally on developer laptop
     REPOS = {
-        "deploy": os.environ.get("BLAZE_SPOKE_DIR", "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy"),
-        "actions": "/Users/marek/Workspace/thisisblaze/blaze-actions",
-        "infra": "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core"
+        "deploy": os.environ.get("BLAZE_SPOKE_DIR", "/Users/marek/Workspace/00-Google-Antigravity/thebyte9/thebyte9-blaze-template-deploy/blaze-template-deploy"),
+        "actions": "/Users/marek/Workspace/00-Google-Antigravity/thebyte9/thebyte9-blaze-template-deploy/blaze-actions",
+        "infra": "/Users/marek/Workspace/00-Google-Antigravity/thebyte9/thebyte9-blaze-template-deploy/blaze-terraform-infra-core"
     }
 
 print("🔧 CHECKENGINES REPORT — RUNNING FULL DIAGNOSTIC SWEEP...")
