@@ -16,7 +16,7 @@
 #
 # ✅ ALWAYS USE for actual runs:
 #   blaze-template-deploy
-#   Local: /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+#   Local: blaze-template-deploy (sibling directory)
 #   GitHub: github.com/thebyte9/blaze-template-deploy
 #
 # Workflow logic edits → blaze-actions ✅

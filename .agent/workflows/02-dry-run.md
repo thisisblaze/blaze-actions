@@ -25,7 +25,7 @@ Ask the user:
 // turbo
 
 ```bash
-cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
+cd blaze-terraform-infra-core (sibling directory)
 git tag --sort=-v:refname | head -1
 ```
 

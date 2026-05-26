@@ -30,7 +30,7 @@ file test.webp
 
 ```bash
 # 1. Check module version in blaze-terraform-infra-core
-cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
+cd blaze-terraform-infra-core (sibling directory)
 git branch
 # Should be on: dev (with latest fixes)
 
@@ -131,7 +131,7 @@ terraform apply
 
 ## Related Documentation
 
-- **Troubleshooting**: [blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md)
-- **Architecture**: [blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md)
-- **Lambda README**: [blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md)
+- **Troubleshooting**: [blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md](file://blaze-terraform-infra-core (sibling directory)/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md)
+- **Architecture**: [blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md](file://blaze-terraform-infra-core (sibling directory)/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md)
+- **Lambda README**: [blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md](file://blaze-terraform-infra-core (sibling directory)/modules/aws/lambda/edge-functions/functions/resize-image/README.md)
 - **Walkthrough**: [Session Artifacts walkthrough.md](<appDataDir>/brain/d4c2c52b-4949-4c22-99cf-51e966c76706/walkthrough.md)

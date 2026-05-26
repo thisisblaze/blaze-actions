@@ -22,7 +22,7 @@
 >
 > **✅ ALWAYS use instead:**
 > - **`blaze-template-deploy`** for ALL actual workflow runs and deployments
-> - Local path: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
+> - Local path: Sibling directory `blaze-template-deploy/` (auto-discovered by utility scripts via `repo_paths.py`)
 > - GitHub: `github.com/thebyte9/blaze-template-deploy`
 >
 > Edit workflow _logic_ here → test and run it from `blaze-template-deploy`.

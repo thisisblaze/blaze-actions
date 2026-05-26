@@ -50,10 +50,24 @@ def get_latest_tags(repo_path):
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     base_dir = os.path.abspath(os.path.join(script_dir, "../../../.."))
-    tdeploy_path = os.path.join(base_dir, "blaze-template-deploy/.github/aws/infra/live/dev-mini-network/main.tf")
-    actions_path = os.path.join(base_dir, "blaze-actions/.github/aws/infra/live/dev-network/main.tf")
+
+    # If invoked via symlink, base_dir is the workspace root (has blaze-template-deploy/).
+    # If invoked directly from _shared/, fall back to _shared/ parent which has the workspaces.
+    deploy_stack = "blaze-template-deploy/.github/aws/infra/live/dev-mini-network/main.tf"
+    if not os.path.exists(os.path.join(base_dir, deploy_stack)):
+        # Likely running from _shared/ — try one level up, then into the first workspace that has it
+        parent = os.path.dirname(base_dir)
+        for candidate in ["thebyte9/thebyte9-blaze-template-deploy", "thebyte9/thebyte9-shopware-km", "KELSEYMedia"]:
+            test = os.path.join(parent, candidate, deploy_stack)
+            if os.path.exists(test):
+                base_dir = os.path.join(parent, candidate)
+                break
+
+    # Both repos have dev-mini-network — compare these for split-brain detection (Rule 4)
+    deploy_path = os.path.join(base_dir, "blaze-template-deploy/.github/aws/infra/live/dev-mini-network/main.tf")
+    actions_path = os.path.join(base_dir, "blaze-actions/.github/aws/infra/live/dev-mini-network/main.tf")
     core_path = os.path.join(base_dir, "blaze-terraform-infra-core")
-    
-    print_refs("blaze-template-deploy", tdeploy_path)
-    print_refs("blaze-actions", actions_path)
+
+    print_refs("blaze-template-deploy (dev-mini-network)", deploy_path)
+    print_refs("blaze-actions (dev-mini-network)", actions_path)
     get_latest_tags(core_path)

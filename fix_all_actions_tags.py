@@ -1,5 +1,11 @@
+#!/usr/bin/env python3
 import os
 import re
+import sys
+
+# Auto-discover repos
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '.github', 'scripts', 'utils'))
+from repo_paths import get_repos
 
 def update_tags(directory, new_tag):
     count = 0
@@ -27,4 +33,5 @@ def update_tags(directory, new_tag):
                     pass
     print(f"Total files updated: {count}")
 
-update_tags('/Users/marek/Workspace/thisisblaze/blaze-actions/.github', 'v2.1.74')
+repos = get_repos(__file__)
+update_tags(os.path.join(repos["actions"], '.github'), 'v2.1.74')

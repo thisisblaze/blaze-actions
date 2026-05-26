@@ -16,7 +16,7 @@ The logic for the 10-engine sweep has been natively upgraded into a hyper-fast P
 Execute the native Python orchestrator:
 
 ```bash
-python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/checkengines/run_sweep.py
+python3 blaze-actions (this repo)/.github/scripts/checkengines/run_sweep.py
 ```
 
 ## Final Output: Dashboard Report

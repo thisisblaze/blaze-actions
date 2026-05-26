@@ -15,9 +15,9 @@ This is a master command to actively perform deep maintenance across all three i
 
 ## Repositories in Scope
 
-- `blaze-template-deploy`: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
-- `blaze-actions`: `/Users/marek/Workspace/thisisblaze/blaze-actions`
-- `blaze-terraform-infra-core`: `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`
+- `blaze-template-deploy`: `blaze-template-deploy (sibling directory)`
+- `blaze-actions`: `blaze-actions (this repo)`
+- `blaze-terraform-infra-core`: `blaze-terraform-infra-core (sibling directory)`
 
 ---
 

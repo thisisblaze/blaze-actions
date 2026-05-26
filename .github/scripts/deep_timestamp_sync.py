@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
 import os
 import re
 
-directories = [
-    "/Users/marek/Workspace/thisisblaze/blaze-actions",
-    "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core",
-    "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy"
-]
+# Auto-discover repos
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'utils'))
+from repo_paths import get_all_repo_list
+
+directories = get_all_repo_list(__file__)
 
 date_str = "April 18, 2026"
 iso_date = "2026-04-18"

@@ -1,8 +1,15 @@
+#!/usr/bin/env python3
 import yaml
 import os
 import glob
+import sys
 
-workflow_dir = '/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows'
+# Auto-discover repos
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts', 'utils'))
+from repo_paths import get_repos
+
+repos = get_repos(__file__)
+workflow_dir = os.path.join(repos["actions"], ".github", "workflows")
 os.chdir(workflow_dir)
 
 for file in sorted(glob.glob('*.yml')):

@@ -13,9 +13,9 @@ Run this at the end of your work session to ensure all governance files are in s
 
 ## Repos
 
-- `blaze-template-deploy`: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
-- `blaze-actions`: `/Users/marek/Workspace/thisisblaze/blaze-actions`
-- `blaze-terraform-infra-core`: `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`
+- `blaze-template-deploy`: `blaze-template-deploy (sibling directory)`
+- `blaze-actions`: `blaze-actions (this repo)`
+- `blaze-terraform-infra-core`: `blaze-terraform-infra-core (sibling directory)`
 
 ## Steps
 

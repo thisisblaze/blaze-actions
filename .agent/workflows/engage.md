@@ -19,11 +19,11 @@ This project spans **3 repositories** with strict dependency rules. Violating th
 
 ### Repo Map
 
-| Repo                             | GitHub                                   | Local Path                                                                             | Role                                                                                                                                                                                                                         |
-| -------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy` | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.**                                                             |
-| **`blaze-actions`**              | `thisisblaze/blaze-actions`              | `/Users/marek/Workspace/thisisblaze/blaze-actions`                                     | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
-| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`                        | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks.                                                                                                                         |
+| Repo                             | GitHub                                   | Local Path (relative to workspace)           | Role                                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.**                                                             |
+| **`blaze-actions`**              | `thisisblaze/blaze-actions`              | `<workspace>/blaze-actions` (symlink to `_shared/`) | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
+| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `<workspace>/blaze-terraform-infra-core` (symlink to `_shared/`) | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks.                                                                                                                         |
 
 ### Dependency Chain
 
@@ -103,7 +103,7 @@ If there are `⏸️ PAUSED` tasks from a previous session, suggest:
 Run this quick sanity check across both repos to catch any split-brain on module versions:
 
 ```bash
-python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/utils/print_env_versions.py
+python3 "$(git -C blaze-actions rev-parse --show-toplevel)/.github/scripts/utils/print_env_versions.py"
 ```
 
 Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the module `?ref=`.
