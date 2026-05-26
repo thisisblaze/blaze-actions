@@ -4,6 +4,8 @@
 
 - **docs**: Added Cloudflare provider validation failure troubleshooting (dummy token requirement `abcdefghijklmnopqrstuvwxyz0123456789ABCD` for disconnected applies) to `cloudflare-operations.md`.
 - **chore(ai)**: Migrated to Google Antigravity 2.0 (Environment Agnostic) standard — `.antigravity/` consolidated into `.agent/`, `.antigravityignore` renamed to `.agentignore`, hardcoded IDE paths eradicated, `AI_CONTEXT_GOVERNANCE.md` upgraded.
+- **chore(ai)**: Purged all 21 hardcoded `/Users/marek/` absolute paths from utility scripts and agent workflows — now use relative resolution and `SCRIPT_DIR`.
+- **fix(infra)**: Bumped `dev-mini-network/main.tf` module ref `v2.6.4` → `v2.6.5` to resolve split-brain with `blaze-template-deploy`.
 
 ## [v2.1.85] - 2026-05-15
 
