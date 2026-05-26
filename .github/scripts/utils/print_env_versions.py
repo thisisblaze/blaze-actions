@@ -48,9 +48,11 @@ def get_latest_tags(repo_path):
         print(f"Error fetching tags: {e}")
 
 if __name__ == "__main__":
-    tdeploy_path = "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.github/aws/infra/live/dev-network/main.tf"
-    actions_path = "/Users/marek/Workspace/thisisblaze/blaze-actions/.github/aws/infra/live/dev-network/main.tf"
-    core_path = "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.abspath(os.path.join(script_dir, "../../../.."))
+    tdeploy_path = os.path.join(base_dir, "blaze-template-deploy/.github/aws/infra/live/dev-mini-network/main.tf")
+    actions_path = os.path.join(base_dir, "blaze-actions/.github/aws/infra/live/dev-network/main.tf")
+    core_path = os.path.join(base_dir, "blaze-terraform-infra-core")
     
     print_refs("blaze-template-deploy", tdeploy_path)
     print_refs("blaze-actions", actions_path)

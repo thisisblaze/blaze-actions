@@ -1,6 +1,6 @@
 ---
 description: 🖖 Engage — pulls latest, audits governance across all 3 repos, loads context
-expected_output: A printed "START-OF-DAY REPORT" containing status, overnight changes, and stress test freshness.
+expected_output: A printed "START-OF-DAY REPORT" containing status and overnight changes.
 exclusions: Do NOT automatically load the massive architecture graphs or AI_CONTEXT_GOVERNANCE.md. Token frugality is required. Do NOT perform any code changes.
 
 ---
@@ -124,17 +124,6 @@ For each repo, run `git log --oneline -5` and report the last 5 commits.
 Flag any commits from other contributors or CI bots that may need attention.
 Flag if `blaze-terraform-infra-core` has new commits NOT yet tagged (would be behind `live/` stacks).
 
-### 5.5. Stress Test Freshness
-
-Check `docs/reports/stress-tests/STRESS_TEST_REPORTS.md` — read the **Coverage Matrix** table.
-
-For each cell that has a date (not `⬚`):
-
-- If the date is **older than 7 days**, flag it: `⚠️ Stress test overdue: AWS {stage} (last: YYYY-MM-DD)`
-- If a stress test is currently `🔄 Running`, note it in the report.
-
-Include in the Ready Report under a `STRESS TESTS:` line.
-
 ### 6. Ready Report
 
 Output:
@@ -155,7 +144,6 @@ MODULE REF CHECK:
 
 CONTEXT: Loaded (Multi-Cloud AWS/GCP/Azure)
 RECENT ACTIVITY: <summary of last commits>
-STRESS TESTS: <last run dates per stage, flag if >7 days overdue>
 
 WORKFLOW REMINDER: Always trigger via thebyte9/blaze-template-deploy
   gh workflow run "01-provision-infra.yml" --repo thebyte9/blaze-template-deploy ...
