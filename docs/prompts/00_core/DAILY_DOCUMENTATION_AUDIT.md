@@ -132,7 +132,7 @@ Execute in this order for systematic coverage:
    ```
 
 2. **Repository Scan**
-   - Scan all 3 repositories: `blaze-actions`, `blaze-terraform-infra-core`, `blaze-template-deploy`
+   - Scan all 4 repositories: `blaze-actions`, `blaze-terraform-infra-core`, `blaze-template-deploy`, `blaze-conductor`
    - Identify impacted domains from the 12 above
    - Note any new features, breaking changes, or architectural shifts
 
