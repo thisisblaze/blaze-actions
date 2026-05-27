@@ -1,5 +1,5 @@
 ---
-description: 🖖 All stop — end-of-day governance sync across all 3 repos
+description: 🖖 All stop — end-of-day governance sync across all 4 repos
 expected_output: A finalized handoff state, completed doc updates, and all uncommitted code pushed.
 exclusions: Do NOT start new complex tasks during the allstop governance sequence.
 
@@ -9,7 +9,7 @@ exclusions: Do NOT start new complex tasks during the allstop governance sequenc
 
 # End-of-Day Governance Sync
 
-Run this at the end of your work session to ensure all governance files are in sync across all 3 repos.
+Run this at the end of your work session to ensure all governance files are in sync across all 4 repos.
 
 ## Repos
 

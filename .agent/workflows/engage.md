@@ -1,5 +1,5 @@
 ---
-description: 🖖 Engage — pulls latest, audits governance across all 3 repos, loads context
+description: 🖖 Engage — pulls latest, audits governance across all 4 repos, loads context
 expected_output: A printed "START-OF-DAY REPORT" containing status and overnight changes.
 exclusions: Do NOT automatically load the massive architecture graphs or AI_CONTEXT_GOVERNANCE.md. Token frugality is required. Do NOT perform any code changes.
 
@@ -13,17 +13,18 @@ Run this when you start work. It pulls latest code, does a quick governance heal
 
 ---
 
-## 🗺️ THREE-REPO ARCHITECTURE (Read Every Session)
+## 🗺️ FOUR-REPO ARCHITECTURE (Read Every Session)
 
-This project spans **3 repositories** with strict dependency rules. Violating these causes invisible failures.
+This project spans **4 repositories** with strict dependency rules. Violating these causes invisible failures.
 
 ### Repo Map
 
-| Repo                             | GitHub                                   | Local Path (relative to workspace)           | Role                                                                                                                                                                                                                         |
-| -------------------------------- | ---------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.**                                                             |
-| **`blaze-actions`**              | `thisisblaze/blaze-actions`              | `<workspace>/blaze-actions` (symlink to `_shared/`) | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
-| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `<workspace>/blaze-terraform-infra-core` (symlink to `_shared/`) | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks.                                                                                                                         |
+| Repo                             | GitHub                                   | Local Path (relative to workspace)           | Role |
+| -------------------------------- | ---------------------------------------- | -------------------------------------------- | ---- |
+| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.** |
+| **`blaze-actions`**              | `thisisblaze/blaze-actions` (**PUBLIC**) | `<workspace>/blaze-actions`                  | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows. Public repo — no secrets or MCP references allowed. |
+| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `<workspace>/blaze-terraform-infra-core`     | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks. |
+| **`blaze-conductor`**            | `thisisblaze/blaze-conductor` (private)  | `<workspace>/blaze-conductor`                | **AI Orchestration** — MCP servers + orchestrator clients. Checked out exclusively by `blaze-template-deploy` workflows via `GH_PAT`. |
 
 ### Dependency Chain
 
@@ -75,9 +76,9 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 
 ## Steps
 
-### 1. Pull Latest (All 3 Repos)
+### 1. Pull Latest (All 4 Repos)
 
-Run `git pull origin dev` (or current branch) in each repo.
+Run `git pull origin dev` (or current branch) in each repo (`blaze-template-deploy`, `blaze-actions`, `blaze-terraform-infra-core`, `blaze-conductor`).
 
 ### 2. Quick Governance Health Check
 
@@ -135,6 +136,7 @@ REPO STATUS:
   deploy (thebyte9):   ✅ pulled | 14/14 files | branch: <branch>
   actions (thisisblaze): ✅ pulled | 14/14 files | branch: <branch>
   infra-core:          ✅ pulled | 14/14 files | branch: <branch>
+  conductor:           ✅ pulled | branch: main
 
 MODULE REF CHECK:
   deploy/dev-network:  ?ref=<version>

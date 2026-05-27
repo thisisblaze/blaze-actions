@@ -1,12 +1,12 @@
 ---
-description: 🔧 Check engines — run a full diagnostic sweep across all 3 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
+description: 🔧 Check engines — run a full diagnostic sweep across all 4 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
 expected_output: A comprehensive 10-engine sweep read-out identifying health warnings.
 exclusions: Do NOT apply fixes directly; this is a diagnostic-only sweep.
 ---
 
 # Check Engines — Full Diagnostic Sweep
 
-Run this mid-session or weekly. It scans all 3 repos, flags issues, and tells you which workflow to run to fix them.
+Run this mid-session or weekly. It scans all 4 repos, flags issues, and tells you which workflow to run to fix them.
 **This is read-only — it reports but does NOT auto-fix or commit.**
 
 ## Execution
