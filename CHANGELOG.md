@@ -1,3 +1,13 @@
+## [Unreleased]
+
+### Changed
+- **chore(agent/governance)**: `engage.md` — Updated to 4-repo architecture. Repo map now includes `blaze-conductor` (private, `thisisblaze`). `blaze-actions` flagged as **PUBLIC** in map. Pull step covers all 4 repos. Ready Report includes conductor status line.
+- **chore(agent/governance)**: `allstop.md` — "3 repos" → "4 repos" throughout.
+- **chore(agent/governance)**: `checkengines.md` — "3 repos" → "4 repos" throughout.
+- **chore(agent/governance)**: `13-deep-cicd-maintenance.md` — Scope expanded to 4 repos. `blaze-conductor` added to Repositories in Scope. CAUTION block added: `blaze-actions` is **PUBLIC** — no conductor/MCP references allowed. Phase 2 agent scan, Phase 4 git log updated. Date bumped to 2026-05-27.
+
+---
+
 ## [v2.1.86] - 2026-05-26
 
 ### Changed
