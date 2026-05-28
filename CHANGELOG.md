@@ -1,3 +1,27 @@
+## v2.1.86 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-28
+- docs: daily audit update 2026-05-28
+- chore: end-of-day governance sync — 2026-05-27
+- chore: end-of-day governance sync — 2026-05-26
+- chore: Google Antigravity 2.0 migration + end-of-day governance sync — 2026-05-26
+- chore: align engage workflow and update print_env_versions paths
+- chore: end-of-day governance sync — 2026-05-15
+- chore: update CHANGELOG for v2.1.85
+- chore: update CHANGELOG for v2.1.85
+- chore: update CHANGELOG for v2.1.84
+
+### Fixed
+
+- fix(checkengines): scope TF ref scan to deploy .github/ only (Engine 4)
+- fix: bump dev-mini-network module refs v2.6.4 → v2.6.5 (resolve split-brain)
+
 ## [Unreleased]
 
 ### Fixed
