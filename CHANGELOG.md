@@ -6,6 +6,19 @@
 
 ### Changed
 
+- chore: update CHANGELOG for v2.1.87
+
+### Fixed
+
+
+## v2.1.87 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 
 ### Fixed
 
