@@ -98,13 +98,22 @@ def run(repos):
                 print(msg)
 
     # ── 2. Parse terraform module source refs ──────────────────────────────────
-    tf_paths = [deploy_path, actions_path]
+    # Only scan deploy_path's .github/ for Terraform module refs.
+    # blaze-actions is a GitHub Actions hub — it contains NO Terraform live stacks.
+    # Scanning actions_path leads to false positives from workspace mirror directories.
+    tf_paths = []
+    if deploy_path:
+        github_subdir = os.path.join(deploy_path, ".github")
+        if os.path.isdir(github_subdir):
+            tf_paths.append(github_subdir)
+
+
     for path in tf_paths:
         if not path:
             continue
-        for root, dirs, files in os.walk(path):
+        for root, dirs, files in os.walk(path, followlinks=False):
             # Prune heavy directories in-place
-            dirs[:] = [d for d in dirs if d not in ['.terraform', 'node_modules', '.git']]
+            dirs[:] = [d for d in dirs if d not in ['.terraform', 'node_modules', '.git', '_shared']]
             for file in files:
                 if file.endswith(".tf"):
                     with open(os.path.join(root, file), 'r') as f:
