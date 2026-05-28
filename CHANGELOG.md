@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### Fixed
+- **fix(checkengines/Engine 4)**: `engine4_modules.py` — Added FREEZE-annotation filter: lines containing `# FREEZE` are skipped when scanning blaze-actions workflow refs, preventing the intentional `v2.1.74` chaos-test pin in `90-daily-health-check.yml` from triggering false split-brain detection.
+- **fix(checkengines/Engine 4)**: `engine4_modules.py` — Scoped Terraform ref scan to `deploy_path/.github/` only. Previously the engine scanned `_shared/blaze-actions/` workspace mirror (a separate directory with an older checkout), producing false-positive split-brain on `v2.6.4`/`v2.6.5` refs. blaze-actions contains no Terraform live stacks.
+- **fix(checkengines/Engine 8)**: `engine8_workflows.py` — Added `INTENTIONAL_DIVERGENCE` allowlist. `90-daily-health-check.yml` differs between repos by design: `blaze-template-deploy` extends it with the `mcp-healing-agent` job (blaze-conductor + `ANTHROPIC_API_KEY`) which must never exist in the public blaze-actions repo per ADR-017.
+
 ### Changed
 - **chore(agent/governance)**: `engage.md` — Updated to 4-repo architecture. Repo map now includes `blaze-conductor` (private, `thisisblaze`). `blaze-actions` flagged as **PUBLIC** in map. Pull step covers all 4 repos. Ready Report includes conductor status line.
 - **chore(agent/governance)**: `allstop.md` — "3 repos" → "4 repos" throughout.
