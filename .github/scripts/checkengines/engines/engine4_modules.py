@@ -58,18 +58,22 @@ def run(repos):
             for file in os.listdir(workflows_dir):
                 if file.endswith(".yml") or file.endswith(".yaml"):
                     with open(os.path.join(workflows_dir, file), 'r') as f:
-                        content = f.read()
-                        matches = re.findall(
-                            r'uses:\s*thisisblaze/blaze-actions/\.github/workflows/.*?@([^\s]+)',
-                            content
-                        )
-                        actions_tags.update(matches)
-                        # also catch composite actions
-                        matches_actions = re.findall(
-                            r'uses:\s*thisisblaze/blaze-actions/\.github/actions/.*?@([^\s]+)',
-                            content
-                        )
-                        actions_tags.update(matches_actions)
+                        for line in f:
+                            # Skip FREEZE-annotated pins — these are intentional frozen versions
+                            # (e.g. v2.1.74 in 90-daily-health-check.yml is a chaos-test anti-loop pin)
+                            if "FREEZE" in line:
+                                continue
+                            matches = re.findall(
+                                r'uses:\s*thisisblaze/blaze-actions/\.github/workflows/.*?@([^\s]+)',
+                                line
+                            )
+                            actions_tags.update(matches)
+                            # also catch composite actions
+                            matches_actions = re.findall(
+                                r'uses:\s*thisisblaze/blaze-actions/\.github/actions/.*?@([^\s]+)',
+                                line
+                            )
+                            actions_tags.update(matches_actions)
 
     if not actions_tags:
         print("⚠️  [Engine 4] No github actions tags found to check.")

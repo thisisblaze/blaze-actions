@@ -6,6 +6,19 @@ def get_hash(path):
     with open(path, 'rb') as f:
         return hashlib.sha256(f.read()).hexdigest()
 
+# Intentional divergence allowlist.
+# Files listed here are allowed to differ across repos because they contain
+# private-repo-only features (e.g. blaze-conductor MCP integration) that
+# MUST NOT be added to the public blaze-actions repo per ADR-007 / 13-deep-cicd-maintenance.
+# Format: "filename": "reason"
+INTENTIONAL_DIVERGENCE = {
+    "90-daily-health-check.yml": (
+        "blaze-template-deploy extends this workflow with the 'mcp-healing-agent' job "
+        "(blaze-conductor MCP, ANTHROPIC_API_KEY). This job must never exist in the public "
+        "blaze-actions repo. Divergence is expected and correct. See ADR-017."
+    ),
+}
+
 def run(repos):
     issues = 0
     # 1. Check CHANGELOG exists
@@ -16,6 +29,12 @@ def run(repos):
 
     # 2. Parity check for daily health check workflow
     template = "90-daily-health-check.yml"
+
+    # Skip parity check for intentionally divergent files
+    if template in INTENTIONAL_DIVERGENCE:
+        print(f"✅  [Engine 8] '{template}' — intentional divergence (ADR-017: mcp-healing-agent is private-only). Skipped.")
+        return issues
+
     deploy_hc = os.path.join(repos.get('deploy', ''), ".github", "workflows", template)
     actions_hc = os.path.join(repos.get('actions', ''), ".github", "workflows", template)
     infra_hc = os.path.join(repos.get('infra', ''), ".github", "workflows", template)
@@ -26,7 +45,7 @@ def run(repos):
     if os.path.exists(infra_hc): hashes['infra'] = get_hash(infra_hc)
 
     unique_hashes = set(h for h in hashes.values() if h)
-    
+
     if len(unique_hashes) > 1:
         print(f"🔴 [Engine 8] Workflow parity failed. '{template}' differs structurally across repositories.")
         issues += 1
@@ -34,5 +53,5 @@ def run(repos):
         print(f"✅  [Engine 8] Core workflows ('{template}') are perfectly identical across all 3 repos.")
     else:
         print(f"⚠️  [Engine 8] Could not find '{template}' in all 3 repos to verify parity.")
-        
+
     return issues

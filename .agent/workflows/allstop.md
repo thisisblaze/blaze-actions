@@ -21,7 +21,7 @@ Run this at the end of your work session to ensure all governance files are in s
 
 ### 1. Standard File Audit
 
-For EACH of the 3 repos, verify ALL of these files exist:
+For EACH of the 4 repos, verify ALL of these files exist:
 
 | File                                   | Must Exist |
 | :------------------------------------- | :--------- |
@@ -46,7 +46,7 @@ If any file is missing, create it following the patterns from the other repos.
 
 Check the 3 `docs/AI_CONTEXT_GOVERNANCE.md` files:
 
-- **Shared sections** (Prime Directive, Golden Rule, Data Retention, Cost Control, Zero Trace, Cleanup Protocol, Cross-Repo Architecture) must be **identical** across all 3. If content was updated in one, propagate to the others.
+- **Shared sections** (Prime Directive, Golden Rule, Data Retention, Cost Control, Zero Trace, Cleanup Protocol, Cross-Repo Architecture) must be **identical** across all 4. If content was updated in one, propagate to the others.
 - **Repo-specific sections** (Protocol/Bootstrap, Workflows, Key References) must reference only files that **exist in that repo**. Verify all referenced workflow paths actually exist.
 - **Dates** must be updated to today if content was changed.
 - **NO `file:///` absolute links** allowed — all links must be relative.
