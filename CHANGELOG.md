@@ -1,3 +1,18 @@
+## v2.1.90 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.89 — add CF token fix note
+- chore: update CHANGELOG for v2.1.89
+- chore: update CHANGELOG for v2.1.89
+
+### Fixed
+
+
 ## v2.1.89 (2026-05-29)
 
 ### Added
