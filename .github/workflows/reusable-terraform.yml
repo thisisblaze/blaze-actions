@@ -1123,21 +1123,19 @@ jobs:
 
 
       - name: Sanitize CF Token for Provider Init
-        # CF provider v5 validates api_token against ^[a-zA-Z0-9_-]+$ at plan time,
-        # even when enable_cloudflare_records = false (provider is always initialized).
-        # Always rewrite TF_VAR_cloudflare_api_token via GITHUB_ENV using the sanitized
-        # value so the next step (Terraform Plan) picks up a guaranteed-clean token.
-        # Falls back to a format-valid placeholder if sanitization yields an empty string.
+        # CF provider v5.19.1 validates api_token at plan time even when
+        # enable_cloudflare_records = false (provider is always initialized by module).
+        # The real CLOUDFLARE_API_TOKEN may contain chars outside [a-zA-Z0-9_-] that
+        # CF provider v5 rejects (e.g. dots in newer token formats, encoding artifacts).
+        # Strategy: always inject a format-valid placeholder into TF_VAR_cloudflare_api_token
+        # so the provider initialises cleanly. The sanitized real token is preserved as
+        # CF_API_TOKEN_SANITIZED for curl calls in pre_apply.sh (which doesn't care about
+        # provider validation).
         run: |
           CLEAN=$(printf '%s' "${TF_VAR_cloudflare_api_token:-}" | tr -cd 'a-zA-Z0-9_-')
-          if [[ -z "$CLEAN" ]]; then
-            CLEAN="placeholder-cf-token-not-used-records-disabled"
-            echo "⚠️  CF token empty after sanitization — using placeholder"
-          else
-            echo "✅ CF token sanitized: ${#CLEAN} chars"
-          fi
-          # Always overwrite — ensures the multiline EOF from prior step doesn't linger
-          echo "TF_VAR_cloudflare_api_token=${CLEAN}" >> "$GITHUB_ENV"
+          echo "CF_API_TOKEN_SANITIZED=${CLEAN}" >> "$GITHUB_ENV"
+          echo "TF_VAR_cloudflare_api_token=placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
+          echo "✅ CF provider init: placeholder injected (real token preserved as CF_API_TOKEN_SANITIZED, ${#CLEAN} chars)"
 
       - name: Terraform Plan
 
