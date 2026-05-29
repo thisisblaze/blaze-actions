@@ -1,3 +1,15 @@
+## v2.1.96 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+
 ## v2.1.95 (2026-05-29)
 
 ### Added
