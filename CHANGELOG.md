@@ -1,3 +1,9 @@
+## v2.1.89 (2026-05-29)
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` — picks up GITHUB_ENV multiline EOF delimiter fix for CF token (prevents trailing newline corrupting `api_token` and causing CF provider v5 `Invalid Attribute Value` error on plan)
+
 ## v2.1.88 (2026-05-28)
 
 ### Added
