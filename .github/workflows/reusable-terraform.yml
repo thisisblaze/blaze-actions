@@ -1158,9 +1158,15 @@ jobs:
           # to determine if 'has_changes' is true for the Terraform Apply step downstream.
           # In destroy mode, use -refresh=false to prevent re-discovering resources that
           # were intentionally state rm'd by pre-destroy.sh (cache policies, WAF, CF function).
+          # Also use -refresh=false when the CF placeholder token is active: the CF provider v5
+          # will 401 on state refresh for any managed CF resource (e.g. ACM validation DNS record).
+          # The CF validation record is set-once and stable — skipping refresh is safe.
           REFRESH_FLAG=""
           if [[ "${{ inputs.destroy }}" == "true" ]]; then
             REFRESH_FLAG="-refresh=false"
+          elif [[ "${TF_VAR_cloudflare_api_token:-}" == "placeholder-cf-token-not-used-records-disabled" ]]; then
+            REFRESH_FLAG="-refresh=false"
+            echo "ℹ️  CF placeholder token active — using -refresh=false to skip CF provider state refresh"
           fi
 
           set +e
