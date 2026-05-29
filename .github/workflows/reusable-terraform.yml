@@ -1121,7 +1121,27 @@ jobs:
             echo "ℹ️  No pre-destroy.sh found — skipping"
           fi
 
+
+      - name: Sanitize CF Token for Provider Init
+        # CF provider v5 validates api_token against ^[a-zA-Z0-9_-]+$ at plan time,
+        # even when enable_cloudflare_records = false (provider is always initialized).
+        # If TF_VAR_cloudflare_api_token is empty or corrupt after sanitization,
+        # replace it with a format-valid placeholder so the provider initializes cleanly.
+        # The placeholder is never used for API calls — only for provider schema validation.
+        run: |
+          CURRENT=$(printf '%s' "${TF_VAR_cloudflare_api_token:-}" | tr -cd 'a-zA-Z0-9_-')
+          if [[ -z "$CURRENT" ]]; then
+            echo "⚠️  TF_VAR_cloudflare_api_token is empty after sanitization — injecting format-valid placeholder"
+            echo "TF_VAR_cloudflare_api_token<<__EOF__" >> "$GITHUB_ENV"
+            printf '%s' "placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
+            echo "" >> "$GITHUB_ENV"
+            echo "__EOF__" >> "$GITHUB_ENV"
+          else
+            echo "✅ TF_VAR_cloudflare_api_token is present (${#CURRENT} chars)"
+          fi
+
       - name: Terraform Plan
+
         id: plan
         run: |
           DESTROY_FLAG=""
