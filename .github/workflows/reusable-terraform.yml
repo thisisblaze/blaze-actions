@@ -1123,29 +1123,37 @@ jobs:
 
 
       - name: Sanitize CF Token for Provider Init
-        # CF provider v5.19.1 validates api_token at plan time even when
-        # enable_cloudflare_records = false (provider is always initialized by module).
-        # The real CLOUDFLARE_API_TOKEN may contain chars outside [a-zA-Z0-9_-] that
-        # CF provider v5 rejects (e.g. dots in newer token formats, encoding artifacts).
-        # Strategy:
-        #   - If enable_cloudflare_records = false (network stack, no real CF API calls):
-        #     inject a format-valid placeholder so the provider initialises cleanly.
-        #   - If enable_cloudflare_records = true (app stack, real CF DNS records managed):
-        #     use the real sanitized token so CF API calls during apply succeed.
-        # The sanitized real token is always preserved as CF_API_TOKEN_SANITIZED.
+        # CF provider v5.19.1 validates api_token format at plan time.
+        # Strategy by stack type:
+        #   - enable_cloudflare_records = false (network stack):
+        #     inject a format-valid placeholder so the provider initialises without
+        #     making real API calls (no managed CF resources in this stack).
+        #   - enable_cloudflare_records = true/absent (app stack, CF DNS managed):
+        #     pass the raw token with only whitespace stripped — preserves dots in
+        #     newer CF token formats that tr -cd would destroy.
+        # CF_API_TOKEN_SANITIZED (whitespace-stripped) is always set for pre_apply.sh curl calls.
         run: |
-          CLEAN=$(printf '%s' "${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}" | tr -cd 'a-zA-Z0-9_-')
+          # Strip only whitespace/control chars — preserve dots, slashes, etc. in newer CF tokens
+          RAW_TOKEN="${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}"
+          CLEAN=$(printf '%s' "${RAW_TOKEN}" | tr -d '[:space:][:cntrl:]')
           echo "CF_API_TOKEN_SANITIZED=${CLEAN}" >> "$GITHUB_ENV"
+          echo "ℹ️  CF token raw length: ${#RAW_TOKEN}, stripped length: ${#CLEAN}"
+
+          # Always export CLOUDFLARE_API_TOKEN so providers using env var (not api_token attr) work.
+          # multi-site-app/main.tf uses the env var to bypass CF provider v5 HCL schema validation.
+          echo "CLOUDFLARE_API_TOKEN=${CLEAN}" >> "$GITHUB_ENV"
 
           # Detect enable_cloudflare_records from tfvars (false = network/no-CF stack)
-          CF_RECORDS_ENABLED=$(grep -E '^enable_cloudflare_records\s*=' terraform.tfvars 2>/dev/null | tr -d ' "' | cut -d= -f2 || echo "true")
+          TFVARS_PATH="${{ inputs.deploy_path }}/terraform.tfvars"
+          CF_RECORDS_ENABLED=$(grep -E '^enable_cloudflare_records\s*=' "${TFVARS_PATH}" 2>/dev/null | tr -d ' "' | cut -d= -f2 | tr -d '[:space:]' || echo "true")
+          [[ -z "${CF_RECORDS_ENABLED}" ]] && CF_RECORDS_ENABLED="true"
 
           if [[ "${CF_RECORDS_ENABLED}" == "false" ]]; then
             echo "TF_VAR_cloudflare_api_token=placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
-            echo "ℹ️  enable_cloudflare_records=false — placeholder injected for CF provider init"
+            echo "ℹ️  enable_cloudflare_records=false — placeholder injected (no CF API calls this stack)"
           else
             echo "TF_VAR_cloudflare_api_token=${CLEAN}" >> "$GITHUB_ENV"
-            echo "✅ enable_cloudflare_records=true — real sanitized token set (${#CLEAN} chars)"
+            echo "✅ enable_cloudflare_records=true — whitespace-stripped token set (${#CLEAN} chars)"
           fi
 
       - name: Terraform Plan
