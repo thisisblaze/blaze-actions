@@ -1,4 +1,11 @@
+## v2.2.2 (2026-05-30)
+
+### Fixed
+
+- `01-provision-infra.yml`: bump internal `reusable-terraform.yml` pin `v2.1.96` → `v2.2.1`. Root cause of `01c` multi-site-app apply failures: `v2.1.96` always-injects a CF placeholder token for ALL stacks (no conditional check), and does NOT export `CLOUDFLARE_API_TOKEN` to `$GITHUB_ENV`. The `multi-site-app/main.tf` CF provider was migrated in `v2.2.1` commit to read auth from `CLOUDFLARE_API_TOKEN` env var — with `v2.1.96` in the chain, `CLOUDFLARE_API_TOKEN` is never set by the workflow, so CF API calls during apply hit 400/9106 "Missing Authorization headers". Fix: pin to `v2.2.1` which has conditional placeholder logic (only injects placeholder when `enable_cloudflare_records=false`) and correctly exports `CLOUDFLARE_API_TOKEN`.
+
 ## v2.2.1 (2026-05-30)
+
 
 ### Added
 
