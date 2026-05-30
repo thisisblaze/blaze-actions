@@ -1,3 +1,16 @@
+## v2.2.0 (2026-05-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.99
+
+### Fixed
+
+
 ## v2.1.99 (2026-05-29)
 
 ### Added
