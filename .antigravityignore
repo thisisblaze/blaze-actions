@@ -1,0 +1,7 @@
+# Antigravity AI indexing exclusions
+docs/archive/
+
+# Terraform cache — never index provider binaries or downloaded modules
+**/.terraform/
+.terraform/
+**/.terraform.lock.hcl
