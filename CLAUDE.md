@@ -3,13 +3,13 @@
 > **Status: SCALED (Multi-Tenant V2)**. All agent operations must adhere to the Phase 1 Foundation / Phase 2 Tenant orchestrated mapping logic.
 
 ## 1. The 4-Repo Architecture
-The Blaze ecosystem consists of 4 distinct repositories:
-1. `blaze-template-deploy`: The central hub and orchestration layer. Contains tenant configurations, state mappings, and client endpoints.
+The Blaze ecosystem consists of 4 distinct functional layers (repositories):
+1. **Tenant Implementation Repo** (e.g., `blaze-template-deploy`, `shopware-km`): The central hub and orchestration layer. Contains tenant-specific configurations, state mappings, and client endpoints.
 2. `blaze-actions`: The shared CI/CD engine. All workflows and orchestration pipelines execute from here.
 3. `blaze-terraform-infra-core`: The shared infrastructure module registry. Contains pure, agnostic Terraform modules.
 4. `blaze-conductor`: The AI Orchestration layer containing MCP servers.
 
-**CRITICAL RULE**: Do not duplicate workflows or modules into `blaze-template-deploy`. Reference them from the shared repositories.
+**CRITICAL RULE**: Do not duplicate workflows or modules into the Tenant Implementation Repo. Always reference them natively from the shared parent repositories (`blaze-actions` / `blaze-terraform-infra-core`).
 
 ## 2. Agent Workflows & The 5-Role Model
 When executing slash commands or workflows in `.agent/workflows/`, you must adopt the specified role to maintain context:

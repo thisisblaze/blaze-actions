@@ -260,6 +260,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -523,6 +527,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -596,6 +604,10 @@
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -709,6 +721,10 @@
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -1098,6 +1114,10 @@
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -1251,6 +1271,10 @@
 
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -1551,6 +1575,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -1584,6 +1612,10 @@
 
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -1805,6 +1837,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -1837,6 +1873,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -2533,6 +2573,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -2565,6 +2609,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -4344,6 +4392,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -4376,6 +4428,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -4428,6 +4484,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -4460,6 +4520,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -4509,6 +4573,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -4541,6 +4609,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -4613,6 +4685,10 @@
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -4645,6 +4721,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -4757,6 +4837,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -4789,6 +4873,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -5166,6 +5254,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -5198,6 +5290,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -5248,6 +5344,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -5280,6 +5380,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -5860,6 +5964,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -5892,6 +6000,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -5949,6 +6061,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -5981,6 +6097,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6038,6 +6158,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6070,6 +6194,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6124,6 +6252,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6156,6 +6288,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6207,6 +6343,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6239,6 +6379,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6295,6 +6439,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6327,6 +6475,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6427,6 +6579,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6459,6 +6615,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6540,6 +6700,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6572,6 +6736,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
@@ -6790,6 +6958,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
 
@@ -6822,6 +6994,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
 
 ### Added
 - **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
