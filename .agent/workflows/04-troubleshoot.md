@@ -16,7 +16,7 @@ role: 🔧 Engineer
 > 💡 **Claude Code**: Use standard bash `grep -rnw`.
  to check `docs/development_guidelines.md` for known error patterns.
 4.  **Confirm Infrastructure state**:
-    - **AWS**: Use `aws ecs describe-tasks` and `aws elbv2 describe-target-health` to inspect runtime state.
+    - **AWS**: Use `aws ecs describe-tasks` and `aws elbv2 describe-target-health` to inspect runtime state. *(Remember to `export AWS_PROFILE` per CLAUDE.md)*
     - **GCP**: Use `gcloud run revisions list` and `gcloud run services describe` to inspect Cloud Run state.
     - **Azure**: Use `az containerapp revision list` to inspect Container App state.
 5.  **Root Cause Identification**: Synthesize findings and identify the specific fix required.

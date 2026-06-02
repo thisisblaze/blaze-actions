@@ -261,6 +261,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -520,6 +524,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
  — 2026-05-09 — /13-deep-cicd-maintenance
@@ -588,6 +596,10 @@
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
 ## [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -697,6 +709,10 @@
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -1083,6 +1099,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -1231,6 +1251,10 @@
 
 
 ## [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -1528,6 +1552,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -1556,6 +1584,10 @@
 
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -1774,6 +1806,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -1801,6 +1837,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -2494,6 +2534,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -2521,6 +2565,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -4297,6 +4345,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -4324,6 +4376,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -4373,6 +4429,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -4400,6 +4460,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -4446,6 +4510,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -4473,6 +4541,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -4542,6 +4614,10 @@
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -4569,6 +4645,10 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -4678,6 +4758,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -4705,6 +4789,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5079,6 +5167,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -5106,6 +5198,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5153,6 +5249,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -5180,6 +5280,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5757,6 +5861,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -5784,6 +5892,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5838,6 +5950,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -5865,6 +5981,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5919,6 +6039,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -5946,6 +6070,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -5997,6 +6125,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6024,6 +6156,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -6072,6 +6208,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6099,6 +6239,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -6152,6 +6296,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6179,6 +6327,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -6276,6 +6428,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6303,6 +6459,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -6381,6 +6541,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6408,6 +6572,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
@@ -6623,6 +6791,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
 - **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
 
@@ -6650,6 +6822,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
