@@ -22,7 +22,7 @@ on:
         options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
         required: true
       project:
-        description: "Project (App Identity) - e.g. thisisblaze"
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
         type: string
         required: true
         default: "thisisblaze"
@@ -119,9 +119,8 @@ on:
         type: string
         default: ""
       project:
-        required: false
+        required: true
         type: string
-        default: "thisisblaze"
       stack:
         required: true
         type: string
@@ -533,7 +532,7 @@ jobs:
           export GH_TOKEN="${GH_PAT:-${GITHUB_TOKEN}}"
 
 
-          if gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh -H "Accept: application/vnd.github.v3.raw" > dynamic_import.sh; then
+          if gh api repos/${{ github.repository }}/contents/.github/actions/resource-importer/import.sh -H "Accept: application/vnd.github.v3.raw" > dynamic_import.sh; then
             chmod +x dynamic_import.sh
             bash dynamic_import.sh
           else

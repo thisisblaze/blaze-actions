@@ -24,7 +24,7 @@ on:
           - multi-site
         required: true
       project:
-        description: "Project (App Identity) - e.g. thisisblaze"
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
         type: string
         required: true
         default: "thisisblaze"
@@ -95,9 +95,8 @@ on:
         type: string
         default: ""
       project:
-        required: false
+        required: true
         type: string
-        default: "thisisblaze"
       branch_name:
         required: false
         type: string
