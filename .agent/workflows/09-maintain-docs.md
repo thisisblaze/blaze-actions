@@ -2,8 +2,10 @@
 description: Perform a routine check of the documentation integrity, ensuring it adheres to Feb 2026 standards.
 expected_output: Refreshed markdown files, 12-domain and killchain validations complete.
 exclusions: Do NOT alter infrastructure or source code logic while auditing docs.
+role: 🧑‍💼 PM / Tech Lead
 
 ---
+
 
 # Workflow: Documentation Maintenance Sweep
 

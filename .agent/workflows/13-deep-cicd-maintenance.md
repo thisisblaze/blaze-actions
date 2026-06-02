@@ -2,7 +2,10 @@
 description: 🧹 Deep CI/CD Maintenance — strictly align ops code, documentation, agent workflows, and timestamps across all 4 repos.
 expected_output: Synchronized operations code, workflows, and action timings across all 4 repos.
 exclusions: Do NOT modify the terraform modules or stack topologies during CI/CD maintenance.
+role: 🔧 Engineer
+
 ---
+
 
 **Last Updated**: 2026-05-27
 

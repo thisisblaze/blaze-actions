@@ -2,8 +2,10 @@
 description: Run Terraform plan-only (dry-run) for one or all AWS stacks — fast, no apply, no stress test
 expected_output: Terraform plan outputs showing expected changes, with no live alterations.
 exclusions: Do NOT execute terraform apply. Do NOT modify the tfstate.
+role: 🕵️ QA
 
 ---
+
 
 // turbo-all
 

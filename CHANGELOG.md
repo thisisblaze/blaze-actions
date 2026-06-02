@@ -260,6 +260,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Changed
 - **chore(ai)**: Platform-Agnostic Workflow Optimization (Plan 154 Phase 1-5). Upgraded all agent workflows across the 4 repositories to gracefully degrade between Antigravity 2.0 (native tools) and CLI agents (Claude Code).
 - **chore(ai)**: IDE Parity. Synced `.cursorrules` Agent Workflows instructions and instantiated `.github/copilot-instructions.md` to ensure identical `/slash-command` execution behavior across Cursor and GitHub Copilot.
@@ -512,7 +517,12 @@
 - chore(modules/2026-05-10): bump all GCP live stack Terraform module refs `v2.5.12` → `v2.6.2` (31 files). GCP stacks now at full parity with AWS stacks on `v2.6.2`.
 - chore: end-of-day governance sync — 2026-05-10
 
-## [Unreleased] — 2026-05-09 — /13-deep-cicd-maintenance
+## [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+ — 2026-05-09 — /13-deep-cicd-maintenance
 
 ### Changed
 - chore(maintenance): bump all `blaze-template-deploy` Terraform module refs from `v2.4.8` → `v2.5.12` across all 58 live stacks (AWS + GCP). Eliminates Engine 4 split-brain drift detected by `/checkengines`.
@@ -578,6 +588,11 @@
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
 ## [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -682,6 +697,11 @@
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -1062,6 +1082,11 @@
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -1206,6 +1231,11 @@
 
 
 ## [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -1497,6 +1527,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -1521,6 +1556,11 @@
 
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -1733,6 +1773,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -1756,6 +1801,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -2443,6 +2493,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -2466,6 +2521,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4236,6 +4296,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4259,6 +4324,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4302,6 +4372,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4325,6 +4400,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4365,6 +4445,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4388,6 +4473,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4451,6 +4541,11 @@
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4474,6 +4569,11 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4577,6 +4677,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4600,6 +4705,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -4968,6 +5078,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -4991,6 +5106,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5032,6 +5152,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5055,6 +5180,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5626,6 +5756,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5649,6 +5784,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5697,6 +5837,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5720,6 +5865,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5768,6 +5918,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5791,6 +5946,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5836,6 +5996,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5859,6 +6024,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5901,6 +6071,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5924,6 +6099,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -5971,6 +6151,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -5994,6 +6179,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -6085,6 +6275,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -6108,6 +6303,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -6180,6 +6380,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -6203,6 +6408,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 
@@ -6412,6 +6622,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
 ### Agent — 2026-05-13 — Client Governance Workflows
 
 - No code changes to blaze-actions today.
@@ -6435,6 +6650,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
 
 ### Agent — 2026-05-13 — Client Governance Workflows
 

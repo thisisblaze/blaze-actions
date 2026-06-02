@@ -2,8 +2,10 @@
 description: Check status of a running or completed stress test — call any time after /03-fire-stress-test
 expected_output: Live workflow run status, error extractions, and final completion confirmation.
 exclusions: Do NOT cancel or restart the workflow run directly.
+role: 🚨 SRE
 
 ---
+
 
 // turbo-all
 

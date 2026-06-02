@@ -2,8 +2,10 @@
 description: execute deep-dive troubleshooting and root cause analysis
 expected_output: Root cause analysis report detailing the exact failure point and proposed fix.
 exclusions: Do NOT deploy speculative fixes without user approval or moving to the fix phase.
+role: 🔧 Engineer
 
 ---
+
 
 > **System Context**: BEFORE executing this workflow, you MUST read and adopt the persona defined in [AGENT_PERSONA_SRE_DAEMON.md](file:///docs/prompts/AGENT_PERSONA_SRE_DAEMON.md).
 

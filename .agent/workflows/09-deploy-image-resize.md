@@ -2,8 +2,10 @@
 description: Deploy and verify CloudFront image resize functionality
 expected_output: Verified Lambda@Edge distribution logic for CloudFront image resizing.
 exclusions: Do NOT modify root DNS or other independent CDN settings.
+role: 🔧 Engineer
 
 ---
+
 
 # Deploy Image Resize
 

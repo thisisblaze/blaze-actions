@@ -2,8 +2,10 @@
 description: 🖖 All stop — end-of-day governance sync across all 4 repos
 expected_output: A finalized handoff state, completed doc updates, and all uncommitted code pushed.
 exclusions: Do NOT start new complex tasks during the allstop governance sequence.
+role: 🧑‍💼 PM / Tech Lead
 
 ---
+
 
 
 

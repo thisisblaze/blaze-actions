@@ -2,7 +2,10 @@
 description: Troubleshoot and fix CloudFront cache behaviors, dependency issues, and image resize problems
 expected_output: Identified cache behaviors, headers, and CDN configuration faults.
 exclusions: Do NOT invalidate entire caches blindly without isolating the URL path.
+role: 🔧 Engineer
+
 ---
+
 
 # CloudFront Troubleshooting Guide
 

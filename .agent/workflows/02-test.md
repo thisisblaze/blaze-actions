@@ -2,8 +2,10 @@
 description: design and execute verification plans for infrastructure and code changes
 expected_output: Clear, reproducible test outputs proving stability or failure of the system.
 exclusions: Do NOT implement code fixes during this workflow. This is strictly a testing/verification workflow.
+role: 🕵️ QA
 
 ---
+
 
 # Verification Workflow
 

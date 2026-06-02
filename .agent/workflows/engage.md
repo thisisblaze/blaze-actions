@@ -2,8 +2,10 @@
 description: 🖖 Engage — pulls latest, audits governance across all 4 repos, loads context
 expected_output: A printed "START-OF-DAY REPORT" containing status and overnight changes.
 exclusions: Do NOT automatically load the massive architecture graphs or AI_CONTEXT_GOVERNANCE.md. Token frugality is required. Do NOT perform any code changes.
+role: 🧑‍💼 PM / Tech Lead
 
 ---
+
 
 // turbo-all
 

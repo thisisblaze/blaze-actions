@@ -2,7 +2,10 @@
 description: Run a best-practice audit by cross-referencing current CI/CD workflows against the curated reference source library
 expected_output: A gap analysis report in docs/reports/YYYY-MM-DD-best-practice-audit.md
 exclusions: Read-only. Do NOT modify workflows or infrastructure during this audit. Report findings only.
+role: 🕵️ QA
+
 ---
+
 
 # 12 — Best Practice Audit
 

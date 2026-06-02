@@ -2,7 +2,10 @@
 description: Freezes the current AI session state to prevent context bloat and rate limits.
 expected_output: A finalized handoff state, completed doc updates, and all uncommitted code pushed.
 exclusions: Do NOT start new complex tasks during the handoff governance sequence.
+role: 🧑‍💼 PM / Tech Lead
+
 ---
+
 
 # Handoff Session
 

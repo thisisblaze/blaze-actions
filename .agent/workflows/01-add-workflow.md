@@ -2,7 +2,10 @@
 description: Add a new GitHub Actions workflow to blaze-actions
 expected_output: Scaffolded and linted reusable GitHub actions YAML workflow.
 exclusions: Do NOT execute the workflow or deploy straight to production branches.
+role: 🔧 Engineer
+
 ---
+
 
 # Add New Workflow
 
