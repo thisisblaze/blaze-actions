@@ -1,5 +1,5 @@
 ---
-description: 🔧 Check engines — run a full diagnostic sweep across all 4 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
+description: 🔧 Check engines — run a full diagnostic sweep across all 4 repos (docs, agent workflows, graphs, modules, security, hygiene, parity)
 expected_output: A comprehensive 10-engine sweep read-out identifying health warnings.
 exclusions: Do NOT apply fixes directly; this is a diagnostic-only sweep.
 role: 🚨 SRE
@@ -29,8 +29,7 @@ Read the stdout from the python execution and report the dashboard results to th
 **RECOMMENDED ACTIONS mapping based on failures:**
 If you see failures, suggest these workflows:
 - → `/09-maintain-docs` (Engine 1, 6)
-- → `/11-maintain-prompts-ai` (Engine 2, 8)
-- → `/13-deep-cicd-maintenance` (Engine 1, 2, 8; for active deep sync of docs, prompts, and timestamps)
+- → `/13-deep-cicd-maintenance` (Engine 1, 2, 8; for active deep sync of docs, agent workflows, and timestamps)
 - → `/slash-weekly-graph` (Engine 3)
 - → `/08-audit` (Engine 5)
 - → `/cross-environment-consistency` (Engine 7)

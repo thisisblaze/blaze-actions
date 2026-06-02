@@ -83,7 +83,7 @@ gh run list --workflow="01a-provision-network.yml" --repo thebyte9/blaze-templat
 
 ### 3. Frugal Reading
 
-- Do **NOT** read the full `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` automatically here (it should be loaded in `/engage`).
+- Do **NOT** read the full `AGENTS.md` automatically here (it should be loaded in `/engage`).
 - Do **NOT** read `docs/reference/NETWORK_STACK_RESOURCES.md` completely. Instead use `grep_search` on it to find the specific Resource Naming convention for the service you are about to build.
 
 ### 4. Output Summary

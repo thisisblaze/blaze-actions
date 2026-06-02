@@ -7,7 +7,7 @@ role: 🔧 Engineer
 ---
 
 
-> **System Context**: BEFORE executing this workflow, you MUST read and adopt the persona defined in [AGENT_PERSONA_SRE_DAEMON.md](file:///docs/prompts/AGENT_PERSONA_SRE_DAEMON.md).
+> **System Context**: BEFORE executing this workflow, you MUST read and adopt the persona defined in [sre.agent.md](file:///.github/agents/sre.agent.md).
 
 1.  **Isolate Failure Layer**: Identify if the issue is in Terraform, network ingress, ECS container, or application code.
 2.  **Analyze Drift**: Run `terraform plan` to identify discrepancies between code and reality.

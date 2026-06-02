@@ -113,7 +113,7 @@ Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the 
 
 ### 4. Load Context (Hub Repo)
 
-Read `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` from `blaze-template-deploy`.
+Read `AGENTS.md` and `.github/agents/maintainer.agent.md` from `blaze-template-deploy`.
 
 **CRITICAL TOKEN FRUGALITY RULE:**
 Do **NOT** automatically read `AI_CONTEXT_GOVERNANCE.md`, architecture graphs, or the knowledge library on startup.

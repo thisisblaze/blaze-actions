@@ -30,9 +30,7 @@ package.json
 ## Phase 1: Preparation
 
 1.  **Load Standards**:
-    - Read `docs/AI_CONTEXT_GOVERNANCE.md` (Governance & Cost).
-    - Read `docs/prompts/00_core/DAILY_DOCUMENTATION_AUDIT.md` (12-Domain Multi-Cloud Framework).
-    - Read `docs/prompts/03_manual/MONTHLY_DOCUMENTATION_REVIEW.md` (Review Criteria).
+    - Read `docs/AI_CONTEXT_GOVERNANCE.md` (Governance, Cost, 12-Domain Framework, and Review Criteria).
 
 2.  **Initialize Report**:
     - Create a new report file: `docs/reports/YYYY/MM/YYYY-MM-DD-DOCS-SWEEP.md`.
@@ -53,9 +51,9 @@ Iterate through these directories. For each, check **Date Freshness** (< 30 days
     - Azure: "Container Apps" (with Managed Environment)
   - Must link to `AI_CONTEXT_GOVERNANCE.md`.
 
-### 2. Core Prompts (`docs/prompts/00_core/`)
+### 2. Core Agents (`.github/agents/`)
 
-- **Check**: `REPOSITORY_SYSTEM_PROMPT.md`, `AGENT_PERSONA_SRE_DAEMON.md`, `DAILY_DOCUMENTATION_AUDIT.md`.
+- **Check**: `maintainer.agent.md`, `sre.agent.md`.
 - **Criteria**:
   - Must reference **12-Domain Framework** (not 11).
   - Must reference **5-Killchain Security** (not 4).

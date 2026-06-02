@@ -11,7 +11,7 @@ role: 🔧 Engineer
 
 # Deep CI/CD Maintenance Sync
 
-This is a master command to actively perform deep maintenance across all **four** infrastructure repositories. Unlike `/checkengines` (which is read-only) and `/allstop` (which is a fast daily sync), this workflow **actively analyzes** CI/CD definitions and forces documentation, AI prompts, and agent workflows to match reality perfectly.
+This is a master command to actively perform deep maintenance across all **four** infrastructure repositories. Unlike `/checkengines` (which is read-only) and `/allstop` (which is a fast daily sync), this workflow **actively analyzes** CI/CD definitions and forces documentation and agent workflows to match reality perfectly.
 
 **STRICT RULE 1: YOU MUST NOT TOUCH ANY APPLICATION CODE. Do NOT modify any files within the `blaze-` project folders (e.g., `blaze-frontend`, `blaze-api`, `blaze-admin`) under any circumstances.**
 **STRICT RULE 2: ABSOLUTELY NO MASS DATE BUMPING. Do NOT write scripts that blindly update `Last Updated` strings across all files. You MUST read the file contents, compare them with the actual `.github/workflows/*.yml` code, identify architectural or input drift, and fix the content. You may only update the timestamp of a file AFTER you have actively analyzed its content and confirmed it matches the true CI/CD state.**
@@ -48,9 +48,9 @@ This is a master command to actively perform deep maintenance across all **four*
    - Scan `.agent/workflows/*.md` across all 4 repos.
    - **Deep Analysis Required**: Read the agent workflow files and compare them against the actual GitHub Actions. Are the `gh workflow run` commands still passing the correct inputs? Are they referencing workflows that still exist? Fix any drift.
    - Specifically verify: all "4 repos" references have been updated to "4 repos" in agent workflows.
-2. **Review AI Prompts**:
-   - In `blaze-template-deploy`, review `docs/prompts/00_core/` files and other prompt directories.
-   - **Deep Analysis Required**: Read the prompts. Do they accurately reflect how CI/CD currently works (e.g., native ECS blue/green, newest multi-cloud pipelines, changes to stress testing)? If the pipeline has evolved, update the prompt to teach the AI the new reality.
+2. **Review AI Agent Instructions**:
+   - In `blaze-template-deploy`, review `.agent/workflows/` and `.github/agents/` files.
+   - **Deep Analysis Required**: Read the agent workflows. Do they accurately reflect how CI/CD currently works (e.g., native ECS blue/green, newest multi-cloud pipelines, changes to stress testing)? If the pipeline has evolved, update the agent workflow to teach the AI the new reality.
 
 ## Phase 3: Deep Timestamp Sync (All Repos)
 
