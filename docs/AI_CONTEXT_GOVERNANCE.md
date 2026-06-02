@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-27
+**Last Updated**: 2026-06-02
 **Owner**: Infrastructure Team
 
 ---
@@ -166,7 +166,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | :---------------------------------- | :------------------------------------------- | :------------ |
 | `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
-| `shopware-km` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
+| `shopware-km` | Application deployment & infra instantiation | `thebyte9`    |
 
 ## 11. Deployment Architecture Facts (2026-05-12)
 

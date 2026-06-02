@@ -191,6 +191,36 @@ jobs:
              echo "STAGE_KEY=" >> $GITHUB_ENV
           fi
 
+      - name: Drain ECS Services (Scale to 0)
+        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') && inputs.cluster_name != ''
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          REGION="${{ inputs.aws_region }}"
+          echo "🛑 Checking ECS cluster: $CLUSTER for active services to drain..."
+          
+          STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER" --region "$REGION" --query "clusters[0].status" --output text 2>/dev/null || echo "MISSING")
+          if [[ "$STATUS" == "ACTIVE" ]]; then
+             SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" --query "serviceArns[]" --output text 2>/dev/null || echo "")
+             if [[ -n "$SERVICES" && "$SERVICES" != "None" ]]; then
+                for SVC in $SERVICES; do
+                   echo "   📉 Scaling service $SVC to 0 desired tasks..."
+                   if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                      echo "      [DRY RUN] Would run: aws ecs update-service --cluster $CLUSTER --service $SVC --desired-count 0"
+                   else
+                      aws ecs update-service --cluster "$CLUSTER" --service "$SVC" --desired-count 0 --region "$REGION" > /dev/null || echo "      ⚠️ Failed to scale service"
+                   fi
+                done
+                if [[ "${{ inputs.dry_run }}" != "true" ]]; then
+                   echo "   ⏳ Waiting 15 seconds for tasks to begin draining..."
+                   sleep 15
+                fi
+             else
+                echo "   ✅ No active services found in cluster."
+             fi
+          else
+             echo "   ✅ Cluster not found or already inactive ($STATUS)."
+          fi
+
       - name: Cleanup S3 CRR Configs (Pre-Bucket-Empty)
         # Plan 151 L5/L13: CRR replication config MUST be deleted BEFORE bucket contents.
         # AWS will block bucket deletion if a replication config referencing it still exists.
