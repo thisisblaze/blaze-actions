@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-06-02
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 38 main + 24 reusable = 62 total  
-**Version**: v2.1.80  
-**Last Updated**: 2026-05-09
+**Total Workflows**: 30 main + 24 reusable = 54 total  
+**Version**: v2.2.3  
+**Last Updated**: 2026-06-02
 
 ---
 
@@ -670,11 +670,22 @@ These are called by main workflows, not directly by users.
 
 ## Version History
 
+**v2.2.3** (2026-06-02):
+- AI governance: Added `AGENTS.md` (root) and `.github/agents/` directory with `@maintainer` and `@sre` custom agent persona definitions across all 4 repos.
+- Upgraded `.github/copilot-instructions.md` across all 4 repos from a stub to a substantive guide.
+- Abstracted all hardcoded `blaze-template-deploy` references in shared parent repo `CLAUDE.md` files to generic "Tenant Implementation Repo" terminology — enabling clean multi-tenant reuse.
+- Added `docs/operations/nuke_environment_runbook.md` (comprehensive 5-stage environment teardown manual).
+- **Workflow count corrected**: 30 main + 24 reusable = 54 total (previous count of 38 main was incorrect — includes only root-level non-reusable workflows).
+
+**v2.2.2** (2026-05-31):
+- Platform-Agnostic Workflow Optimization (Plan 154 Phase 1–5): Self-healing orchestrator loop, 5-Role CLAUDE.md model, IDE parity.
+- Bumped GHA self-refs `v2.1.74` → `v2.2.2`, Terraform pins → `v2.6.9`.
+
 **v2.1.80** (2026-05-09):
 - Plan 151 + Plan 152 delivery: Added 3 new reusable workflows to catalog (`reusable-backup-snapshot`, `reusable-dev-sleep-schedule`, `reusable-ecs-health-snapshot`).
 - Bumped all action pins `@v2.1.74` → `@v2.1.80` across all 3 repos (Engine 8 parity restored).
 - Fixed `@dev` refs in `03-ecs-health-snapshot.yml` and `04-dev-sleep-schedule.yml` callers → `@v2.1.80`.
-- Total workflow count: 38 main + 24 reusable = 62 total.
+- Total workflow count corrected: 30 main + 24 reusable = 54 total.
 - **2026-05-12**: Added `/12-best-practice-audit` agent workflow + `docs/learning/REFERENCE_SOURCE_LIBRARY.md` (5-domain, 9 priority checks, knowledge base freshness step).
 
 **v2.1.77** (2026-05-08):
@@ -753,6 +764,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-05-12  
+**Last Updated**: 2026-06-02  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

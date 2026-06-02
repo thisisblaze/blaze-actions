@@ -260,8 +260,18 @@
 
 ## [Unreleased]
 
+### Added
+- **feat(ai)**: `AGENTS.md` (repo root) — plain-markdown project context for all AI tools (Copilot, Cursor, Antigravity, Aider).
+- **feat(ai)**: `.github/agents/maintainer.agent.md` — VS Code Custom Agent persona for the `@maintainer` role.
+- **feat(ai)**: `.github/agents/sre.agent.md` — VS Code Custom Agent persona for the `@sre` role.
+
 ### Changed
 - **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+- **docs(catalog)**: `WORKFLOW_CATALOG.md` corrected workflow count (38+24=62 was wrong → 30+24=54 actual files); bumped to v2.2.3.
+- **docs(catalog)**: `REUSABLE_WORKFLOWS.md` fixed stale `stress-test.yml` code example (file no longer exists); version pins updated to v2.2.2; timestamps updated to 2026-06-02.
+- **docs(workflows)**: `troubleshoot-terraform-locks.md` — replaced hardcoded `thisisblaze` state key examples with generic `<project-key>/<client>` placeholders; timestamp updated to 2026-06-02.
+- **docs(workflows)**: `debug-cicd-workflows.md` — timestamp updated to 2026-06-02 (content verified accurate).
+- **docs(workflows)**: `03-monitor-stress.md` — fixed stale `--workflow=stress-test.yml` reference (file does not exist; now points to `03-stress-test.yml` wrapper in tenant repo).
 
 
 ### Added
