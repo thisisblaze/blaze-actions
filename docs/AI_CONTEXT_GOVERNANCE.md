@@ -62,7 +62,7 @@ _(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-c
 
 **Action**:
 
-1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
+1.  Read the **Constitution**: `AGENTS.md` and `.agent/workflows/`
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
 4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS) Blaze stack."
 
@@ -108,7 +108,7 @@ Consult these approved workflows for specific operational tasks:
 
 - **Naming Standard**: `docs/reference/NETWORK_STACK_RESOURCES.md`
 - **Visual Hub**: `docs/graphs/`
-- **Maintenance Prompt**: `docs/prompts/02_weekly/WEEKLY_VISUALIZATION_UPDATE.md`
+- **Maintenance Workflow**: `.agent/workflows/slash-weekly-graph.md`
 
 ## 7. Stage Safety Protocol (Cost Control)
 

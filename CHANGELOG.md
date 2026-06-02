@@ -1,3 +1,12 @@
+# Changelog
+
+All notable changes to the `blaze-actions` project will be documented in this file.
+
+## [Unreleased]
+
+### Changed
+- **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
+
 ## v2.2.2 (2026-05-30)
 
 ### Added
