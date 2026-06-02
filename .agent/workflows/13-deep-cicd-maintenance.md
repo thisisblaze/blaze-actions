@@ -44,7 +44,7 @@ This is a master command to actively perform deep maintenance across all **four*
 1. **Review Agent Commands**:
    - Scan `.agent/workflows/*.md` across all 4 repos.
    - **Deep Analysis Required**: Read the agent workflow files and compare them against the actual GitHub Actions. Are the `gh workflow run` commands still passing the correct inputs? Are they referencing workflows that still exist? Fix any drift.
-   - Specifically verify: all "3 repos" references have been updated to "4 repos" in agent workflows.
+   - Specifically verify: all "4 repos" references have been updated to "4 repos" in agent workflows.
 2. **Review AI Prompts**:
    - In `blaze-template-deploy`, review `docs/prompts/00_core/` files and other prompt directories.
    - **Deep Analysis Required**: Read the prompts. Do they accurately reflect how CI/CD currently works (e.g., native ECS blue/green, newest multi-cloud pipelines, changes to stress testing)? If the pipeline has evolved, update the prompt to teach the AI the new reality.

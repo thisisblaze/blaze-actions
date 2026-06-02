@@ -260,6 +260,9 @@
 
 ## [Unreleased]
 
+### Changed
+- **chore(ai)**: Platform-Agnostic Workflow Optimization (Plan 154 Phase 1-5). Upgraded all agent workflows across the 4 repositories to gracefully degrade between Antigravity 2.0 (native tools) and CLI agents (Claude Code).
+- **chore(ai)**: IDE Parity. Synced `.cursorrules` Agent Workflows instructions and instantiated `.github/copilot-instructions.md` to ensure identical `/slash-command` execution behavior across Cursor and GitHub Copilot.
 ### Fixed
 - **fix(checkengines/Engine 4)**: `engine4_modules.py` — Added FREEZE-annotation filter: lines containing `# FREEZE` are skipped when scanning blaze-actions workflow refs, preventing the intentional `v2.1.74` chaos-test pin in `90-daily-health-check.yml` from triggering false split-brain detection.
 - **fix(checkengines/Engine 4)**: `engine4_modules.py` — Scoped Terraform ref scan to `deploy_path/.github/` only. Previously the engine scanned `_shared/blaze-actions/` workspace mirror (a separate directory with an older checkout), producing false-positive split-brain on `v2.6.4`/`v2.6.5` refs. blaze-actions contains no Terraform live stacks.

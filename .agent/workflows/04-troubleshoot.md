@@ -9,7 +9,10 @@ exclusions: Do NOT deploy speculative fixes without user approval or moving to t
 
 1.  **Isolate Failure Layer**: Identify if the issue is in Terraform, network ingress, ECS container, or application code.
 2.  **Analyze Drift**: Run `terraform plan` to identify discrepancies between code and reality.
-3.  **Review System Guidelines**: Use the `grep_search` AI tool to check `docs/development_guidelines.md` for known error patterns.
+3.  **Review System Guidelines**: Use a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ to check `docs/development_guidelines.md` for known error patterns.
 4.  **Confirm Infrastructure state**:
     - **AWS**: Use `aws ecs describe-tasks` and `aws elbv2 describe-target-health` to inspect runtime state.
     - **GCP**: Use `gcloud run revisions list` and `gcloud run services describe` to inspect Cloud Run state.

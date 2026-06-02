@@ -52,3 +52,6 @@ The file MUST use the following format exactly:
 Tell the user:
 
 > "Context successfully frozen to `docs/HANDOFF.md`. You may now close this conversation to avoid context bloat. In a new conversation, type `/slash-resume` to instantly pick up where we left off."
+
+> 💡 **Antigravity 2.0**: Context is persistent natively. Sync the Sprint Board in `HANDOFF.md` but do not close the conversation.
+> 💡 **Claude Code**: Freeze context to `HANDOFF.md` to protect token limits.

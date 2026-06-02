@@ -53,14 +53,23 @@ Check the 3 `docs/AI_CONTEXT_GOVERNANCE.md` files:
 
 ### 3. .cursorrules Freshness Check
 
-For each repo, use the `grep_search` AI tool to quickly scan `.cursorrules` to verify if it correctly reflects today's major changes:
+For each repo, use a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ to quickly scan `.cursorrules` to verify if it correctly reflects today's major changes:
 
-- Does it still accurately reflect the repo's current patterns? (Use the `grep_search` AI tool on specific sections, DO NOT read the entire file).
+- Does it still accurately reflect the repo's current patterns? (Use a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ on specific sections, DO NOT read the entire file).
 - If significant workflows or modules were added/changed today, update the relevant sections.
 
 ### 4. .gitignore Consistency Check
 
-Verify these patterns exist in ALL 3 `.gitignore` files using the `grep_search` AI tool:
+Verify these patterns exist in ALL 3 `.gitignore` files using a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+:
 
 - `**/.DS_Store`
 - `scratch/`

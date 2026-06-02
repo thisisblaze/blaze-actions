@@ -85,7 +85,10 @@ Iterate through these directories. For each, check **Date Freshness** (< 30 days
 
 ## Phase 3: Cost & Security Pattern Scan (Multi-Cloud)
 
-Run `grep_search` AI tool checks to find banned or required patterns. DO NOT use bash grep.
+Run search checks:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ to find banned or required patterns. DO NOT use bash grep.
 
 ### AWS
 

@@ -10,7 +10,7 @@ Run this with an argument (e.g. `/slash-init-context aws` or `/slash-init-contex
 
 ---
 
-## 🗺️ THREE-REPO ARCHITECTURE (Always Active)
+## 🗺️ FOUR-REPO ARCHITECTURE (Always Active)
 
 Before loading cloud context, internalize these rules. They apply regardless of cloud provider.
 

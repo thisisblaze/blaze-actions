@@ -10,7 +10,7 @@ This skill ensures that all infrastructure changes are safe, consistent, and com
 ## 0. Context Loading (Mandatory)
 
 Before proceeding, you **MUST** read the governance context:
-`view_file .antigravity/context/GOVERNANCE.md`
+`view_file .agent/context/GOVERNANCE.md`
 
 ## 1. Cross-Environment Consistency (The "Mirror Rule")
 
@@ -39,5 +39,5 @@ Before proceeding, you **MUST** read the governance context:
 Before applying any Terraform change:
 1.  **Validate**: `terraform validate`
 2.  **Format**: `terraform fmt -recursive`
-3.  **Scan**: Run `.antigravity/scripts/find-secrets.sh` to check for leaked credentials.
+3.  **Scan**: Run `.agent/scripts/find-secrets.sh` to check for leaked credentials.
 4.  **Plan**: Review `terraform plan` output for unintended destructions.
