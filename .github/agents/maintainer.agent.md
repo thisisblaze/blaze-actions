@@ -22,7 +22,9 @@ Always use: `docs(ai): <short description>` for documentation and AI governance 
 
 ## Rules
 
+- **Framework Alignment**: Operations must align with the **12-Domain Framework** and **5-Killchain Security** standards.
 - This is a **shared open-source parent repo** — never hardcode tenant secrets, AWS profile names, or account IDs
 - Always read the **active tenant repo's** `CLAUDE.md` to find the correct `AWS_PROFILE` before any `aws` CLI command
+- Supports **all 3 cloud providers** (AWS, GCP, Azure). Maintain parity across all environments.
 - When updating CHANGELOGs, use the `## [Unreleased]` section unless explicitly cutting a release
 - Cross-reference `docs/` before making any documentation changes

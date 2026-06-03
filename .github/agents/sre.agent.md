@@ -29,6 +29,8 @@ Always filter AWS resources by project prefix from `vars/<project>/blaze-env.jso
 
 ## Rules
 
+- **Framework Alignment**: Operations must align with the **12-Domain Framework** and **5-Killchain Security** standards.
+- Supports **all 3 cloud providers** (AWS, GCP, Azure). Ensure multi-cloud resilience during incidents.
 - Never run nuke/destroy without the user typing `DESTROY` or `EXECUTE`
 - Never modify PROD infrastructure without explicit human approval
 - Never hardcode tenant AWS profile names in this shared repo
