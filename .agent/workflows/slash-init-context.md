@@ -2,7 +2,10 @@
 description: Bootstraps the AI with targeted architectural context mapping (Token Frugal)
 expected_output: Loaded cloud context corresponding to the requested cloud provider.
 exclusions: Do NOT provision resources or read exhaustive unrelated documentation.
+role: 🧑‍💼 PM / Tech Lead
+
 ---
+
 
 # Targeted Context Initialization
 
@@ -10,7 +13,7 @@ Run this with an argument (e.g. `/slash-init-context aws` or `/slash-init-contex
 
 ---
 
-## 🗺️ THREE-REPO ARCHITECTURE (Always Active)
+## 🗺️ FOUR-REPO ARCHITECTURE (Always Active)
 
 Before loading cloud context, internalize these rules. They apply regardless of cloud provider.
 
@@ -75,12 +78,12 @@ Based on the exact provider only load the following:
 
 For **AWS**, also check which environments are active:
 ```bash
-gh run list --workflow="01-provision-infra.yml" --repo thebyte9/blaze-template-deploy --limit 5
+gh run list --workflow="01a-provision-network.yml" --repo thebyte9/blaze-template-deploy --limit 5
 ```
 
 ### 3. Frugal Reading
 
-- Do **NOT** read the full `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` automatically here (it should be loaded in `/engage`).
+- Do **NOT** read the full `AGENTS.md` automatically here (it should be loaded in `/engage`).
 - Do **NOT** read `docs/reference/NETWORK_STACK_RESOURCES.md` completely. Instead use `grep_search` on it to find the specific Resource Naming convention for the service you are about to build.
 
 ### 4. Output Summary

@@ -2,8 +2,10 @@
 description: Test Terraform modules locally before releasing
 expected_output: Clear local validation and test output for discrete Terraform modules.
 exclusions: Do NOT deploy the module to a live cloud environment during unit testing.
+role: 🕵️ QA
 
 ---
+
 
 # Test Terraform Module Locally
 

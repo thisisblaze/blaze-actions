@@ -58,18 +58,22 @@ def run(repos):
             for file in os.listdir(workflows_dir):
                 if file.endswith(".yml") or file.endswith(".yaml"):
                     with open(os.path.join(workflows_dir, file), 'r') as f:
-                        content = f.read()
-                        matches = re.findall(
-                            r'uses:\s*thisisblaze/blaze-actions/\.github/workflows/.*?@([^\s]+)',
-                            content
-                        )
-                        actions_tags.update(matches)
-                        # also catch composite actions
-                        matches_actions = re.findall(
-                            r'uses:\s*thisisblaze/blaze-actions/\.github/actions/.*?@([^\s]+)',
-                            content
-                        )
-                        actions_tags.update(matches_actions)
+                        for line in f:
+                            # Skip FREEZE-annotated pins — these are intentional frozen versions
+                            # (e.g. v2.1.74 in 90-daily-health-check.yml is a chaos-test anti-loop pin)
+                            if "FREEZE" in line:
+                                continue
+                            matches = re.findall(
+                                r'uses:\s*thisisblaze/blaze-actions/\.github/workflows/.*?@([^\s]+)',
+                                line
+                            )
+                            actions_tags.update(matches)
+                            # also catch composite actions
+                            matches_actions = re.findall(
+                                r'uses:\s*thisisblaze/blaze-actions/\.github/actions/.*?@([^\s]+)',
+                                line
+                            )
+                            actions_tags.update(matches_actions)
 
     if not actions_tags:
         print("⚠️  [Engine 4] No github actions tags found to check.")
@@ -94,13 +98,22 @@ def run(repos):
                 print(msg)
 
     # ── 2. Parse terraform module source refs ──────────────────────────────────
-    tf_paths = [deploy_path, actions_path]
+    # Only scan deploy_path's .github/ for Terraform module refs.
+    # blaze-actions is a GitHub Actions hub — it contains NO Terraform live stacks.
+    # Scanning actions_path leads to false positives from workspace mirror directories.
+    tf_paths = []
+    if deploy_path:
+        github_subdir = os.path.join(deploy_path, ".github")
+        if os.path.isdir(github_subdir):
+            tf_paths.append(github_subdir)
+
+
     for path in tf_paths:
         if not path:
             continue
-        for root, dirs, files in os.walk(path):
+        for root, dirs, files in os.walk(path, followlinks=False):
             # Prune heavy directories in-place
-            dirs[:] = [d for d in dirs if d not in ['.terraform', 'node_modules', '.git']]
+            dirs[:] = [d for d in dirs if d not in ['.terraform', 'node_modules', '.git', '_shared']]
             for file in files:
                 if file.endswith(".tf"):
                     with open(os.path.join(root, file), 'r') as f:

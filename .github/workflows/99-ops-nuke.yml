@@ -129,75 +129,6 @@ on:
       dist_id:
         type: string
         required: false
-    # TODO: Refactor to use secrets: inherit pattern like 01-provision-infra.yml
-    # Currently explicitly defining secrets to ensure workflow_call compatibility
-    secrets:
-      BLAZE_ELASTICSEARCH_USERNAME:
-        required: false
-      BLAZE_ELASTICSEARCH_PASSWORD:
-        required: false
-      BLAZE_ELASTICSEARCH_ENDPOINT:
-        required: false
-      AWS_ROLE_ARN:
-        required: false
-      GCP_WORKLOAD_IDENTITY_PROVIDER:
-        required: false
-      GCP_SERVICE_ACCOUNT:
-        required: false
-      AZURE_CLIENT_ID:
-        required: false
-      AZURE_TENANT_ID:
-        required: false
-      AZURE_SUBSCRIPTION_ID:
-        required: false
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
-      GH_PAT:
-        required: false
-      NPM_TOKEN:
-        required: false
-      INFRACOST_API_KEY:
-        required: false
-      BLAZE_CONNECTION_STRING:
-        required: false
-      BLAZE_AUTH_JWT_PRIVATE_KEY:
-        required: false
-      BLAZE_AUTH_ADMIN_EMAIL:
-        required: false
-      BLAZE_AUTH_ADMIN_PASSWORD:
-        required: false
-      BLAZE_FILES_S3_ACCESS_KEY:
-        required: false
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
-        required: false
-      BLAZE_GRAPHQL_CACHE_SETTINGS:
-        required: false
-      BLAZE_CLIENT_HEADER:
-        required: false
-      EC_API_KEY:
-        required: false
-      MONGODB_ATLAS_PUBLIC_KEY:
-        required: false
-      MONGODB_ATLAS_PRIVATE_KEY:
-        required: false
-      MONGODB_ATLAS_ORG_ID:
-        required: false
-      MONGODB_ATLAS_PROJECT_ID:
-        required: false
-      ACM_CERTIFICATE_ARN:
-        required: false
-      BLAZE_SENTRY_AUTH_TOKEN:
-        required: false
-      BLAZE_SENTRY_DSN:
-        required: false
-      SLACK_WEBHOOK_URL:
-        required: false
-      DEPLOY_KEY:
-        required: false
 permissions:
   id-token: write
   contents: read
@@ -232,7 +163,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.81
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -332,6 +263,7 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_tenant_app: ${{ steps.check-dirs.outputs.has_tenant_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -357,7 +289,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.81
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -421,7 +353,7 @@ jobs:
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
     if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.1.81
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -436,7 +368,7 @@ jobs:
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
     if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.1.81
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -447,6 +379,7 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       target_stack: 'all'
       dry_run: ${{ inputs.dry_run }}
+      stack_id: ${{ needs.configuration.outputs.stack_id }}
 
   nuke-stop-services-gcp:
     name: 🛑 Nuke 1c/5 - Stop Cloud Run Services
@@ -587,7 +520,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -656,7 +589,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_tenant_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -810,7 +743,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -854,7 +787,7 @@ jobs:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-app-gate]
     if: inputs.action == 'nuke-environment'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
@@ -915,7 +848,7 @@ jobs:
   #    name: 💾 Nuke 4a/5 - Mongo
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -935,7 +868,7 @@ jobs:
   #    name: 💾 Nuke 4b/5 - Elastic
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/elastic"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -963,7 +896,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1022,7 +955,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_cdn == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -1065,7 +998,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1117,7 +1050,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1171,7 +1104,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1223,7 +1156,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1275,7 +1208,7 @@ jobs:
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.81
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -1352,23 +1285,160 @@ jobs:
         fi
 
         # ----- EC2 / ASG CLEANUP (GAP-5) -----
-        # If EC2 capacity provider exists, scale ASG to 0 and wait for drain.
-        # This prevents destroy from hanging on ECS managed termination protection.
+        # The nuke workflow must assume the Terraform state is corrupted and perform explicit, 
+        # stateless AWS CLI purges based on resource names/tags before dropping the state bucket.
         echo "🔍 Checking for EC2 ASGs to clean up..."
-        ASG_NAME=$(terraform state list 2>/dev/null | grep 'aws_autoscaling_group' | head -1)
-        if [ -n "$ASG_NAME" ]; then
-          ASG_ID=$(terraform state show "$ASG_NAME" 2>/dev/null | grep 'name ' | head -1 | awk -F'"' '{print $2}')
-          if [ -n "$ASG_ID" ]; then
-            echo "🛑 Scaling down ASG: $ASG_ID"
-            aws autoscaling update-auto-scaling-group \
-              --auto-scaling-group-name "$ASG_ID" \
-              --min-size 0 --max-size 0 --desired-capacity 0 || true
-            echo "⏳ Waiting 30s for instance drain..."
-            sleep 30
-          fi
-          echo "✅ EC2 ASG cleanup complete."
+        
+        STACK_ID="${{ needs.configuration.outputs.stack_id }}"
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+          echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+          TAG_FILTERS="\"Key=Blaze:StackID,Values=$STACK_ID\""
         else
-          echo "ℹ️  No ASG found in state — skipping EC2 cleanup."
+          echo "   ⚠️ No Stack UUID found. Falling back to Project/Stage heuristic."
+          # ASGs are typically tagged with Project and Stage by null-label
+          TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$aws_region" \
+            --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
+            --resource-type-filters "autoscaling:autoScalingGroup" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          # Fallback to Blaze prefixed tags if empty
+          if [[ -z "$TAGGED_ASG_ARNS" || "$TAGGED_ASG_ARNS" == "None" ]]; then
+            TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$aws_region" \
+              --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+              --resource-type-filters "autoscaling:autoScalingGroup" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
+        fi
+
+        # If STACK_ID is used, query specifically for it
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+           TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$aws_region" \
+            --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+            --resource-type-filters "autoscaling:autoScalingGroup" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+        fi
+
+        if [[ -n "$TAGGED_ASG_ARNS" && "$TAGGED_ASG_ARNS" != "None" ]]; then
+          for ASG_ARN in $TAGGED_ASG_ARNS; do
+            ASG="${ASG_ARN##*autoScalingGroupName/}"
+            echo "   → Zeroing ASG capacity: $ASG"
+            aws autoscaling update-auto-scaling-group \
+              --auto-scaling-group-name "$ASG" \
+              --min-size 0 --max-size 0 --desired-capacity 0 \
+              --region "$aws_region" >/dev/null 2>&1 || echo "   ⚠️  Could not zero capacity for $ASG"
+              
+            echo "   → Force deleting ASG: $ASG"
+            aws autoscaling delete-auto-scaling-group \
+              --auto-scaling-group-name "$ASG" \
+              --force-delete \
+              --region "$aws_region" >/dev/null 2>&1 || echo "   ⚠️  Could not force delete $ASG"
+          done
+        else
+          echo "   ℹ️  No ASGs found matching tags."
+        fi
+
+        # ----- CLOUDFRONT CLEANUP (Plan 155 Phase 2) -----
+        echo "🔍 Checking for orphaned CloudFront distributions to clean up..."
+        
+        if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+          echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+        else
+          # CloudFront may be tagged with Project and Stage or Blaze:Project and Blaze:Environment
+          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "us-east-1" \
+            --tag-filters "Key=Project,Values=${project_key}" "Key=Stage,Values=${stage}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$TAGGED_CF_ARNS" || "$TAGGED_CF_ARNS" == "None" ]]; then
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "us-east-1" \
+              --tag-filters "Key=Blaze:Project,Values=${project_key}" "Key=Blaze:Environment,Values=${stage}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
+        fi
+
+        if [[ -n "$TAGGED_CF_ARNS" && "$TAGGED_CF_ARNS" != "None" ]]; then
+          CF_IDS=""
+          for CF_ARN in $TAGGED_CF_ARNS; do
+            CF_ID="${CF_ARN##*distribution/}"
+            CF_IDS="$CF_IDS $CF_ID"
+            
+            echo "   → Fetching config for CF Distribution: $CF_ID"
+            CONFIG_JSON=$(aws cloudfront get-distribution-config --id "$CF_ID" 2>/dev/null || echo "")
+            if [[ -n "$CONFIG_JSON" ]]; then
+              ETAG=$(echo "$CONFIG_JSON" | jq -r '.ETag')
+              ENABLED=$(echo "$CONFIG_JSON" | jq -r '.DistributionConfig.Enabled')
+              
+              if [[ "$ENABLED" == "true" ]]; then
+                echo "   → Disabling CF Distribution: $CF_ID"
+                # Update the config to Enabled=false
+                UPDATED_CONFIG=$(echo "$CONFIG_JSON" | jq '.DistributionConfig.Enabled = false | del(.ETag)')
+                
+                # Write to temp file because aws cli expects file:// for complex JSON
+                TMP_CONFIG="/tmp/cf_config_${CF_ID}.json"
+                echo "$UPDATED_CONFIG" > "$TMP_CONFIG"
+                
+                aws cloudfront update-distribution \
+                  --id "$CF_ID" \
+                  --if-match "$ETAG" \
+                  --distribution-config "file://$TMP_CONFIG" >/dev/null 2>&1 || echo "   ⚠️  Could not disable $CF_ID"
+                rm -f "$TMP_CONFIG"
+              else
+                echo "   ℹ️  CF Distribution $CF_ID is already disabled."
+              fi
+            else
+              echo "   ⚠️  Could not fetch config for $CF_ID"
+            fi
+          done
+
+          echo "⏳ Waiting for distributions to deploy (disabling)... max 15 mins."
+          TIMEOUT=60 # 60 * 15s = 15 mins
+          for CF_ID in $CF_IDS; do
+            PENDING=true
+            while [[ "$PENDING" == "true" && $TIMEOUT -gt 0 ]]; do
+              STATUS=$(aws cloudfront get-distribution --id "$CF_ID" --query 'Distribution.Status' --output text 2>/dev/null || echo "Missing")
+              if [[ "$STATUS" == "Deployed" ]]; then
+                echo "   ✅ $CF_ID is Deployed."
+                PENDING=false
+              elif [[ "$STATUS" == "Missing" ]]; then
+                echo "   ℹ️  $CF_ID no longer exists."
+                PENDING=false
+              else
+                echo "   ... $CF_ID is $STATUS. Waiting 15s..."
+                sleep 15
+                TIMEOUT=$((TIMEOUT-1))
+              fi
+            done
+            
+            if [[ $TIMEOUT -eq 0 ]]; then
+              echo "   ⚠️  Timeout waiting for $CF_ID to deploy."
+            else
+              echo "   → Deleting CF Distribution: $CF_ID"
+              ETAG=$(aws cloudfront get-distribution-config --id "$CF_ID" --query 'ETag' --output text 2>/dev/null || echo "")
+              if [[ -n "$ETAG" ]]; then
+                aws cloudfront delete-distribution --id "$CF_ID" --if-match "$ETAG" 2>/dev/null || echo "   ⚠️  Could not delete $CF_ID"
+                echo "   ✅ Deleted $CF_ID"
+              fi
+            fi
+          done
+        else
+          echo "   ℹ️  No CloudFront distributions found matching tags."
         fi
 
   nuke-cleanup-dns:
@@ -1406,30 +1476,24 @@ jobs:
             "cdn-${STAGE}.${DOMAIN_ROOT}"
             "admin-${STAGE}.${DOMAIN_ROOT}"
             "api-direct-${STAGE}.${DOMAIN_ROOT}"
-            # Tunnel Stack Targets (fix 400 Bad Request / 409 Conflict)
             "kibana-${STAGE}.${DOMAIN_ROOT}"
             "gibana-${STAGE}.${DOMAIN_ROOT}"
             "grafana-${STAGE}.${DOMAIN_ROOT}"
             "prometheus-${STAGE}.${DOMAIN_ROOT}"
             "alertmanager-${STAGE}.${DOMAIN_ROOT}"
-            # Wildcard for stage? "*.${STAGE}.${DOMAIN_ROOT}" doesn't usually exist.
-            # But the user reported "*.thisisblaze.uk" (root wildcard) left over.
-            # We won't delete root wildcard automatically.
           )
 
-          echo "🎯 Targets:"
+          echo "🎯 Explicit Targets:"
           printf '%s\n' "${TARGETS[@]}"
 
           for RECORD_NAME in "${TARGETS[@]}"; do
             echo "---------------------------------------------------"
             echo "🔍 Checking: $RECORD_NAME"
 
-            # List records matching name
             RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$RECORD_NAME" \
               -H "Authorization: Bearer $CF_API_TOKEN" \
               -H "Content-Type: application/json")
 
-            # Extract IDs
             IDS=$(echo "$RESPONSE" | jq -r '.result[].id')
 
             if [[ -z "$IDS" || "$IDS" == "null" ]]; then
@@ -1451,6 +1515,39 @@ jobs:
               done
             fi
           done
+
+          echo "---------------------------------------------------"
+          echo "🌐 Dynamic DNS Flush for Stage: $STAGE"
+          echo "Fetching first 500 records to find residual environment records..."
+          
+          ALL_RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?per_page=500" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json")
+            
+          if [[ $(echo "$ALL_RECORDS" | jq -r '.success') == "true" ]]; then
+            echo "$ALL_RECORDS" | jq -c '.result[]?' | while IFS= read -r record; do
+              R_ID=$(echo "$record" | jq -r '.id')
+              R_NAME=$(echo "$record" | jq -r '.name')
+              R_TYPE=$(echo "$record" | jq -r '.type')
+              
+              # Match any record ending with -${STAGE}.${DOMAIN_ROOT} or exactly ${STAGE}.${DOMAIN_ROOT}
+              if [[ "$R_NAME" == *"-${STAGE}.${DOMAIN_ROOT}" ]] || [[ "$R_NAME" == "${STAGE}.${DOMAIN_ROOT}" ]] || [[ "$R_NAME" == "*.${STAGE}.${DOMAIN_ROOT}" ]]; then
+                echo "   🗑️ Deleting orphaned record: $R_NAME ($R_TYPE, $R_ID)"
+                DEL_RES=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$R_ID" \
+                  -H "Authorization: Bearer $CF_API_TOKEN" \
+                  -H "Content-Type: application/json")
+                
+                if [[ $(echo "$DEL_RES" | jq -r '.success') == "true" ]]; then
+                   echo "      ✅ Deleted."
+                else
+                   echo "      ❌ Failed to delete."
+                   echo "$DEL_RES" | jq -r '.errors'
+                fi
+              fi
+            done
+          else
+            echo "   ⚠️  Failed to fetch all records."
+          fi
 
   summary:
     name: 📝 Ops Summary

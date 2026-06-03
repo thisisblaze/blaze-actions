@@ -1,9 +1,18 @@
+#!/usr/bin/env python3
 import os
 import glob
 import re
+import sys
 
-workflow_files = glob.glob('/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows/*.yml')
-action_files = glob.glob('/Users/marek/Workspace/thisisblaze/blaze-actions/.github/actions/**/*.yml', recursive=True)
+# Auto-discover repos
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '.github', 'scripts', 'utils'))
+from repo_paths import get_repos
+
+repos = get_repos(__file__)
+actions_dir = repos["actions"]
+
+workflow_files = glob.glob(os.path.join(actions_dir, '.github', 'workflows', '*.yml'))
+action_files = glob.glob(os.path.join(actions_dir, '.github', 'actions', '**', '*.yml'), recursive=True)
 
 all_files = workflow_files + action_files
 count = 0

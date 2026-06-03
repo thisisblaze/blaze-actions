@@ -1,12 +1,14 @@
-**Last Updated**: 2026-05-10
+**Last Updated**: 2026-06-02
 **Owner**: Infrastructure Team
 
 ---
 
-# AI Context Governance: Shopware KM Standard
+# AI Context Governance: Google Antigravity 2.0 Standard
 
 > [!TIP]
-> **Status: SCALED (ECS Fargate Environment)**. All agents must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
+> **Status: SCALED (ECS Fargate Environment & Environment Agnostic)**. All agents (including Google Antigravity 2.0) must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
+> 
+> **Antigravity 2.0 Standard**: This ecosystem is environment-agnostic. Workflows, context, and MCP tools rely strictly on the `.agent/` directory paradigm. Do not assume execution originates from a specific IDE or local GUI. The agent operates identically across headless CLI, background pipelines, and interactive IDE sessions.
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
@@ -39,11 +41,12 @@ The AI Agent is strictly forbidden from executing ANY autonomous command that de
 ### 1.6. The Signature Tag Rule
 
 **CRITICAL POLICY**: Generic tags like `Stage`, `Client`, and `Project` are heavily overloaded by legacy tools and other CI/CDs. 
-When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags:
+When verifying infrastructure teardown, checking for orphaned resources, or listing active systems via raw CLI (like `aws cloudfront list-distributions`), you **MUST** filter exclusively by our unified signature tags. We employ a revolutionary UUID tag solution for stateless purges and precise environment isolation (Plan 155):
+- `Blaze:StackID={UUID}`: This is the definitive, globally unique identifier injected into all resources belonging to a specific environment instance. It guarantees precise environment nuking isolation and resilience against orphaned resources.
 - `Shopware:Architecture=Shopware 6.7.x`
 - `Blaze:Provisioner=blaze-actions`
 
-"Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking these exact tags or Terraform State is strictly forbidden.
+"Orphan hunting" using string matching on domains (e.g., `dev.b9`) without checking the `Blaze:StackID` or these exact tags/Terraform State is strictly forbidden.
 
 ## 2. The Golden Rule of Context
 
@@ -59,7 +62,7 @@ _(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-c
 
 **Action**:
 
-1.  Read the **Constitution**: `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md`
+1.  Read the **Constitution**: `AGENTS.md` and `.agent/workflows/`
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
 4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS) Blaze stack."
 
@@ -105,7 +108,7 @@ Consult these approved workflows for specific operational tasks:
 
 - **Naming Standard**: `docs/reference/NETWORK_STACK_RESOURCES.md`
 - **Visual Hub**: `docs/graphs/`
-- **Maintenance Prompt**: `docs/prompts/02_weekly/WEEKLY_VISUALIZATION_UPDATE.md`
+- **Maintenance Workflow**: `.agent/workflows/slash-weekly-graph.md`
 
 ## 7. Stage Safety Protocol (Cost Control)
 
@@ -163,21 +166,21 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | :---------------------------------- | :------------------------------------------- | :------------ |
 | `blaze-terraform-infra-core`        | Terraform module Source of Truth             | `thisisblaze` |
 | `blaze-actions`                     | Reusable GitHub Actions workflows            | `thisisblaze` |
-| `shopware-km` (This Repo) | Application deployment & infra instantiation | `thebyte9`    |
+| `shopware-km` | Application deployment & infra instantiation | `thebyte9`    |
 
-## 11. Deployment Architecture Facts (2026-04-30)
+## 11. Deployment Architecture Facts (2026-05-12)
 
 **Status: MANDATORY — agents must not assume older patterns**
 
 | Fact                               | Detail                                                                                             |
 | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
-| **Core Architecture Paradigm**     | **Single-Tenant Elastic Beanstalk**: Dedicated AWS Beanstalk environment per stage (dev, stage, prod) |
-| **Application Deployment**         | **AWS Elastic Beanstalk** — Application Versions are zipped and deployed via GitHub Actions        |
-| **Database Strategy**              | **Dedicated Services** — Standalone RDS (MySQL) and ElastiCache (Redis) per environment            |
-| **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the Elastic Beanstalk Security Group  |
-| **Background Workers**             | **Elastic Beanstalk Worker Tier** or native cron within the instances                              |
-| **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.100.0.0/16` for Dev)                      |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.4.0+**                                                         |
+| **Core Architecture Paradigm**     | **ECS Fargate (ARM64 Graviton2)** — Blue/Green deployment via ALB listener swap. Elastic Beanstalk is **deprecated fallback only**. |
+| **Application Deployment**         | **AWS ECS Fargate** — Docker image built on `ubuntu-24.04-arm`, pushed to ECR, deployed via task definition update + ALB swap |
+| **Database Strategy**              | **Dedicated Services** — Standalone RDS MySQL (`db.t4g.small`) and ElastiCache Redis per environment |
+| **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the ECS Task Security Group           |
+| **Background Workers**             | **ECS Sidecar containers** — `shopware-worker` and `shopware-scheduler` as essential=false sidecars in the same task definition |
+| **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.98.0.0/16` for Dev, `10.3.0.0/16` for Prod) |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.6.4**                                                          |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
 
@@ -189,16 +192,18 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `shopware` in all `environment:` keys and `workflow_dispatch` options |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-04-16)
+## 13. Current Version Pins (2026-05-15)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.3.8** | latest stable — Dual-Engine workers logic. |
-| `blaze-terraform-infra-core` | **v2.4.0** | Dual-Engine Background Workers (Plan 146), Case B ACM binding, ec2-capacity-provider deadlock fix, WAF direct S3 logging. |
-| Terraform AWS Provider | **## 14. Shopware Project Configuration (April 2026+)
+| `blaze-actions` | **v2.1.85** | Latest stable — nuke hardening: IGW CLI-delete (v2.1.84 P1), Atlas GROUP_NOT_FOUND guard (v2.1.84 P1), CF DNS catch-all state rm (v2.1.85 P2), VPC force-delete fallback (v2.1.85 P3). All 25 workflows at @v2.1.85. |
+| `blaze-terraform-infra-core` | **v2.6.4** | Plan 158: Blaze:StackID tag propagated to all resources via label module. All live stacks bumped 2026-05-14. |
+| Terraform AWS Provider | **v6.0+** | Required for ECS Fargate ARM64 task definitions. |
+
+## 14. Shopware Project Configuration (2026-05-12)
 
 > [!IMPORTANT]
-> The Shopware KM platform utilizes isolated Elastic Beanstalk environments per stage. All AI agents MUST be aware of the active environment configuration before modifying any resource.
+> The Shopware KM platform uses **ECS Fargate (ARM64 Graviton2)** per stage. Elastic Beanstalk is a **deprecated fallback** — present in `03-debug-eb.yml` for emergency use only. All primary deployments are ECS.
 
 ### Environment Variable Files
 
@@ -207,11 +212,11 @@ Configuration overrides and infrastructure settings are explicitly defined in:
 - `vars/stage.env`
 - `vars/prod.env`
 
-These files determine `vpc_cidr`, `eb_instance_type`, and database cluster sizes.
+These files determine `vpc_cidr`, `ecs_task_cpu`, `ecs_task_memory`, `rds_instance_class`, and `cpu_architecture`.
 
-### Elastic Beanstalk Deployment Rule
+### ECS Fargate Deployment Rule
 
-Each environment maintains its own isolated Elastic Beanstalk application. Ensure `.ebextensions` and `.platform` hooks are correctly verified before triggering deployments.
+Each environment runs isolated ECS clusters (`{namespace}-{env}-cluster`). Blue/Green is managed via ALB target group swap in `02-deploy-app.yml`. Container entrypoint handles `theme:compile`, Redis flush, and `cache:clear` on every startup.
 
 ---
 

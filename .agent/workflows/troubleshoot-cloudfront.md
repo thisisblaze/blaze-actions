@@ -2,7 +2,10 @@
 description: Troubleshoot and fix CloudFront cache behaviors, dependency issues, and image resize problems
 expected_output: Identified cache behaviors, headers, and CDN configuration faults.
 exclusions: Do NOT invalidate entire caches blindly without isolating the URL path.
+role: 🔧 Engineer
+
 ---
+
 
 # CloudFront Troubleshooting Guide
 
@@ -336,12 +339,12 @@ terraform destroy -auto-approve
 
 ## Resources
 
-- [CloudFront Audit](file:///Users/marek/.gemini/antigravity/brain/.../cloudfront-image-resize-audit.md)
-- [Implementation Plan](file:///Users/marek/.gemini/antigravity/brain/.../implementation_plan.md)
-- [Fixes Summary](file:///Users/marek/.gemini/antigravity/brain/.../fixes-summary.md)
+- [CloudFront Audit](<appDataDir>/brain/.../cloudfront-image-resize-audit.md)
+- [Implementation Plan](<appDataDir>/brain/.../implementation_plan.md)
+- [Fixes Summary](<appDataDir>/brain/.../fixes-summary.md)
 
 ---
 
-**Last Updated:** 2026-04-22  
+**Last Updated:** 2026-05-09  
 **Critical Issues Fixed:** 5/8  
 **Automation Status:** ✅ Sharp Layer, ⏸️ Image Resize (disabled by default)

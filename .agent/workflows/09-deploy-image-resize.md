@@ -2,8 +2,10 @@
 description: Deploy and verify CloudFront image resize functionality
 expected_output: Verified Lambda@Edge distribution logic for CloudFront image resizing.
 exclusions: Do NOT modify root DNS or other independent CDN settings.
+role: 🔧 Engineer
 
 ---
+
 
 # Deploy Image Resize
 
@@ -30,7 +32,7 @@ file test.webp
 
 ```bash
 # 1. Check module version in blaze-terraform-infra-core
-cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
+cd blaze-terraform-infra-core (sibling directory)
 git branch
 # Should be on: dev (with latest fixes)
 
@@ -52,11 +54,10 @@ enable_image_resize = true
 ### 2. Run Provision Workflow
 
 ```bash
-gh workflow run 01-provision-infra.yml \
+gh workflow run "01a-provision-network.yml" \
   --repo thebyte9/blaze-template-deploy \
   -f environment=STAGE \
-  -f stack=network \
-  -f action=apply
+  -f apply=true
 ```
 
 This workflow will **automatically**:
@@ -132,7 +133,7 @@ terraform apply
 
 ## Related Documentation
 
-- **Troubleshooting**: [blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md)
-- **Architecture**: [blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md)
-- **Lambda README**: [blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md](file:///Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md)
-- **Walkthrough**: [Session Artifacts walkthrough.md](file:///Users/marek/.gemini/antigravity/brain/d4c2c52b-4949-4c22-99cf-51e966c76706/walkthrough.md)
+- **Troubleshooting**: [blaze-terraform-infra-core/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md](file://blaze-terraform-infra-core (sibling directory)/docs/architecture/TROUBLESHOOTING-IMAGE-RESIZE.md)
+- **Architecture**: [blaze-terraform-infra-core/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md](file://blaze-terraform-infra-core (sibling directory)/docs/architecture/CLOUDFRONT-IMAGE-RESIZE.md)
+- **Lambda README**: [blaze-terraform-infra-core/modules/aws/lambda/edge-functions/functions/resize-image/README.md](file://blaze-terraform-infra-core (sibling directory)/modules/aws/lambda/edge-functions/functions/resize-image/README.md)
+- **Walkthrough**: [Session Artifacts walkthrough.md](<appDataDir>/brain/d4c2c52b-4949-4c22-99cf-51e966c76706/walkthrough.md)

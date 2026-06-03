@@ -117,7 +117,7 @@ variable "ec2_min_size" {
 variable "ec2_max_size" {
   description = "Maximum number of EC2 instances"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "ec2_desired_size" {

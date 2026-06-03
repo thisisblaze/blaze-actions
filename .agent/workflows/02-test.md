@@ -2,8 +2,10 @@
 description: design and execute verification plans for infrastructure and code changes
 expected_output: Clear, reproducible test outputs proving stability or failure of the system.
 exclusions: Do NOT implement code fixes during this workflow. This is strictly a testing/verification workflow.
+role: 🕵️ QA
 
 ---
+
 
 # Verification Workflow
 
@@ -106,7 +108,7 @@ aws logs tail /aws/lambda/us-east-1.blaze-{client}-{project}-<env>-lambda-edge-r
   --region us-east-1 --since 10m --follow
 ```
 
-> **System Context**: BEFORE executing this workflow, you MUST read and adopt the persona defined in [AGENT_PERSONA_SRE_DAEMON.md](file:///docs/prompts/AGENT_PERSONA_SRE_DAEMON.md).
+> **System Context**: BEFORE executing this workflow, you MUST read and adopt the persona defined in [sre.agent.md](file:///.github/agents/sre.agent.md).
 
 > **New: Automated Test Capability** (2026-01-13):
 > For CloudFront and image resize infrastructure, use the automated test suite:

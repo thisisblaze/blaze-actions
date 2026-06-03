@@ -2,7 +2,10 @@
 description: Bootstraps a brand new AI session from a frozen Handoff state.
 expected_output: A clearly established context based on the HANDOFF.md board tasks.
 exclusions: Do NOT perform any actions until the target task context is fully claimed.
+role: 🧑‍💼 PM / Tech Lead
+
 ---
+
 
 # Resume Session
 
@@ -29,3 +32,6 @@ If any unresolved 🔴 items are found, surface them in your acknowledgement.
 
 Output a brief summary confirming you understand the objective, any open 🔴 items from the ENV report, and the immediate next steps from the Handoff doc.
 Immediately begin executing Step 1 from "The Immediate Next Steps" section of the document.
+
+> 💡 **Antigravity 2.0**: Context is persistent natively. Sync the Sprint Board in `HANDOFF.md` but do not close the conversation.
+> 💡 **Claude Code**: Freeze context to `HANDOFF.md` to protect token limits.

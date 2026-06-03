@@ -2,8 +2,10 @@
 description: Run Terraform plan-only (dry-run) for one or all AWS stacks — fast, no apply, no stress test
 expected_output: Terraform plan outputs showing expected changes, with no live alterations.
 exclusions: Do NOT execute terraform apply. Do NOT modify the tfstate.
+role: 🕵️ QA
 
 ---
+
 
 // turbo-all
 
@@ -25,7 +27,7 @@ Ask the user:
 // turbo
 
 ```bash
-cd /Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core
+cd blaze-terraform-infra-core (sibling directory)
 git tag --sort=-v:refname | head -1
 ```
 
@@ -36,11 +38,15 @@ Flag if any `main.tf` in the target env uses a different `ref=` value.
 For each stack (network → app → data):
 
 ```bash
-gh workflow run "01 ⚙️ Provision Infrastructure" \
+gh workflow run "01a-provision-network.yml" \
   --repo thebyte9/blaze-template-deploy \
   -f environment=<env> \
-  -f layer=<layer> \
-  -f run_apply=false
+  -f apply=false
+
+gh workflow run "01c-provision-app-infra.yml" \
+  --repo thebyte9/blaze-template-deploy \
+  -f environment=<env> \
+  -f apply=false
 ```
 
 Wait for completion:

@@ -1,9 +1,11 @@
 ---
-description: 🖖 Engage — pulls latest, audits governance across all 3 repos, loads context
-expected_output: A printed "START-OF-DAY REPORT" containing status, overnight changes, and stress test freshness.
+description: 🖖 Engage — pulls latest, audits governance across all 4 repos, loads context
+expected_output: A printed "START-OF-DAY REPORT" containing status and overnight changes.
 exclusions: Do NOT automatically load the massive architecture graphs or AI_CONTEXT_GOVERNANCE.md. Token frugality is required. Do NOT perform any code changes.
+role: 🧑‍💼 PM / Tech Lead
 
 ---
+
 
 // turbo-all
 
@@ -13,17 +15,18 @@ Run this when you start work. It pulls latest code, does a quick governance heal
 
 ---
 
-## 🗺️ THREE-REPO ARCHITECTURE (Read Every Session)
+## 🗺️ FOUR-REPO ARCHITECTURE (Read Every Session)
 
-This project spans **3 repositories** with strict dependency rules. Violating these causes invisible failures.
+This project spans **4 repositories** with strict dependency rules. Violating these causes invisible failures.
 
 ### Repo Map
 
-| Repo                             | GitHub                                   | Local Path                                                                             | Role                                                                                                                                                                                                                         |
-| -------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy` | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.**                                                             |
-| **`blaze-actions`**              | `thisisblaze/blaze-actions`              | `/Users/marek/Workspace/thisisblaze/blaze-actions`                                     | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows (`.github/workflows/`). Also contains the `live/` Terraform stacks for `dev-mini` and other environments NOT present in `blaze-template-deploy`. |
-| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`                        | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks.                                                                                                                         |
+| Repo                             | GitHub                                   | Local Path (relative to workspace)           | Role |
+| -------------------------------- | ---------------------------------------- | -------------------------------------------- | ---- |
+| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.** |
+| **`blaze-actions`**              | `thisisblaze/blaze-actions` (**PUBLIC**) | `<workspace>/blaze-actions`                  | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows. Public repo — no secrets or MCP references allowed. |
+| **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `<workspace>/blaze-terraform-infra-core`     | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks. |
+| **`blaze-conductor`**            | `thisisblaze/blaze-conductor` (private)  | `<workspace>/blaze-conductor`                | **AI Orchestration** — MCP servers + orchestrator clients. Checked out exclusively by `blaze-template-deploy` workflows via `GH_PAT`. |
 
 ### Dependency Chain
 
@@ -75,15 +78,15 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 
 ## Steps
 
-### 1. Pull Latest (All 3 Repos)
+### 1. Pull Latest (All 4 Repos)
 
-Run `git pull origin dev` (or current branch) in each repo.
+Run `git pull origin dev` (or current branch) in each repo (`blaze-template-deploy`, `blaze-actions`, `blaze-terraform-infra-core`, `blaze-conductor`).
 
 ### 2. Quick Governance Health Check
 
 For each repo, verify the 14 standard governance files exist:
 
-`.cursorrules`, `.github/copilot-instructions.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/dependabot.yml`, `.antigravityignore`, `.cursorignore`, `.gitignore`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE`, `README.md`, `docs/AI_CONTEXT_GOVERNANCE.md`, `.agent/config.yml`, `.agent/workflows/09-maintain-docs.md`
+`.cursorrules`, `.github/copilot-instructions.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/dependabot.yml`, `.agentignore`, `.cursorignore`, `.gitignore`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE`, `README.md`, `docs/AI_CONTEXT_GOVERNANCE.md`, `.agent/config.yml`, `.agent/workflows/09-maintain-docs.md`
 
 Report any missing files immediately.
 
@@ -103,14 +106,14 @@ If there are `⏸️ PAUSED` tasks from a previous session, suggest:
 Run this quick sanity check across both repos to catch any split-brain on module versions:
 
 ```bash
-python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/utils/print_env_versions.py
+python3 "$(git -C blaze-actions rev-parse --show-toplevel)/.github/scripts/utils/print_env_versions.py"
 ```
 
 Flag immediately if `blaze-template-deploy` and `blaze-actions` disagree on the module `?ref=`.
 
 ### 4. Load Context (Hub Repo)
 
-Read `docs/prompts/00_core/REPOSITORY_SYSTEM_PROMPT.md` from `blaze-template-deploy`.
+Read `AGENTS.md` and `.github/agents/maintainer.agent.md` from `blaze-template-deploy`.
 
 **CRITICAL TOKEN FRUGALITY RULE:**
 Do **NOT** automatically read `AI_CONTEXT_GOVERNANCE.md`, architecture graphs, or the knowledge library on startup.
@@ -124,17 +127,6 @@ For each repo, run `git log --oneline -5` and report the last 5 commits.
 Flag any commits from other contributors or CI bots that may need attention.
 Flag if `blaze-terraform-infra-core` has new commits NOT yet tagged (would be behind `live/` stacks).
 
-### 5.5. Stress Test Freshness
-
-Check `docs/reports/stress-tests/STRESS_TEST_REPORTS.md` — read the **Coverage Matrix** table.
-
-For each cell that has a date (not `⬚`):
-
-- If the date is **older than 7 days**, flag it: `⚠️ Stress test overdue: AWS {stage} (last: YYYY-MM-DD)`
-- If a stress test is currently `🔄 Running`, note it in the report.
-
-Include in the Ready Report under a `STRESS TESTS:` line.
-
 ### 6. Ready Report
 
 Output:
@@ -146,6 +138,7 @@ REPO STATUS:
   deploy (thebyte9):   ✅ pulled | 14/14 files | branch: <branch>
   actions (thisisblaze): ✅ pulled | 14/14 files | branch: <branch>
   infra-core:          ✅ pulled | 14/14 files | branch: <branch>
+  conductor:           ✅ pulled | branch: main
 
 MODULE REF CHECK:
   deploy/dev-network:  ?ref=<version>
@@ -155,7 +148,6 @@ MODULE REF CHECK:
 
 CONTEXT: Loaded (Multi-Cloud AWS/GCP/Azure)
 RECENT ACTIVITY: <summary of last commits>
-STRESS TESTS: <last run dates per stage, flag if >7 days overdue>
 
 WORKFLOW REMINDER: Always trigger via thebyte9/blaze-template-deploy
   gh workflow run "01-provision-infra.yml" --repo thebyte9/blaze-template-deploy ...

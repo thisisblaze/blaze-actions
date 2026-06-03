@@ -2,8 +2,10 @@
 description: Check status of a running or completed stress test — call any time after /03-fire-stress-test
 expected_output: Live workflow run status, error extractions, and final completion confirmation.
 exclusions: Do NOT cancel or restart the workflow run directly.
+role: 🚨 SRE
 
 ---
+
 
 // turbo-all
 
@@ -29,8 +31,10 @@ gh run view <run_id> --repo thebyte9/blaze-template-deploy \
   --json status,conclusion,createdAt,updatedAt,jobs \
   --jq '{status,conclusion,createdAt,updatedAt,jobs:[.jobs[]|{name,status,conclusion,startedAt,completedAt}]}'
 
-# Otherwise: list last 3 runs
-gh run list --workflow=stress-test.yml --repo thebyte9/blaze-template-deploy \
+# Otherwise: list last 3 runs of the stress test wrapper workflow
+# Note: stress-test.yml no longer exists as a monolithic file.
+# The tenant repo calls the composable phases via a wrapper workflow (e.g. 03-stress-test.yml)
+gh run list --workflow=03-stress-test.yml --repo thebyte9/blaze-template-deploy \
   --limit=3 --json databaseId,status,conclusion,createdAt,displayTitle
 ```
 

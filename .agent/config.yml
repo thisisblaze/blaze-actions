@@ -16,7 +16,7 @@
 #
 # ✅ ALWAYS USE for actual runs:
 #   blaze-template-deploy
-#   Local: /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+#   Local: blaze-template-deploy (sibling directory)
 #   GitHub: github.com/thebyte9/blaze-template-deploy
 #
 # Workflow logic edits → blaze-actions ✅
@@ -169,3 +169,16 @@ examples:
   - trigger: "task_completion"
     scenario: "Successfully automated Sharp Lambda Layer"
     action: "Create learning: aws/lambda-layer-automation.md"
+
+# Self-Healing Orchestration Loop
+on_failure:
+  terraform_plan_fail: "/04-troubleshoot"
+  test_fail: "/02-test"
+  deployment_exception: "/05-fix"
+
+# MCP Servers Registry (Future Readiness)
+mcp_servers:
+  gcp:
+    enabled: true
+    package: "@google-cloud/mcp-server-gcp"
+    description: "Optional endpoint for GCP stack inspection (Cloud Logging, Cloud Run) matching Plan 154 capabilities."

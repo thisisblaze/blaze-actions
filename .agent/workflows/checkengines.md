@@ -1,12 +1,15 @@
 ---
-description: 🔧 Check engines — run a full diagnostic sweep across all 3 repos (docs, prompts, graphs, modules, security, hygiene, parity, workflows)
+description: 🔧 Check engines — run a full diagnostic sweep across all 4 repos (docs, agent workflows, graphs, modules, security, hygiene, parity)
 expected_output: A comprehensive 10-engine sweep read-out identifying health warnings.
 exclusions: Do NOT apply fixes directly; this is a diagnostic-only sweep.
+role: 🚨 SRE
+
 ---
+
 
 # Check Engines — Full Diagnostic Sweep
 
-Run this mid-session or weekly. It scans all 3 repos, flags issues, and tells you which workflow to run to fix them.
+Run this mid-session or weekly. It scans all 4 repos, flags issues, and tells you which workflow to run to fix them.
 **This is read-only — it reports but does NOT auto-fix or commit.**
 
 ## Execution
@@ -16,7 +19,7 @@ The logic for the 10-engine sweep has been natively upgraded into a hyper-fast P
 Execute the native Python orchestrator:
 
 ```bash
-python3 /Users/marek/Workspace/thisisblaze/blaze-actions/.github/scripts/checkengines/run_sweep.py
+python3 ./.github/scripts/checkengines/run_sweep.py
 ```
 
 ## Final Output: Dashboard Report
@@ -26,8 +29,7 @@ Read the stdout from the python execution and report the dashboard results to th
 **RECOMMENDED ACTIONS mapping based on failures:**
 If you see failures, suggest these workflows:
 - → `/09-maintain-docs` (Engine 1, 6)
-- → `/11-maintain-prompts-ai` (Engine 2, 8)
-- → `/13-deep-cicd-maintenance` (Engine 1, 2, 8; for active deep sync of docs, prompts, and timestamps)
+- → `/13-deep-cicd-maintenance` (Engine 1, 2, 8; for active deep sync of docs, agent workflows, and timestamps)
 - → `/slash-weekly-graph` (Engine 3)
 - → `/08-audit` (Engine 5)
 - → `/cross-environment-consistency` (Engine 7)

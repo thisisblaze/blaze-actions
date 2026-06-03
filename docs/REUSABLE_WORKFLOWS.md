@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-06-02
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-05-10
 
 ---
 
@@ -57,7 +57,7 @@ uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
 **Stable (recommended for production)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.5.7
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.2.2
 ```
 
 **Specific commit (maximum stability)**:
@@ -134,7 +134,7 @@ with:
 @<sha>
 ```
 
-> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.5.7`).
+> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.2.2`).
 
 ### 4. Set Proper Permissions
 
@@ -243,6 +243,7 @@ jobs:
     with:
       environment: dev
       dry_run: false
+      stack_id: "your-stack-uuid" # Recommended: Use STACK_ID from calculate-config
     secrets: inherit
 
   destroy:
@@ -386,7 +387,7 @@ jobs:
   # ... 400 more lines ...
 ```
 
-**After** (wrapper, 16 lines):
+**After** (wrapper using the composable stress test, ~16 lines):
 
 ```yaml
 name: Stress Test
@@ -400,11 +401,12 @@ permissions:
 
 jobs:
   execute:
-    uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/reusable-stress-test-provision.yml@dev
     secrets: inherit
 ```
 
-**Reduction**: 775 lines removed (97%)
+> **Note**: `stress-test.yml` as a monolithic file no longer exists. Use the composable reusable phases:
+> `reusable-stress-test-provision.yml` → `reusable-stress-test-deploy.yml` → `reusable-stress-test-verify.yml` → `reusable-stress-test-teardown.yml`.
 
 ---
 
@@ -494,7 +496,7 @@ For legacy EB environments, use `reusable-elastic-beanstalk-deploy.yml` to packa
 ```yaml
 jobs:
   deploy-eb:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.77
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.80
     with:
       environment: prod                          # GitHub environment (for OIDC)
       application_name: my-app                   # EB Application name
@@ -516,7 +518,7 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.1.77` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.2.2` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
@@ -607,6 +609,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-05-08  
+**Last Updated**: 2026-06-02  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

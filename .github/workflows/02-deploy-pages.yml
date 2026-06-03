@@ -363,7 +363,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -663,8 +663,7 @@ jobs:
           fi
 
       - name: Deploy to Cloudflare Pages
-        uses: 
-          cloudflare/wrangler-action@v3.14.1
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

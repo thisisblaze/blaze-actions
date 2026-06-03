@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
 import os
 
-repos = [
-    "/Users/marek/Workspace/thisisblaze/blaze-actions",
-    "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core",
-    "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy"
-]
+# Auto-discover repos
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'utils'))
+from repo_paths import get_all_repo_list
+
+repos = get_all_repo_list(__file__)
 
 changelog_entry = """## [Unreleased]
 

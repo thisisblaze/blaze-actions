@@ -1,27 +1,29 @@
 ---
-description: 🖖 All stop — end-of-day governance sync across all 3 repos
+description: 🖖 All stop — end-of-day governance sync across all 4 repos
 expected_output: A finalized handoff state, completed doc updates, and all uncommitted code pushed.
 exclusions: Do NOT start new complex tasks during the allstop governance sequence.
+role: 🧑‍💼 PM / Tech Lead
 
 ---
 
 
 
+
 # End-of-Day Governance Sync
 
-Run this at the end of your work session to ensure all governance files are in sync across all 3 repos.
+Run this at the end of your work session to ensure all governance files are in sync across all 4 repos.
 
 ## Repos
 
-- `blaze-template-deploy`: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
-- `blaze-actions`: `/Users/marek/Workspace/thisisblaze/blaze-actions`
-- `blaze-terraform-infra-core`: `/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core`
+- `blaze-template-deploy`: `blaze-template-deploy (sibling directory)`
+- `blaze-actions`: `blaze-actions (this repo)`
+- `blaze-terraform-infra-core`: `blaze-terraform-infra-core (sibling directory)`
 
 ## Steps
 
 ### 1. Standard File Audit
 
-For EACH of the 3 repos, verify ALL of these files exist:
+For EACH of the 4 repos, verify ALL of these files exist:
 
 | File                                   | Must Exist |
 | :------------------------------------- | :--------- |
@@ -29,7 +31,7 @@ For EACH of the 3 repos, verify ALL of these files exist:
 | `.github/copilot-instructions.md`      | ✅         |
 | `.github/PULL_REQUEST_TEMPLATE.md`     | ✅         |
 | `.github/dependabot.yml`               | ✅         |
-| `.antigravityignore`                   | ✅         |
+| `.agentignore`                   | ✅         |
 | `.cursorignore`                        | ✅         |
 | `.gitignore`                           | ✅         |
 | `CONTRIBUTING.md`                      | ✅         |
@@ -46,21 +48,30 @@ If any file is missing, create it following the patterns from the other repos.
 
 Check the 3 `docs/AI_CONTEXT_GOVERNANCE.md` files:
 
-- **Shared sections** (Prime Directive, Golden Rule, Data Retention, Cost Control, Zero Trace, Cleanup Protocol, Cross-Repo Architecture) must be **identical** across all 3. If content was updated in one, propagate to the others.
+- **Shared sections** (Prime Directive, Golden Rule, Data Retention, Cost Control, Zero Trace, Cleanup Protocol, Cross-Repo Architecture) must be **identical** across all 4. If content was updated in one, propagate to the others.
 - **Repo-specific sections** (Protocol/Bootstrap, Workflows, Key References) must reference only files that **exist in that repo**. Verify all referenced workflow paths actually exist.
 - **Dates** must be updated to today if content was changed.
 - **NO `file:///` absolute links** allowed — all links must be relative.
 
 ### 3. .cursorrules Freshness Check
 
-For each repo, use the `grep_search` AI tool to quickly scan `.cursorrules` to verify if it correctly reflects today's major changes:
+For each repo, use a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ to quickly scan `.cursorrules` to verify if it correctly reflects today's major changes:
 
-- Does it still accurately reflect the repo's current patterns? (Use the `grep_search` AI tool on specific sections, DO NOT read the entire file).
+- Does it still accurately reflect the repo's current patterns? (Use a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+ on specific sections, DO NOT read the entire file).
 - If significant workflows or modules were added/changed today, update the relevant sections.
 
 ### 4. .gitignore Consistency Check
 
-Verify these patterns exist in ALL 3 `.gitignore` files using the `grep_search` AI tool:
+Verify these patterns exist in ALL 3 `.gitignore` files using a search tool:
+> 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
+> 💡 **Claude Code**: Use standard bash `grep -rnw`.
+:
 
 - `**/.DS_Store`
 - `scratch/`

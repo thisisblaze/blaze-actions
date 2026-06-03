@@ -2,7 +2,10 @@
 description: Debug CI/CD workflow execution issues, GitHub Actions failures, and automation problems
 expected_output: Diagnosed workflow logs highlighting the specific runner or step failure.
 exclusions: Do NOT execute unapproved destructive steps to fix the workflows.
+role: 🔧 Engineer
+
 ---
+
 
 # CI/CD Workflow Debugging
 
@@ -548,6 +551,6 @@ If hit:
 
 ---
 
-**Last Updated:** 2026-04-22  
+**Last Updated:** 2026-06-02  
 **Debug Sessions:** 3 major (Sharp Layer, Terraform Locks, Namespace Issues)  
 **Success Rate:** 100% after fixes applied

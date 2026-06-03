@@ -1,9 +1,17 @@
+#!/usr/bin/env python3
 import os
-import yaml
 import re
 
-workflows_dir = "/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows"
-catalog_file = "/Users/marek/Workspace/thisisblaze/blaze-actions/docs/WORKFLOW_CATALOG.md"
+# Auto-discover repos
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'utils'))
+from repo_paths import get_repos
+
+repos = get_repos(__file__)
+actions_dir = repos["actions"]
+
+workflows_dir = os.path.join(actions_dir, ".github", "workflows")
+catalog_file = os.path.join(actions_dir, "docs", "WORKFLOW_CATALOG.md")
 
 with open(catalog_file, "r") as f:
     content = f.read()

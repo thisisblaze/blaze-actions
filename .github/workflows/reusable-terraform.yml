@@ -109,6 +109,11 @@ on:
       azure_subscription_id_rev:
         required: false
         type: string
+      stack_id:
+        description: "Stack UUID (STACK_ID from blaze-env.json via calculate-config). Injected as TF_VAR_stack_id → Blaze:StackID tag on all resources. Enables precise tag-based destroy isolation (pre-destroy-cleanup, verify-destroy-complete)."
+        required: false
+        type: string
+        default: ""
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -348,9 +353,24 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         run: |
+          # CF provider v5 validates api_token strictly: ^[a-zA-Z0-9_-]+$
+          # Strip ALL chars outside that set (not just whitespace) — handles newlines,
+          # carriage returns, invisible unicode, BOMs, and any other invalid byte.
+          # tr -cd keeps ONLY the complement — chars in the allowed set.
+          CF_TOKEN_CLEAN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -cd 'a-zA-Z0-9_-')
+          CF_ZONE_CLEAN=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:]')
+
+          # Use GitHub's multiline EOF delimiter syntax to safely write values that may
+          # contain newlines — prevents GITHUB_ENV file corruption from embedded newlines.
           {
-            echo "TF_VAR_cloudflare_api_token=$CLOUDFLARE_API_TOKEN"
-            echo "TF_VAR_cloudflare_zone_id=$CLOUDFLARE_ZONE_ID"
+            echo "TF_VAR_cloudflare_api_token<<__EOF__"
+            printf '%s' "$CF_TOKEN_CLEAN"
+            echo ""
+            echo "__EOF__"
+            echo "TF_VAR_cloudflare_zone_id<<__EOF__"
+            printf '%s' "$CF_ZONE_CLEAN"
+            echo ""
+            echo "__EOF__"
             echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID"
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
@@ -835,12 +855,17 @@ jobs:
         # v1.4.94: Provides TF_VAR_stack_name + TF_VAR_blaze_run_id for all stacks.
         # stack_name = last path component of tf_dir (e.g. "multi-site-network")
         # blaze_run_id = GITHUB_RUN_ID (enables per-run cost attribution + surgical cleanup)
+        # v1.5.0 (L25): TF_VAR_stack_id injected from calculate-config output →
+        #   propagates STACK_ID UUID from blaze-env.json → Terraform variable → Blaze:StackID tag
+        #   on all AWS resources. Enables precise tag-based destroy isolation.
         run: |
           STACK_NAME=$(basename "${{ inputs.tf_dir }}")
           echo "TF_VAR_stack_name=${STACK_NAME}" >> "$GITHUB_ENV"
           echo "TF_VAR_blaze_run_id=${{ github.run_id }}" >> "$GITHUB_ENV"
+          echo "TF_VAR_stack_id=${{ inputs.stack_id }}" >> "$GITHUB_ENV"
           echo "   🏷️  Blaze:Stack   = ${STACK_NAME}"
           echo "   🏷️  Blaze:RunId   = ${{ github.run_id }}"
+          echo "   🏷️  Blaze:StackID = ${{ inputs.stack_id }}"
 
       - name: Inject AWS Account ID
         # Resolves the AWS account ID via STS and exports as:
@@ -1017,6 +1042,12 @@ jobs:
           terraform state list 2>/dev/null | grep 'cloudflare_dns_record.validation\[' | while read ADDR; do
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || true
           done
+          # Catch-all: any remaining cloudflare_dns_record in state regardless of module path or key.
+          # Covers multi-site-app pattern: cloudflare_dns_record.site["thisisblaze-frontend"]
+          # Root cause of 2026-05-15 stage nuke failure — record was 404 in CF but still in state.
+          terraform state list 2>/dev/null | grep 'cloudflare_dns_record\.' | while read -r ADDR; do
+            terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed (catch-all): $ADDR" || true
+          done
 
           # ECS Capacity Providers — restrict to just the cluster mapping to avoid API deadlock
           echo "  🧹 Removing ECS Capacity Providers from state (dynamic match) to prevent PutClusterCapacityProviders failures..."
@@ -1025,10 +1056,44 @@ jobs:
           done
 
           # VPC Internet Gateway — prevent DependencyViolation if ENIs linger
+          # Step 1: Remove from Terraform state so TF skips it in the plan
           echo "  🧹 Removing Internet Gateways from state (dynamic match) to prevent DependencyViolation..."
           terraform state list 2>/dev/null | grep -E 'aws_internet_gateway\.this' | while read -r ADDR; do
             terraform state rm "$ADDR" 2>/dev/null && echo "  🗑️  Removed: $ADDR" || echo "  ⚠️  Failed to remove: $ADDR"
           done
+
+          # Step 2: CLI-detach and delete any IGW still physically attached to the VPC.
+          # state rm above removes TF's knowledge of the IGW, but the AWS resource itself
+          # remains attached — causing DependencyViolation when TF attempts to delete the VPC.
+          # Fix: resolve VPC ID from state outputs, then force-detach via AWS CLI.
+          REGION="${{ inputs.aws_region }}"
+          VPC_ID=$(terraform output -raw vpc_id 2>/dev/null || echo "")
+          if [[ -n "$VPC_ID" && "$VPC_ID" != "null" ]]; then
+            echo "  🔍 Checking for physically attached IGWs on VPC: $VPC_ID"
+            IGW_IDS=$(aws ec2 describe-internet-gateways \
+              --region "$REGION" \
+              --filters "Name=attachment.vpc-id,Values=${VPC_ID}" \
+              --query 'InternetGateways[*].InternetGatewayId' \
+              --output text 2>/dev/null || echo "")
+            for IGW_ID in $IGW_IDS; do
+              echo "  🔌 Detaching IGW: $IGW_ID from VPC: $VPC_ID"
+              aws ec2 detach-internet-gateway \
+                --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" \
+                --vpc-id "$VPC_ID" 2>/dev/null \
+                && echo "  ✅ Detached: $IGW_ID" || echo "  ⚠️  Detach failed (may already be detached): $IGW_ID"
+              echo "  🗑️  Deleting IGW: $IGW_ID"
+              aws ec2 delete-internet-gateway \
+                --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" 2>/dev/null \
+                && echo "  ✅ Deleted: $IGW_ID" || echo "  ⚠️  Delete failed (may already be gone): $IGW_ID"
+            done
+            if [[ -z "$IGW_IDS" ]]; then
+              echo "  ✅ No physically attached IGWs found — VPC is clean"
+            fi
+          else
+            echo "  ℹ️  No vpc_id output available — skipping IGW CLI cleanup"
+          fi
 
           echo "✅ Stale network resources purged"
 
@@ -1056,7 +1121,43 @@ jobs:
             echo "ℹ️  No pre-destroy.sh found — skipping"
           fi
 
+
+      - name: Sanitize CF Token for Provider Init
+        # CF provider v5.19.1 validates api_token format at plan time.
+        # Strategy by stack type:
+        #   - enable_cloudflare_records = false (network stack):
+        #     inject a format-valid placeholder so the provider initialises without
+        #     making real API calls (no managed CF resources in this stack).
+        #   - enable_cloudflare_records = true/absent (app stack, CF DNS managed):
+        #     pass the raw token with only whitespace stripped — preserves dots in
+        #     newer CF token formats that tr -cd would destroy.
+        # CF_API_TOKEN_SANITIZED (whitespace-stripped) is always set for pre_apply.sh curl calls.
+        run: |
+          # Strip only whitespace/control chars — preserve dots, slashes, etc. in newer CF tokens
+          RAW_TOKEN="${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}"
+          CLEAN=$(printf '%s' "${RAW_TOKEN}" | tr -d '[:space:][:cntrl:]')
+          echo "CF_API_TOKEN_SANITIZED=${CLEAN}" >> "$GITHUB_ENV"
+          echo "ℹ️  CF token raw length: ${#RAW_TOKEN}, stripped length: ${#CLEAN}"
+
+          # Always export CLOUDFLARE_API_TOKEN so providers using env var (not api_token attr) work.
+          # multi-site-app/main.tf uses the env var to bypass CF provider v5 HCL schema validation.
+          echo "CLOUDFLARE_API_TOKEN=${CLEAN}" >> "$GITHUB_ENV"
+
+          # Detect enable_cloudflare_records from tfvars (false = network/no-CF stack)
+          TFVARS_PATH="${{ inputs.deploy_path }}/terraform.tfvars"
+          CF_RECORDS_ENABLED=$(grep -E '^enable_cloudflare_records\s*=' "${TFVARS_PATH}" 2>/dev/null | tr -d ' "' | cut -d= -f2 | tr -d '[:space:]' || echo "true")
+          [[ -z "${CF_RECORDS_ENABLED}" ]] && CF_RECORDS_ENABLED="true"
+
+          if [[ "${CF_RECORDS_ENABLED}" == "false" ]]; then
+            echo "TF_VAR_cloudflare_api_token=placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
+            echo "ℹ️  enable_cloudflare_records=false — placeholder injected (no CF API calls this stack)"
+          else
+            echo "TF_VAR_cloudflare_api_token=${CLEAN}" >> "$GITHUB_ENV"
+            echo "✅ enable_cloudflare_records=true — whitespace-stripped token set (${#CLEAN} chars)"
+          fi
+
       - name: Terraform Plan
+
         id: plan
         run: |
           DESTROY_FLAG=""
@@ -1076,9 +1177,15 @@ jobs:
           # to determine if 'has_changes' is true for the Terraform Apply step downstream.
           # In destroy mode, use -refresh=false to prevent re-discovering resources that
           # were intentionally state rm'd by pre-destroy.sh (cache policies, WAF, CF function).
+          # Also use -refresh=false when the CF placeholder token is active: the CF provider v5
+          # will 401 on state refresh for any managed CF resource (e.g. ACM validation DNS record).
+          # The CF validation record is set-once and stable — skipping refresh is safe.
           REFRESH_FLAG=""
           if [[ "${{ inputs.destroy }}" == "true" ]]; then
             REFRESH_FLAG="-refresh=false"
+          elif [[ "${TF_VAR_cloudflare_api_token:-}" == "placeholder-cf-token-not-used-records-disabled" ]]; then
+            REFRESH_FLAG="-refresh=false"
+            echo "ℹ️  CF placeholder token active — using -refresh=false to skip CF provider state refresh"
           fi
 
           set +e

@@ -1,5 +1,5 @@
 ---
-Last Updated: 2026-05-02
+Last Updated: 2026-05-15
 Owner: Infrastructure Team
 ---
 
@@ -38,3 +38,5 @@ When creating a new file in this directory, please use this structure:
 - [AWS ECS Capacity Provider Reconciliation](./aws-ecs-capacity-provider-reconciliation.md) - Handling AWS `ResourceInUseException` and detaching Capacity Providers safely via CLI toggle.
 - [GitHub Actions Nested Relative Paths](./github-actions-nested-relative-paths.md) - Fixing `workflow was not found` cross-repo issues.
 - [GitHub Actions Allowed Infra Users](./github-actions-allowed-infra-users.md) - Implementing `ALLOWED_INFRA_USERS` access control.
+- [AWS VPC IGW DependencyViolation on Destroy](./aws-vpc-igw-dependency-violation.md) - Fixing `DependencyViolation` when IGW survives `terraform state rm` and blocks VPC deletion. (v2.1.84)
+- [MongoDB Atlas GROUP_NOT_FOUND Stale State](./atlas-group-not-found-stale-state.md) - Resolving 404 `GROUP_NOT_FOUND` errors when Atlas project was reprovisioned externally but old ID remains in state. (v2.1.84)

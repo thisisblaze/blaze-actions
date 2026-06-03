@@ -24,7 +24,7 @@ on:
           - multi-site
         required: true
       project:
-        description: "Project (App Identity) - e.g. thisisblaze"
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
         type: string
         required: true
         default: "thisisblaze"
@@ -95,9 +95,8 @@ on:
         type: string
         default: ""
       project:
-        required: false
+        required: true
         type: string
-        default: "thisisblaze"
       branch_name:
         required: false
         type: string
@@ -278,6 +277,7 @@ jobs:
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
       admin_bucket: ${{ steps.config.outputs.admin_bucket }}
       project_slug: ${{ steps.config.outputs.project_slug }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -365,7 +365,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -555,7 +555,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -604,7 +604,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -734,7 +734,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true ||
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' ||
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -786,7 +786,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -835,7 +835,7 @@ jobs:
       == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services
       == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -884,7 +884,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
@@ -955,12 +955,22 @@ jobs:
           # Sync to S3
           aws s3 sync packages/admin/dist "s3://$EXPECTED_BUCKET" --delete
 
+          STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           # Find CloudFront Distribution ID bounded organically by Tags
-          TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
-            --tag-filters "Key=Blaze:Environment,Values=${STAGE_KEY}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
-            --resource-type-filters "cloudfront:distribution" \
-            --query 'ResourceTagMappingList[*].ResourceARN' \
-            --output text 2>/dev/null || echo "")
+          if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
+            echo "   → Using precise Stack UUID for targeting: $STACK_ID"
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --tag-filters "Key=Blaze:StackID,Values=${STACK_ID}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          else
+            TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --tag-filters "Key=Blaze:Environment,Values=${{ needs.configuration.outputs.stage_key }}" "Key=Blaze:Project,Values=${{ needs.configuration.outputs.project_key }}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           CF_DIST_ID="None"
           for CF_ARN in $TAGGED_CF_ARNS; do

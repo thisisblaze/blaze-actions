@@ -22,7 +22,7 @@ on:
         options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
         required: true
       project:
-        description: "Project (App Identity) - e.g. thisisblaze"
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
         type: string
         required: true
         default: "thisisblaze"
@@ -119,9 +119,8 @@ on:
         type: string
         default: ""
       project:
-        required: false
+        required: true
         type: string
-        default: "thisisblaze"
       stack:
         required: true
         type: string
@@ -309,6 +308,7 @@ jobs:
       azure_client_id: ${{ steps.resolve-azure.outputs.client_id }}
       azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
       azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -325,7 +325,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.2.2
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -398,7 +398,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -452,7 +452,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.2.2
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -463,7 +463,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.2.1
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -525,10 +525,14 @@ jobs:
           export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
           
           # Pass Cloudflare/GH tokens for API access during import.sh execution
+          # IMPORTANT: TF_VAR_cloudflare_api_token may be the placeholder (set by sanitize step).
+          # Re-export from raw CLOUDFLARE_API_TOKEN (the runner env var from reusable-terraform)
+          # so import.sh curl calls get the real token for CF API authentication.
+          export TF_VAR_cloudflare_api_token=$(printf '%s' "${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}" | tr -cd 'a-zA-Z0-9_-')
           export GH_TOKEN="${GH_PAT:-${GITHUB_TOKEN}}"
 
 
-          if gh api repos/thisisblaze/blaze-actions/contents/.github/actions/resource-importer/import.sh -H "Accept: application/vnd.github.v3.raw" > dynamic_import.sh; then
+          if gh api repos/${{ github.repository }}/contents/.github/actions/resource-importer/import.sh -H "Accept: application/vnd.github.v3.raw" > dynamic_import.sh; then
             chmod +x dynamic_import.sh
             bash dynamic_import.sh
           else
@@ -651,6 +655,7 @@ jobs:
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
+      stack_id: ${{ needs.configuration.outputs.stack_id }}
 
   post_provision:
     name: ⚙️ Post-Provision Configuration
@@ -714,7 +719,7 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.2.2
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
@@ -821,13 +826,17 @@ jobs:
           AZURE_REGION: ${{ needs.configuration.outputs.cloud_region }}
           CAE_HOSTNAME: ${{ steps.cae_hostname.outputs.cae_hostname }}
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Raw secrets — trimmed of whitespace in the run step below before use
+          _CF_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
         run: |
+          # Strip whitespace — CF provider v5 rejects trailing newlines from GitHub UI paste
+          TF_VAR_cloudflare_api_token=$(echo -n "$_CF_API_TOKEN_RAW" | tr -d '[:space:]')
+          export TF_VAR_cloudflare_api_token
           NETWORK_STACK_DIR=".github/azure/infra/live/${STAGE}-network"
 
           echo "🔄 Re-applying ${STAGE}-network with container_app_hostname=${CAE_HOSTNAME}"

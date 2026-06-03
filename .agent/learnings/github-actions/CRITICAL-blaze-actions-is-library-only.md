@@ -33,7 +33,7 @@ blaze-template-deploy (DEPLOYMENT REPO - thebyte9/blaze-template-deploy)
     └── Consumes:  blaze-actions workflows via `uses: thisisblaze/blaze-actions/...@dev`
     └── HAS:       all secrets (GH_PAT, AWS_ROLE_ARN, GCP_*, CLOUDFLARE_*, etc.)
     └── RUNS:      ALL stress tests, provisioning, deployments
-    └── Local:     /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+    └── Local:     blaze-template-deploy (sibling directory)
 ```
 
 ---
@@ -46,12 +46,12 @@ Added permanent `> [!CAUTION]` block to `blaze-actions/README.md` and this learn
 
 ## Prevention Rules (MUST FOLLOW)
 
-1. **NEVER** run `gh workflow run` from `/Users/marek/Workspace/thisisblaze/blaze-actions`
+1. **NEVER** run `gh workflow run` from `blaze-actions (this repo)`
 2. **NEVER** check `gh secret list` on `blaze-actions` expecting deployment secrets
 3. **NEVER** trigger stress tests from `blaze-actions`
 4. **ALWAYS** switch to `blaze-template-deploy` for any actual run or secret lookup:
    ```bash
-   cd /Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy
+   cd blaze-template-deploy (sibling directory)
    gh workflow run stress-test-gcp.yml --ref dev -f environment=MULTI-SITE ...
    ```
 5. When editing workflows in `blaze-actions` → the test run **must** happen from `blaze-template-deploy`

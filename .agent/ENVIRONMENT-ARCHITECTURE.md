@@ -219,9 +219,9 @@ If you want to enable CloudFront in DEV (not recommended):
 2. Provision network:
 
    ```bash
-   gh workflow run "01-provision-infra.yml" \
+   gh workflow run "01a-provision-network.yml" \
+     --repo thebyte9/blaze-template-deploy \
      -f environment=DEV \
-     -f stack=network \
      -f apply=true
    ```
 
@@ -292,7 +292,7 @@ The platform now supports multiple projects sharing a single ECS cluster, ALB, a
 
 ---
 
-**Last Updated:** 2026-04-22  
+**Last Updated:** 2026-05-09  
 **Maintained By:** Infrastructure Team  
 **Review Frequency:** Quarterly or when architecture changes  
 **Cloud Providers:** AWS (ECS Fargate/EC2 Hybrid), GCP (Cloud Run), Azure (Container Apps)

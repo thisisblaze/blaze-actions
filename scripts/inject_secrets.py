@@ -56,13 +56,19 @@ def process_caller_workflow(filepath):
             f.write(new_content)
         print(f"Replaced secrets: inherit in caller workflow: {filepath}")
 
+# Auto-discover repos
+import sys as _sys
+_sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.github', 'scripts', 'utils'))
+from repo_paths import get_repos
+_repos = get_repos(__file__)
+
 # 1. Process blaze-actions (reusable ones and any callers inside)
-for filepath in glob.glob("/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows/*.yml"):
+for filepath in glob.glob(os.path.join(_repos["actions"], ".github", "workflows", "*.yml")):
     process_reusable_workflow(filepath)
     process_caller_workflow(filepath)
 
 # 2. Process blaze-template-deploy (caller ones)
-for filepath in glob.glob("/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.github/workflows/*.yml"):
+for filepath in glob.glob(os.path.join(_repos["deploy"], ".github", "workflows", "*.yml")):
     process_caller_workflow(filepath)
 
 print("Done computing multi-repo injection.")

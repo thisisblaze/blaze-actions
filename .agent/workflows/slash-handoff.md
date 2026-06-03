@@ -2,7 +2,10 @@
 description: Freezes the current AI session state to prevent context bloat and rate limits.
 expected_output: A finalized handoff state, completed doc updates, and all uncommitted code pushed.
 exclusions: Do NOT start new complex tasks during the handoff governance sequence.
+role: 🧑‍💼 PM / Tech Lead
+
 ---
+
 
 # Handoff Session
 
@@ -52,3 +55,6 @@ The file MUST use the following format exactly:
 Tell the user:
 
 > "Context successfully frozen to `docs/HANDOFF.md`. You may now close this conversation to avoid context bloat. In a new conversation, type `/slash-resume` to instantly pick up where we left off."
+
+> 💡 **Antigravity 2.0**: Context is persistent natively. Sync the Sprint Board in `HANDOFF.md` but do not close the conversation.
+> 💡 **Claude Code**: Freeze context to `HANDOFF.md` to protect token limits.

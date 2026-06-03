@@ -23,11 +23,14 @@ if is_ci:
         "infra": os.path.join(base_dir, "blaze-terraform-infra-core")
     }
 else:
-    # Running locally on developer laptop
+    # Running locally — auto-discover from script location
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'utils'))
+    from repo_paths import get_repos
+    _repos = get_repos(__file__)
     REPOS = {
-        "deploy": os.environ.get("BLAZE_SPOKE_DIR", "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy"),
-        "actions": "/Users/marek/Workspace/thisisblaze/blaze-actions",
-        "infra": "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core"
+        "deploy": _repos.get("deploy", ""),
+        "actions": _repos.get("actions", ""),
+        "infra": _repos.get("infra", "")
     }
 
 print("🔧 CHECKENGINES REPORT — RUNNING FULL DIAGNOSTIC SWEEP...")

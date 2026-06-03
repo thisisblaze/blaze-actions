@@ -47,7 +47,7 @@ GitHub Actions workflows use a strict Multi-Tenant lifecycle phase mapping:
 ## 3. Directory Structure
 
 ### 3.1 Live Infrastructures: `/.aws/`, `/.gcp/`, `/.azure/`
-- **`modules/`**: Distributed universally via remote `blaze-terraform-infra-core@v2.3.7`.
+- **`modules/`**: Distributed universally via remote `blaze-terraform-infra-core@v2.6.7`.
 - **`live/`**: Instantiations of infrastructure across explicit Pillars:
   - `01a-provision-network/`: Foundation Layer Networking.
   - `01g-provision-db-pod/`: Foundation Layer Data pods.
@@ -160,3 +160,6 @@ default_tags {
 - ❌ Using CodeDeploy functions (Deprecated 2026-02-27).
 - ❌ Suppressing `actionlint` with `|| true` — fix real GHA expression errors instead.
 - ❌ Using `terraform import` or `import {}` blocks for orphaned resources that can be safely deleted — delete the zombie from AWS first, then let Terraform create cleanly.
+
+## 8. Agent Workflows & Skills
+If the user mentions a slash command (e.g. `/09-maintain-docs`), you MUST manually read the corresponding markdown file in `.agent/workflows/` and execute it step-by-step.

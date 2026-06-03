@@ -2,7 +2,10 @@
 description: Troubleshoot and fix Terraform state lock issues (stale locks blocking workflows)
 expected_output: Released Terraform state locks causing blocking pipelines.
 exclusions: Do NOT force-unlock without verifying the lock is genuinely orphaned.
+role: 🚨 SRE
+
 ---
+
 
 # Terraform State Lock Troubleshooting
 
@@ -83,8 +86,8 @@ Then select:
 
 ```bash
 # Set variables from error message
-BUCKET="b9-stage-blaze-tfstate"
-STATE_KEY="infra/thisisblaze/stage/network.tfstate"
+BUCKET="<client>-<stage>-blaze-tfstate"     # e.g. b9-stage-blaze-tfstate
+STATE_KEY="infra/<project-key>/<stage>/<stack>.tfstate"  # e.g. infra/thisisblaze/stage/network.tfstate
 TABLE="$BUCKET"  # Usually same as bucket
 REGION="eu-west-1"
 
@@ -109,17 +112,17 @@ echo "✅ Lock released"
 ## Common Lock IDs
 
 ```
-# Network stack
-b9-stage-blaze-tfstate/infra/thisisblaze/stage/network.tfstate
+# Network stack (replace <project-key> with your project, e.g. thisisblaze or support)
+<client>-<stage>-blaze-tfstate/infra/<project-key>/<stage>/network.tfstate
 
 # App stack
-b9-stage-blaze-tfstate/infra/thisisblaze/stage/app.tfstate
+<client>-<stage>-blaze-tfstate/infra/<project-key>/<stage>/app.tfstate
 
 # Tunnel
-b9-stage-blaze-tfstate/infra/thisisblaze/third-party/cloudflare.tfstate
+<client>-<stage>-blaze-tfstate/infra/<project-key>/third-party/cloudflare.tfstate
 
 # MongoDB
-b9-stage-blaze-tfstate/infra/thisisblaze/third-party/mongodb.tfstate
+<client>-<stage>-blaze-tfstate/infra/<project-key>/third-party/mongodb.tfstate
 ```
 
 ## Monitoring & Alerts
@@ -152,8 +155,11 @@ resource "aws_cloudwatch_metric_alarm" "terraform_locks" {
 
 for ENV in dev stage prod; do
   for STACK in network app; do
-    TABLE="b9-${ENV}-blaze-tfstate"
-    KEY="infra/thisisblaze/${ENV}/${STACK}.tfstate"
+    # Read project-key from vars/<project>/blaze-env.json
+    PROJECT_KEY="<project-key>"  # e.g. thisisblaze or support
+    CLIENT="<client>"            # e.g. b9
+    TABLE="${CLIENT}-${ENV}-blaze-tfstate"
+    KEY="infra/${PROJECT_KEY}/${ENV}/${STACK}.tfstate"
 
     LOCK=$(aws dynamodb get-item \
       --table-name "$TABLE" \
@@ -170,7 +176,7 @@ done
 
 ## Technical Deep Dive
 
-See: `/Users/marek/.gemini/antigravity/brain/.../terraform-lock-analysis.md`
+See: `<appDataDir>/brain/.../terraform-lock-analysis.md`
 
 **Key Bug (Fixed 2026-01-13):**
 
@@ -190,6 +196,6 @@ If automation fails and manual unlock doesn't work:
 
 ---
 
-**Last Updated:** 2026-04-22  
+**Last Updated:** 2026-06-02  
 **Auto-Fix Status:** ✅ Enabled  
 **Success Rate:** 100% (tested with 11-hour-old lock)

@@ -11,9 +11,13 @@ on:
         required: true
         default: 'thisisblaze.uk'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   find-zombie:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       id-token: write
       contents: read

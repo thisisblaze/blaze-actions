@@ -1,52 +1,30 @@
 ---
-Last Updated: 2026-03-17
-Owner: Infrastructure Team
+Last Updated: 2026-06-02
+Owner: Byte9 Platform Team
 ---
 
-# GitHub Copilot Instructions
+# GitHub Copilot Instructions — Byte9 Shared CI/CD Engine
 
-You are an expert Senior DevOps Engineer specialized in GitHub Actions, Terraform, and multi-cloud CI/CD.
-Follow these project-specific rules and standards when generating code or explanations.
+You are a GitHub Copilot agent operating in `blaze-actions`, the **shared CI/CD engine** of the Byte9 platform.
 
-## 1. Core Technology Stack & Architecture
+## Critical Rule — This Is a Shared Parent Repo
 
-- **Architecture**: Split-Repository Design
-  - `blaze-terraform-infra-core`: Core Terraform modules (Source of Truth).
-  - `blaze-actions` (This Repo): Shared/Reusable GitHub Actions Workflows.
-  - `blaze-template-deploy`: Application Implementation & Infrastructure Instantiation.
-- **Cloud**: AWS (Primary), GCP, Azure — Multi-cloud support.
-- **CI/CD**: GitHub Actions (this repo provides reusable workflows to consuming repos).
+This repo is consumed by many different tenant repositories (`blaze-template-deploy`, `shopware-km`, future clients). Never hardcode tenant-specific values, AWS profile names, or account IDs here. All workflows must remain generic and parameterised.
 
-## 2. This Repo's Responsibility
+## Architecture
 
-- Provide reusable workflows (`.github/workflows/reusable-*.yml`)
-- Provide composite actions (`.github/actions/*/action.yml`)
-- Maintain scripts for CI/CD operations (`scripts/`)
+This repo provides reusable GitHub Actions workflows called via `workflow_call` from tenant repos. Tenant repos pass their specific secrets and variables at call-time.
 
-## 3. Workflow Standards
+## Agent Workflows & Skills
 
-- **SHA Pinning**: All third-party actions MUST use commit SHAs, not tags.
-- **Timeout Protection**: Every job MUST have `timeout-minutes`.
-- **Input Validation**: Use `type: choice` with explicit options.
-- **Multi-Cloud**: Accept `cloud_provider` input where applicable.
-- **Naming**: `reusable-<name>.yml` for reusable, `<number>-<name>.yml` for top-level.
+If the user mentions a slash command (e.g. `/04-troubleshoot`, `/13-deep-cicd-maintenance`), read the corresponding markdown file in `.agent/workflows/` and execute it step-by-step.
 
-## 4. Naming Conventions
+## AWS Credentials
 
-All cloud resources MUST follow: `blaze-<client_key>-<project_key>-<stage_key>-<resource-suffix>`
+Before running any `aws` CLI command, read the **active tenant repo's** `CLAUDE.md` to find the correct `AWS_PROFILE` and export it first.
 
-## 5. Code Style
+## Custom Agent Personas
 
-- **YAML**: 2-space indentation, comments above complex sections, descriptive step names.
-- **Shell Scripts**: Use `set -euo pipefail`, quote variables, use `printf` over `echo` for complex output.
-
-## 6. Security
-
-- Use OIDC for cloud authentication, never long-lived credentials.
-- `vars.ALLOWED_INFRA_USERS` restricts destructive actions.
-- Default inputs to safe values (e.g., `delete_storage: false`).
-
-## 7. Testing
-
-- Validate with `actionlint` before committing.
-- Create test workflows calling your reusable workflow.
+For specialised tasks, use the named agents in `.github/agents/`:
+- `@maintainer` — workflow releases, documentation sweeps, changelog parity
+- `@sre` — health checks, incident response, AWS troubleshooting

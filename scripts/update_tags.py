@@ -1,14 +1,17 @@
+#!/usr/bin/env python3
 import os
 import re
 import shutil
+import sys
 
-REPOS = [
-    "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy",
-    "/Users/marek/Workspace/thisisblaze/blaze-actions",
-    "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core"
-]
+# Auto-discover repos
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.github', 'scripts', 'utils'))
+from repo_paths import get_all_repo_list, get_repos
+
+REPOS = get_all_repo_list(__file__)
 
 def main():
+    repos = get_repos(__file__)
     print("Replacing @dev tags with @v1.4.30 in workflows...")
     for repo in REPOS:
         for root, dirs, files in os.walk(os.path.join(repo, '.github')):
@@ -27,9 +30,9 @@ def main():
                         print(f"Updated {cnt} occurrence(s) in {p}")
 
     print("\nSyncing workflow parity (Engine 8)...")
-    source = "/Users/marek/Workspace/thisisblaze/blaze-terraform-infra-core/.github/workflows/90-daily-health-check.yml"
-    dest1 = "/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy/.github/workflows/90-daily-health-check.yml"
-    dest2 = "/Users/marek/Workspace/thisisblaze/blaze-actions/.github/workflows/90-daily-health-check.yml"
+    source = os.path.join(repos["infra"], ".github", "workflows", "90-daily-health-check.yml")
+    dest1 = os.path.join(repos["deploy"], ".github", "workflows", "90-daily-health-check.yml")
+    dest2 = os.path.join(repos["actions"], ".github", "workflows", "90-daily-health-check.yml")
     
     shutil.copy2(source, dest1)
     print(f"Synced {dest1}")

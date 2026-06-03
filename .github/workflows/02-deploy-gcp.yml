@@ -24,7 +24,7 @@ on:
           - MULTI-SITE
         required: true
       project:
-        description: "Project (App Identity) - e.g. thisisblaze"
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
         type: string
         required: true
         default: "thisisblaze"
@@ -95,9 +95,8 @@ on:
         type: string
         default: ""
       project:
-        required: false
+        required: true
         type: string
-        default: "thisisblaze"
       branch_name:
         required: false
         type: string
@@ -363,7 +362,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.1.74
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -540,7 +539,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -589,7 +588,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -643,7 +642,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true || 
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -693,7 +692,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.2.2
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -753,7 +752,7 @@ jobs:
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
       || inputs.target_services == 'frontend' || inputs.target_services == null)
       }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.2.2
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -808,7 +807,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.2.2
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -861,7 +860,7 @@ jobs:
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.1.74
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.2.2
     with:
       site_key: ${{ matrix.site_key }}
       # Service name must match TF naming: the network module uses project_key="multi-site"

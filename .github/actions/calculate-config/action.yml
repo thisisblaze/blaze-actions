@@ -147,6 +147,9 @@ outputs:
   workers_json:
     description: "Background Workers Configuration (JSON)"
     value: ${{ steps.config.outputs.workers_json }}
+  stack_id:
+    description: "Stack UUID for precise resource targeting"
+    value: ${{ steps.config.outputs.stack_id }}
 
 runs:
   using: "composite"
@@ -230,6 +233,8 @@ runs:
         CLOUDFLARE_ZONE_ID_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUDFLARE_ZONE_ID_KEY // "CLOUDFLARE_ZONE_ID"')
         DEDICATED_ALB=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_ALB // "false"')
         DEDICATED_WAF=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_WAF // "false"')
+        STACK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.STACK_ID // ""')
+        
         # Resolve templated variables in DB_SSM_PATH
         DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
         DB_SSM_PATH="${DB_SSM_PATH//\${PROJECT_KEY\}/$PROJECT_KEY}"
@@ -313,6 +318,7 @@ runs:
         echo "cloudflare_zone_id_key=$CLOUDFLARE_ZONE_ID_KEY" >> $GITHUB_OUTPUT
         echo "dedicated_alb=$DEDICATED_ALB" >> $GITHUB_OUTPUT
         echo "dedicated_waf=$DEDICATED_WAF" >> $GITHUB_OUTPUT
+        echo "stack_id=$STACK_ID" >> $GITHUB_OUTPUT
         
         WORKERS_JSON=$(echo "$MERGED_CONFIG" | jq -c '.common.WORKERS // {}')
         echo "workers_json=$WORKERS_JSON" >> $GITHUB_OUTPUT

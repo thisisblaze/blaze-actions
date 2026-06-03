@@ -22,7 +22,7 @@
 >
 > **✅ ALWAYS use instead:**
 > - **`blaze-template-deploy`** for ALL actual workflow runs and deployments
-> - Local path: `/Users/marek/Workspace/Byte9/blaze-template-deploy-aws-actions/blaze-template-deploy`
+> - Local path: Sibling directory `blaze-template-deploy/` (auto-discovered by utility scripts via `repo_paths.py`)
 > - GitHub: `github.com/thebyte9/blaze-template-deploy`
 >
 > Edit workflow _logic_ here → test and run it from `blaze-template-deploy`.
@@ -132,6 +132,10 @@ b9-dev-blaze-tfstate                    # Terraform State Bucket
 ```
 ${namespace}-${client_key}-${project_key}-${stage_key}-${resource}
 ```
+
+### 🆔 Environment Isolation (Blaze:StackID)
+
+As of Plan 155, all resources provisioned by these workflows are also stamped with a revolutionary UUID tag solution: `Blaze:StackID`. This precise UUID acts as a definitive signature for an environment instance, enabling strictly isolated, stateless purges (`99-ops-nuke.yml`) without risking cross-environment resource deletion. It completely replaces legacy, name-based regex or generic tagging (`Stage`, `Client`) for orphan resource tracking.
 
 ### Custom Namespace
 

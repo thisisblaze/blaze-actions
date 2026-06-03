@@ -1,5 +1,651 @@
+# Changelog
+
+All notable changes to the `blaze-actions` project will be documented in this file.
+
 ## [Unreleased]
 
+### Changed
+- **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
+- **fix(infra)**: Implemented ECS scale-to-zero in `reusable-pre-destroy-cleanup.yml` to prevent `ResourceInUseException` during environment teardown.
+- **refactor(ci)**: Stripped explicit `secrets:` from all `99-ops-*.yml` wrapper workflows to natively leverage the `secrets: inherit` standard.
+
+## v2.2.2 (2026-05-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.2.1
+
+### Fixed
+
+
+## v2.2.2 (2026-05-30)
+
+### Fixed
+
+- `01-provision-infra.yml`: bump internal `reusable-terraform.yml` pin `v2.1.96` → `v2.2.1`. Root cause of `01c` multi-site-app apply failures: `v2.1.96` always-injects a CF placeholder token for ALL stacks (no conditional check), and does NOT export `CLOUDFLARE_API_TOKEN` to `$GITHUB_ENV`. The `multi-site-app/main.tf` CF provider was migrated in `v2.2.1` commit to read auth from `CLOUDFLARE_API_TOKEN` env var — with `v2.1.96` in the chain, `CLOUDFLARE_API_TOKEN` is never set by the workflow, so CF API calls during apply hit 400/9106 "Missing Authorization headers". Fix: pin to `v2.2.1` which has conditional placeholder logic (only injects placeholder when `enable_cloudflare_records=false`) and correctly exports `CLOUDFLARE_API_TOKEN`.
+
+## v2.2.1 (2026-05-30)
+
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.2.0
+
+### Fixed
+
+
+## v2.2.0 (2026-05-30)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.99
+
+### Fixed
+
+
+## v2.1.99 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.98
+
+### Fixed
+
+
+## v2.1.98 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.97
+- chore: update CHANGELOG for v2.1.96
+
+### Fixed
+
+
+## v2.1.97 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.96
+
+### Fixed
+
+
+## v2.1.96 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+
+## v2.1.95 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.94
+
+### Fixed
+
+
+## v2.1.94 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+
+## v2.1.93 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.92
+
+### Fixed
+
+
+## v2.1.92 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.90
+
+### Fixed
+
+
+## v2.1.90 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.89 — add CF token fix note
+- chore: update CHANGELOG for v2.1.89
+- chore: update CHANGELOG for v2.1.89
+
+### Fixed
+
+
+## v2.1.89 (2026-05-29)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.88
+
+### Fixed
+
+
+## v2.1.88 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.87
+- chore: update CHANGELOG for v2.1.87
+
+### Fixed
+
+
+## v2.1.87 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.87
+
+### Fixed
+
+
+## v2.1.87 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+
+### Fixed
+
+
+## v2.1.86 (2026-05-28)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-28
+- docs: daily audit update 2026-05-28
+- chore: end-of-day governance sync — 2026-05-27
+- chore: end-of-day governance sync — 2026-05-26
+- chore: Google Antigravity 2.0 migration + end-of-day governance sync — 2026-05-26
+- chore: align engage workflow and update print_env_versions paths
+- chore: end-of-day governance sync — 2026-05-15
+- chore: update CHANGELOG for v2.1.85
+- chore: update CHANGELOG for v2.1.85
+- chore: update CHANGELOG for v2.1.84
+
+### Fixed
+
+- fix(checkengines): scope TF ref scan to deploy .github/ only (Engine 4)
+- fix: bump dev-mini-network module refs v2.6.4 → v2.6.5 (resolve split-brain)
+
+## [Unreleased]
+
+### Added
+- **feat(ai)**: `AGENTS.md` (repo root) — plain-markdown project context for all AI tools (Copilot, Cursor, Antigravity, Aider).
+- **feat(ai)**: `.github/agents/maintainer.agent.md` — VS Code Custom Agent persona for the `@maintainer` role.
+- **feat(ai)**: `.github/agents/sre.agent.md` — VS Code Custom Agent persona for the `@sre` role.
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+- **docs(catalog)**: `WORKFLOW_CATALOG.md` corrected workflow count (38+24=62 was wrong → 30+24=54 actual files); bumped to v2.2.3.
+- **docs(catalog)**: `REUSABLE_WORKFLOWS.md` fixed stale `stress-test.yml` code example (file no longer exists); version pins updated to v2.2.2; timestamps updated to 2026-06-02.
+- **docs(workflows)**: `troubleshoot-terraform-locks.md` — replaced hardcoded `thisisblaze` state key examples with generic `<project-key>/<client>` placeholders; timestamp updated to 2026-06-02.
+- **docs(workflows)**: `debug-cicd-workflows.md` — timestamp updated to 2026-06-02 (content verified accurate).
+- **docs(workflows)**: `03-monitor-stress.md` — fixed stale `--workflow=stress-test.yml` reference (file does not exist; now points to `03-stress-test.yml` wrapper in tenant repo).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Changed
+- **chore(ai)**: Platform-Agnostic Workflow Optimization (Plan 154 Phase 1-5). Upgraded all agent workflows across the 4 repositories to gracefully degrade between Antigravity 2.0 (native tools) and CLI agents (Claude Code).
+- **chore(ai)**: IDE Parity. Synced `.cursorrules` Agent Workflows instructions and instantiated `.github/copilot-instructions.md` to ensure identical `/slash-command` execution behavior across Cursor and GitHub Copilot.
+### Fixed
+- **fix(checkengines/Engine 4)**: `engine4_modules.py` — Added FREEZE-annotation filter: lines containing `# FREEZE` are skipped when scanning blaze-actions workflow refs, preventing the intentional `v2.1.74` chaos-test pin in `90-daily-health-check.yml` from triggering false split-brain detection.
+- **fix(checkengines/Engine 4)**: `engine4_modules.py` — Scoped Terraform ref scan to `deploy_path/.github/` only. Previously the engine scanned `_shared/blaze-actions/` workspace mirror (a separate directory with an older checkout), producing false-positive split-brain on `v2.6.4`/`v2.6.5` refs. blaze-actions contains no Terraform live stacks.
+- **fix(checkengines/Engine 8)**: `engine8_workflows.py` — Added `INTENTIONAL_DIVERGENCE` allowlist. `90-daily-health-check.yml` differs between repos by design: `blaze-template-deploy` extends it with the `mcp-healing-agent` job (blaze-conductor + `ANTHROPIC_API_KEY`) which must never exist in the public blaze-actions repo per ADR-017.
+
+### Changed
+- **chore(agent/governance)**: `engage.md` — Updated to 4-repo architecture. Repo map now includes `blaze-conductor` (private, `thisisblaze`). `blaze-actions` flagged as **PUBLIC** in map. Pull step covers all 4 repos. Ready Report includes conductor status line.
+- **chore(agent/governance)**: `allstop.md` — "3 repos" → "4 repos" throughout.
+- **chore(agent/governance)**: `checkengines.md` — "3 repos" → "4 repos" throughout.
+- **chore(agent/governance)**: `13-deep-cicd-maintenance.md` — Scope expanded to 4 repos. `blaze-conductor` added to Repositories in Scope. CAUTION block added: `blaze-actions` is **PUBLIC** — no conductor/MCP references allowed. Phase 2 agent scan, Phase 4 git log updated. Date bumped to 2026-05-27.
+
+---
+
+## [v2.1.86] - 2026-05-26
+
+### Changed
+
+- **docs**: Added Cloudflare provider validation failure troubleshooting (dummy token requirement `abcdefghijklmnopqrstuvwxyz0123456789ABCD` for disconnected applies) to `cloudflare-operations.md`.
+- **chore(ai)**: Migrated to Google Antigravity 2.0 (Environment Agnostic) standard — `.antigravity/` consolidated into `.agent/`, `.antigravityignore` renamed to `.agentignore`, hardcoded IDE paths eradicated, `AI_CONTEXT_GOVERNANCE.md` upgraded.
+- **chore(ai)**: Purged all 21 hardcoded `/Users/marek/` absolute paths from utility scripts and agent workflows — now use relative resolution and `SCRIPT_DIR`.
+- **fix(infra)**: Bumped `dev-mini-network/main.tf` module ref `v2.6.4` → `v2.6.5` to resolve split-brain with `blaze-template-deploy`.
+
+## [v2.1.85] - 2026-05-15
+
+### Fixed
+
+- **[P2] Cloudflare DNS catch-all `state rm` on destroy** (`reusable-terraform.yml`): The existing purge step only covered `module.environment_network.cloudflare_dns_record.*` (network stack pattern). Added a catch-all dynamic sweep that removes every `cloudflare_dns_record.*` address from state regardless of module path or map key — covering the multi-site-app pattern `cloudflare_dns_record.site["thisisblaze-frontend"]` that caused the 2026-05-15 stage nuke failure.
+- **[P2] Data stack warning at safety gate** (`99-nuke-env.yml`): MongoDB Atlas and Elastic Cloud warning is now printed at workflow start inside the Safety Gate step, not buried in the job summary at the end.
+- **[P3] VPC force-delete fallback in verify-destroy-complete** (`99-nuke-env.yml`): After all Terraform destroy jobs, scans for any VPCs tagged `Blaze:Environment` that survived the nuke and force-deletes them (IGWs, subnets, SGs, VPC). Runs with `continue-on-error: true`. Covers crash-interrupted nuke scenarios like the 2026-05-15 laptop crash event.
+
+
+## v2.1.84 (2026-05-15)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.84
+- chore: update CHANGELOG for v2.1.83
+- chore: end-of-day governance sync — 2026-05-14
+- chore: update CHANGELOG for v2.1.82
+
+### Fixed
+
+
+## [v2.1.84] - 2026-05-15
+
+### Fixed
+
+- **[P1] IGW DependencyViolation on VPC destroy** (`reusable-terraform.yml`): After removing the Internet Gateway from Terraform state (`state rm`), now also CLI-detaches and deletes the physical AWS IGW via `aws ec2 detach-internet-gateway` + `delete-internet-gateway`. Previously the physical IGW remained attached, causing `DependencyViolation` when Terraform attempted to delete the VPC. Root cause: 2026-05-15 nuke failure on `vpc-0d27e5f9065a0b113` (10.2.0.0/16).
+- **[P1] Atlas `GROUP_NOT_FOUND` state guard** (`mongodb/pre-destroy.sh`): Added a pre-flight project existence check before any Atlas API calls. If the Atlas project returns 404/GROUP_NOT_FOUND (reprovisioned externally or deleted out-of-band), all `mongodbatlas_*` and `cloudflare_dns_record` resources are purged from state so `terraform destroy` exits cleanly instead of failing. Root cause: 2026-05-15 stage nuke failed on orphaned project `6a065298a1c2b19656835825`.
+
+
+## v2.1.83 (2026-05-15)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-14
+- chore: update CHANGELOG for v2.1.82
+
+### Fixed
+
+
+## v2.1.82-ops (2026-05-15)
+
+### Operations
+- ops(stage/2026-05-15): `01c - Provision App Infra` stage/thisisblaze ✅ `Apply complete! Resources: 3 added, 22 changed, 0 destroyed.` (run #25893833780). Full stack provisioned via 5-layer import script fix chain.
+- ops(stage/2026-05-15): `import-existing-resources.sh` — enabled root-scope CF DNS imports (Step 4.5), added `get_cf_module_for_domain()` for correct `site_cdn`/`admin_cdn`/`assets_cdn` routing (Step 4.4), stale CF CNAME cleanup.
+- ops(stage/2026-05-15): `stage-multi-site-app/pre_apply.sh` — removed dead Section 5 CF DNS block (domain-resolution bug + `set -u` crash on undefined vars).
+
+## v2.1.82 (2026-05-14)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.81
+
+### Fixed
+
+
+## v2.1.82 (2026-05-14)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.81
+
+### Fixed
+
+
+## v2.1.82 (2026-05-14)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.82
+- chore: update CHANGELOG for v2.1.81
+
+### Fixed
+
+
+## v2.1.82 (2026-05-14)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.81
+
+### Fixed
+
+
+## v2.1.81 (2026-05-14)
+
+### Added
+
+- feat: complete Plan 155 StackID hardening in pre-destroy cleanup and ops-nuke
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.81
+- chore: prepare v2.1.81 release
+- chore: end-of-day governance sync — 2026-05-14
+- chore: end-of-day governance sync — 2026-05-14
+- chore: bump all infra-core refs v2.6.2 → v2.6.3 (Plan 151 security release)
+- chore: end-of-day governance sync — 2026-05-13
+- docs: update CHANGELOG + WORKFLOW_CATALOG for /12-best-practice-audit
+- chore: end-of-day governance sync — 2026-05-12
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync 2026-05-10 — date bump
+- chore: end-of-day governance sync — 2026-05-09
+- chore: /13-deep-cicd-maintenance — Engine 4 v2.4.8→v2.5.12, Engine 8 parity, Blaze:StackID docs — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09 (allstop) + reusable-dev-sleep-schedule.yml Plan 151 L4
+- chore: update CHANGELOG for v2.1.80
+- chore: update CHANGELOG for v2.1.79
+- chore: update CHANGELOG for v2.1.78
+
+### Fixed
+
+
+## v2.1.81 (2026-05-14)
+
+### Added
+
+- feat: complete Plan 155 StackID hardening in pre-destroy cleanup and ops-nuke
+
+### Changed
+
+- chore: prepare v2.1.81 release
+- chore: end-of-day governance sync — 2026-05-14
+- chore: end-of-day governance sync — 2026-05-14
+- chore: bump all infra-core refs v2.6.2 → v2.6.3 (Plan 151 security release)
+- chore: end-of-day governance sync — 2026-05-13
+- docs: update CHANGELOG + WORKFLOW_CATALOG for /12-best-practice-audit
+- chore: end-of-day governance sync — 2026-05-12
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync — 2026-05-10
+- chore: end-of-day governance sync 2026-05-10 — date bump
+- chore: end-of-day governance sync — 2026-05-09
+- chore: /13-deep-cicd-maintenance — Engine 4 v2.4.8→v2.5.12, Engine 8 parity, Blaze:StackID docs — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09
+- chore: end-of-day governance sync — 2026-05-09 (allstop) + reusable-dev-sleep-schedule.yml Plan 151 L4
+- chore: update CHANGELOG for v2.1.80
+- chore: update CHANGELOG for v2.1.79
+- chore: update CHANGELOG for v2.1.78
+
+### Fixed
+
+
+## [v2.1.81] — 2026-05-14 (Plan 158)
+
+### Infrastructure
+- **GCP live stacks**: All `blaze-actions/.github/gcp/infra/live/**` Terraform module refs bumped `v2.6.2 → v2.6.3` (`dev-network`, `dev-data`, `multi-site-app`). Picks up `blaze-terraform-infra-core` v2.6.3 security release (S3 versioning default fix, RDS backup defaults, `prevent_destroy` on stateful services).
+
+### Added (Plan 158 — L25: Blaze:StackID Tag Propagation)
+- **`reusable-terraform.yml`**: New optional `stack_id` workflow_call input. Injected as `TF_VAR_stack_id` in the "Inject Blaze Signature Tag Vars" step — propagates `STACK_ID` UUID from `blaze-env.json` into the Terraform environment. Logged as `🏷️ Blaze:StackID` for visibility in run logs.
+- **`01-provision-infra.yml`**: `stack_id` threaded from `calculate-config` outputs → `configuration` job outputs → `provision` job `with:` block → `reusable-terraform.yml` input. No new secrets or manual config required.
+
+### Fixed
+- **`99-ops-nuke.yml`**: bumped `check-access` action pin to `v2.1.80`, fixed broken `uses:` in `02-deploy-pages`, added `timeout-minutes: 35`.
+- **`02-deploy-app.yml`**: security hardening — resolved broken `uses:` reference.
+
+### Governance
+- chore: end-of-day governance sync — 2026-05-14. All 3 repos 14/14 ✅.
+
+
+
+### Agent Tooling
+- **`docs/learning/REFERENCE_SOURCE_LIBRARY.md`** — New curated 5-domain reference source library. Domains: GH Actions reusable workflow patterns, AWS OIDC, Terraform CI/CD, deployment patterns, access control. Cross-references all `docs/knowledge/*.md` smart fixes with 🔴/🟡/🟢 relevance tiers. 9 priority audit checks defined.
+- **`.agent/workflows/12-best-practice-audit.md`** — New read-only monthly audit workflow. Checks OIDC role scoping, actionlint coverage, SHA pinning, concurrency groups, secret inheritance, timeout-minutes, check-access gating, and pre-destroy cleanup. Includes knowledge base freshness check. Produces `docs/reports/YYYY-MM-DD-best-practice-audit.md`.
+
+### Governance
+- chore: end-of-day governance sync — 2026-05-12. Governance files verified (14/14 ✅).
+
+### Changed
+- chore(modules/2026-05-12): bump all AWS live stack Terraform module refs `v2.5.12` → `v2.6.2` (19 files, 41 occurrences). All AWS live stacks now at full parity with `blaze-terraform-infra-core` latest tag. Eliminates split-brain drift.
+- chore(modules/2026-05-10): bump all GCP live stack Terraform module refs `v2.5.12` → `v2.6.2` (31 files). GCP stacks now at full parity with AWS stacks on `v2.6.2`.
+- chore: end-of-day governance sync — 2026-05-10
+
+## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+ — 2026-05-09 — /13-deep-cicd-maintenance
+
+### Changed
+- chore(maintenance): bump all `blaze-template-deploy` Terraform module refs from `v2.4.8` → `v2.5.12` across all 58 live stacks (AWS + GCP). Eliminates Engine 4 split-brain drift detected by `/checkengines`.
+- chore(parity): copy `90-daily-health-check.yml` byte-for-byte from `blaze-actions` to `blaze-template-deploy` and `blaze-terraform-infra-core`. Resolves Engine 8 structural parity failure.
+- docs(stackid): propagate `Blaze:StackID` UUID tag architecture (Plan 155) into `README.md` (new §🆔 Environment Isolation section) and `docs/AI_CONTEXT_GOVERNANCE.md` (§1.6 Signature Tag Rule expanded).
+- chore: clean up `scratch_fix_versions.py` temporary script.
+
+## v2.1.80 (2026-05-09)
+
+### Added
+
+- **`WORKFLOW_CATALOG.md`**: 3 new reusable workflows documented — `reusable-backup-snapshot.yml` (Plan 151 L14 + Plan 152), `reusable-dev-sleep-schedule.yml` (Plan 151 L4 FinOps), `reusable-ecs-health-snapshot.yml` (Plan 151 L7 observability). Total: 38 main + 24 reusable = 62 workflows.
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-05-09
+- **Engine 8 parity fix**: `90-daily-health-check.yml` self-pins bumped `@v2.1.74→@v2.1.80` — SHA hash now identical across all 3 repos.
+- **WORKFLOW_CATALOG.md**: Header version `v2.1.77→v2.1.80`, count `59→62`, Last Updated `2026-05-08→2026-05-09`.
+- **All GitHub Actions tags**: `@v2.1.74→@v2.1.80` sweep complete across blaze-template-deploy (54+ workflows) and blaze-terraform-infra-core.
+
+
+## v2.1.79 (2026-05-09)
+
+### Added
+
+- No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
+### Changed
+
+- chore: update CHANGELOG for v2.1.78
+
+### Fixed
+
+
+## v2.1.78 (2026-05-09)
+
+### Added
+
+- feat: publish deployed Elastic Beanstalk version to SSM Parameter Store
+
+### Changed
+
+- docs: add prod safety boundary to orphan rule
+- chore: end-of-day governance sync — 2026-05-08
+- chore: end-of-day governance sync — 2026-05-07
+- chore: update CHANGELOG for v2.1.77
+- chore: end-of-day governance sync — 2026-05-06
+- chore: end-of-day governance sync — 2026-05-05
+- chore: end-of-day governance sync — 2026-05-02
+- docs: sync timestamps for deep cicd maintenance
+- docs: bump workflow catalog versions to v2.5.7 for deep cicd maintenance sync
+- chore: update CHANGELOG for v2.5.7
+- chore: end-of-day governance sync — 2026-05-02
+- chore: end-of-day governance sync — 2026-05-01
+- chore: update CHANGELOG for v2.1.76
+
+### Fixed
+
+- fix: pre-destroy cleanup should check both standard and Blaze tag schemas
+
+## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
+
+>>>>>>> dev
 ## [v2.1.80] — 2026-05-09 (Plan 152 Phase 4)
 
 ### Added
@@ -97,6 +743,25 @@
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 
 ### Added
@@ -108,6 +773,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -147,6 +816,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.74
@@ -167,6 +840,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.74
@@ -185,6 +862,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.74
@@ -201,6 +882,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - docs: update CHANGELOG for v2.1.74 / v2.4.8 deep ci/cd sync
@@ -216,6 +901,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: globally bump internal workflow references to v2.1.73 to ensure jq strict null fix is executed
@@ -230,6 +919,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.71
@@ -242,6 +935,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -259,6 +956,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump internal reusable workflow references to v2.1.70
@@ -274,6 +975,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.69
@@ -286,6 +991,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -305,6 +1014,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG.md for bash syntax error fix
@@ -321,6 +1034,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.68
@@ -334,6 +1051,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -352,6 +1073,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -410,6 +1135,25 @@
 - fix(ops): explicitly force-delete ASG before Launch Template cleanup (282b580)
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -458,6 +1202,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.62
@@ -475,6 +1223,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.62
@@ -490,6 +1242,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -506,6 +1262,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.60
@@ -520,6 +1280,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: execute /13-deep-cicd-maintenance sync
@@ -529,6 +1293,25 @@
 
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -567,12 +1350,20 @@
 ### Added
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 - chore: update CHANGELOG for v2.1.59
 
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -599,6 +1390,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.56
@@ -612,6 +1407,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.55
@@ -624,6 +1423,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -672,6 +1475,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.53
@@ -684,6 +1491,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -698,6 +1509,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.51
@@ -710,6 +1525,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -724,6 +1543,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.49
@@ -737,6 +1560,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.48
@@ -749,6 +1576,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -765,6 +1596,25 @@
 
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -784,6 +1634,25 @@
 
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 - **CI/CD Maintenance**: Deep synchronization executed (Engine 6 & 8 checks passed).
 - **Architecture**: Enforced Single-Tenant Elastic Beanstalk paradigm in AI prompts.
@@ -838,6 +1707,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.46
@@ -854,6 +1727,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.45
@@ -869,6 +1746,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.44
@@ -883,6 +1764,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.43
@@ -895,6 +1780,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -914,6 +1803,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump refs to v2.1.43
@@ -930,6 +1823,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump blaze-actions refs to v2.1.42
@@ -944,6 +1841,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - docs: /13-deep-cicd-maintenance — fix WORKFLOW_CATALOG (count, dead refs, stubs→real descriptions), update REUSABLE_WORKFLOWS vars path, add CHANGELOG April 13
@@ -957,6 +1858,25 @@
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -975,6 +1895,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -1016,6 +1955,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.40
@@ -1034,6 +1977,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1054,6 +2001,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1081,6 +2032,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump to v2.1.38
@@ -1094,6 +2049,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1109,6 +2068,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump to v2.1.36
@@ -1122,6 +2085,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1137,6 +2104,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump all workflow pins to v2.1.34
@@ -1150,6 +2121,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1167,6 +2142,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.32
@@ -1181,6 +2160,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.32
@@ -1195,6 +2178,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.31
@@ -1207,6 +2194,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1221,6 +2212,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.29
@@ -1234,6 +2229,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.28
@@ -1246,6 +2245,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1262,6 +2265,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.26
@@ -1275,6 +2282,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1290,6 +2301,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.24
@@ -1303,6 +2318,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1322,6 +2341,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.22
@@ -1338,6 +2361,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.21
@@ -1351,6 +2378,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1368,6 +2399,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.19
@@ -1381,6 +2416,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1415,6 +2454,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.17
@@ -1446,6 +2489,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.16
@@ -1476,6 +2523,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.15
@@ -1504,6 +2555,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1539,6 +2594,25 @@
 ---
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -1557,6 +2631,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -1633,6 +2726,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.13
@@ -1654,6 +2751,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.12
@@ -1674,6 +2775,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.11
@@ -1693,6 +2798,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.10
@@ -1711,6 +2820,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.9
@@ -1728,6 +2841,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.8
@@ -1744,6 +2861,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.7
@@ -1759,6 +2880,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.6
@@ -1773,6 +2898,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.5
@@ -1786,6 +2915,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.4
@@ -1798,6 +2931,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1814,6 +2951,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v2.1.2
@@ -1828,6 +2969,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.96
@@ -1840,6 +2985,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1875,6 +3024,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.93
@@ -1890,6 +3043,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.94
@@ -1902,6 +3059,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -1943,6 +3104,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.91
@@ -1963,6 +3128,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.90
@@ -1980,6 +3149,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2000,6 +3173,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.88
@@ -2019,6 +3196,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.87
@@ -2036,6 +3217,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2056,6 +3241,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.85
@@ -2073,6 +3262,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2093,6 +3286,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.83
@@ -2111,6 +3308,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2131,6 +3332,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.81
@@ -2149,6 +3354,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2169,6 +3378,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.79
@@ -2187,6 +3400,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.78
@@ -2204,6 +3421,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2226,6 +3447,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.76
@@ -2244,6 +3469,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2269,6 +3498,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.73
@@ -2282,6 +3515,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.72
@@ -2294,6 +3531,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2309,6 +3550,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: sync 90-daily-health-check.yml — bump setup-blaze/calculate-config to v1.4.70
@@ -2322,6 +3567,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2340,6 +3589,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.68
@@ -2354,6 +3607,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.67
@@ -2366,6 +3623,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2381,6 +3642,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.65
@@ -2393,6 +3658,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2449,6 +3718,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.56
@@ -2484,6 +3757,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.55
@@ -2517,6 +3794,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.54
@@ -2548,6 +3829,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.53
@@ -2578,6 +3863,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.52
@@ -2606,6 +3895,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.51
@@ -2633,6 +3926,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.50
@@ -2658,6 +3955,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.49
@@ -2681,6 +3982,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.48
@@ -2703,6 +4008,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.47
@@ -2723,6 +4032,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.46
@@ -2741,6 +4054,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.45
@@ -2757,6 +4074,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.44
@@ -2771,6 +4092,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2801,6 +4126,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2821,6 +4150,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.41
@@ -2835,6 +4168,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.40
@@ -2847,6 +4184,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2862,6 +4203,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.38
@@ -2875,6 +4220,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.37
@@ -2887,6 +4236,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2904,6 +4257,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.36
@@ -2918,6 +4275,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.35
@@ -2931,6 +4292,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2949,6 +4314,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -2974,6 +4343,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: bump internal refs to v1.4.33 — EC2 launch type for STAGE stress test
@@ -2994,6 +4367,10 @@
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3036,6 +4413,25 @@
 - chore: end-of-day governance sync — 2026-03-29
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3054,6 +4450,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3090,6 +4505,25 @@
 - chore: end-of-day governance sync — 2026-03-27
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3108,6 +4542,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3141,6 +4594,25 @@
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3159,6 +4631,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3197,6 +4688,10 @@
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: end-of-day governance sync — 2026-03-22
@@ -3211,6 +4706,25 @@
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3229,6 +4743,25 @@
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3325,6 +4858,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3343,6 +4895,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3378,6 +4949,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.27
@@ -3390,6 +4965,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3404,6 +4983,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.25
@@ -3417,6 +5000,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.24
@@ -3429,6 +5016,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3445,6 +5036,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.22
@@ -3459,6 +5054,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.21
@@ -3471,6 +5070,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3492,6 +5095,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.19
@@ -3509,6 +5116,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3527,6 +5138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.20
@@ -3541,6 +5156,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.19
@@ -3553,6 +5172,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3567,6 +5190,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3581,6 +5208,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.17
@@ -3594,6 +5225,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.16
@@ -3606,6 +5241,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3636,6 +5275,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: inject timeout-minutes and pin github action shas globally
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3654,6 +5312,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3688,6 +5365,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3706,6 +5402,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -3783,6 +5498,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.9
@@ -3804,6 +5523,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.9
@@ -3824,6 +5547,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.9
@@ -3843,6 +5570,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.9
@@ -3861,6 +5592,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.9
@@ -3877,6 +5612,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3894,6 +5633,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.8
@@ -3908,6 +5651,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3922,6 +5669,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3938,6 +5689,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.5
@@ -3952,6 +5707,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.4
@@ -3964,6 +5723,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -3978,6 +5741,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No new features in this release
 
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
+
 ### Changed
 
 - chore: update CHANGELOG for v1.4.2
@@ -3991,6 +5758,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - No new features in this release
+
+### Fixed
+
+- `01-provision-infra.yml`: bump `reusable-terraform.yml` pin `v2.1.86` → `v2.1.88` (CF token EOF fix)
 
 ### Changed
 
@@ -4214,6 +5985,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use GITHUB_WORKSPACE for pre-apply script path
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4232,6 +6022,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4273,6 +6082,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4291,6 +6119,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4332,6 +6179,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Context**: Maintained agent workflows sweep 2026-03-16.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4350,6 +6216,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4388,6 +6273,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4406,6 +6310,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4441,6 +6364,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4459,6 +6401,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4499,6 +6460,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4517,6 +6497,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4559,7 +6558,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`cleanup-orphaned-buckets` ops action** (`99-ops-utility.yml`): New action to find and force-delete orphaned S3 buckets matching the project prefix (excludes tfstate). Accepts `DRY_RUN` or `EXECUTE` confirmation.
 - **Orphaned Resource Cleanup — Extended** (`99-ops-utility.yml`): Added cleanup steps for orphaned CloudWatch Log Groups, ALB Target Groups, and CloudFront Functions within the `cleanup-orphaned-buckets` action to resolve Terraform `AlreadyExists` conflicts after partial environment destroy.
-- **`gh-actions-troubleshooter` Antigravity Skill**: Created global Antigravity skill at `~/.gemini/antigravity/skills/gh-actions-troubleshooter/` implementing local-first PDCA diagnostic cycle, `get_failed_logs.sh`, `run_local_act.sh` (with `--doctor` check), and curated `ERROR_PATTERNS.txt` reference library.
+- **`gh-actions-troubleshooter` Antigravity Skill**: Created global Antigravity skill at `~/.gemini/config/skills/gh-actions-troubleshooter/` implementing local-first PDCA diagnostic cycle, `get_failed_logs.sh`, `run_local_act.sh` (with `--doctor` check), and curated `ERROR_PATTERNS.txt` reference library.
 
 ### Fixed
 
@@ -4601,6 +6600,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4619,6 +6637,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4684,6 +6721,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4702,6 +6758,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4904,6 +6979,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
@@ -4922,6 +7016,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **docs(ai)**: Abstracted `blaze-template-deploy` references into generic "Tenant Implementation Repo" terminology across `CLAUDE.md` to cleanly support multiple downstream tenants (e.g., `shopware-km`).
+
+
+### Added
+- **docs(ai)**: Security Context Split for AWS Profiles. Open repos now dynamically instruct the AI to reference the private tenant `CLAUDE.md` to prevent credential hardcoding.
+
+
+### Added
+- **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+
+
+### Agent — 2026-05-13 — Client Governance Workflows
+
+- No code changes to blaze-actions today.
+- Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
+
 - **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.

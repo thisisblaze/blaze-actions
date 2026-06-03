@@ -53,6 +53,10 @@ on:
         required: true
       GH_PAT:
         required: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   provision-db-users:
     name: Provision App Users (Atlas & Elastic)

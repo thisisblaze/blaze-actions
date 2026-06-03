@@ -1,4 +1,4 @@
-**Last Updated**: 2026-05-08
+**Last Updated**: 2026-06-02
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 38 main + 21 reusable = 59 total  
-**Version**: v2.1.77  
-**Last Updated**: 2026-05-08
+**Total Workflows**: 30 main + 24 reusable = 54 total  
+**Version**: v2.2.3  
+**Last Updated**: 2026-06-02
 
 ---
 
@@ -523,8 +523,8 @@ These are called by main workflows, not directly by users.
 ### reusable-pre-destroy-cleanup.yml
 
 **Purpose**: Essential cleanup before infrastructure destroy to prevent hangs.
-**Use Case**: Removes EC2 Capacity Providers, Launch Templates, and Logs.
-**Inputs**: cluster_name, aws_region, force_delete  
+**Use Case**: Removes EC2 Capacity Providers, Launch Templates, CloudFront, Target Groups, and Logs surgically.
+**Inputs**: cluster_name, aws_region, force_delete, stack_id
 **Outputs**: cleanup_status
 
 ---
@@ -609,6 +609,50 @@ These are called by main workflows, not directly by users.
 **Purpose**: Stress test verification phase. Runs URL health checks and ECS service validation after deployment.
 
 ---
+#### reusable-backup-snapshot.yml
+**Purpose**: Multi-service backup snapshot workflow (Plan 151 L14 + Plan 152 Phase 4). Runs four sequential backup jobs: RDS MySQL snapshot, S3 CRR sync verification, SSM parameter inventory export, and DocumentDB cluster snapshot.
+
+**Inputs**:
+- `environment` (required): Target environment (dev/stage/prod)
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: Creates an RDS manual snapshot → Verifies S3 replication sync → Exports SSM parameter inventory → Creates a DocumentDB cluster snapshot. Each job is idempotent and named by date to prevent collisions.
+
+**Caller**: `98-backup-snapshot.yml`
+
+---
+#### reusable-dev-sleep-schedule.yml
+**Purpose**: FinOps dev environment sleep/wake schedule (Plan 151 L4). Scales down ECS services to 0 and stops RDS in the correct dependency order (ECS first, then RDS), or reverses the order for wake-up (RDS first, then ECS).
+
+**Inputs**:
+- `environment` (required): Target environment (typically `dev`)
+- `action` (required): `sleep` or `wake`
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: `sleep` — gracefully stops all ECS services (waits for stability), then stops the RDS instance. `wake` — starts RDS, waits for available state, then scales ECS services back to 1. Achieves ~55% compute cost saving on non-production environments.
+
+**Caller**: `04-dev-sleep-schedule.yml` (scheduled Mon–Fri: sleep 20:03 UTC, wake 06:50 UTC)
+
+---
+#### reusable-ecs-health-snapshot.yml
+**Purpose**: Single-click ECS incident health snapshot (Plan 151 L7). Produces a consolidated report covering ECS service states, container health checks, stopped task failure reasons, and endpoint availability.
+
+**Inputs**:
+- `environment` (required): Target environment
+- `aws_region` (optional): AWS region (default: `eu-west-1`)
+- `endpoint_url` (optional): HTTPS endpoint to probe for availability
+
+**Secrets**: `AWS_ROLE_ARN` (required)
+
+**What it does**: Queries ECS cluster → Lists all services and running/stopped tasks → Extracts `stoppedReason` for failed containers → Tails CloudWatch logs for recent errors → Probes the endpoint URL and reports HTTP status. Outputs a structured markdown summary as a GitHub Step Summary.
+
+**Caller**: `03-ecs-health-snapshot.yml`
+
+---
 ## Quick Reference
 
 | Workflow                | Common Use             | Typical Runtime |
@@ -625,6 +669,24 @@ These are called by main workflows, not directly by users.
 ---
 
 ## Version History
+
+**v2.2.3** (2026-06-02):
+- AI governance: Added `AGENTS.md` (root) and `.github/agents/` directory with `@maintainer` and `@sre` custom agent persona definitions across all 4 repos.
+- Upgraded `.github/copilot-instructions.md` across all 4 repos from a stub to a substantive guide.
+- Abstracted all hardcoded `blaze-template-deploy` references in shared parent repo `CLAUDE.md` files to generic "Tenant Implementation Repo" terminology — enabling clean multi-tenant reuse.
+- Added `docs/operations/nuke_environment_runbook.md` (comprehensive 5-stage environment teardown manual).
+- **Workflow count corrected**: 30 main + 24 reusable = 54 total (previous count of 38 main was incorrect — includes only root-level non-reusable workflows).
+
+**v2.2.2** (2026-05-31):
+- Platform-Agnostic Workflow Optimization (Plan 154 Phase 1–5): Self-healing orchestrator loop, 5-Role CLAUDE.md model, IDE parity.
+- Bumped GHA self-refs `v2.1.74` → `v2.2.2`, Terraform pins → `v2.6.9`.
+
+**v2.1.80** (2026-05-09):
+- Plan 151 + Plan 152 delivery: Added 3 new reusable workflows to catalog (`reusable-backup-snapshot`, `reusable-dev-sleep-schedule`, `reusable-ecs-health-snapshot`).
+- Bumped all action pins `@v2.1.74` → `@v2.1.80` across all 3 repos (Engine 8 parity restored).
+- Fixed `@dev` refs in `03-ecs-health-snapshot.yml` and `04-dev-sleep-schedule.yml` callers → `@v2.1.80`.
+- Total workflow count corrected: 30 main + 24 reusable = 54 total.
+- **2026-05-12**: Added `/12-best-practice-audit` agent workflow + `docs/learning/REFERENCE_SOURCE_LIBRARY.md` (5-domain, 9 priority checks, knowledge base freshness step).
 
 **v2.1.77** (2026-05-08):
 - Deep CI/CD maintenance sync: Added `php_version` + `build_command` inputs to `02-deploy-aws.yml` catalog entry.
@@ -693,6 +755,15 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-05-08  
+## Agent Intelligence
+
+| Resource | Description |
+| :--- | :--- |
+| [`docs/learning/REFERENCE_SOURCE_LIBRARY.md`](learning/REFERENCE_SOURCE_LIBRARY.md) | 5-domain reference library: GH Actions patterns, OIDC, Terraform CI/CD, deployment, access control. Cross-links all `docs/knowledge/` smart fixes. |
+| [`.agent/workflows/12-best-practice-audit.md`](../.agent/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
+
+---
+
+**Last Updated**: 2026-06-02  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
