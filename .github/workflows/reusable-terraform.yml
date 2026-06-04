@@ -132,14 +132,6 @@ on:
         required: false
       AZURE_TENANT_ID:
         required: false
-      AZURE_SUBSCRIPTION_ID:
-        required: false
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
       GH_PAT:
         required: false
       NPM_TOKEN:
@@ -340,9 +332,6 @@ jobs:
 
       - name: Export Global Terraform Credentials
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
           MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
@@ -353,25 +342,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
         run: |
-          # CF provider v5 validates api_token strictly: ^[a-zA-Z0-9_-]+$
-          # Strip ALL chars outside that set (not just whitespace) — handles newlines,
-          # carriage returns, invisible unicode, BOMs, and any other invalid byte.
-          # tr -cd keeps ONLY the complement — chars in the allowed set.
-          CF_TOKEN_CLEAN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -cd 'a-zA-Z0-9_-')
-          CF_ZONE_CLEAN=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:]')
-
-          # Use GitHub's multiline EOF delimiter syntax to safely write values that may
-          # contain newlines — prevents GITHUB_ENV file corruption from embedded newlines.
           {
-            echo "TF_VAR_cloudflare_api_token<<__EOF__"
-            printf '%s' "$CF_TOKEN_CLEAN"
-            echo ""
-            echo "__EOF__"
-            echo "TF_VAR_cloudflare_zone_id<<__EOF__"
-            printf '%s' "$CF_ZONE_CLEAN"
-            echo ""
-            echo "__EOF__"
-            echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID"
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
@@ -386,77 +357,6 @@ jobs:
             echo "ARM_TENANT_ID=$ARM_TENANT_ID"
             echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
           } >> "$GITHUB_ENV"
-
-      - name: "🔐 Validate Cloudflare Zone ID ↔ Domain"
-        # Pre-flight guard: verifies CLOUDFLARE_ZONE_ID resolves to the expected
-        # domain (TF_VAR_domain_root from calculate-config/blaze-env.json) before
-        # any Terraform operation. Prevents wrong-zone DNS writes caused by a
-        # misconfigured or copy-pasted secret.
-        # Skips gracefully when:
-        #   - CLOUDFLARE_API_TOKEN is absent (non-Cloudflare stacks)
-        #   - CLOUDFLARE_ZONE_ID is absent (stacks that don't use CF DNS)
-        #   - TF_VAR_domain_root is absent (stack doesn't manage DNS)
-        env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-        run: |
-          # Resolve expected domain from TF_VAR_domain_root (set by calculate-config)
-          EXPECTED_DOMAIN="${TF_VAR_domain_root:-}"
-
-          if [[ -z "$CF_API_TOKEN" || "$CF_API_TOKEN" == "" ]]; then
-            echo "ℹ️  No CLOUDFLARE_API_TOKEN — skipping zone validation (non-CF stack)"
-            exit 0
-          fi
-
-          if [[ -z "$CF_ZONE_ID" || "$CF_ZONE_ID" == "" ]]; then
-            echo "ℹ️  No CLOUDFLARE_ZONE_ID — skipping zone validation (CF DNS not managed by this stack)"
-            exit 0
-          fi
-
-          if [[ -z "$EXPECTED_DOMAIN" ]]; then
-            echo "ℹ️  No TF_VAR_domain_root — skipping zone validation (domain not in scope)"
-            exit 0
-          fi
-
-          echo "🔍 Validating Cloudflare Zone ID..."
-          echo "   Zone ID       : ${CF_ZONE_ID:0:8}…  (redacted)"
-          echo "   Expected domain: $EXPECTED_DOMAIN"
-
-          RESPONSE=$(curl -sf \
-            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}" \
-            -H "Authorization: Bearer $CF_API_TOKEN" \
-            -H "Content-Type: application/json" 2>/dev/null || echo "CURL_FAILED")
-
-          if [[ "$RESPONSE" == "CURL_FAILED" ]]; then
-            echo "❌ Cloudflare API request failed (network error or invalid token)"
-            exit 1
-          fi
-
-          SUCCESS=$(echo "$RESPONSE" | jq -r '.success // false')
-          if [[ "$SUCCESS" != "true" ]]; then
-            ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].message // "unknown error"')
-            echo "❌ Cloudflare API returned error: $ERROR"
-            echo "   Check that CLOUDFLARE_API_TOKEN has Read access to the Zones for domain: $EXPECTED_DOMAIN"
-            exit 1
-          fi
-
-          ACTUAL_DOMAIN=$(echo "$RESPONSE" | jq -r '.result.name // ""')
-          if [[ -z "$ACTUAL_DOMAIN" ]]; then
-            echo "❌ Could not extract domain name from Cloudflare API response"
-            exit 1
-          fi
-
-          if [[ "$ACTUAL_DOMAIN" != "$EXPECTED_DOMAIN" ]]; then
-            echo "❌ CLOUDFLARE_ZONE_ID MISMATCH:"
-            echo "   Zone ID resolves to : $ACTUAL_DOMAIN"
-            echo "   Expected domain     : $EXPECTED_DOMAIN"
-            echo ""
-            echo "   Fix: ensure the correct zone ID is stored in the secret."
-            echo "   For blazecms.io → secret must be CLOUDFLARE_ZONE_ID_BLAZECMS_IO"
-            exit 1
-          fi
-
-          echo "✅ Zone ID validated: ${CF_ZONE_ID:0:8}… → $ACTUAL_DOMAIN ✓"
 
       - name: Configure Git for Private Modules
         env:
@@ -1121,40 +1021,6 @@ jobs:
             echo "ℹ️  No pre-destroy.sh found — skipping"
           fi
 
-
-      - name: Sanitize CF Token for Provider Init
-        # CF provider v5.19.1 validates api_token format at plan time.
-        # Strategy by stack type:
-        #   - enable_cloudflare_records = false (network stack):
-        #     inject a format-valid placeholder so the provider initialises without
-        #     making real API calls (no managed CF resources in this stack).
-        #   - enable_cloudflare_records = true/absent (app stack, CF DNS managed):
-        #     pass the raw token with only whitespace stripped — preserves dots in
-        #     newer CF token formats that tr -cd would destroy.
-        # CF_API_TOKEN_SANITIZED (whitespace-stripped) is always set for pre_apply.sh curl calls.
-        run: |
-          # Strip only whitespace/control chars — preserve dots, slashes, etc. in newer CF tokens
-          RAW_TOKEN="${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}"
-          CLEAN=$(printf '%s' "${RAW_TOKEN}" | tr -d '[:space:][:cntrl:]')
-          echo "CF_API_TOKEN_SANITIZED=${CLEAN}" >> "$GITHUB_ENV"
-          echo "ℹ️  CF token raw length: ${#RAW_TOKEN}, stripped length: ${#CLEAN}"
-
-          # Always export CLOUDFLARE_API_TOKEN so providers using env var (not api_token attr) work.
-          # multi-site-app/main.tf uses the env var to bypass CF provider v5 HCL schema validation.
-          echo "CLOUDFLARE_API_TOKEN=${CLEAN}" >> "$GITHUB_ENV"
-
-          # Detect enable_cloudflare_records from tfvars or *.tf (false = network/no-CF stack)
-          TFVARS_PATH="${{ inputs.tf_dir }}/terraform.tfvars"
-          CF_RECORDS_ENABLED=$(grep -rE 'enable_cloudflare_records\s*=\s*false' "${{ inputs.tf_dir }}" 2>/dev/null && echo "false" || echo "true")
-          [[ -z "${CF_RECORDS_ENABLED}" ]] && CF_RECORDS_ENABLED="true"
-
-          if [[ "${CF_RECORDS_ENABLED}" == "false" ]]; then
-            echo "TF_VAR_cloudflare_api_token=placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
-            echo "ℹ️  enable_cloudflare_records=false — placeholder injected (no CF API calls this stack)"
-          else
-            echo "TF_VAR_cloudflare_api_token=${CLEAN}" >> "$GITHUB_ENV"
-            echo "✅ enable_cloudflare_records=true — whitespace-stripped token set (${#CLEAN} chars)"
-          fi
 
       - name: Terraform Plan
 
