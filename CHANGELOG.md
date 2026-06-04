@@ -8,6 +8,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
 - **fix(infra)**: Implemented ECS scale-to-zero in `reusable-pre-destroy-cleanup.yml` to prevent `ResourceInUseException` during environment teardown.
 - **refactor(ci)**: Stripped explicit `secrets:` from all `99-ops-*.yml` wrapper workflows to natively leverage the `secrets: inherit` standard.
+- **fix(cicd)**: Deep CI/CD maintenance sync: regenerated `WORKFLOW_CATALOG.md` inputs, aligned reusable workflow references in AI agent markdown files, and bumped markdown timestamps globally.
+- **fix(deps)**: Pinned GitHub Actions to latest (`v6.0.3`, `v7.0.1`) and Terraform modules to `v2.6.9` to resolve split-brain execution drift across environments.
+- **fix(seed)**: Preserved Stage admin passwords during PROD-to-STAGE automated database imports to prevent leaked prod credentials.
 
 ## v2.2.2 (2026-05-30)
 
