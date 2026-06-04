@@ -27,14 +27,14 @@ Optionally ask for:
 
 ```bash
 # If run_id provided:
-gh run view <run_id> --repo thebyte9/blaze-template-deploy \
+gh run view <run_id> --repo <tenant-repo> \
   --json status,conclusion,createdAt,updatedAt,jobs \
   --jq '{status,conclusion,createdAt,updatedAt,jobs:[.jobs[]|{name,status,conclusion,startedAt,completedAt}]}'
 
 # Otherwise: list last 3 runs of the stress test wrapper workflow
 # Note: stress-test.yml no longer exists as a monolithic file.
 # The tenant repo calls the composable phases via a wrapper workflow (e.g. 03-stress-test.yml)
-gh run list --workflow=03-stress-test.yml --repo thebyte9/blaze-template-deploy \
+gh run list --workflow=03-stress-test.yml --repo <tenant-repo> \
   --limit=3 --json databaseId,status,conclusion,createdAt,displayTitle
 ```
 
@@ -60,7 +60,7 @@ gh run list --workflow=03-stress-test.yml --repo thebyte9/blaze-template-deploy 
 **If `completed` with `success`:**
 
 ```bash
-gh run view <run_id> --repo thebyte9/blaze-template-deploy --log 2>/dev/null | tail -100
+gh run view <run_id> --repo <tenant-repo> --log 2>/dev/null | tail -100
 ```
 
 Output:
@@ -76,7 +76,7 @@ Output:
 **If `completed` with `failure`:**
 
 ```bash
-gh run view <run_id> --repo thebyte9/blaze-template-deploy --log-failed --json steps --jq '.steps[].log'
+gh run view <run_id> --repo <tenant-repo> --log-failed --json steps --jq '.steps[].log'
 ```
 
 Output:

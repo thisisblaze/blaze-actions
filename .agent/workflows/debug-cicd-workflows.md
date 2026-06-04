@@ -16,14 +16,14 @@ role: 🔧 Engineer
 ```bash
 # Check recent workflow runs
 gh run list --workflow="01-provision-infra.yml" \
-  --repo thebyte9/blaze-template-deploy \
+  --repo <tenant-repo> \
   --limit 10
 
 # View specific run
-gh run view <run-id> --repo thebyte9/blaze-template-deploy
+gh run view <run-id> --repo <tenant-repo>
 
 # Get failed job logs
-gh run view <run-id> --log-failed --repo thebyte9/blaze-template-deploy
+gh run view <run-id> --log-failed --repo <tenant-repo>
 ```
 
 ## Common Workflow Issues
@@ -46,12 +46,12 @@ HTTP 404: workflow 01-provision-infra.yml not found on the default branch
 
 ```bash
 # Check which repo has the workflow
-gh workflow list --repo thebyte9/blaze-template-deploy
+gh workflow list --repo <tenant-repo>
 gh workflow list --repo thisisblaze/blaze-actions
 
 # Use correct repo (wrapper repo, not action repo)
 gh workflow run "01-provision-infra.yml" \
-  --repo thebyte9/blaze-template-deploy \
+  --repo <tenant-repo> \
   --ref main  # Use main branch for wrapper
 ```
 
@@ -100,7 +100,7 @@ or secrets evaluate to empty strings during the workflow run.
 
 **Causes:**
 
-1. **`secrets: inherit` limitation** - When a private caller repository (e.g., `thebyte9/blaze-template-deploy`) calls a public reusable workflow in a different organization (e.g., `thisisblaze/blaze-actions`), `secrets: inherit` **fails silently**.
+1. **`secrets: inherit` limitation** - When a private caller repository (e.g., `<tenant-repo>`) calls a public reusable workflow in a different organization (e.g., `thisisblaze/blaze-actions`), `secrets: inherit` **fails silently**.
 
 **Fix:**
 
@@ -264,8 +264,8 @@ gh run view <run-id> --log | grep "namespace="
 
 ```bash
 # 1. Destroy existing environment
-gh workflow run "99 - Ops Utility" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "99-ops-utility.yml" \
+  --repo <tenant-repo> \
   -f environment=dev \
   -f action="nuke-environment" \
   -f confirmation="NUKE"
@@ -274,8 +274,8 @@ gh workflow run "99 - Ops Utility" \
 echo '{"common": {"NAMESPACE": "mycompany"}}' > vars/blaze-env.json
 
 # 3. Re-provision
-gh workflow run "00 - Setup Environment" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "00_setup_environment.yml" \
+  --repo <tenant-repo> \
   -f environment=dev
 ```
 
@@ -498,7 +498,7 @@ runs:
 # get-workflow-stats.sh
 
 WORKFLOW="01-provision-infra.yml"
-REPO="thebyte9/blaze-template-deploy"
+REPO="<tenant-repo>"
 
 TOTAL=$(gh run list --workflow="$WORKFLOW" --repo="$REPO" --limit 100 --json conclusion --jq 'length')
 SUCCESS=$(gh run list --workflow="$WORKFLOW" --repo="$REPO" --limit 100 --json conclusion --jq '[.[] | select(.conclusion == "success")] | length')
@@ -515,14 +515,14 @@ echo "Failed: $(( TOTAL - SUCCESS ))"
 
 ```bash
 # List running workflows
-gh run list --status in_progress --repo thebyte9/blaze-template-deploy
+gh run list --status in_progress --repo <tenant-repo>
 
 # Cancel specific run
-gh run cancel <run-id> --repo thebyte9/blaze-template-deploy
+gh run cancel <run-id> --repo <tenant-repo>
 
 # Cancel all running
 gh run list --status in_progress --json databaseId -q '.[].databaseId' | \
-  xargs -I {} gh run cancel {} --repo thebyte9/blaze-template-deploy
+  xargs -I {} gh run cancel {} --repo <tenant-repo>
 ```
 
 ### Workflow Dispatch Limits

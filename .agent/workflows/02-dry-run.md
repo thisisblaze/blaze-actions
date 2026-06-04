@@ -38,13 +38,13 @@ Flag if any `main.tf` in the target env uses a different `ref=` value.
 For each stack (network → app → data):
 
 ```bash
-gh workflow run "01a-provision-network.yml" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "01-provision-infra.yml" -f stack="network" \
+  --repo <tenant-repo> \
   -f environment=<env> \
   -f apply=false
 
-gh workflow run "01c-provision-app-infra.yml" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "01-provision-infra.yml" -f stack="app" \
+  --repo <tenant-repo> \
   -f environment=<env> \
   -f apply=false
 ```
@@ -52,14 +52,14 @@ gh workflow run "01c-provision-app-infra.yml" \
 Wait for completion:
 
 ```bash
-gh run list --workflow="01*Provision*" --repo thebyte9/blaze-template-deploy --limit=3 --json databaseId,status,conclusion,createdAt
-gh run watch <run_id> --repo thebyte9/blaze-template-deploy
+gh run list --workflow="01*Provision*" --repo <tenant-repo> --limit=3 --json databaseId,status,conclusion,createdAt
+gh run watch <run_id> --repo <tenant-repo>
 ```
 
 ### 3. Parse Plan Output
 
 ```bash
-gh run view <run_id> --repo thebyte9/blaze-template-deploy --log --json steps --jq '.steps[] | select(.name | test("(?i)plan")) | .log'
+gh run view <run_id> --repo <tenant-repo> --log --json steps --jq '.steps[] | select(.name | test("(?i)plan")) | .log'
 ```
 
 Flag any:
