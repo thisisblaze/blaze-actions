@@ -1143,9 +1143,9 @@ jobs:
           # multi-site-app/main.tf uses the env var to bypass CF provider v5 HCL schema validation.
           echo "CLOUDFLARE_API_TOKEN=${CLEAN}" >> "$GITHUB_ENV"
 
-          # Detect enable_cloudflare_records from tfvars (false = network/no-CF stack)
-          TFVARS_PATH="${{ inputs.deploy_path }}/terraform.tfvars"
-          CF_RECORDS_ENABLED=$(grep -E '^enable_cloudflare_records\s*=' "${TFVARS_PATH}" 2>/dev/null | tr -d ' "' | cut -d= -f2 | tr -d '[:space:]' || echo "true")
+          # Detect enable_cloudflare_records from tfvars or *.tf (false = network/no-CF stack)
+          TFVARS_PATH="${{ inputs.tf_dir }}/terraform.tfvars"
+          CF_RECORDS_ENABLED=$(grep -rE 'enable_cloudflare_records\s*=\s*false' "${{ inputs.tf_dir }}" 2>/dev/null && echo "false" || echo "true")
           [[ -z "${CF_RECORDS_ENABLED}" ]] && CF_RECORDS_ENABLED="true"
 
           if [[ "${CF_RECORDS_ENABLED}" == "false" ]]; then
