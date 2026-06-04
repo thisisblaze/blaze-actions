@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-02
+**Last Updated**: 2026-06-04
 **Owner**: Infrastructure Team
 
 ---
@@ -12,7 +12,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 30 main + 24 reusable = 54 total  
 **Version**: v2.2.3  
-**Last Updated**: 2026-06-02
+**Last Updated**: 2026-06-04
 
 ---
 
@@ -29,9 +29,16 @@
 
 **Inputs**:
 
-- `environment` (required): Target environment (DEV-MINI/DEV/STAGE/PROD)
-- `aws_region` (optional): AWS region (default: eu-west-1)
-
+- `cloud_provider` (optional): 
+- `elasticsearch_tag` (optional): 
+- `environment` (required): 
+- `images` (optional): 
+- `kibana_tag` (optional): 
+- `mongo_tag` (optional): 
+- `task` (optional): 
+- `terraform_version` (optional): 
+- `tunnel_tag` (optional): 
+- `wif_audience` (optional):
 **What it does**:
 
 - Creates GitHub OIDC provider
@@ -49,32 +56,30 @@
 
 **Inputs**:
 
-- `cloud_provider` (choice): aws|gcp|azure (default: aws)
-- `wif_audience` (optional): WIF Audience
-- `environment` (required): DEV/DEV-MINI/STAGE/PROD/MULTI-SITE
-- `project` (required): Project Identity (default: thisisblaze)
-- `stack` (required): network|dedicated-network|db-pod-alpha|tenant-app|single-network|single-app|app|acm|third-party-mongodb|third-party-elastic
-- `branch_name` (optional): Feature branch tag
-- `apply` (boolean): Run terraform apply? (default: false)
-- `destroy` (boolean): Teardown Stack (default: false)
-- `force_destructive_reconcile` (boolean): Force reconcile (default: false)
-- `terraform_version` (string): TF version (default: 1.9.0)
-- `cluster_tier` (choice): MongoDB tier (auto|flex|M0|M10|M20|M30)
-- `kibana_size` (choice): Elastic Kibana size (1g|2g)
-- `enable_image_resize` (boolean): Enable CloudFront Image Resizing
-- `enable_ec2` (boolean): Enable EC2 capacity providers (default: false)
-- `api_launch_type` (choice): FARGATE or EC2
-- `api_cpu_architecture` (choice): X86_64 or ARM64
-- `frontend_launch_type` (choice): FARGATE or EC2
-- `frontend_cpu_architecture` (choice): X86_64 or ARM64
-- `workers_json` (string): JSON mapping payload for Dual-Engine background background workers
-- `enable_tunnel` (boolean): Deploy Cloudflare Tunnel
-- `enable_vpc_peering` (boolean): Enable VPC Peering
-- `azure_client_id_rev` (string): Azure Client ID
-- `azure_tenant_id_rev` (string): Azure Tenant ID
-- `azure_subscription_id_rev` (string): Azure Subscription ID
-
-
+- `api_cpu_architecture` (optional): 
+- `api_launch_type` (optional): 
+- `apply` (optional): 
+- `azure_client_id_rev` (optional): 
+- `azure_subscription_id_rev` (optional): 
+- `azure_tenant_id_rev` (optional): 
+- `branch_name` (optional): 
+- `cloud_provider` (optional): 
+- `cluster_tier` (optional): 
+- `destroy` (optional): 
+- `enable_ec2` (optional): 
+- `enable_image_resize` (optional): 
+- `enable_tunnel` (optional): 
+- `enable_vpc_peering` (optional): Enable Atlas VPC peering (Plan 135). Requires non-flex cluster (M10+). Passed as TF_VAR_enable_vpc_peering.
+- `environment` (required): 
+- `force_destructive_reconcile` (optional): 
+- `frontend_cpu_architecture` (optional): 
+- `frontend_launch_type` (optional): 
+- `kibana_size` (optional): 
+- `project` (required): 
+- `stack` (required): 
+- `terraform_version` (optional): 
+- `wif_audience` (optional): 
+- `workers_json` (optional): Background Workers Configuration (JSON String)
 **What it does**:
 
 - Runs Terraform init/plan/apply
@@ -92,24 +97,23 @@
 
 **Inputs**:
 
-- `cloud_provider` (choice): aws|gcp|azure (default: aws)
-- `wif_audience` (optional): WIF Audience
-- `environment` (required): dev-mini/dev/stage/prod
-- `project` (required): Project identity (default: thisisblaze)
-- `target_services` (required): Service filter (e.g., "api", "Blaze all")
-- `branch_name` (optional): Feature branch tag
-- `build_images` (boolean): Build Docker images?
-- `deploy_services` (boolean): Deploy to ECS/Pages?
-- `override_image_tag` (string): Override image tag
-- `api_launch_type` (choice): `FARGATE` (default) or `EC2`
-- `api_cpu_architecture` (choice): `X86_64` or `ARM64`
-- `frontend_launch_type` (choice): `FARGATE` (default) or `EC2`
-- `frontend_cpu_architecture` (choice): `X86_64` or `ARM64`
-- `skip_stability_wait` (boolean): Skip ECS stabilisation wait (for stress tests)
-- `azure_client_id_rev` (string): Azure Client ID
-- `azure_tenant_id_rev` (string): Azure Tenant ID
-- `azure_subscription_id_rev` (string): Azure Subscription ID
-
+- `api_cpu_architecture` (optional): 
+- `api_launch_type` (optional): 
+- `azure_client_id_rev` (optional): 
+- `azure_subscription_id_rev` (optional): 
+- `azure_tenant_id_rev` (optional): 
+- `branch_name` (optional): 
+- `build_images` (optional): 
+- `cloud_provider` (optional): 
+- `deploy_services` (optional): 
+- `environment` (required): 
+- `frontend_cpu_architecture` (optional): 
+- `frontend_launch_type` (optional): 
+- `override_image_tag` (optional): 
+- `project` (required): 
+- `skip_stability_wait` (optional): Set to 'true' to skip ECS stabilisation wait (for stress tests)
+- `target_services` (optional): 
+- `wif_audience` (optional):
 **What it does**: Delegates to `02-deploy-aws.yml`, `02-deploy-gcp.yml`, or `02-deploy-azure.yml`
 
 **When to run**: Code deployments
@@ -126,8 +130,8 @@
 
 **Inputs**:
 
-- `run_integration` (boolean)
-
+- `run_integration` (optional): Run integration tests
+- `scan_path` (optional): Path to scan for Terraform modules/stacks
 **What it does**:
 - Creates AWS resources for integration testing
 
@@ -154,8 +158,8 @@
 
 **Inputs**:
 
-- `environment` (required): Environment to check
-
+- `cloud_provider` (optional): 
+- `environment` (optional):
 **What it does**:
 
 - Checks ECS service status
@@ -218,11 +222,21 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `cloud_provider` (required): aws|gcp|azure
-- `operation` (required)
-- Additional operation-specific inputs
-
+- `action` (required): 
+- `branch_tag` (optional): 
+- `bulk_pattern` (optional): 
+- `cloud_provider` (optional): 
+- `confirmation` (optional): 
+- `desired_count` (optional): 
+- `dist_id` (optional): 
+- `dry_run` (optional): 
+- `environment` (optional): 
+- `manage_action` (optional): 
+- `retention_count` (optional): 
+- `retention_days` (optional): 
+- `run_id` (optional): 
+- `skip_lambda_destroy` (optional): 
+- `stack` (optional):
 **When to run**: Operational tasks
 
 ---
@@ -234,9 +248,9 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `secret_prefix` (optional): SSM path prefix
-
+- `environment` (required): Target Environment
+- `services` (optional): Services to sync
+- `sync_github` (optional): Sync to GitHub Secrets?
 **What it does**:
 
 - Reads secrets from AWS SSM
@@ -318,7 +332,6 @@
 **Inputs**:
 
 - `target_cname` (required): CNAME to search for
-
 **What it does**:
 - Finds zombie cloudfront distributions
 
@@ -372,10 +385,9 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `stack` (required)
-- `operation` (required): refresh|migrate|inspect
-
+- `dynamodb_table` (required): DynamoDB Lock Table Name
+- `environment` (required): Environment (DEV/STAGE/PROD)
+- `state_key_path` (required): S3 Key to Clean (e.g., infra/.../cloudflare.tfstate)
 **What it does**:
 
 - State refresh
@@ -393,9 +405,7 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `domain` (required): Conflicting domain
-
+- `dist_id` (required): Distribution ID (or Domain Name) to strip aliases from
 **What it does**:
 
 - Identifies conflicting records
@@ -491,7 +501,7 @@ These are called by main workflows, not directly by users.
 ### reusable-terraform.yml
 
 **Purpose**: Core Terraform operations (init/plan/apply)  
-**Inputs**: tf_dir, bucket, state_key, apply, destroy  
+**Inputs**: apply, aws_region, azure_client_id_rev, azure_subscription_id_rev, azure_tenant_id_rev, bucket, build_sharp, cloud_provider, destroy, detect_drift, enable_vpc_peering, environment, lock_table, orphan_lambda, orphan_lambda_namespace, pre_apply_script, sleep_seconds, split_apply, split_targets, stack_id, state_key, terraform_version, tf_dir, tf_vars, wif_audience
 **Outputs**: terraform_outputs
 
 ---
@@ -499,7 +509,7 @@ These are called by main workflows, not directly by users.
 ### reusable-docker-build.yml
 
 **Purpose**: Docker image build and push  
-**Inputs**: service_name, image_tag, dockerfile_path  
+**Inputs**: aws_region, azure_client_id_rev, azure_registry_server, azure_subscription_id_rev, azure_tenant_id_rev, build_args, cloud_provider, context, display_name, dockerfile, environment, gcp_project_id, gcp_region, image_name, image_tag, platforms, wif_audience
 **Outputs**: image_uri
 
 ---
@@ -507,7 +517,7 @@ These are called by main workflows, not directly by users.
 ### reusable-ecs-deploy.yml
 
 **Purpose**: ECS service deployment (Fargate or EC2)  
-**Inputs**: cluster_name, service_name, image_uri, launch_type, cpu_architecture  
+**Inputs**: api_ap_id, aws_region, branch_name, client_key, cloud_platform, cloud_provider, config_environment, cpu_architecture, dfp_network_id, domain_root, efs_id, elasticsearch_endpoint, environment, es_ap_id, gtm_id, image_tag, launch_type, mongo_ap_id, namespace, ns_id, project_key, registry, s3_bucket, s3_public_url, service_name, skip_stability_wait, stage_key
 **Outputs**: deployment_status
 
 ---
@@ -515,7 +525,7 @@ These are called by main workflows, not directly by users.
 ### reusable-ecs-service-management.yml
 
 **Purpose**: ECS service operations (start/stop/scale)  
-**Inputs**: cluster_name, action, service_name, desired_count  
+**Inputs**: action, aws_region, cloud_provider, cluster_name, desired_count, environment, service_name, stage_filter
 **Outputs**: service_status
 
 ---
@@ -524,7 +534,7 @@ These are called by main workflows, not directly by users.
 
 **Purpose**: Essential cleanup before infrastructure destroy to prevent hangs.
 **Use Case**: Removes EC2 Capacity Providers, Launch Templates, CloudFront, Target Groups, and Logs surgically.
-**Inputs**: cluster_name, aws_region, force_delete, stack_id
+**Inputs**: aws_region, cloud_provider, cluster_name, dry_run, environment, force_delete, stack_id, stage_filter, target_stack, wif_audience
 **Outputs**: cleanup_status
 
 ---
@@ -532,7 +542,7 @@ These are called by main workflows, not directly by users.
 ### reusable-terraform-operations.yml
 
 **Purpose**: Simplified Terraform operations wrapper  
-**Inputs**: action, tf_dir, bucket, state_key  
+**Inputs**: action, aws_region, azure_client_id_rev, azure_subscription_id_rev, azure_tenant_id_rev, branch_name, bucket, client_key, cloud_platform, domain_root, environment, lock_table, namespace, project_key, stage_key, state_key, terraform_vars, tf_dir, wif_audience, working_directory
 **Outputs**: outputs
 
 ---
@@ -568,7 +578,7 @@ These are called by main workflows, not directly by users.
 **Purpose**: Packages application code and pushes an Application Version to AWS Elastic Beanstalk via S3. Supports optional PHP setup and pre-package build commands.
 
 **Inputs**:
-- `environment` (required): GitHub environment name (for OIDC)
+artifact_registry_url, environment, gcp_project_id, gcp_region, image_repository, image_tag, multi_revision, service_name, shift_strategy, site_key
 - `application_name` (required): Elastic Beanstalk application name
 - `environment_name` (required): Elastic Beanstalk environment name
 - `aws_region` (optional): AWS region (default: `eu-west-1`)
@@ -613,7 +623,7 @@ These are called by main workflows, not directly by users.
 **Purpose**: Multi-service backup snapshot workflow (Plan 151 L14 + Plan 152 Phase 4). Runs four sequential backup jobs: RDS MySQL snapshot, S3 CRR sync verification, SSM parameter inventory export, and DocumentDB cluster snapshot.
 
 **Inputs**:
-- `environment` (required): Target environment (dev/stage/prod)
+aws_region, azure_acr_name, branch_tag, client_key, cloud_region, cluster_name, domain_root, environment, gcp_project_id, namespace, project_key, stage_key, target_type, wif_audience
 - `aws_region` (optional): AWS region (default: `eu-west-1`)
 
 **Secrets**: `AWS_ROLE_ARN` (required)
@@ -627,7 +637,7 @@ These are called by main workflows, not directly by users.
 **Purpose**: FinOps dev environment sleep/wake schedule (Plan 151 L4). Scales down ECS services to 0 and stops RDS in the correct dependency order (ECS first, then RDS), or reverses the order for wake-up (RDS first, then ECS).
 
 **Inputs**:
-- `environment` (required): Target environment (typically `dev`)
+action, aws_region, cluster, db_instance, desired_count_wake, rds_wait_minutes, services
 - `action` (required): `sleep` or `wake`
 - `aws_region` (optional): AWS region (default: `eu-west-1`)
 
@@ -642,7 +652,7 @@ These are called by main workflows, not directly by users.
 **Purpose**: Single-click ECS incident health snapshot (Plan 151 L7). Produces a consolidated report covering ECS service states, container health checks, stopped task failure reasons, and endpoint availability.
 
 **Inputs**:
-- `environment` (required): Target environment
+aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lines
 - `aws_region` (optional): AWS region (default: `eu-west-1`)
 - `endpoint_url` (optional): HTTPS endpoint to probe for availability
 
@@ -764,6 +774,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated**: 2026-06-02  
+**Last Updated**: 2026-06-04  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

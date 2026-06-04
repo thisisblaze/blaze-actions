@@ -23,7 +23,7 @@ This project spans **4 repositories** with strict dependency rules. Violating th
 
 | Repo                             | GitHub                                   | Local Path (relative to workspace)           | Role |
 | -------------------------------- | ---------------------------------------- | -------------------------------------------- | ---- |
-| **`blaze-template-deploy`**      | `thebyte9/blaze-template-deploy`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.** |
+| **`blaze-template-deploy`**      | `<tenant-repo>`         | `<workspace>/blaze-template-deploy`          | **Spoke / Hub** — Contains the actual Terraform stack configs (`live/`), the application code, and the GitHub Actions workflow triggers. **Workflows run here.** |
 | **`blaze-actions`**              | `thisisblaze/blaze-actions` (**PUBLIC**) | `<workspace>/blaze-actions`                  | **Actions Hub** — Source of truth for ALL reusable GitHub Actions workflows. Public repo — no secrets or MCP references allowed. |
 | **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | `<workspace>/blaze-terraform-infra-core`     | **Module Hub** — Source of truth for ALL Terraform modules (`modules/`). Never contains live stacks. |
 | **`blaze-conductor`**            | `thisisblaze/blaze-conductor` (private)  | `<workspace>/blaze-conductor`                | **AI Orchestration** — MCP servers + orchestrator clients. Checked out exclusively by `blaze-template-deploy` workflows via `GH_PAT`. |
@@ -38,7 +38,7 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 
 ### ⚠️ Critical Rules (Burned In)
 
-1. **GitHub Actions workflows are TRIGGERED from `blaze-template-deploy`** using `gh workflow run --repo thebyte9/blaze-template-deploy`.
+1. **GitHub Actions workflows are TRIGGERED from `blaze-template-deploy`** using `gh workflow run --repo <tenant-repo>`.
    - DO NOT use `--repo thisisblaze/blaze-actions` for production infrastructure workflows.
 
 2. **Terraform stack configs (`live/`) live in BOTH repos** but partitioned by environment:
@@ -58,10 +58,10 @@ blaze-template-deploy  ──triggers──▶  .github/workflows/ from blaze-ac
 
 | Environment | Terraform Stack Location                                      | Workflow Trigger Repo                    |
 | ----------- | ------------------------------------------------------------- | ---------------------------------------- |
-| `dev`       | `blaze-template-deploy/.github/aws/infra/live/dev-network/`   | `thebyte9/blaze-template-deploy`         |
-| `dev-mini`  | `blaze-actions/.github/aws/infra/live/dev-mini-network/`      | `thebyte9/blaze-template-deploy` (still) |
-| `stage`     | `blaze-template-deploy/.github/aws/infra/live/stage-network/` | `thebyte9/blaze-template-deploy`         |
-| `prod`      | `blaze-template-deploy/.github/aws/infra/live/prod-network/`  | `thebyte9/blaze-template-deploy`         |
+| `dev`       | `blaze-template-deploy/.github/aws/infra/live/dev-network/`   | `<tenant-repo>`         |
+| `dev-mini`  | `blaze-actions/.github/aws/infra/live/dev-mini-network/`      | `<tenant-repo>` (still) |
+| `stage`     | `blaze-template-deploy/.github/aws/infra/live/stage-network/` | `<tenant-repo>`         |
+| `prod`      | `blaze-template-deploy/.github/aws/infra/live/prod-network/`  | `<tenant-repo>`         |
 
 ### Future Ephemeral CIDR Allocation
 
@@ -149,8 +149,8 @@ MODULE REF CHECK:
 CONTEXT: Loaded (Multi-Cloud AWS/GCP/Azure)
 RECENT ACTIVITY: <summary of last commits>
 
-WORKFLOW REMINDER: Always trigger via thebyte9/blaze-template-deploy
-  gh workflow run "01-provision-infra.yml" --repo thebyte9/blaze-template-deploy ...
+WORKFLOW REMINDER: Always trigger via <tenant-repo>
+  gh workflow run "01-provision-infra.yml" --repo <tenant-repo> ...
 
 Ready to work. "Live long and prosper." - Spock 🖖
 ```

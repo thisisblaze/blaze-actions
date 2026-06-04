@@ -21,7 +21,7 @@ Before loading cloud context, internalize these rules. They apply regardless of 
 
 | Repo | GitHub Org/Name | Purpose |
 |------|----------------|---------|
-| **`blaze-template-deploy`** | `thebyte9/blaze-template-deploy` | **Workflow trigger point.** All `gh workflow run` commands go here. Contains `live/` Terraform stacks for dev/stage/prod. |
+| **`blaze-template-deploy`** | `<tenant-repo>` | **Workflow trigger point.** All `gh workflow run` commands go here. Contains `live/` Terraform stacks for dev/stage/prod. |
 | **`blaze-actions`** | `thisisblaze/blaze-actions` | **Reusable workflow source.** All `.github/workflows/reusable-*.yml` and `resource-importer/import.sh` live here. Also owns `dev-mini` Terraform stacks. |
 | **`blaze-terraform-infra-core`** | `thisisblaze/blaze-terraform-infra-core` | **Terraform module source.** All `modules/` live here. Must be tagged before use in `live/` stacks. |
 
@@ -29,10 +29,10 @@ Before loading cloud context, internalize these rules. They apply regardless of 
 
 ```bash
 # ✅ CORRECT — workflows always triggered from blaze-template-deploy
-gh workflow run "01a-provision-network.yml" --repo thebyte9/blaze-template-deploy --ref dev ...
+gh workflow run "01-provision-infra.yml" -f stack="network" --repo <tenant-repo> --ref dev ...
 
 # ❌ WRONG — never trigger production infra workflows from blaze-actions
-gh workflow run "01a-provision-network.yml" --repo thisisblaze/blaze-actions ...
+gh workflow run "01-provision-infra.yml" -f stack="network" --repo thisisblaze/blaze-actions ...
 ```
 
 ### The Golden Rule for Module Refs
@@ -58,7 +58,7 @@ When bumping module versions, update `?ref=` in **both** repos if the environmen
 | `stage` | `blaze-template-deploy` | `.github/aws/infra/live/stage-network/` |
 | `prod` | `blaze-template-deploy` | `.github/aws/infra/live/prod-network/` |
 
-All environments still trigger workflows from `thebyte9/blaze-template-deploy`.
+All environments still trigger workflows from `<tenant-repo>`.
 
 ---
 
@@ -78,7 +78,7 @@ Based on the exact provider only load the following:
 
 For **AWS**, also check which environments are active:
 ```bash
-gh run list --workflow="01a-provision-network.yml" --repo thebyte9/blaze-template-deploy --limit 5
+gh run list --workflow="01-provision-infra.yml" -f stack="network" --repo <tenant-repo> --limit 5
 ```
 
 ### 3. Frugal Reading
@@ -92,7 +92,7 @@ Confirm which specific cloud context has been loaded, remind the user of the "No
 
 ```
 ✅ Cloud Context Loaded: AWS
-Workflow Trigger: gh workflow run "..." --repo thebyte9/blaze-template-deploy --ref dev
+Workflow Trigger: gh workflow run "..." --repo <tenant-repo> --ref dev
 Module Hub: thisisblaze/blaze-terraform-infra-core (latest tag: vX.Y.Z)
 Stack Locations: dev/stage/prod → blaze-template-deploy | dev-mini → blaze-actions
 ```
