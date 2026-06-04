@@ -524,11 +524,6 @@ jobs:
           export INPUT_CLUSTER_NAME="${{ needs.configuration.outputs.cluster_name }}"
           export INPUT_NAMESPACE="${{ needs.configuration.outputs.namespace }}"
           
-          # Pass Cloudflare/GH tokens for API access during import.sh execution
-          # IMPORTANT: TF_VAR_cloudflare_api_token may be the placeholder (set by sanitize step).
-          # Re-export from raw CLOUDFLARE_API_TOKEN (the runner env var from reusable-terraform)
-          # so import.sh curl calls get the real token for CF API authentication.
-          export TF_VAR_cloudflare_api_token=$(printf '%s' "${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}" | tr -cd 'a-zA-Z0-9_-')
           export GH_TOKEN="${GH_PAT:-${GITHUB_TOKEN}}"
 
 
