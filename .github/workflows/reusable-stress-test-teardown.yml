@@ -59,15 +59,6 @@ on:
         required: false
         type: string
         
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -386,9 +377,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -460,9 +448,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -489,9 +474,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -518,9 +500,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -546,9 +525,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -980,9 +956,6 @@ jobs:
       cloud_platform: ${{ inputs.cloud_provider }}
       domain_root: ${{ needs.config.outputs.domain_root }}
       environment: ${{ inputs.environment }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}

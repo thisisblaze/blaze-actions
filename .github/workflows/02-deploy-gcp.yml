@@ -66,19 +66,6 @@ on:
         options: ["X86_64", "ARM64"]
         default: "ARM64"
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        description: "Base64 Azure Client ID"
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        description: "Base64 Azure Tenant ID"
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        description: "Base64 Azure Subscription ID"
-        required: false
-        type: string
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -138,16 +125,6 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -329,28 +306,14 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
@@ -460,28 +423,14 @@ jobs:
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
@@ -569,9 +518,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -620,9 +566,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -670,9 +613,6 @@ jobs:
         'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

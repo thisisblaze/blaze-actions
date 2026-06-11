@@ -4,7 +4,18 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## [Unreleased]
 
+<!-- ───────────── Plan 158 — Phase 1 (Stop the Bleeding) — 2026-06-11 ───────────── -->
+
+### Security
+- **security(azure-oidc)** (Plan 158 §1.2): Removed the `azure_*_rev` base64/`| rev` credential-obfuscation pattern from **14 workflows** (`01-provision-infra`, `02-deploy-{app,aws,azure,gcp,pages}`, `reusable-container-app-deploy`, `reusable-docker-build`, `reusable-stress-test-{deploy,provision,teardown,verify}`, `reusable-terraform-operations`, `reusable-terraform`). Deleted 19 `*_rev` input declarations, 87 passthrough lines and 49 `rev` decode lines; `azure/login@v2` now resolves identity directly from `secrets.AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID` (native OIDC federation). Behaviour-preserving — the `_rev` path was dead code (no caller set it), so the obfuscation added risk without function.
+
+### Added
+- **feat(ci)** (Plan 158 §1.3): `pin-guard` job in `05_ci_no_cloud.yml` — fails the build on any active `uses: …@dev` reference in `.github/workflows` or `.github/actions`, preventing floating dev pins from reaching `main`.
+
 ### Changed
+- **fix(ci)** (Plan 158 §1.3): Repointed the `provision` job's `reusable-terraform.yml@dev` self-reference in `01-provision-infra.yml` to the released tag `@v2.2.2`, matching the 97 other internal pins. Zero active `@dev` references remain.
+- **docs** (Plan 158 §1.3): README version badge corrected `v2.3.7` (non-existent tag) → `v2.2.2` (the in-use released tag).
+- **refactor(azure)** (Plan 158 §1.2): Renamed the now-secret-only "Decode Azure Credentials" steps to "Set Azure Credentials (OIDC)" across 7 workflows; rewrote 18 `secrets.AZURE_* || steps.*.outputs.*` fallbacks to plain `secrets.AZURE_*`.
 - **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
 - **fix(infra)**: Implemented ECS scale-to-zero in `reusable-pre-destroy-cleanup.yml` to prevent `ResourceInUseException` during environment teardown.
 - **refactor(ci)**: Stripped explicit `secrets:` from all `99-ops-*.yml` wrapper workflows to natively leverage the `secrets: inherit` standard.

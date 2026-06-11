@@ -17,6 +17,33 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  pin-guard:
+    name: 🔒 Pin Guard (no @dev refs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: "Fail on any active @dev reference (Plan 158 §1.3)"
+        run: |
+          echo "## 🔒 Pin Guard Results" >> "$GITHUB_STEP_SUMMARY"
+          # Match active workflow `uses:` lines pinned to @dev. Commented lines
+          # (starting with #) are ignored. @dev in a main-branch path is a
+          # production incident waiting to happen.
+          HITS=$(grep -rnE '^[[:space:]]*uses:[[:space:]]*\S+@dev([[:space:]]|$)' \
+            .github/workflows .github/actions 2>/dev/null || true)
+          if [ -z "$HITS" ]; then
+            echo "✅ No '@dev' references found in workflows or actions." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$HITS"
+            {
+              echo '❌ Found `@dev` pins — replace with a released tag before merge:'
+              echo '```'
+              echo "$HITS"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
   actionlint:
     name: 🧩 Workflow Lint (actionlint)
     runs-on: ubuntu-latest

@@ -66,19 +66,6 @@ on:
         options: ["X86_64", "ARM64"]
         default: "ARM64"
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        description: "Base64 Azure Client ID"
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        description: "Base64 Azure Tenant ID"
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        description: "Base64 Azure Subscription ID"
-        required: false
-        type: string
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -138,16 +125,6 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -246,9 +223,6 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -297,9 +271,6 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -348,9 +319,6 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -399,9 +367,6 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}

@@ -47,15 +47,6 @@ on:
         required: false
         type: string
         
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false

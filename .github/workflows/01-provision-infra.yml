@@ -191,15 +191,6 @@ on:
         required: false
         type: string
         default: "{}"
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -305,9 +296,9 @@ jobs:
       cluster_tier: ${{ steps.config.outputs.cluster_tier }}
       cluster_name: ${{ steps.config.outputs.cluster_name }}
       gcp_project_id: ${{ steps.config.outputs.gcp_project_id }}
-      azure_client_id: ${{ steps.resolve-azure.outputs.client_id }}
-      azure_tenant_id: ${{ steps.resolve-azure.outputs.tenant_id }}
-      azure_subscription_id: ${{ steps.resolve-azure.outputs.subscription_id }}
+      azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+      azure_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
       - uses: actions/checkout@v6.0.2
@@ -377,24 +368,13 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/setup-gcloud@98ddc00a17442e89a24bbf282954a3b65ce6d200 # v2.1.0
 
-      - name: Resolve Azure Secrets
-        if: inputs.cloud_provider == 'azure' && inputs.azure_client_id_rev != ''
-        id: resolve-azure
-        run: |
-          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
-          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
-          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
-
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
         uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure.outputs.client_id }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure.outputs.tenant_id }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure.outputs.subscription_id }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Calculate Configuration
         id: config
@@ -463,7 +443,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.2.2
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -497,9 +477,6 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
       build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 'network' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
@@ -755,23 +732,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6.0.2
 
-      - name: Resolve Azure Secrets (CDN)
-        if: inputs.azure_client_id_rev != ''
-        id: resolve-azure-cdn
-        run: |
-          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
-          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
-          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
-
       - name: Azure Login
         uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4 # v3 stable
@@ -825,9 +791,9 @@ jobs:
           _CF_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.resolve-azure-cdn.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.resolve-azure-cdn.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.resolve-azure-cdn.outputs.subscription_id }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           # Strip whitespace — CF provider v5 rejects trailing newlines from GitHub UI paste
           TF_VAR_cloudflare_api_token=$(echo -n "$_CF_API_TOKEN_RAW" | tr -d '[:space:]')
