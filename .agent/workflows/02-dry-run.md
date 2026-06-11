@@ -9,6 +9,13 @@ role: 🕵️ QA
 
 // turbo-all
 
+> 💡 **Claude Code / Cowork — Workspace Bootstrap** (replaces `// turbo-all`):
+> ```bash
+> cd /path/to/blaze-template-deploy    && git status --short
+> cd /path/to/blaze-actions            && git status --short
+> cd /path/to/blaze-terraform-infra-core && git status --short
+> ```
+
 # Terraform Dry-Run
 
 Fast, blocking plan check (~2-3 min per stack). Does **NOT** trigger a stress test — use `/03-fire-stress-test` for that separately.

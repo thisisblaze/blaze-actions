@@ -9,6 +9,12 @@ role: 🚨 SRE
 
 // turbo-all
 
+> 💡 **Claude Code / Cowork — Workspace Bootstrap** (replaces `// turbo-all`):
+> ```bash
+> cd /path/to/blaze-template-deploy && git status --short
+> cd /path/to/blaze-actions         && git status --short
+> ```
+
 # Monitor Stress Test
 
 Call this at any point after firing a stress test — 5 min in or 35 min in. Works regardless of status.

@@ -9,6 +9,14 @@ role: 🧑‍💼 PM / Tech Lead
 
 // turbo-all
 
+> 💡 **Claude Code / Cowork — Workspace Bootstrap** (replaces `// turbo-all`):
+> ```bash
+> cd /path/to/blaze-template-deploy    && git status --short
+> cd /path/to/blaze-actions            && git status --short
+> cd /path/to/blaze-terraform-infra-core && git status --short
+> cd /path/to/blaze-conductor          && git status --short
+> ```
+
 # Start-of-Day Setup
 
 Run this when you start work. It pulls latest code, does a quick governance health check, and loads AI context.
