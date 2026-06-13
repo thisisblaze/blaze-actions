@@ -47,7 +47,7 @@ GitHub Actions workflows use a strict Multi-Tenant lifecycle phase mapping:
 ## 3. Directory Structure
 
 ### 3.1 Live Infrastructures: `/.aws/`, `/.gcp/`, `/.azure/`
-- **`modules/`**: Distributed universally via remote `blaze-terraform-infra-core@v2.6.7`.
+- **`modules/`**: Distributed universally via remote `blaze-terraform-infra-core@v2.7.0`.
 - **`live/`**: Instantiations of infrastructure across explicit Pillars:
   - `01a-provision-network/`: Foundation Layer Networking.
   - `01g-provision-db-pod/`: Foundation Layer Data pods.
