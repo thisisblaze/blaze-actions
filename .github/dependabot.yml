@@ -6,3 +6,53 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "chore(deps)"
+
+  # --- TERRAFORM PROVIDERS & MODULES ---
+  - package-ecosystem: "terraform"
+    directory: "/.github/aws/infra/preinit"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/aws/infra/live/dev-network"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/aws/infra/live/dev-app"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/gcp/infra/live/dev-network"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/gcp/infra/live/dev-app"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/azure/infra/live/dev-network"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
+
+  - package-ecosystem: "terraform"
+    directory: "/.github/azure/infra/live/dev-app"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-tf)"
