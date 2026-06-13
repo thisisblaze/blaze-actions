@@ -17,14 +17,16 @@ for file in sorted(glob.glob('*.yml')):
         with open(file, 'r') as f:
             data = yaml.safe_load(f)
             inputs = set()
-            if data and 'on' in data:
-                if isinstance(data['on'], dict):
-                    if 'workflow_dispatch' in data['on'] and isinstance(data['on']['workflow_dispatch'], dict):
-                        if 'inputs' in data['on']['workflow_dispatch'] and data['on']['workflow_dispatch']['inputs']:
-                            inputs.update(data['on']['workflow_dispatch']['inputs'].keys())
-                    if 'workflow_call' in data['on'] and isinstance(data['on']['workflow_call'], dict):
-                        if 'inputs' in data['on']['workflow_call'] and data['on']['workflow_call']['inputs']:
-                            inputs.update(data['on']['workflow_call']['inputs'].keys())
+            trigger_key = 'on' if 'on' in data else True
+            if data and trigger_key in data:
+                triggers = data[trigger_key]
+                if isinstance(triggers, dict):
+                    if 'workflow_dispatch' in triggers and isinstance(triggers['workflow_dispatch'], dict):
+                        if 'inputs' in triggers['workflow_dispatch'] and triggers['workflow_dispatch']['inputs']:
+                            inputs.update(triggers['workflow_dispatch']['inputs'].keys())
+                    if 'workflow_call' in triggers and isinstance(triggers['workflow_call'], dict):
+                        if 'inputs' in triggers['workflow_call'] and triggers['workflow_call']['inputs']:
+                            inputs.update(triggers['workflow_call']['inputs'].keys())
             if inputs:
                 print(f"{file}: {', '.join(sorted(inputs))}")
     except Exception as e:

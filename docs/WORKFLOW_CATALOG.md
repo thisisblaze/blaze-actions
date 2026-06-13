@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-04
+**Last Updated**: 2026-06-13
 **Owner**: Infrastructure Team
 
 ---
@@ -11,8 +11,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 30 main + 24 reusable = 54 total  
-**Version**: v2.2.3  
-**Last Updated**: 2026-06-04
+**Version**: v2.5.7  
+**Last Updated**: 2026-06-13
 
 ---
 
@@ -112,6 +112,7 @@
 - `override_image_tag` (optional): 
 - `project` (required): 
 - `skip_stability_wait` (optional): Set to 'true' to skip ECS stabilisation wait (for stress tests)
+- `smoke_test_url` (optional): URL to hit for post-deploy smoke test
 - `target_services` (optional): 
 - `wif_audience` (optional):
 **What it does**: Delegates to `02-deploy-aws.yml`, `02-deploy-gcp.yml`, or `02-deploy-azure.yml`
@@ -178,6 +179,9 @@
 
 **What it does**:
 
+- Pin Guard (fails on active `@dev` references in workflows/actions)
+- Workflow Linting (actionlint)
+- Environment Config Validation (validates JSON configurations against schema)
 - Terraform fmt/validate
 - YAML linting
 - Security scans (Trivy, tfsec)
@@ -194,8 +198,10 @@
 **What it does**:
 
 - Secret scanning (Gitleaks)
-- Code analysis (Semgrep)
-- Container scanning (Trivy)
+- Code analysis (SAST Semgrep)
+- Dependency Scan (Trivy filesystem) & Lockfile Validation
+- IaC Security Scan (Trivy config scan)
+- Repository Integrity (OSSF Scorecard)
 - Infrastructure scanning (Terrascan, tfsec)
 
 **When to run**: Daily or weekly scheduled
@@ -432,6 +438,7 @@
 - `build_command` (optional): Shell command to run before image packaging (e.g. `composer install`).
 - `api_launch_type` (choice): `FARGATE` (default) or `EC2`
 - `api_cpu_architecture` (choice): `X86_64` or `ARM64`
+- `smoke_test_url` (optional): URL to hit for post-deploy smoke test
 
 ---
 #### 02-deploy-azure.yml
@@ -774,6 +781,6 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 
 ---
 
-**Last Updated**: 2026-06-04  
+**Last Updated**: 2026-06-13  
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

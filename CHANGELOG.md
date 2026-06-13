@@ -4,6 +4,14 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## [Unreleased]
 
+### Added
+- **feat(workflows)**: Propagated `smoke_test_url` input parameter to `02-deploy-app.yml` and all cloud-specific deployment wrappers (`02-deploy-aws.yml`, `02-deploy-azure.yml`, `02-deploy-gcp.yml`) to trigger post-deployment health verification.
+- **feat(cicd)**: Added JSON schema validation for environment configurations (`vars/**/blaze-env.json`) using `ajv-cli` in `05_ci_no_cloud.yml`.
+- **feat(workflows)**: Integrated Trivy IaC configuration scanning into CI (`terraform-tests.yml`) and security (`10_security_scan.yml`) workflows.
+
+### Changed
+- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.0`.
+
 <!-- ───────────── Plan 158 — Phase 1 (Stop the Bleeding) — 2026-06-11 ───────────── -->
 
 ### Security
