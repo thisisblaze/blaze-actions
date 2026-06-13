@@ -7,12 +7,24 @@ import sys
 def get_latest_tag():
     repo_url = "https://github.com/thisisblaze/blaze-terraform-infra-core.git"
     gh_pat = os.getenv("GH_PAT")
+    
+    cmd = ["git"]
+    auth = None
     if gh_pat:
-        repo_url = f"https://x-access-token:{gh_pat}@github.com/thisisblaze/blaze-terraform-infra-core.git"
+        import base64
+        auth = base64.b64encode(f"x-access-token:{gh_pat}".encode("utf-8")).decode("utf-8")
+        cmd.extend(["-c", f"http.extraHeader=Authorization: Basic {auth}"])
+    cmd.extend(["ls-remote", "--tags", repo_url])
+
     try:
-        output = subprocess.check_output(["git", "ls-remote", "--tags", repo_url], text=True)
+        output = subprocess.check_output(cmd, text=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error running git ls-remote: {e}", file=sys.stderr)
+        err_msg = str(e)
+        if gh_pat:
+            err_msg = err_msg.replace(gh_pat, "***")
+        if auth:
+            err_msg = err_msg.replace(auth, "***")
+        print(f"Error running git ls-remote: {err_msg}", file=sys.stderr)
         sys.exit(1)
 
     tags = []
