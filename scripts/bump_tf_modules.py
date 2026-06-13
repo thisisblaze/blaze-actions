@@ -6,6 +6,9 @@ import sys
 
 def get_latest_tag():
     repo_url = "https://github.com/thisisblaze/blaze-terraform-infra-core.git"
+    gh_pat = os.getenv("GH_PAT")
+    if gh_pat:
+        repo_url = f"https://x-access-token:{gh_pat}@github.com/thisisblaze/blaze-terraform-infra-core.git"
     try:
         output = subprocess.check_output(["git", "ls-remote", "--tags", repo_url], text=True)
     except subprocess.CalledProcessError as e:

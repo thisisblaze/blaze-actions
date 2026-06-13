@@ -25,6 +25,8 @@ jobs:
 
       - name: Run bump script
         id: run_bump
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           python3 scripts/bump_tf_modules.py > bump_output.txt
           cat bump_output.txt
