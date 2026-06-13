@@ -1,0 +1,67 @@
+name: 🔄 Bump Terraform Modules
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Every Sunday at midnight
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+  workflows: write
+
+jobs:
+  bump:
+    name: Bump Modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run bump script
+        id: run_bump
+        run: |
+          python3 scripts/bump_tf_modules.py > bump_output.txt
+          cat bump_output.txt
+          
+          # Extract version from output
+          LATEST_VERSION=$(grep -oE "Latest version found: v[0-9]+\.[0-9]+\.[0-9]+" bump_output.txt | awk '{print $4}')
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if files were updated
+          if grep -q "Updating" bump_output.txt; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.run_bump.outputs.changes_detected == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_VERSION: ${{ steps.run_bump.outputs.latest_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          BRANCH="automation/bump-tf-modules"
+          git checkout -b $BRANCH
+          git add .
+          git commit -m "chore(deps): bump terraform modules to $LATEST_VERSION"
+          git push origin $BRANCH --force
+          
+          # Create PR if it doesn't exist
+          PR_EXISTS=$(gh pr list --head $BRANCH --json number --jq '.[0].number')
+          if [ -z "$PR_EXISTS" ]; then
+            gh pr create --title "chore(deps): bump terraform modules to $LATEST_VERSION" \
+                         --body "Automated pull request to bump all blaze-terraform-infra-core module references to $LATEST_VERSION." \
+                         --base dev \
+                         --head $BRANCH
+          else
+            echo "PR already exists for branch $BRANCH."
+          fi
