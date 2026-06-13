@@ -1,5 +1,5 @@
 module "tfstate_backend" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/tfstate-backend?ref=v2.6.9"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/storage/tfstate-backend?ref=v2.7.0"
 
   namespace = var.namespace
   stage     = var.environment
