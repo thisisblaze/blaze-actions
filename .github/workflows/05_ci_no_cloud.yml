@@ -70,3 +70,44 @@ jobs:
             echo "❌ Issues found — merge is blocked until fixed." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+
+  config-validation:
+    name: 📋 Environment Config Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Caller Repo
+        uses: actions/checkout@v6.0.2
+
+      - name: Checkout Actions Repo for Schema
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: thisisblaze/blaze-actions
+          path: .actions-shared
+
+      - name: Validate JSON configurations against schema
+        run: |
+          echo "## 📋 Config Validation Results" >> "$GITHUB_STEP_SUMMARY"
+          
+          # Find all blaze-env.json files recursively
+          CONFIG_FILES=$(find vars/ -name "blaze-env.json" 2>/dev/null || true)
+          
+          if [ -z "$CONFIG_FILES" ]; then
+            echo "ℹ️ No blaze-env.json files found to validate in this repository." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          
+          echo "Validating config files: $CONFIG_FILES"
+          
+          # Run ajv-cli validation
+          npx -y ajv-cli validate \
+            -s .actions-shared/.github/schemas/blaze-env.schema.json \
+            -d "vars/**/blaze-env.json"
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ All environment configuration files are valid against the schema." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "❌ JSON Schema validation failed. Check job logs for details." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+

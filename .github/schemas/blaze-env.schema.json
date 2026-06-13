@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Blaze Environment Configuration Schema",
+  "type": "object",
+  "properties": {
+    "common": {
+      "type": "object",
+      "properties": {
+        "CLIENT_KEY": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "CLOUD_PROVIDER": {
+          "type": "string",
+          "enum": ["aws", "gcp", "azure"]
+        },
+        "PROJECT_KEY": {
+          "type": "string"
+        },
+        "PROJECT_SLUG": {
+          "type": "string"
+        },
+        "STACK_ID": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }
+      }
+    },
+    "dev": { "type": "object" },
+    "stage": { "type": "object" },
+    "prod": { "type": "object" }
+  },
+  "required": ["common"],
+  "additionalProperties": true
+}
