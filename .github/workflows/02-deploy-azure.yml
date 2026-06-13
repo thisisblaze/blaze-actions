@@ -65,6 +65,11 @@ on:
         type: choice
         options: ["X86_64", "ARM64"]
         default: "ARM64"
+      smoke_test_url:
+        description: "URL to hit for post-deploy smoke test"
+        required: false
+        type: string
+        default: ""
 
 
   # Enable usage by other workflows (Stress Test)
@@ -112,6 +117,10 @@ on:
         required: false
         type: string
         default: "ARM64"
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
       frontend_launch_type:
         required: false
         type: string
@@ -740,9 +749,29 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
+  smoke-test:
+    name: 🩺 Post-Deploy Smoke Test
+    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure]
+    if: always() && (inputs.deploy_services == true || inputs.deploy_services == null) && inputs.smoke_test_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit Smoke Test URL
+        run: |
+          URL="${{ inputs.smoke_test_url }}"
+          echo "🔍 Hitting smoke test URL: $URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+             echo "❌ Post-deploy smoke test failed with status $HTTP_STATUS!"
+             echo "💡 Rollback hint: Consider reverting the deployment to the previous task definition or commit."
+             exit 1
+          fi
+          echo "✅ Smoke test passed with 200 OK!"
+
   summary:
     name: 📝 Deployment Summary
-    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure]
+    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure, smoke-test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30

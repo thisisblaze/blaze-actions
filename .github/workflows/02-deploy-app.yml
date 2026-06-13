@@ -65,6 +65,11 @@ on:
         type: choice
         options: ["X86_64", "ARM64"]
         default: "ARM64"
+      smoke_test_url:
+        description: "URL to hit for post-deploy smoke test"
+        required: false
+        type: string
+        default: ""
 
 
   # Enable usage by other workflows (Stress Test)
@@ -125,6 +130,10 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -223,6 +232,7 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
+      smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -271,6 +281,7 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
+      smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -319,6 +330,7 @@ jobs:
       frontend_launch_type: ${{ inputs.frontend_launch_type }}
       frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
+      smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
