@@ -145,11 +145,29 @@ jobs:
           done
           echo "✅ All modules validated successfully"
 
+  iac-security:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6.0.2
+
+      - name: Run Trivy Config Scan
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          scan-type: "config"
+          scan-ref: "${{ inputs.scan_path || '.github/aws/infra/modules/' }}"
+          hide-progress: true
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+
   unit-tests:
     name: Unit Tests (Label Module)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: static-analysis
+    needs: [static-analysis, iac-security]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6.0.2
@@ -227,7 +245,7 @@ jobs:
     name: Test Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [static-analysis, unit-tests, integration-tests]
+    needs: [static-analysis, iac-security, unit-tests, integration-tests]
     if: always()
     steps:
       - name: Generate Summary
@@ -238,6 +256,7 @@ jobs:
             echo "| Test Type | Status |"
             echo "|-----------|--------|"
             echo "| Static Analysis | ${{ needs.static-analysis.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
+            echo "| IaC Security Scan | ${{ needs.iac-security.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
             echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
             if [[ "${{ needs.integration-tests.result }}" != "skipped" && "${{ needs.integration-tests.result }}" != "" ]]; then
               echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |"
