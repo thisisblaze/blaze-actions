@@ -96,16 +96,10 @@ output "elastic_password" {
   sensitive   = true
 }
 
-output "elastic_app_username" {
-  description = "Application user username"
-  value       = module.elastic_deployment.app_username
-}
-
-output "elastic_app_password" {
-  description = "Application user password"
-  value       = module.elastic_deployment.app_password
-  sensitive   = true
-}
+# NOTE: elastic_app_username / elastic_app_password outputs were removed (plan 160).
+# The elastic-deployment module never declared app_username/app_password outputs,
+# so these references errored at `terraform plan`. Least-privilege app users are
+# provisioned by the separate `elastic-tenant-user` module, not here.
 
 output "kibana_endpoint" {
   description = "Kibana HTTPS endpoint"
