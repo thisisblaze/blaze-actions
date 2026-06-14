@@ -534,7 +534,7 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
@@ -580,7 +580,7 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -708,7 +708,7 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
         'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 
         'linux/amd64' || 'linux/amd64,linux/arm64' }}
@@ -744,7 +744,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
@@ -792,7 +792,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
@@ -841,7 +841,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
