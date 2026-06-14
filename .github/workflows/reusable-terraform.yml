@@ -324,6 +324,25 @@ jobs:
              echo "❌ EC_API_KEY is NOT DETECTED (Empty)."
           fi
 
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+             TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+             echo "✅ CLOUDFLARE_API_TOKEN is DETECTED. Length: ${#TOKEN}"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ZONE_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ZONE_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ZONE_ID is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ACCOUNT_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ACCOUNT_ID is NOT DETECTED (Empty)."
+          fi
+
       - name: Export Global Terraform Credentials
         env:
           ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
