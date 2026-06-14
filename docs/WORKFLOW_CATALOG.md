@@ -232,7 +232,7 @@
 - `branch_tag` (optional): 
 - `bulk_pattern` (optional): 
 - `cloud_provider` (optional): 
-- `confirmation` (optional): 
+- `confirmation` (optional): for destructive actions on **manual dispatch**, must be the target-scoped keyword `DESTROY-<environment>-<stack>` (99-ops-terraform/utility) or `DESTROY-<environment>-<cloud_provider>` (99-ops-nuke); programmatic `workflow_call` accepts `DESTROY`/`EXECUTE` (plan 163 O3)
 - `desired_count` (optional): 
 - `dist_id` (optional): 
 - `dry_run` (optional): 
@@ -373,12 +373,15 @@
 **Inputs**:
 
 - `environment` (required)
+- `stack` (required)
+- `reason` (required on manual dispatch — recorded in the audit trail; plan 163 O4)
 - `lock_id` (required): Lock ID from error message
 
 **What it does**:
 
 - Forces Terraform state unlock
 - Clears DynamoDB lock entry
+- Writes a durable audit record (run log + job summary): actor, env, stack, lock id, reason, UTC timestamp (plan 163 O4)
 
 **When to run**: After confirming no other operations running
 
