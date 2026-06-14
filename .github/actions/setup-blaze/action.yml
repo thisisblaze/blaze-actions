@@ -21,10 +21,10 @@ inputs:
     required: false
     default: "false"
   aws-access-key-id:
-    description: "AWS Access Key ID"
+    description: "[DEPRECATED] AWS Access Key ID. Static keys are discouraged — use OIDC via 'aws-role-arn'. No current caller passes this."
     required: false
   aws-secret-access-key:
-    description: "AWS Secret Access Key"
+    description: "[DEPRECATED] AWS Secret Access Key. Static keys are discouraged — use OIDC via 'aws-role-arn'. No current caller passes this."
     required: false
   skip-aws-setup:
     description: "Set to true to skip AWS credential configuration"
@@ -70,6 +70,12 @@ runs:
     - name: Suppress Node 20 warnings
       shell: bash
       run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> "$GITHUB_ENV"
+
+    - name: Warn on deprecated static AWS keys
+      if: inputs.aws-access-key-id != '' || inputs.aws-secret-access-key != ''
+      shell: bash
+      run: |
+        echo "::warning title=Deprecated auth::Static AWS access keys are deprecated for blaze CI. Use OIDC via 'aws-role-arn' (role-to-assume) instead — keys require manual rotation and are higher-risk."
 
     - name: Configure AWS Credentials
       if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
