@@ -137,7 +137,27 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          
+
+          # Short-circuit: already completed → stop polling (avoids hourly re-apply churn).
+          STATUS=$(jq -r '.status // "pending"' "$STATE_FILE")
+          if [ "$STATUS" = "completed" ]; then
+            echo "Handoff for ${{ inputs.environment }} already completed. Nothing to verify."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Hard timeout: stop polling once timeout_at has passed without resolution.
+          TIMEOUT_AT=$(jq -r '.timeout_at // empty' "$STATE_FILE")
+          if [ -n "$TIMEOUT_AT" ]; then
+            NOW_EPOCH=$(date -u +%s)
+            TO_EPOCH=$(date -u -d "$TIMEOUT_AT" +%s 2>/dev/null || echo 0)
+            if [ "$TO_EPOCH" -ne 0 ] && [ "$NOW_EPOCH" -gt "$TO_EPOCH" ]; then
+              echo "::warning::DNS handoff for ${{ inputs.environment }} exceeded timeout_at=$TIMEOUT_AT without resolving — giving up. Re-run handoff (Phase B) to restart the window."
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
           # We should parse the JSON and check each record using dig.
           # For simplicity, if jq and dig are available:
           RECORDS=$(jq -c '.records[]' "$STATE_FILE")
@@ -169,7 +189,7 @@ jobs:
     needs: check-dns
     if: ${{ needs.check-dns.outputs.ready == 'true' }}
     
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@feat/166-third-party-dns-handoff
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.6.0
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
@@ -230,12 +250,17 @@ jobs:
             # Update state to completed
             tmp=$(mktemp)
             jq '.status = "completed"' "$JSON_FILE" > "$tmp" && mv "$tmp" "$JSON_FILE"
-            
+
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add docs/dns-handoff/state/
-            git commit -m "docs: DNS handoff completed for ${{ inputs.environment }}"
-            git push
+            # Only commit/push if the state actually changed (prevents red runs on re-poll).
+            if git diff --staged --quiet; then
+              echo "State already marked completed — nothing to commit."
+            else
+              git commit -m "docs: DNS handoff completed for ${{ inputs.environment }}"
+              git push
+            fi
           fi
           
           ISSUE_TITLE="DNS handoff: ${{ inputs.environment }}"

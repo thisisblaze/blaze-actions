@@ -120,7 +120,7 @@ on:
     
 jobs:
   handoff:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@feat/166-third-party-dns-handoff
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.6.0
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
@@ -186,9 +186,12 @@ jobs:
           echo "|------|------|-------|------|" >> "$MD_FILE"
           echo '${{ needs.handoff.outputs.dns_handoff_records_json }}' | jq -r '.[] | "| \(.name) | \(.type) | \(.value) | \(.host) |"' >> "$MD_FILE"
           
-          # Render JSON State
+          # Render JSON State (status + 14-day timeout window the poller honours)
           JSON_FILE="docs/dns-handoff/state/${{ inputs.environment }}.json"
-          echo '{"status": "pending", "records": ${{ needs.handoff.outputs.dns_handoff_records_json }}}' > "$JSON_FILE"
+          RECORDS_JSON='${{ needs.handoff.outputs.dns_handoff_records_json }}'
+          TIMEOUT_AT=$(date -u -d "+14 days" +%Y-%m-%dT%H:%M:%SZ)
+          jq -n --argjson recs "$RECORDS_JSON" --arg t "$TIMEOUT_AT" \
+            '{status: "pending", timeout_at: $t, attempts: 0, records: $recs}' > "$JSON_FILE"
           
           # Also append to step summary
           cat "$MD_FILE" >> $GITHUB_STEP_SUMMARY
