@@ -1,0 +1,80 @@
+name: "🌐 DNS Handoff (Phase A)"
+
+on:
+  workflow_call:
+    inputs:
+      cloud_provider:
+        description: "Cloud provider (aws/gcp/azure). Default: aws"
+        required: false
+        type: string
+        default: "aws"
+      tf_dir:
+        description: "Directory containing Terraform configuration"
+        required: true
+        type: string
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
+      environment:
+        description: "GitHub Environment (for secrets)"
+        required: false
+        type: string
+      bucket:
+        description: "S3 Bucket for State"
+        required: true
+        type: string
+      state_key:
+        description: "S3 Key for State"
+        required: true
+        type: string
+      lock_table:
+        description: "DynamoDB Table for Locking"
+        required: false
+        type: string
+      terraform_version:
+        description: "Terraform Version"
+        required: false
+        type: string
+        default: "1.9.0"
+      pre_apply_script:
+        description: "Bash script to run after Init but before Plan/Apply"
+        required: false
+        type: string
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+
+jobs:
+  handoff:
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      cloud_provider: ${{ inputs.cloud_provider }}
+      tf_dir: ${{ inputs.tf_dir }}
+      aws_region: ${{ inputs.aws_region }}
+      environment: ${{ inputs.environment }}
+      bucket: ${{ inputs.bucket }}
+      state_key: ${{ inputs.state_key }}
+      lock_table: ${{ inputs.lock_table }}
+      terraform_version: ${{ inputs.terraform_version }}
+      pre_apply_script: ${{ inputs.pre_apply_script }}
+      wif_audience: ${{ inputs.wif_audience }}
+      apply: true
+      # Phase A: Request cert, emit records, do NOT wait.
+      tf_vars: '{"manage_dns":false,"await_validation":false}'
+
+  summary:
+    name: "Render DNS Handoff Summary"
+    needs: handoff
+    runs-on: ubuntu-latest
+    if: ${{ needs.handoff.outputs.dns_handoff_records_json != '' && needs.handoff.outputs.dns_handoff_records_json != '[]' }}
+    steps:
+      - name: Write to Summary
+        run: |
+          echo "## 🌐 DNS Handoff Required" >> $GITHUB_STEP_SUMMARY
+          echo "The following DNS records must be created manually before proceeding to Phase B / C:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Name | Type | Value | Host |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|-------|------|" >> $GITHUB_STEP_SUMMARY
+          echo '${{ needs.handoff.outputs.dns_handoff_records_json }}' | jq -r '.[] | "| \(.name) | \(.type) | \(.value) | \(.host) |"' >> $GITHUB_STEP_SUMMARY

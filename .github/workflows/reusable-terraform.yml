@@ -222,6 +222,9 @@ on:
       storage_account_name:
         description: "Azure Storage Account Name"
         value: ${{ jobs.terraform.outputs.storage_account_name }}
+      dns_handoff_records_json:
+        description: "JSON array of DNS records required for handoff"
+        value: ${{ jobs.terraform.outputs.dns_handoff_records_json }}
 
 concurrency:
   group: tf-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.tf_dir }}
@@ -259,6 +262,7 @@ jobs:
       front_door_endpoint_hostname: ${{ steps.tf_outputs.outputs.front_door_endpoint_hostname }}
       image_resize_function_hostname: ${{ steps.tf_outputs.outputs.image_resize_function_hostname }}
       storage_account_name: ${{ steps.tf_outputs.outputs.storage_account_name }}
+      dns_handoff_records_json: ${{ steps.tf_outputs.outputs.dns_handoff_records_json }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -1156,6 +1160,12 @@ jobs:
           if [[ -n "$CLUSTER_NAME" ]]; then
              echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
              echo "ecs_cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          fi
+
+          # DNS Handoff Records
+          DNS_HANDOFF=$(jq -c '.dns_handoff_records.value // empty' tf_outputs.json)
+          if [[ -n "$DNS_HANDOFF" ]]; then
+             echo "dns_handoff_records_json=$DNS_HANDOFF" >> $GITHUB_OUTPUT
           fi
 
           # Generic Output Extractor
