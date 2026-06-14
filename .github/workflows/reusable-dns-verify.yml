@@ -129,6 +129,8 @@ jobs:
       pre_apply_script: |
         ${{ inputs.pre_apply_script }}
         echo "TF_VAR_cloudflare_zone_id=$CLOUDFLARE_ZONE_ID" >> $GITHUB_ENV
+        echo "TF_VAR_cloudflare_api_token=$CLOUDFLARE_API_TOKEN" >> $GITHUB_ENV
+        echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID" >> $GITHUB_ENV
       wif_audience: ${{ inputs.wif_audience }}
       apply: true
       # Phase C: Provision actual DNS records for the domain, and await final ACM validation
