@@ -192,11 +192,23 @@ jobs:
             exit 1
           fi
 
-          # Validation for destructive actions
+          # Validation for destructive actions (plan 163 O3 — fail closed).
           if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "rm-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
-            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
-              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
-              exit 1
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              # Manual runs must confirm the EXACT target, so a stale/copied keyword
+              # aimed at the wrong env or stack is rejected.
+              EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.stack }}"
+              if [[ "$CONF" != "$EXPECTED" ]]; then
+                echo "❌ ERROR: Confirmation for '$ACTION' must be EXACTLY: $EXPECTED"
+                echo "   (you typed: '$CONF') — this binds the confirmation to the chosen environment + stack."
+                exit 1
+              fi
+            else
+              # Programmatic callers (workflow_call) keep the legacy keyword.
+              if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+                echo "❌ ERROR: Confirmation required for $ACTION. Pass 'DESTROY' or 'EXECUTE'."
+                exit 1
+              fi
             fi
           fi
 
@@ -392,8 +404,16 @@ jobs:
               exit 1
             fi
             echo "🔧 REMOVING TARGET '$TARGET' FROM STATE: $LOCK_ID"
+            # Mandatory backup before any state mutation (plan 163 O1) — abort if it fails.
+            BACKUP_KEY="${KEY}.backup.$(date +%s)"
+            echo "💾 Backing up state to s3://$BUCKET/$BACKUP_KEY"
+            if ! aws s3 cp "s3://$BUCKET/$KEY" "s3://$BUCKET/$BACKUP_KEY" --region "$REGION"; then
+              echo "❌ ERROR: state backup failed — refusing to mutate state."
+              exit 1
+            fi
+            echo "::notice title=State backup::s3://$BUCKET/$BACKUP_KEY"
             aws s3 cp "s3://$BUCKET/$KEY" state.json --region "$REGION"
-            
+
             # Use jq to remove the resource from the state file
             # This is a brute-force approach, terraform CLI is safer but requires init
             # Since we just need to remove cloudflare_record, let's use jq:
@@ -424,6 +444,16 @@ jobs:
             echo "✅ State unlocked."
           elif [[ "$ACTION" == "wipe-state" ]]; then
             echo "☢️ WIPING GCS STATE: gs://$BUCKET/$KEY"
+            # Mandatory backup before wipe (plan 163 O1) — abort if the state exists but backup fails.
+            if gsutil -q stat "gs://$BUCKET/$KEY" 2>/dev/null; then
+              BACKUP_KEY="${KEY}.backup.$(date +%s)"
+              echo "💾 Backing up state to gs://$BUCKET/$BACKUP_KEY"
+              if ! gsutil cp "gs://$BUCKET/$KEY" "gs://$BUCKET/$BACKUP_KEY"; then
+                echo "❌ ERROR: state backup failed — refusing to wipe state."
+                exit 1
+              fi
+              echo "::notice title=State backup::gs://$BUCKET/$BACKUP_KEY"
+            fi
             gsutil rm "gs://$BUCKET/$KEY" 2>/dev/null || echo "ℹ️ State file not found"
             gsutil rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || echo "ℹ️ No lock file found"
             echo "✅ State wiped."
