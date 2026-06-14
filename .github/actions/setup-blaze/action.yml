@@ -73,7 +73,7 @@ runs:
 
     - name: Configure AWS Credentials
       if: (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
-      uses: aws-actions/configure-aws-credentials@v6.0.0
+      uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
       with:
         role-to-assume: ${{ inputs.aws-role-arn || env.AWS_ROLE_ARN }}
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
@@ -103,7 +103,7 @@ runs:
     - name: Authenticate to Google Cloud
       if: inputs.cloud-provider == 'gcp'
       id: gcp-auth
-      uses: google-github-actions/auth@v3
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
       with:
         workload_identity_provider: ${{ inputs.gcp-workload-identity-provider }}
         service_account: ${{ inputs.gcp-service-account }}
@@ -112,14 +112,14 @@ runs:
 
     - name: Set up Google Cloud SDK
       if: inputs.cloud-provider == 'gcp'
-      uses: google-github-actions/setup-gcloud@v3
+      uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
 
     # ══════════════════════════════════════════════════════════
     # Azure Authentication (OIDC / Managed Identity)
     # ══════════════════════════════════════════════════════════
     - name: Authenticate to Azure
       if: inputs.cloud-provider == 'azure'
-      uses: azure/login@v3.0.0
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
       with:
         client-id: ${{ inputs.azure-client-id }}
         tenant-id: ${{ inputs.azure-tenant-id }}
@@ -130,7 +130,7 @@ runs:
     # ══════════════════════════════════════════════════════════
     - name: Cache Terraform Providers
       if: inputs.terraform == 'true'
-      uses: actions/cache@v5
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: |
           .terraform
@@ -141,7 +141,7 @@ runs:
 
     - name: Setup Terraform
       if: inputs.terraform == 'true'
-      uses: hashicorp/setup-terraform@v4
+      uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
 
     # ══════════════════════════════════════════════════════════
     # Container Registry Login (Provider-specific)
@@ -149,7 +149,7 @@ runs:
     - name: Login to Amazon ECR
       if: inputs.ecr == 'true' && (inputs.cloud-provider == 'aws' || inputs.cloud-provider == '') && inputs.skip-aws-setup != 'true'
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
     - name: Login to GCP Artifact Registry
       if: inputs.ecr == 'true' && inputs.cloud-provider == 'gcp'

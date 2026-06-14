@@ -152,7 +152,7 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v6.0.2
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
             - name: Set Azure Credentials (OIDC)
               run: |
@@ -161,7 +161,7 @@ jobs:
                   echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
             - name: Authenticate to Azure
-              uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+              uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
               with:
                   client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
                   tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -195,7 +195,7 @@ jobs:
                   echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
 
             - name: Deploy Revision
-              uses: azure/container-apps-deploy-action@v1
+              uses: azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1 # v1
               with:
                   imageToDeploy: ${{ inputs.azure_registry_server }}/${{ inputs.namespace }}-${{ inputs.project_key }}-web/${{ inputs.project_key }}/${{ inputs.service_name }}:${{ inputs.image_tag }}
                   resourceGroup: ${{ steps.names.outputs.resource_group }}

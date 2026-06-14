@@ -151,6 +151,10 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+  id-token: write # OIDC cloud auth
+
 jobs:
     deploy-site:
         name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"
@@ -168,7 +172,7 @@ jobs:
 
         steps:
             - name: Azure Login (OIDC)
-              uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+              uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
               with:
                   client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -188,7 +192,7 @@ jobs:
             # For Tier 2 (multi-revision): new revision starts at 0% traffic.
 
             - name: Deploy New Revision
-              uses: azure/container-apps-deploy-action@v1
+              uses: azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1 # v1
               with:
                   imageToDeploy: ${{ env.ACR }}/${{ env.REPO }}/${{ env.SITE_KEY }}:${{ env.TAG }}
                   resourceGroup: ${{ env.RG }}

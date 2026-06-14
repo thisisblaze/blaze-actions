@@ -19,10 +19,22 @@ runs:
   steps:
     - name: Promote
       shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+        SOURCE_TAG: ${{ inputs.source_tag }}
+        TARGET_TAG: ${{ inputs.target_tag }}
       run: |
-        FULL_IMAGE="${{ inputs.registry }}/${{ inputs.image_name }}"
-        SOURCE="${FULL_IMAGE}:${{ inputs.source_tag }}"
-        TARGET="${FULL_IMAGE}:${{ inputs.target_tag }}"
+        set -euo pipefail
+        # GitHub does not enforce composite-action `required: true` at runtime — validate explicitly.
+        for v in REGISTRY IMAGE_NAME SOURCE_TAG TARGET_TAG; do
+          if [ -z "${!v:-}" ]; then
+            echo "❌ ERROR: required input '$v' is empty"; exit 1
+          fi
+        done
+        FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
+        SOURCE="${FULL_IMAGE}:${SOURCE_TAG}"
+        TARGET="${FULL_IMAGE}:${TARGET_TAG}"
         
         echo "🐳 Promoting Image..."
         echo "   From: $SOURCE"

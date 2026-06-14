@@ -63,6 +63,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+  id-token: write # OIDC cloud auth
+
 jobs:
   ecs-health-snapshot:
     name: "🩺 ECS Health Snapshot"
