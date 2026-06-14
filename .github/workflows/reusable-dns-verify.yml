@@ -41,6 +41,10 @@ on:
         description: "Bash script to run after Init but before Plan/Apply"
         required: false
         type: string
+      tf_vars:
+        description: "Variables string to write to _github_vars.env"
+        required: false
+        type: string
       wif_audience:
         description: "WIF Audience (Optional)"
         required: false
@@ -135,6 +139,7 @@ jobs:
       apply: true
       # Phase C: Provision actual DNS records for the domain, and await final ACM validation
       tf_vars: |
+        ${{ inputs.tf_vars }}
         manage_dns=true
         await_validation=true
     secrets:
