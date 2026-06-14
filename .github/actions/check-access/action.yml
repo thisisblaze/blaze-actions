@@ -14,9 +14,19 @@ runs:
   steps:
     - name: Verify Access
       shell: bash
+      env:
+        ALLOWED_USERS_IN: ${{ inputs.allowed_users }}
+        ACTOR_IN: ${{ inputs.actor }}
       run: |
-        ALLOWED_USERS="${{ inputs.allowed_users }}"
-        ACTOR="${{ inputs.actor }}"
+        set -euo pipefail
+        ALLOWED_USERS="${ALLOWED_USERS_IN:-}"
+        ACTOR="${ACTOR_IN:-}"
+
+        # Fail closed: empty inputs must never silently grant or skip the check.
+        if [ -z "$ALLOWED_USERS" ] || [ -z "$ACTOR" ]; then
+          echo "❌ ERROR: 'allowed_users' and 'actor' are required and must be non-empty (fail closed)."
+          exit 1
+        fi
 
         echo "🔒 Access Control Check"
         echo "   Actor: $ACTOR"

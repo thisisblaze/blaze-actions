@@ -49,6 +49,10 @@ concurrency:
   group: dev-sleep-wake-${{ inputs.cluster }}-${{ inputs.action }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  id-token: write # OIDC cloud auth
+
 jobs:
   sleep:
     name: "😴 Sleep — ECS → RDS"
