@@ -119,7 +119,56 @@ on:
         required: false
     
 jobs:
+  check-dns:
+    name: "Check DNS Resolution"
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6.0.2
+
+      - name: Verify DNS Records
+        id: check
+        run: |
+          STATE_FILE="docs/dns-handoff/state/${{ inputs.environment }}.json"
+          if [ ! -f "$STATE_FILE" ]; then
+            echo "State file not found. Nothing to verify."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # We should parse the JSON and check each record using dig.
+          # For simplicity, if jq and dig are available:
+          RECORDS=$(jq -c '.records[]' "$STATE_FILE")
+          
+          ALL_RESOLVED=true
+          for row in $RECORDS; do
+            NAME=$(echo "$row" | jq -r '.name')
+            TYPE=$(echo "$row" | jq -r '.type')
+            EXPECTED_VALUE=$(echo "$row" | jq -r '.value')
+            
+            # Use 1.1.1.1 to resolve
+            RESOLVED_VALUE=$(dig +short "$TYPE" "$NAME" @1.1.1.1 | tail -n1 | sed 's/"//g')
+            
+            if [[ "$RESOLVED_VALUE" == *"$EXPECTED_VALUE"* ]] || [[ "$EXPECTED_VALUE" == *"$RESOLVED_VALUE"* ]]; then
+              echo "✅ $NAME resolves to $RESOLVED_VALUE"
+            else
+              echo "❌ $NAME resolves to '$RESOLVED_VALUE', expected '$EXPECTED_VALUE'"
+              ALL_RESOLVED=false
+            fi
+          done
+          
+          if [ "$ALL_RESOLVED" = true ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
   verify:
+    needs: check-dns
+    if: ${{ needs.check-dns.outputs.ready == 'true' }}
+    
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@feat/166-third-party-dns-handoff
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
@@ -140,7 +189,7 @@ jobs:
       # Phase C: Provision actual DNS records for the domain, and await final ACM validation
       tf_vars: |
         ${{ inputs.tf_vars }}
-        manage_dns=true
+        manage_dns=false
         await_validation=true
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -160,3 +209,39 @@ jobs:
       BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
       BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+
+  close-issue:
+    name: "Close DNS Handoff Issue"
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6.0.2
+
+      - name: Update State and Close Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          JSON_FILE="docs/dns-handoff/state/${{ inputs.environment }}.json"
+          if [ -f "$JSON_FILE" ]; then
+            # Update state to completed
+            tmp=$(mktemp)
+            jq '.status = "completed"' "$JSON_FILE" > "$tmp" && mv "$tmp" "$JSON_FILE"
+            
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/dns-handoff/state/
+            git commit -m "docs: DNS handoff completed for ${{ inputs.environment }}"
+            git push
+          fi
+          
+          ISSUE_TITLE="DNS handoff: ${{ inputs.environment }}"
+          ISSUE_NUMBER=$(gh issue list --search "in:title \"$ISSUE_TITLE\"" --state open --json number -q '.[0].number')
+          
+          if [ -n "$ISSUE_NUMBER" ] && [ "$ISSUE_NUMBER" != "null" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body "✅ DNS verification successful! Certificate validated and CDN updated. Closing handoff."
+            gh issue close "$ISSUE_NUMBER"
+          fi
