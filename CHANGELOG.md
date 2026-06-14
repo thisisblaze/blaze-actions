@@ -10,9 +10,12 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - **feat(workflows)**: Integrated Trivy IaC configuration scanning into CI (`terraform-tests.yml`) and security (`10_security_scan.yml`) workflows.
 - **feat(cicd)**: Added automated bump-terraform-modules Python script and workflow to query and update module references.
 - **feat(dependabot)**: Configured Dependabot git registries and `DEPENDABOT_PAT` secrets for private repository scanning.
+- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.1` across all AWS and GCP live stack configurations.
 
 ### Changed
-- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.0`.
+- **fix(elastic)** (Plan 160): Removed dead `elastic_app_username/password` outputs from the Elastic Cloud live wrapper stack (F1).
+- **fix(secrets)** (Plan 160): Dropped empty-secret `ELASTIC_APP_*` syncing from `sync-secrets-from-ssm.yml` (F2).
+- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.0`. (Old v2.7.0 bump)
 
 ### Security
 - **security(ci)**: Secured Git credentials in the module bumper script using base64 basic Authorization headers, preventing token exposure in command arguments and execution logs.
