@@ -116,7 +116,7 @@ on:
     
 jobs:
   verify:
-    uses: ./.github/workflows/reusable-terraform.yml
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@feat/166-third-party-dns-handoff
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
