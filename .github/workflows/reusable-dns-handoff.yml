@@ -126,14 +126,15 @@ jobs:
       state_key: ${{ inputs.state_key }}
       lock_table: ${{ inputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      pre_apply_script: ${{ inputs.pre_apply_script }}
+      pre_apply_script: |
+        ${{ inputs.pre_apply_script }}
+        echo "TF_VAR_cloudflare_zone_id=$CLOUDFLARE_ZONE_ID" >> $GITHUB_ENV
       wif_audience: ${{ inputs.wif_audience }}
       apply: true
       # Phase A: Request cert, emit records, do NOT wait.
       tf_vars: |
         manage_dns=false
         await_validation=false
-        cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
