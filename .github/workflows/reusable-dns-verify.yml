@@ -129,8 +129,11 @@ jobs:
       pre_apply_script: ${{ inputs.pre_apply_script }}
       wif_audience: ${{ inputs.wif_audience }}
       apply: true
-      # Phase C: Verify cert/records
-      tf_vars: '{"manage_dns":true,"await_validation":true}'
+      # Phase C: Provision actual DNS records for the domain, and await final ACM validation
+      tf_vars: |
+        manage_dns=true
+        await_validation=true
+        cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}

@@ -130,7 +130,10 @@ jobs:
       wif_audience: ${{ inputs.wif_audience }}
       apply: true
       # Phase A: Request cert, emit records, do NOT wait.
-      tf_vars: '{"manage_dns":false,"await_validation":false}'
+      tf_vars: |
+        manage_dns=false
+        await_validation=false
+        cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
