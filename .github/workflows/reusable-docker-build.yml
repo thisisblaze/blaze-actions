@@ -264,7 +264,6 @@ jobs:
           push: true
           tags: |
             ${{ inputs.image_name }}:${{ inputs.image_tag }}-amd64
-            ${{ inputs.image_name }}:latest-amd64
           build-args: |
             ${{ inputs.build_args }}
             NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
@@ -385,7 +384,6 @@ jobs:
           push: true
           tags: |
             ${{ inputs.image_name }}:${{ inputs.image_tag }}-arm64
-            ${{ inputs.image_name }}:latest-arm64
           build-args: |
             ${{ inputs.build_args }}
             NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }}
@@ -492,7 +490,6 @@ jobs:
           echo "🔗 Creating multi-arch manifest for ${IMAGE}:${TAG}"
           docker buildx imagetools create \
             --tag "${IMAGE}:${TAG}" \
-            --tag "${IMAGE}:latest" \
             $SOURCES
 
           echo "✅ Multi-arch manifest pushed"
