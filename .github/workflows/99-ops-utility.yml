@@ -182,11 +182,21 @@ jobs:
             exit 1
           fi
 
-          # Validation for destructive actions
+          # Validation for destructive actions (plan 163 O3 — kept consistent with
+          # 99-ops-terraform / 99-ops-nuke: manual dispatch requires a target-scoped keyword).
           if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
-            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
-              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
-              exit 1
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.stack }}"
+              if [[ "$CONF" != "$EXPECTED" ]]; then
+                echo "❌ ERROR: Confirmation for '$ACTION' must be EXACTLY: $EXPECTED"
+                echo "   (you typed: '$CONF') — this binds the confirmation to the chosen environment + stack."
+                exit 1
+              fi
+            else
+              if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+                echo "❌ ERROR: Confirmation required for $ACTION. Pass 'DESTROY' or 'EXECUTE'."
+                exit 1
+              fi
             fi
           fi
 

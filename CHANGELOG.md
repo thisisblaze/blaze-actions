@@ -4,6 +4,17 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## [Unreleased]
 
+<!-- ───────────── Plans 161–164 — CI/CD Hardening Sweep — 2026-06-14 ───────────── -->
+
+### Security
+- **security(supply-chain)** (Plan 162): SHA-pinned all third-party GitHub Actions — 176 floating `@vN` refs across 48 workflows + 9 composite actions converted to 40-char commit SHAs (79 → 255 pinned; 0 floating third-party refs remain). Fixed `azure/login` (was floating `@v2` with an unresolvable-SHA note). Added least-privilege `permissions:` blocks to 13 reusable workflows and fail-loud input validation to `docker-promote` / `check-access` (fail-closed) / `check-stack-exists`.
+- **security(secrets)** (Plan 164): `sync-secrets-from-ssm.yml` now fails loud on missing required Mongo/Elastic SSM params (replaced silent `|| echo ""`) and masks all sensitive fields (usernames/host/endpoint, not just passwords). Scoped `id-token`/`pull-requests` to the jobs that need them in `10_security_scan.yml` (workflow default → `contents: read`). Removed the hardcoded AWS account id from `find-zombie.yml` (→ `secrets.AWS_ROLE_ARN`). Marked `setup-blaze` static AWS-key inputs deprecated (OIDC is the supported path).
+- **security(ci-gate)** (Plan 164): Security-scan gate policy = block on infra/CI CRITICAL+HIGH — Trivy IaC blocks (exit-code 1) and a new SAST gate fails on high/critical Semgrep findings; app-dependency vulns remain advisory.
+
+### Changed
+- **fix(cicd)** (Plan 161): ECS deploy pipeline hardening — stopped publishing mutable `:latest`/`:latest-amd64`/`:latest-arm64` image tags (only the immutable git-SHA tag is pushed); STAGE/PROD now always wait for ECS service stability (`skip_stability_wait` cannot disable the health gate there); hardened the task-def render (fail on empty output / invalid JSON / zero `containerDefinitions`); wired the previously-ignored `override_image_tag` (used only when `build_images=false` and a real non-`latest` tag, else `github.sha`).
+- **fix(ops)** (Plan 163): De-risked destructive ops — dated S3/GCS state backups before `rm-state`/`wipe-state` (abort on backup failure); target-scoped confirmation keyword (`DESTROY-<env>-<stack>` / `DESTROY-<env>-<cloud>`) on manual dispatch of `99-ops-terraform`, `99-ops-nuke`, and `99-ops-utility` (programmatic `workflow_call` keeps the legacy keyword); `force-unlock` requires a `reason` and writes a durable audit record; `delete_asg.py`/`nuke_asg_lt.py` parameterised and refuse to delete unless `Blaze:Project`+`Blaze:Environment` tags match (fail closed). GCP Cloud Run nuke fails closed on an under-qualified prefix; full GCP/Azure label-based selection deferred pending confirmation of the label keys.
+
 ### Added
 - **feat(workflows)**: Propagated `smoke_test_url` input parameter to `02-deploy-app.yml` and all cloud-specific deployment wrappers (`02-deploy-aws.yml`, `02-deploy-azure.yml`, `02-deploy-gcp.yml`) to trigger post-deployment health verification.
 - **feat(cicd)**: Added JSON schema validation for environment configurations (`vars/**/blaze-env.json`) using `ajv-cli` in `05_ci_no_cloud.yml`.
