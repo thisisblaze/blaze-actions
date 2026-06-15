@@ -345,6 +345,9 @@ jobs:
 
       - name: Export Global Terraform Credentials
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
           MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
@@ -356,6 +359,25 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           {
+            if [[ -n "$CLOUDFLARE_API_TOKEN" ]]; then
+              # Strip whitespace/control chars but preserve valid chars
+              CLEAN_TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_api_token<<__EOF__"
+              printf '%s' "$CLEAN_TOKEN"
+              echo ""
+              echo "__EOF__"
+              echo "CLOUDFLARE_API_TOKEN=$CLEAN_TOKEN"
+            fi
+            
+            if [[ -n "$CLOUDFLARE_ZONE_ID" ]]; then
+              CLEAN_ZONE=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_zone_id<<__EOF__"
+              printf '%s' "$CLEAN_ZONE"
+              echo ""
+              echo "__EOF__"
+            fi
+            
+            [[ -n "$CLOUDFLARE_ACCOUNT_ID" ]] && echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID" || true
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
