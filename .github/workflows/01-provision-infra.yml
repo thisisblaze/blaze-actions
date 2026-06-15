@@ -266,7 +266,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: infra-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
+  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
 env:
