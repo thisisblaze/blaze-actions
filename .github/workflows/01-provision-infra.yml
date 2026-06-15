@@ -378,7 +378,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@feat/166-third-party-dns-handoff
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
