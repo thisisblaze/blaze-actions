@@ -54,8 +54,8 @@ enable_image_resize = true
 ### 2. Run Provision Workflow
 
 ```bash
-gh workflow run "01a-provision-network.yml" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "01-provision-infra.yml" -f stack="network" \
+  --repo <tenant-repo> \
   -f environment=STAGE \
   -f apply=true
 ```

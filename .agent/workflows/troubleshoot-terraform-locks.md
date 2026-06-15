@@ -73,7 +73,7 @@ The `reusable-terraform.yml` workflow includes:
 ```bash
 # Trigger force-unlock workflow
 gh workflow run "force-unlock.yml" \
-  --repo thebyte9/blaze-template-deploy \
+  --repo <tenant-repo> \
   --ref main
 ```
 

@@ -66,19 +66,6 @@ on:
         options: ["X86_64", "ARM64"]
         default: "ARM64"
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        description: "Base64 Azure Client ID"
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        description: "Base64 Azure Tenant ID"
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        description: "Base64 Azure Subscription ID"
-        required: false
-        type: string
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -139,16 +126,6 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -234,8 +211,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.3.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with: {node-version: "20"}
@@ -277,7 +254,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -330,32 +307,18 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -458,32 +421,18 @@ jobs:
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -543,9 +492,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Node
-        uses: actions/setup-node@v6.3.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
@@ -558,7 +507,7 @@ jobs:
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Cache Next.js & NPM
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             ~/.npm
@@ -598,7 +547,7 @@ jobs:
           mkdir -p packages/admin/dist
           echo "/* /index.html 200" > packages/admin/dist/_redirects
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -619,8 +568,8 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -663,7 +612,7 @@ jobs:
           fi
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3.14.1
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
         with:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

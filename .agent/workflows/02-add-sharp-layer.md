@@ -36,7 +36,7 @@ This workflow automates building and deploying the Sharp Lambda Layer required f
 The layer is **automatically built** in GitHub Actions when provisioning the network stack:
 
 ```yaml
-# thebyte9/blaze-template-deploy/.github/workflows/01-provision-infra.yml
+# <tenant-repo>/.github/workflows/01-provision-infra.yml
 jobs:
   build_sharp_layer:
     if: inputs.stack == 'network'
@@ -123,8 +123,8 @@ module "label_image_resize" {
 ### Step 3: Run Provision Workflow
 
 ```bash
-gh workflow run "01a-provision-network.yml" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "01-provision-infra.yml" -f stack="network" \
+  --repo <tenant-repo> \
   --ref main \
   -f environment=STAGE \
   -f project=thisisblaze \
@@ -149,8 +149,8 @@ gh workflow run "01a-provision-network.yml" \
 Re-run with `apply=true`:
 
 ```bash
-gh workflow run "01a-provision-network.yml" \
-  --repo thebyte9/blaze-template-deploy \
+gh workflow run "01-provision-infra.yml" -f stack="network" \
+  --repo <tenant-repo> \
   --ref main \
   -f environment=STAGE \
   -f apply=true
@@ -217,7 +217,7 @@ aws s3 ls s3://blaze-b9-thisisblaze-stage-image-resize/converted/ --recursive
 
 ### Issue: Test scripts or logs show no errors but the CloudFront endpoint returns 503
 
-**Cause:** You might be checking the logs of an INACTIVE, older version of the Lambda function. When looking up Lambda functions by name (`list-functions`), AWS returns all matching functions. `93a-test-image-resize.yml` and manual troubleshooting often mistakenly parse the first returned ARN.
+**Cause:** You might be checking the logs of an INACTIVE, older version of the Lambda function. When looking up Lambda functions by name (`list-functions`), AWS returns all matching functions. `90-daily-health-check.yml` and manual troubleshooting often mistakenly parse the first returned ARN.
 **Fix:** Always ensure you are querying the _active_ Lambda ARN attached to the specific CloudFront distribution's cache behavior. A quick CLI fix is to sort by `LastModified`:
 
 ```bash
@@ -341,7 +341,7 @@ Lambda@Edge functions deployed with Sharp
 
 ### Workflow Integration
 
-- `thebyte9/blaze-template-deploy/.github/workflows/01-provision-infra.yml` - Main workflow
+- `<tenant-repo>/.github/workflows/01-provision-infra.yml` - Main workflow
 - `.github/actions/build-sharp-layer/action.yml` - Reusable action
 
 ### Terraform Modules

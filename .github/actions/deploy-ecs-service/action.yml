@@ -555,11 +555,20 @@ runs:
         echo "🏷️  Container name resolved: $CONTAINER_NAME (service: $TARGET_SERVICE)"
 
         echo "📝 Rendering $TEMPLATE to task-def.json..."
+        set -o pipefail
         envsubst < "$TEMPLATE" > task-def.json
 
-        # Basic Validation
-        if ! jq empty task-def.json; then
+        # Validation — fail fast on malformed or under-populated task-defs (plan 161 S3).
+        if [ ! -s task-def.json ]; then
+           echo "❌ ERROR: Rendered task-def.json is empty."
+           exit 1
+        fi
+        if ! jq empty task-def.json 2>/dev/null; then
            echo "❌ ERROR: Rendered JSON is invalid."
+           exit 1
+        fi
+        if [ "$(jq '.containerDefinitions | length' task-def.json 2>/dev/null || echo 0)" -lt 1 ]; then
+           echo "❌ ERROR: Rendered task-def has no containerDefinitions (envsubst likely dropped required vars)."
            exit 1
         fi
 
@@ -682,15 +691,23 @@ runs:
       shell: bash
       run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
 
+    - name: Warn if stability wait overridden on a protected env
+      if: (inputs.stage_key == 'stage' || inputs.stage_key == 'prod') && inputs.skip_stability_wait == 'true'
+      shell: bash
+      run: |
+        echo "::warning title=Health gate enforced::skip_stability_wait=true is IGNORED on '${{ inputs.stage_key }}'. Waiting for ECS service stability is mandatory on STAGE/PROD."
+
     - name: Deploy to Amazon ECS
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.0
+      uses: aws-actions/amazon-ecs-deploy-task-definition@cbf54ec46642b86ff78c2f5793da6746954cf8ff # v2.6.0
       env:
         FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         task-definition: task-def.json
         service: ${{ steps.prep.outputs.service_name }}
         cluster: ${{ steps.prep.outputs.cluster_name }}
-        wait-for-service-stability: ${{ inputs.skip_stability_wait != 'true' }}
+        # Health gate: STAGE/PROD always wait for steady state; skip_stability_wait
+        # is honoured only on dev/feature envs (plan 161 S2).
+        wait-for-service-stability: ${{ (inputs.stage_key == 'stage' || inputs.stage_key == 'prod') || inputs.skip_stability_wait != 'true' }}
         codedeploy-appspec: ${{ steps.prep.outputs.appspec_path }}
         codedeploy-application: ${{ steps.prep.outputs.codedeploy_app }}
         codedeploy-deployment-group: ${{ steps.prep.outputs.codedeploy_group }}

@@ -33,7 +33,13 @@ When executing slash commands or workflows in `.agent/workflows/`, you must adop
 - **Graceful Degradation**: Workflows support both native Antigravity 2.0 tools and Claude Code CLI fallbacks. Follow the conditional logic blocks `💡 Antigravity 2.0` vs `💡 Claude Code` exactly.
 - **Slash Commands**: If the user asks for a command like `/01-analyze`, manually read the file in `.agent/workflows/` and execute it step by step.
 
-## 5. AWS Profile Mapping
+## 5. File Exclusions (Claude Code / Cowork)
+Do NOT read, index, or modify these paths (mirrors `.agentignore`):
+- `docs/archive/` — archived historical docs, not current
+- `**/.terraform/` — Terraform provider binaries and downloaded modules
+- `**/.terraform.lock.hcl` — lock files, not human-edited
+
+## 6. AWS Profile Mapping
 **SECURITY RULE**: This is an open, shared parent repository used by many different tenants. Do NOT hardcode AWS Profile names here.
 When executing AWS commands, you must either:
 1. Inspect the *active tenant repository's* `CLAUDE.md` file (e.g., `thebyte9/blaze-template-deploy/CLAUDE.md` or `thebyte9/shopware-km/CLAUDE.md`) to find the tenant's specific AWS profile mapping and use it.

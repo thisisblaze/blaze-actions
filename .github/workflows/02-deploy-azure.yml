@@ -65,20 +65,12 @@ on:
         type: choice
         options: ["X86_64", "ARM64"]
         default: "ARM64"
+      smoke_test_url:
+        description: "URL to hit for post-deploy smoke test"
+        required: false
+        type: string
+        default: ""
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        description: "Base64 Azure Client ID"
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        description: "Base64 Azure Tenant ID"
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        description: "Base64 Azure Subscription ID"
-        required: false
-        type: string
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -125,6 +117,10 @@ on:
         required: false
         type: string
         default: "ARM64"
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
       frontend_launch_type:
         required: false
         type: string
@@ -138,16 +134,6 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -233,8 +219,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.3.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with: {node-version: "20"}
@@ -276,7 +262,7 @@ jobs:
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -329,32 +315,18 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -458,32 +430,18 @@ jobs:
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -567,9 +525,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -618,9 +573,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -667,9 +619,6 @@ jobs:
         'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -705,9 +654,6 @@ jobs:
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       target_port: 3000
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -747,9 +693,6 @@ jobs:
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       target_port: 3000
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -806,9 +749,29 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
+  smoke-test:
+    name: 🩺 Post-Deploy Smoke Test
+    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure]
+    if: always() && (inputs.deploy_services == true || inputs.deploy_services == null) && inputs.smoke_test_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit Smoke Test URL
+        run: |
+          URL="${{ inputs.smoke_test_url }}"
+          echo "🔍 Hitting smoke test URL: $URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+             echo "❌ Post-deploy smoke test failed with status $HTTP_STATUS!"
+             echo "💡 Rollback hint: Consider reverting the deployment to the previous task definition or commit."
+             exit 1
+          fi
+          echo "✅ Smoke test passed with 200 OK!"
+
   summary:
     name: 📝 Deployment Summary
-    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure]
+    needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure, smoke-test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30

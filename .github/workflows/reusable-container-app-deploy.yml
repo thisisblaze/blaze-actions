@@ -65,16 +65,6 @@ on:
                 required: false
                 type: string
 
-            # Base64 Secrets Bridge
-            azure_client_id_rev:
-                required: false
-                type: string
-            azure_tenant_id_rev:
-                required: false
-                type: string
-            azure_subscription_id_rev:
-                required: false
-                type: string
 
         secrets:
           BLAZE_ELASTICSEARCH_USERNAME:
@@ -162,28 +152,16 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v6.0.2
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-            - name: Decode Azure Credentials
+            - name: Set Azure Credentials (OIDC)
               run: |
-                if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-                  CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-                  TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-                  SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-                  echo "DECODED_AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
-                  echo "DECODED_AZURE_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
-                  echo "DECODED_AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> "$GITHUB_ENV"
-                  echo "::add-mask::$CLIENT_ID"
-                  echo "::add-mask::$TENANT_ID"
-                  echo "::add-mask::$SUBSCRIPTION_ID"
-                else
                   echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
                   echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
                   echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
-                fi
 
             - name: Authenticate to Azure
-              uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+              uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
               with:
                   client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
                   tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
@@ -217,7 +195,7 @@ jobs:
                   echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
 
             - name: Deploy Revision
-              uses: azure/container-apps-deploy-action@v1
+              uses: azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1 # v1
               with:
                   imageToDeploy: ${{ inputs.azure_registry_server }}/${{ inputs.namespace }}-${{ inputs.project_key }}-web/${{ inputs.project_key }}/${{ inputs.service_name }}:${{ inputs.image_tag }}
                   resourceGroup: ${{ steps.names.outputs.resource_group }}

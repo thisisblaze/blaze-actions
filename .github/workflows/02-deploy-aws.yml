@@ -65,20 +65,12 @@ on:
         type: choice
         options: ["X86_64", "ARM64"]
         default: "ARM64"
+      smoke_test_url:
+        description: "URL to hit for post-deploy smoke test"
+        required: false
+        type: string
+        default: ""
 
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        description: "Base64 Azure Client ID"
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        description: "Base64 Azure Tenant ID"
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        description: "Base64 Azure Subscription ID"
-        required: false
-        type: string
 
   # Enable usage by other workflows (Stress Test)
   workflow_call:
@@ -125,6 +117,10 @@ on:
         required: false
         type: string
         default: "ARM64"
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
       frontend_launch_type:
         required: false
         type: string
@@ -138,16 +134,6 @@ on:
         type: string
         default: "false"
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
-      # Base64 Secrets Bridge (Azure)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -233,8 +219,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.3.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with: {node-version: "20"}
@@ -279,7 +265,7 @@ jobs:
       project_slug: ${{ steps.config.outputs.project_slug }}
       stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Debug Inputs
         run: |
@@ -332,32 +318,18 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -476,32 +448,18 @@ jobs:
           echo "-------------------------------------"
           echo "✅ GCP Pre-Flight Complete."
 
-      - name: Decode Azure Credentials
+      - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-          if [[ -n "${{ inputs.azure_client_id_rev }}" ]]; then
-            CLIENT_ID=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-            TENANT_ID=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-            SUBSCRIPTION_ID=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-            {
-              echo "AZURE_CLIENT_ID=$CLIENT_ID"
-              echo "AZURE_TENANT_ID=$TENANT_ID"
-              echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
-            } >> "$GITHUB_ENV"
-            echo "::add-mask::$CLIENT_ID"
-            echo "::add-mask::$TENANT_ID"
-            echo "::add-mask::$SUBSCRIPTION_ID"
-          else
             {
               echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
               echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
               echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             } >> "$GITHUB_ENV"
-          fi
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -576,7 +534,7 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
@@ -585,9 +543,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -625,7 +580,7 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -636,9 +591,6 @@ jobs:
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -661,9 +613,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Node
-        uses: actions/setup-node@v6.3.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
@@ -676,7 +628,7 @@ jobs:
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Cache Next.js & NPM
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             ~/.npm
@@ -720,7 +672,7 @@ jobs:
           mkdir -p packages/admin/dist
           echo "/* /index.html 200" > packages/admin/dist/_redirects
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -756,15 +708,12 @@ jobs:
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
         'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 
         'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -795,7 +744,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
@@ -843,7 +792,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
@@ -892,7 +841,7 @@ jobs:
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
       branch_name: ${{ inputs.branch_name }}
-      image_tag: ${{ github.sha }}
+      image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
@@ -931,8 +880,8 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
@@ -990,9 +939,29 @@ jobs:
             echo "⚠️  CloudFront Distribution for $ADMIN_DOMAIN not found. Did you run the network stack first?"
           fi
 
+  smoke-test:
+    name: 🩺 Post-Deploy Smoke Test
+    needs: [configuration, deploy-api, deploy-frontend, deploy-admin-ecs, deploy-admin-aws]
+    if: always() && (inputs.deploy_services == true || inputs.deploy_services == null) && inputs.smoke_test_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit Smoke Test URL
+        run: |
+          URL="${{ inputs.smoke_test_url }}"
+          echo "🔍 Hitting smoke test URL: $URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+             echo "❌ Post-deploy smoke test failed with status $HTTP_STATUS!"
+             echo "💡 Rollback hint: Consider reverting the deployment to the previous task definition or commit."
+             exit 1
+          fi
+          echo "✅ Smoke test passed with 200 OK!"
+
   summary:
     name: 📝 Deployment Summary
-    needs: [configuration, deploy-api, deploy-frontend, deploy-admin-ecs, deploy-admin-aws]
+    needs: [configuration, deploy-api, deploy-frontend, deploy-admin-ecs, deploy-admin-aws, smoke-test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30

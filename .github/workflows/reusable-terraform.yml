@@ -100,15 +100,6 @@ on:
         type: string
         default: ""
       # Azure reversed credentials (to bypass GitHub secret masking on outputs)
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
       stack_id:
         description: "Stack UUID (STACK_ID from blaze-env.json via calculate-config). Injected as TF_VAR_stack_id → Blaze:StackID tag on all resources. Enables precise tag-based destroy isolation (pre-destroy-cleanup, verify-destroy-complete)."
         required: false
@@ -136,9 +127,9 @@ on:
         required: false
       CLOUDFLARE_API_TOKEN:
         required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
       CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
         required: false
       GH_PAT:
         required: false
@@ -233,6 +224,9 @@ on:
       storage_account_name:
         description: "Azure Storage Account Name"
         value: ${{ jobs.terraform.outputs.storage_account_name }}
+      dns_handoff_records_json:
+        description: "JSON array of DNS records required for handoff"
+        value: ${{ jobs.terraform.outputs.dns_handoff_records_json }}
 
 concurrency:
   group: tf-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.tf_dir }}
@@ -240,6 +234,10 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  id-token: write # OIDC cloud auth
 
 jobs:
   terraform:
@@ -266,18 +264,19 @@ jobs:
       front_door_endpoint_hostname: ${{ steps.tf_outputs.outputs.front_door_endpoint_hostname }}
       image_resize_function_hostname: ${{ steps.tf_outputs.outputs.image_resize_function_hostname }}
       storage_account_name: ${{ steps.tf_outputs.outputs.storage_account_name }}
+      dns_handoff_records_json: ${{ steps.tf_outputs.outputs.dns_handoff_records_json }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: ${{ inputs.tf_dir }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4 # Fixes Node 20 & url.parse() deprecation warnings
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
@@ -305,24 +304,13 @@ jobs:
         run: echo "GOOGLE_OAUTH_ACCESS_TOKEN=${{ steps.google-auth.outputs.access_token }}" >> "$GITHUB_ENV"
 
 
-      - name: Decode Azure Credentials
-        if: inputs.cloud_provider == 'azure'
-        id: decode-azure
-        run: |
-          CLIENT=$(echo "${{ inputs.azure_client_id_rev }}" | rev)
-          TENANT=$(echo "${{ inputs.azure_tenant_id_rev }}" | rev)
-          SUB=$(echo "${{ inputs.azure_subscription_id_rev }}" | rev)
-          echo "client_id=$CLIENT" >> "$GITHUB_OUTPUT"
-          echo "tenant_id=$TENANT" >> "$GITHUB_OUTPUT"
-          echo "subscription_id=$SUB" >> "$GITHUB_OUTPUT"
-
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@v2 # v2 — SHA pin removed (old SHA a65d910e no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Debug Secret Presence
         run: |
@@ -338,6 +326,25 @@ jobs:
              echo "❌ EC_API_KEY is NOT DETECTED (Empty)."
           fi
 
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+             TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+             echo "✅ CLOUDFLARE_API_TOKEN is DETECTED. Length: ${#TOKEN}"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ZONE_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ZONE_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ZONE_ID is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ACCOUNT_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ACCOUNT_ID is NOT DETECTED (Empty)."
+          fi
+
       - name: Export Global Terraform Credentials
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -349,29 +356,30 @@ jobs:
           MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
           EC_API_KEY: ${{ secrets.EC_API_KEY }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
-          # CF provider v5 validates api_token strictly: ^[a-zA-Z0-9_-]+$
-          # Strip ALL chars outside that set (not just whitespace) — handles newlines,
-          # carriage returns, invisible unicode, BOMs, and any other invalid byte.
-          # tr -cd keeps ONLY the complement — chars in the allowed set.
-          CF_TOKEN_CLEAN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -cd 'a-zA-Z0-9_-')
-          CF_ZONE_CLEAN=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:]')
-
-          # Use GitHub's multiline EOF delimiter syntax to safely write values that may
-          # contain newlines — prevents GITHUB_ENV file corruption from embedded newlines.
           {
-            echo "TF_VAR_cloudflare_api_token<<__EOF__"
-            printf '%s' "$CF_TOKEN_CLEAN"
-            echo ""
-            echo "__EOF__"
-            echo "TF_VAR_cloudflare_zone_id<<__EOF__"
-            printf '%s' "$CF_ZONE_CLEAN"
-            echo ""
-            echo "__EOF__"
-            echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID"
+            if [[ -n "$CLOUDFLARE_API_TOKEN" ]]; then
+              # Strip whitespace/control chars but preserve valid chars
+              CLEAN_TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_api_token<<__EOF__"
+              printf '%s' "$CLEAN_TOKEN"
+              echo ""
+              echo "__EOF__"
+              echo "CLOUDFLARE_API_TOKEN=$CLEAN_TOKEN"
+            fi
+            
+            if [[ -n "$CLOUDFLARE_ZONE_ID" ]]; then
+              CLEAN_ZONE=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_zone_id<<__EOF__"
+              printf '%s' "$CLEAN_ZONE"
+              echo ""
+              echo "__EOF__"
+            fi
+            
+            [[ -n "$CLOUDFLARE_ACCOUNT_ID" ]] && echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID" || true
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
@@ -386,77 +394,6 @@ jobs:
             echo "ARM_TENANT_ID=$ARM_TENANT_ID"
             echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
           } >> "$GITHUB_ENV"
-
-      - name: "🔐 Validate Cloudflare Zone ID ↔ Domain"
-        # Pre-flight guard: verifies CLOUDFLARE_ZONE_ID resolves to the expected
-        # domain (TF_VAR_domain_root from calculate-config/blaze-env.json) before
-        # any Terraform operation. Prevents wrong-zone DNS writes caused by a
-        # misconfigured or copy-pasted secret.
-        # Skips gracefully when:
-        #   - CLOUDFLARE_API_TOKEN is absent (non-Cloudflare stacks)
-        #   - CLOUDFLARE_ZONE_ID is absent (stacks that don't use CF DNS)
-        #   - TF_VAR_domain_root is absent (stack doesn't manage DNS)
-        env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-        run: |
-          # Resolve expected domain from TF_VAR_domain_root (set by calculate-config)
-          EXPECTED_DOMAIN="${TF_VAR_domain_root:-}"
-
-          if [[ -z "$CF_API_TOKEN" || "$CF_API_TOKEN" == "" ]]; then
-            echo "ℹ️  No CLOUDFLARE_API_TOKEN — skipping zone validation (non-CF stack)"
-            exit 0
-          fi
-
-          if [[ -z "$CF_ZONE_ID" || "$CF_ZONE_ID" == "" ]]; then
-            echo "ℹ️  No CLOUDFLARE_ZONE_ID — skipping zone validation (CF DNS not managed by this stack)"
-            exit 0
-          fi
-
-          if [[ -z "$EXPECTED_DOMAIN" ]]; then
-            echo "ℹ️  No TF_VAR_domain_root — skipping zone validation (domain not in scope)"
-            exit 0
-          fi
-
-          echo "🔍 Validating Cloudflare Zone ID..."
-          echo "   Zone ID       : ${CF_ZONE_ID:0:8}…  (redacted)"
-          echo "   Expected domain: $EXPECTED_DOMAIN"
-
-          RESPONSE=$(curl -sf \
-            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}" \
-            -H "Authorization: Bearer $CF_API_TOKEN" \
-            -H "Content-Type: application/json" 2>/dev/null || echo "CURL_FAILED")
-
-          if [[ "$RESPONSE" == "CURL_FAILED" ]]; then
-            echo "❌ Cloudflare API request failed (network error or invalid token)"
-            exit 1
-          fi
-
-          SUCCESS=$(echo "$RESPONSE" | jq -r '.success // false')
-          if [[ "$SUCCESS" != "true" ]]; then
-            ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].message // "unknown error"')
-            echo "❌ Cloudflare API returned error: $ERROR"
-            echo "   Check that CLOUDFLARE_API_TOKEN has Read access to the Zones for domain: $EXPECTED_DOMAIN"
-            exit 1
-          fi
-
-          ACTUAL_DOMAIN=$(echo "$RESPONSE" | jq -r '.result.name // ""')
-          if [[ -z "$ACTUAL_DOMAIN" ]]; then
-            echo "❌ Could not extract domain name from Cloudflare API response"
-            exit 1
-          fi
-
-          if [[ "$ACTUAL_DOMAIN" != "$EXPECTED_DOMAIN" ]]; then
-            echo "❌ CLOUDFLARE_ZONE_ID MISMATCH:"
-            echo "   Zone ID resolves to : $ACTUAL_DOMAIN"
-            echo "   Expected domain     : $EXPECTED_DOMAIN"
-            echo ""
-            echo "   Fix: ensure the correct zone ID is stored in the secret."
-            echo "   For blazecms.io → secret must be CLOUDFLARE_ZONE_ID_BLAZECMS_IO"
-            exit 1
-          fi
-
-          echo "✅ Zone ID validated: ${CF_ZONE_ID:0:8}… → $ACTUAL_DOMAIN ✓"
 
       - name: Configure Git for Private Modules
         env:
@@ -553,9 +490,9 @@ jobs:
         env:
           # Azure OIDC: azurerm provider cannot use CLI auth for SPs — must use ARM_ env vars
           ARM_USE_OIDC: ${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || steps.decode-azure.outputs.client_id }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || steps.decode-azure.outputs.tenant_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || steps.decode-azure.outputs.subscription_id }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           set +e
           BUCKET="${{ inputs.bucket }}"
@@ -832,6 +769,7 @@ jobs:
         run: |
           if [ -n "$BASIC_AUTH_CRED" ]; then
             echo "TF_VAR_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
+            echo "TF_VAR_default_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
           fi
 
       - name: Load TF Vars
@@ -954,6 +892,9 @@ jobs:
         if: ${{ inputs.pre_apply_script != '' }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         working-directory: ${{ inputs.tf_dir }}
         run: |
           echo "📜 Running Pre-Apply Script (cwd: $(pwd))..."
@@ -1122,40 +1063,6 @@ jobs:
           fi
 
 
-      - name: Sanitize CF Token for Provider Init
-        # CF provider v5.19.1 validates api_token format at plan time.
-        # Strategy by stack type:
-        #   - enable_cloudflare_records = false (network stack):
-        #     inject a format-valid placeholder so the provider initialises without
-        #     making real API calls (no managed CF resources in this stack).
-        #   - enable_cloudflare_records = true/absent (app stack, CF DNS managed):
-        #     pass the raw token with only whitespace stripped — preserves dots in
-        #     newer CF token formats that tr -cd would destroy.
-        # CF_API_TOKEN_SANITIZED (whitespace-stripped) is always set for pre_apply.sh curl calls.
-        run: |
-          # Strip only whitespace/control chars — preserve dots, slashes, etc. in newer CF tokens
-          RAW_TOKEN="${CLOUDFLARE_API_TOKEN:-${TF_VAR_cloudflare_api_token:-}}"
-          CLEAN=$(printf '%s' "${RAW_TOKEN}" | tr -d '[:space:][:cntrl:]')
-          echo "CF_API_TOKEN_SANITIZED=${CLEAN}" >> "$GITHUB_ENV"
-          echo "ℹ️  CF token raw length: ${#RAW_TOKEN}, stripped length: ${#CLEAN}"
-
-          # Always export CLOUDFLARE_API_TOKEN so providers using env var (not api_token attr) work.
-          # multi-site-app/main.tf uses the env var to bypass CF provider v5 HCL schema validation.
-          echo "CLOUDFLARE_API_TOKEN=${CLEAN}" >> "$GITHUB_ENV"
-
-          # Detect enable_cloudflare_records from tfvars (false = network/no-CF stack)
-          TFVARS_PATH="${{ inputs.deploy_path }}/terraform.tfvars"
-          CF_RECORDS_ENABLED=$(grep -E '^enable_cloudflare_records\s*=' "${TFVARS_PATH}" 2>/dev/null | tr -d ' "' | cut -d= -f2 | tr -d '[:space:]' || echo "true")
-          [[ -z "${CF_RECORDS_ENABLED}" ]] && CF_RECORDS_ENABLED="true"
-
-          if [[ "${CF_RECORDS_ENABLED}" == "false" ]]; then
-            echo "TF_VAR_cloudflare_api_token=placeholder-cf-token-not-used-records-disabled" >> "$GITHUB_ENV"
-            echo "ℹ️  enable_cloudflare_records=false — placeholder injected (no CF API calls this stack)"
-          else
-            echo "TF_VAR_cloudflare_api_token=${CLEAN}" >> "$GITHUB_ENV"
-            echo "✅ enable_cloudflare_records=true — whitespace-stripped token set (${#CLEAN} chars)"
-          fi
-
       - name: Terraform Plan
 
         id: plan
@@ -1297,6 +1204,12 @@ jobs:
           if [[ -n "$CLUSTER_NAME" ]]; then
              echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
              echo "ecs_cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          fi
+
+          # DNS Handoff Records
+          DNS_HANDOFF=$(jq -c '.dns_handoff_records.value // empty' tf_outputs.json)
+          if [[ -n "$DNS_HANDOFF" ]]; then
+             echo "dns_handoff_records_json=$DNS_HANDOFF" >> $GITHUB_OUTPUT
           fi
 
           # Generic Output Extractor

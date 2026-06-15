@@ -1,8 +1,14 @@
 name: 🔒 Security Scan
 
-# Note: To enable SARIF uploads to GitHub Security tab, enable "Code Security" in:
-# Repository Settings → Code security and analysis → Code scanning → Set up
-# For now, SARIF uploads are non-blocking (continue-on-error: true)
+# ------------------------------------------------------------------------------
+# GATE POLICY (plan 164 S4 — decided 2026-06-14: "block on infra/CI CRITICAL+HIGH"):
+#   • IaC scan (Trivy config)  → BLOCKS the build on CRITICAL/HIGH (exit-code 1).
+#   • SAST (Semgrep)           → BLOCKS the build on high/critical (ERROR-level) findings.
+#   • App dependency vulns (Trivy fs) → ADVISORY only (exit-code 0) — upstream CVEs we
+#     can't always fix immediately must not block deploys; reported in PR comments.
+#   • Secret scanning (Gitleaks) → BLOCKS (GITLEAKS_EXIT_CODE=1).
+# SARIF artifact uploads remain non-blocking (informational).
+# ------------------------------------------------------------------------------
 
 on:
   pull_request:
@@ -12,14 +18,10 @@ on:
   schedule:
     - cron: "0 0 * * 0" # Weekly deep scan on Sunday
 
+# Least-privilege default for ALL jobs; elevated scopes are granted per-job below
+# (id-token only on the Scorecard job, pull-requests only on the reporting job).
 permissions:
   contents: read
-  pull-requests: write
-  security-events: write # For SARIF uploads
-  actions: read # Required for CodeQL Action v4
-  id-token: write # Required for OSSF Scorecard signing
-  issues: read # Required for OSSF Scorecard checks
-  checks: read # Required for OSSF Scorecard checks
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,12 +40,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1 # Scan current state only (faster)
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -52,7 +54,7 @@ jobs:
 
       - name: Upload Gitleaks Results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: gitleaks-results
           path: |
@@ -71,7 +73,7 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0 # Needed for diff calculation
 
@@ -151,9 +153,23 @@ jobs:
             --exclude="**/*.spec.js" \
             --exclude="**/*.spec.ts" || true
 
+      - name: 🚦 SAST gate (block on high/critical)
+        run: |
+          set -euo pipefail
+          if [ ! -f semgrep.sarif ]; then
+            echo "❌ semgrep.sarif missing — scan did not produce output"; exit 1
+          fi
+          HIGH=$(jq '[.runs[0].results[]? | select(.level=="error")] | length' semgrep.sarif 2>/dev/null || echo 0)
+          echo "High/critical (ERROR-level) SAST findings: ${HIGH:-0}"
+          if [ "${HIGH:-0}" -gt 0 ]; then
+            echo "❌ SAST gate failed: ${HIGH} high/critical finding(s). See PR comments / the semgrep-results artifact."
+            exit 1
+          fi
+          echo "✅ SAST gate passed (no high/critical findings)."
+
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: semgrep-results
           path: semgrep.sarif
@@ -170,10 +186,10 @@ jobs:
     needs: secrets
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Cache Trivy DB
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: .trivy
           key: ${{ runner.os }}-trivy-db
@@ -181,7 +197,7 @@ jobs:
             ${{ runner.os }}-trivy-db-
 
       - name: Run Trivy (Console Log)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -193,7 +209,7 @@ jobs:
           hide-progress: true
 
       - name: Run Trivy (Filesystem)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -228,10 +244,39 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: trivy-results
           path: trivy.sarif
+          if-no-files-found: ignore
+          retention-days: 7
+
+  iac-security:
+    name: 🛡️ IaC Security Scan (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: secrets
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Trivy Config Scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          hide-progress: true
+          format: "sarif"
+          output: "trivy-iac.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: iac-results
+          path: trivy-iac.sarif
           if-no-files-found: ignore
           retention-days: 7
 
@@ -242,15 +287,20 @@ jobs:
     name: 🛡️ Repository Integrity
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # OSSF Scorecard signing
+      issues: read # Scorecard checks
+      checks: read # Scorecard checks
     needs: secrets
     # Only run on default branch - Scorecard only supports default branch
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Run OSSF Scorecard
-        uses: ossf/scorecard-action@v2.4.3
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
         continue-on-error: true # Prevent failure on private repos where some checks are restricted
         with:
           results_file: scorecard-results.sarif
@@ -259,7 +309,7 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: scorecard-results
           path: scorecard-results.sarif
@@ -273,11 +323,14 @@ jobs:
     name: 📊 Security Report
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write # post security findings as PR comments
     if: always() && github.event_name == 'pull_request'
-    needs: [sast, dependencies, integrity]
+    needs: [sast, dependencies, iac-security, integrity]
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: "*-results"
           merge-multiple: false
@@ -299,6 +352,13 @@ jobs:
             if [ -f "trivy-results/trivy.sarif" ]; then
               echo "### 📦 Dependency Scan (Trivy)"
               echo "✅ Scan completed. Check PR comments for details."
+              echo ""
+            fi
+
+            # IaC Results
+            if [ -f "iac-results/trivy-iac.sarif" ]; then
+              echo "### 🛡️ IaC Security Scan (Trivy)"
+              echo "✅ Scan completed. Check artifacts for details."
               echo ""
             fi
             

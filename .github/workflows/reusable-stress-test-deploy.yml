@@ -53,15 +53,6 @@ on:
         type: string
         default: ""
         
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -187,10 +178,10 @@ jobs:
       azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Checkout Actions
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
@@ -225,9 +216,6 @@ jobs:
       skip_stability_wait: "${{ 'true' }}"
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}

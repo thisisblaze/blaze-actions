@@ -2,12 +2,126 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
-## [Unreleased]
+## v2.6.0 (2026-06-14)
+
+### Added
+
+- feat: configure bump-terraform-modules script and workflow to use GH_PAT for authentication
+- feat: add automated bump-terraform-modules script and workflow
 
 ### Changed
+
+- chore: update CHANGELOG for v2.6.0
+- chore: end-of-day governance sync — 2026-06-14
+- chore: end-of-day governance sync — 2026-06-14
+- chore: bump GCP stack infra-core module refs to v2.7.1
+- chore: bump infra-core module refs to v2.7.1
+- chore: end-of-day governance sync - update CHANGELOG for bump script and workflow
+- chore: remove non-existent azure directories from dependabot.yml
+- chore: configure dependabot for terraform package-ecosystem
+- chore: end-of-day governance sync — 2026-06-13
+- chore: bump infra-core module refs to v2.7.0
+- chore: dual-tool parity — add Claude Code bootstrap blocks to engage/02-dry-run/03-monitor-stress + CLAUDE.md exclusions
+- chore: point reusable-terraform to dev branch for testing
+- refactor: remove Cloudflare sanitization from provision workflow
+- refactor: remove Cloudflare logic from shared engine
+- docs: add NotebookLM educational prompts (infographic + short/long podcast) — 2026-06-03
+- chore: clean up transient sync scripts
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-session governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-05-31
+- chore: resolve split-brain — bump GHA self-refs v2.1.74→v2.2.2, Terraform pins →v2.6.9
+- chore: update CHANGELOG for v2.2.2
+
+### Fixed
+
+- fix: pass Cloudflare secrets to pre-apply script
+
+## v2.6.0 (2026-06-14)
+
+### Added
+
+- feat: configure bump-terraform-modules script and workflow to use GH_PAT for authentication
+- feat: add automated bump-terraform-modules script and workflow
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-06-14
+- chore: end-of-day governance sync — 2026-06-14
+- chore: bump GCP stack infra-core module refs to v2.7.1
+- chore: bump infra-core module refs to v2.7.1
+- chore: end-of-day governance sync - update CHANGELOG for bump script and workflow
+- chore: remove non-existent azure directories from dependabot.yml
+- chore: configure dependabot for terraform package-ecosystem
+- chore: end-of-day governance sync — 2026-06-13
+- chore: bump infra-core module refs to v2.7.0
+- chore: dual-tool parity — add Claude Code bootstrap blocks to engage/02-dry-run/03-monitor-stress + CLAUDE.md exclusions
+- chore: point reusable-terraform to dev branch for testing
+- refactor: remove Cloudflare sanitization from provision workflow
+- refactor: remove Cloudflare logic from shared engine
+- docs: add NotebookLM educational prompts (infographic + short/long podcast) — 2026-06-03
+- chore: clean up transient sync scripts
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-session governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-05-31
+- chore: resolve split-brain — bump GHA self-refs v2.1.74→v2.2.2, Terraform pins →v2.6.9
+- chore: update CHANGELOG for v2.2.2
+
+### Fixed
+
+- fix: pass Cloudflare secrets to pre-apply script
+
+## [Unreleased]
+
+<!-- ───────────── Plans 161–164 — CI/CD Hardening Sweep — 2026-06-14 ───────────── -->
+
+### Security
+- **security(supply-chain)** (Plan 162): SHA-pinned all third-party GitHub Actions — 176 floating `@vN` refs across 48 workflows + 9 composite actions converted to 40-char commit SHAs (79 → 255 pinned; 0 floating third-party refs remain). Fixed `azure/login` (was floating `@v2` with an unresolvable-SHA note). Added least-privilege `permissions:` blocks to 13 reusable workflows and fail-loud input validation to `docker-promote` / `check-access` (fail-closed) / `check-stack-exists`.
+- **security(secrets)** (Plan 164): `sync-secrets-from-ssm.yml` now fails loud on missing required Mongo/Elastic SSM params (replaced silent `|| echo ""`) and masks all sensitive fields (usernames/host/endpoint, not just passwords). Scoped `id-token`/`pull-requests` to the jobs that need them in `10_security_scan.yml` (workflow default → `contents: read`). Removed the hardcoded AWS account id from `find-zombie.yml` (→ `secrets.AWS_ROLE_ARN`). Marked `setup-blaze` static AWS-key inputs deprecated (OIDC is the supported path).
+- **security(ci-gate)** (Plan 164): Security-scan gate policy = block on infra/CI CRITICAL+HIGH — Trivy IaC blocks (exit-code 1) and a new SAST gate fails on high/critical Semgrep findings; app-dependency vulns remain advisory.
+
+### Changed
+- **refactor(network)** (Plan 165): Network topology routing upgraded to multi-site backbone. Removed duplicated legacy network stacks.
+- **fix(cicd)** (Plan 161): ECS deploy pipeline hardening — stopped publishing mutable `:latest`/`:latest-amd64`/`:latest-arm64` image tags (only the immutable git-SHA tag is pushed); STAGE/PROD now always wait for ECS service stability (`skip_stability_wait` cannot disable the health gate there); hardened the task-def render (fail on empty output / invalid JSON / zero `containerDefinitions`); wired the previously-ignored `override_image_tag` (used only when `build_images=false` and a real non-`latest` tag, else `github.sha`).
+- **fix(ops)** (Plan 163): De-risked destructive ops — dated S3/GCS state backups before `rm-state`/`wipe-state` (abort on backup failure); target-scoped confirmation keyword (`DESTROY-<env>-<stack>` / `DESTROY-<env>-<cloud>`) on manual dispatch of `99-ops-terraform`, `99-ops-nuke`, and `99-ops-utility` (programmatic `workflow_call` keeps the legacy keyword); `force-unlock` requires a `reason` and writes a durable audit record; `delete_asg.py`/`nuke_asg_lt.py` parameterised and refuse to delete unless `Blaze:Project`+`Blaze:Environment` tags match (fail closed). GCP Cloud Run nuke fails closed on an under-qualified prefix; full GCP/Azure label-based selection deferred pending confirmation of the label keys.
+
+### Added
+- **feat(dns)** (Plan 166): Added third-party DNS handoff verification lifecycle. `reusable-dns-handoff.yml` parses Terraform JSON outputs to dynamically generate a client handoff issue and status document. `reusable-dns-verify.yml` runs via cron, queries `1.1.1.1` to confirm CNAME propagation, auto-applies ACM certification, and closes the GitHub issue when complete.
+- **feat(workflows)**: Propagated `smoke_test_url` input parameter to `02-deploy-app.yml` and all cloud-specific deployment wrappers (`02-deploy-aws.yml`, `02-deploy-azure.yml`, `02-deploy-gcp.yml`) to trigger post-deployment health verification.
+- **feat(cicd)**: Added JSON schema validation for environment configurations (`vars/**/blaze-env.json`) using `ajv-cli` in `05_ci_no_cloud.yml`.
+- **feat(workflows)**: Integrated Trivy IaC configuration scanning into CI (`terraform-tests.yml`) and security (`10_security_scan.yml`) workflows.
+- **feat(cicd)**: Added automated bump-terraform-modules Python script and workflow to query and update module references.
+- **feat(dependabot)**: Configured Dependabot git registries and `DEPENDABOT_PAT` secrets for private repository scanning.
+- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.1` across all AWS and GCP live stack configurations.
+
+### Changed
+- **fix(elastic)** (Plan 160): Removed dead `elastic_app_username/password` outputs from the Elastic Cloud live wrapper stack (F1).
+- **fix(secrets)** (Plan 160): Dropped empty-secret `ELASTIC_APP_*` syncing from `sync-secrets-from-ssm.yml` (F2).
+- **chore(infra)**: Bumped `blaze-terraform-infra-core` module references to `v2.7.0`. (Old v2.7.0 bump)
+
+### Security
+- **security(ci)**: Secured Git credentials in the module bumper script using base64 basic Authorization headers, preventing token exposure in command arguments and execution logs.
+
+<!-- ───────────── Plan 158 — Phase 1 (Stop the Bleeding) — 2026-06-11 ───────────── -->
+
+### Security
+- **security(azure-oidc)** (Plan 158 §1.2): Removed the `azure_*_rev` base64/`| rev` credential-obfuscation pattern from **14 workflows** (`01-provision-infra`, `02-deploy-{app,aws,azure,gcp,pages}`, `reusable-container-app-deploy`, `reusable-docker-build`, `reusable-stress-test-{deploy,provision,teardown,verify}`, `reusable-terraform-operations`, `reusable-terraform`). Deleted 19 `*_rev` input declarations, 87 passthrough lines and 49 `rev` decode lines; `azure/login@v2` now resolves identity directly from `secrets.AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID` (native OIDC federation). Behaviour-preserving — the `_rev` path was dead code (no caller set it), so the obfuscation added risk without function.
+
+### Added
+- **feat(ci)** (Plan 158 §1.3): `pin-guard` job in `05_ci_no_cloud.yml` — fails the build on any active `uses: …@dev` reference in `.github/workflows` or `.github/actions`, preventing floating dev pins from reaching `main`.
+
+### Changed
+- **fix(ci)** (Plan 158 §1.3): Repointed the `provision` job's `reusable-terraform.yml@dev` self-reference in `01-provision-infra.yml` to the released tag `@v2.2.2`, matching the 97 other internal pins. Zero active `@dev` references remain.
+- **docs** (Plan 158 §1.3): README version badge corrected `v2.3.7` (non-existent tag) → `v2.2.2` (the in-use released tag).
+- **refactor(azure)** (Plan 158 §1.2): Renamed the now-secret-only "Decode Azure Credentials" steps to "Set Azure Credentials (OIDC)" across 7 workflows; rewrote 18 `secrets.AZURE_* || steps.*.outputs.*` fallbacks to plain `secrets.AZURE_*`.
 - **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
 - **fix(infra)**: Implemented ECS scale-to-zero in `reusable-pre-destroy-cleanup.yml` to prevent `ResourceInUseException` during environment teardown.
 - **refactor(ci)**: Stripped explicit `secrets:` from all `99-ops-*.yml` wrapper workflows to natively leverage the `secrets: inherit` standard.
+- **fix(cicd)**: Deep CI/CD maintenance sync: regenerated `WORKFLOW_CATALOG.md` inputs, aligned reusable workflow references in AI agent markdown files, and bumped markdown timestamps globally.
+- **fix(deps)**: Pinned GitHub Actions to latest (`v6.0.3`, `v7.0.1`) and Terraform modules to `v2.6.9` to resolve split-brain execution drift across environments.
+- **fix(seed)**: Preserved Stage admin passwords during PROD-to-STAGE automated database imports to prevent leaked prod credentials.
 
 ## v2.2.2 (2026-05-30)
 

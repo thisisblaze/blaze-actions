@@ -148,7 +148,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Load Access List
         id: load-access
@@ -182,11 +182,21 @@ jobs:
             exit 1
           fi
 
-          # Validation for destructive actions
+          # Validation for destructive actions (plan 163 O3 — fail closed).
           if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
-            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
-              echo "❌ ERROR: Confirmation required for $ACTION. Please type 'DESTROY' or 'EXECUTE'."
-              exit 1
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              # Manual nuke must confirm the EXACT target (env + cloud) to defeat copy-paste mistakes.
+              EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.cloud_provider }}"
+              if [[ "$CONF" != "$EXPECTED" ]]; then
+                echo "❌ ERROR: Confirmation for '$ACTION' must be EXACTLY: $EXPECTED"
+                echo "   (you typed: '$CONF') — this binds the confirmation to the chosen environment + cloud provider."
+                exit 1
+              fi
+            else
+              if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+                echo "❌ ERROR: Confirmation required for $ACTION. Pass 'DESTROY' or 'EXECUTE'."
+                exit 1
+              fi
             fi
           fi
 
@@ -265,7 +275,7 @@ jobs:
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
       stack_id: ${{ steps.config.outputs.stack_id }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Load AWS Region from Config
         id: load-region
@@ -405,6 +415,16 @@ jobs:
           REGION="${{ needs.configuration.outputs.cloud_region }}"
           PREFIX="${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}"
 
+          # Guard (plan 163 O2): refuse an under-qualified prefix that could match
+          # unrelated services. Label-based selection is DEFERRED until the Blaze
+          # label keys on GCP Cloud Run resources are confirmed (STOP condition).
+          for part in "${{ needs.configuration.outputs.namespace }}" "${{ needs.configuration.outputs.client_key }}" "${{ needs.configuration.outputs.project_key }}" "${{ needs.configuration.outputs.stage_key }}"; do
+            if [[ -z "$part" ]]; then
+              echo "❌ ERROR: refusing Cloud Run selection — PREFIX has an empty component ('$PREFIX'). Fail closed."
+              exit 1
+            fi
+          done
+
           echo "🗑️ Deleting Cloud Run services matching: ${PREFIX}-*"
           echo "   Project: $PROJECT"
           echo "   Region: $REGION"
@@ -417,6 +437,7 @@ jobs:
           if [[ -z "$SERVICES" ]]; then
             echo "ℹ️  No Cloud Run services found matching prefix."
           else
+            echo "::notice title=Cloud Run nuke::Matched $(echo "$SERVICES" | wc -w) service(s) for prefix ${PREFIX}-*"
             for SVC in $SERVICES; do
               echo "   🗑️ Deleting: $SVC"
               gcloud run services delete "$SVC" \
@@ -453,7 +474,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Authenticate to Azure
-        uses: azure/login@v2 # v2 — SHA a65d910e removed (no longer resolvable)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

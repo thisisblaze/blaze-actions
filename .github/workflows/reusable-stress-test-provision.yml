@@ -47,15 +47,6 @@ on:
         type: string
         default: ""
         
-      azure_client_id_rev:
-        required: false
-        type: string
-      azure_tenant_id_rev:
-        required: false
-        type: string
-      azure_subscription_id_rev:
-        required: false
-        type: string
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -181,10 +172,10 @@ jobs:
       azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Checkout Actions
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
@@ -214,9 +205,6 @@ jobs:
       stack: "network"
       apply: true
       enable_ec2: ${{ inputs.environment == 'dev-mini' }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -240,9 +228,6 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "tunnel"
       apply: true
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -266,9 +251,6 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "db-pod-alpha"
       apply: true
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -299,9 +281,6 @@ jobs:
       enable_ec2: ${{ contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage') }}
       api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
       frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -324,9 +303,6 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "third-party-mongodb"
       apply: true
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -350,9 +326,6 @@ jobs:
       environment: ${{ inputs.environment }}
       stack: "third-party-elastic"
       apply: true
-      azure_client_id_rev: ${{ inputs.azure_client_id_rev }}
-      azure_tenant_id_rev: ${{ inputs.azure_tenant_id_rev }}
-      azure_subscription_id_rev: ${{ inputs.azure_subscription_id_rev }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}

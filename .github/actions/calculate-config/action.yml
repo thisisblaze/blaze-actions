@@ -464,16 +464,16 @@ runs:
             
         else
             # Auto-upgrade standard generic network/app/cdn stacks to Multi-Site V2
-            if [[ "$STACK" == "network" ]]; then
+            if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "dedicated-network" ]]; then
                STACK="multi-site-network"
-            elif [[ "$STACK" == "app" ]]; then
+            elif [[ "$STACK" == "app" || "$STACK" == "single-app" ]]; then
                STACK="multi-site-app"
             elif [[ "$STACK" == "cdn" ]]; then
                STACK="multi-site-cdn"
             fi
 
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
-            if [[ "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "data" ]]; then
+            if [[ "$STACK" == "db-pod-alpha" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
                
@@ -495,10 +495,7 @@ runs:
                fi
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}-db.tfstate"
 
-            # Dedicated High-Traffic Network (opt-in per-env dedicated VPC/ALB/ECS)
-            elif [[ "$STACK" == "dedicated-network" ]]; then
-               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-dedicated-network"
-               STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/dedicated-network.tfstate"
+
 
             # V2 Multi-Site App
             elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
