@@ -769,6 +769,7 @@ jobs:
         run: |
           if [ -n "$BASIC_AUTH_CRED" ]; then
             echo "TF_VAR_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
+            echo "TF_VAR_default_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
           fi
 
       - name: Load TF Vars
