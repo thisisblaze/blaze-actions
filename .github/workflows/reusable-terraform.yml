@@ -123,6 +123,8 @@ on:
         required: false
       AZURE_TENANT_ID:
         required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
       CLOUDFLARE_API_TOKEN:
         required: false
       CLOUDFLARE_ZONE_ID:
@@ -222,6 +224,9 @@ on:
       storage_account_name:
         description: "Azure Storage Account Name"
         value: ${{ jobs.terraform.outputs.storage_account_name }}
+      dns_handoff_records_json:
+        description: "JSON array of DNS records required for handoff"
+        value: ${{ jobs.terraform.outputs.dns_handoff_records_json }}
 
 concurrency:
   group: tf-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.tf_dir }}
@@ -259,6 +264,7 @@ jobs:
       front_door_endpoint_hostname: ${{ steps.tf_outputs.outputs.front_door_endpoint_hostname }}
       image_resize_function_hostname: ${{ steps.tf_outputs.outputs.image_resize_function_hostname }}
       storage_account_name: ${{ steps.tf_outputs.outputs.storage_account_name }}
+      dns_handoff_records_json: ${{ steps.tf_outputs.outputs.dns_handoff_records_json }}
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -320,8 +326,30 @@ jobs:
              echo "❌ EC_API_KEY is NOT DETECTED (Empty)."
           fi
 
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+             TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+             echo "✅ CLOUDFLARE_API_TOKEN is DETECTED. Length: ${#TOKEN}"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ZONE_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ZONE_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ZONE_ID is NOT DETECTED (Empty)."
+          fi
+
+          if [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+             echo "✅ CLOUDFLARE_ACCOUNT_ID is DETECTED."
+          else
+             echo "❌ CLOUDFLARE_ACCOUNT_ID is NOT DETECTED (Empty)."
+          fi
+
       - name: Export Global Terraform Credentials
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
           MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
           MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
@@ -333,6 +361,25 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           {
+            if [[ -n "$CLOUDFLARE_API_TOKEN" ]]; then
+              # Strip whitespace/control chars but preserve valid chars
+              CLEAN_TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_api_token<<__EOF__"
+              printf '%s' "$CLEAN_TOKEN"
+              echo ""
+              echo "__EOF__"
+              echo "CLOUDFLARE_API_TOKEN=$CLEAN_TOKEN"
+            fi
+            
+            if [[ -n "$CLOUDFLARE_ZONE_ID" ]]; then
+              CLEAN_ZONE=$(printf '%s' "$CLOUDFLARE_ZONE_ID" | tr -d '[:space:][:cntrl:]')
+              echo "TF_VAR_cloudflare_zone_id<<__EOF__"
+              printf '%s' "$CLEAN_ZONE"
+              echo ""
+              echo "__EOF__"
+            fi
+            
+            [[ -n "$CLOUDFLARE_ACCOUNT_ID" ]] && echo "TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID" || true
             echo "TF_VAR_acm_certificate_arn=$ACM_CERTIFICATE_ARN"
             echo "TF_VAR_atlas_public_key=$MONGODB_ATLAS_PUBLIC_KEY"
             echo "TF_VAR_atlas_private_key=$MONGODB_ATLAS_PRIVATE_KEY"
@@ -722,6 +769,7 @@ jobs:
         run: |
           if [ -n "$BASIC_AUTH_CRED" ]; then
             echo "TF_VAR_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
+            echo "TF_VAR_default_basic_auth_credentials=[\"${BASIC_AUTH_CRED}\"]" >> $GITHUB_ENV
           fi
 
       - name: Load TF Vars
@@ -1156,6 +1204,12 @@ jobs:
           if [[ -n "$CLUSTER_NAME" ]]; then
              echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
              echo "ecs_cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          fi
+
+          # DNS Handoff Records
+          DNS_HANDOFF=$(jq -c '.dns_handoff_records.value // empty' tf_outputs.json)
+          if [[ -n "$DNS_HANDOFF" ]]; then
+             echo "dns_handoff_records_json=$DNS_HANDOFF" >> $GITHUB_OUTPUT
           fi
 
           # Generic Output Extractor
