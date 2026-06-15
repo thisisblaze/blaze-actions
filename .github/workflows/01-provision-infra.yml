@@ -378,7 +378,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@feat/166-third-party-dns-handoff
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.0
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -443,7 +443,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@feat/166-third-party-dns-handoff
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.0
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
