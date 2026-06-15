@@ -2,6 +2,55 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.7.0 (2026-06-15)
+
+### Added
+
+- feat: accept tf_vars input for reusable dns handoff
+- feat: reusable dns handoff workflows
+- feat: configure bump-terraform-modules script and workflow to use GH_PAT for authentication
+- feat: add automated bump-terraform-modules script and workflow
+
+### Changed
+
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+- chore: end-of-day governance sync — 2026-06-14
+- chore: add debug for cloudflare secrets
+- chore: end-of-day governance sync — 2026-06-14
+- chore: end-of-day governance sync — 2026-06-14
+- chore: bump GCP stack infra-core module refs to v2.7.1
+- chore: bump infra-core module refs to v2.7.1
+- chore: end-of-day governance sync - update CHANGELOG for bump script and workflow
+- chore: remove non-existent azure directories from dependabot.yml
+- chore: configure dependabot for terraform package-ecosystem
+- chore: end-of-day governance sync — 2026-06-13
+- chore: bump infra-core module refs to v2.7.0
+- chore: dual-tool parity — add Claude Code bootstrap blocks to engage/02-dry-run/03-monitor-stress + CLAUDE.md exclusions
+- chore: point reusable-terraform to dev branch for testing
+- refactor: remove Cloudflare sanitization from provision workflow
+- refactor: remove Cloudflare logic from shared engine
+- docs: add NotebookLM educational prompts (infographic + short/long podcast) — 2026-06-03
+- chore: clean up transient sync scripts
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-session governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-05-31
+- chore: resolve split-brain — bump GHA self-refs v2.1.74→v2.2.2, Terraform pins →v2.6.9
+- chore: update CHANGELOG for v2.2.2
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+- fix: use tr -cd to strictly sanitize Cloudflare secrets
+- fix: explicitly map secrets to reusable terraform
+- fix: absolute path for nested reusable workflow
+- fix: yaml syntax in reusable workflows
+- fix: pass Cloudflare secrets to pre-apply script
+
 ## v2.6.0 (2026-06-14)
 
 ### Added
