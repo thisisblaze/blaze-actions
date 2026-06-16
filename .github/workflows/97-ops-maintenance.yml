@@ -27,6 +27,9 @@ on:
         description: "CloudFront Distribution ID (optional)"
         type: string
         required: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
 
 permissions:
   id-token: write
