@@ -2,6 +2,16 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- feat(cicd) (Plan 169 / L21): add `97-ops-maintenance.yml` reusable workflow — resolves cluster via `calculate-config`, runs the post-reprovision compile gate over ECS Exec, optional CloudFront invalidation.
+
+### Fixed
+
+- fix(cicd): make `97` compile gate actually gate failures — install `session-manager-plugin` (absent on `ubuntu-latest`), assert a split success sentinel since `execute-command` returns the SSM session exit code rather than the remote command's, `set -euo pipefail`, drop unused `actions: write` permission.
+
 ## v2.6.0 (2026-06-14)
 
 ### Added
