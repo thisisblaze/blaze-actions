@@ -31,7 +31,6 @@ on:
 permissions:
   id-token: write
   contents: read
-  actions: write
 
 jobs:
   maintenance:
@@ -61,9 +60,21 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ steps.config.outputs.aws_region }}
 
+      - name: Install Session Manager plugin
+        if: inputs.action == 'compile-gate' && inputs.cloud_provider == 'aws'
+        run: |
+          set -euo pipefail
+          # `aws ecs execute-command` shells out to the Session Manager plugin,
+          # which is NOT preinstalled on ubuntu-latest runners.
+          curl -fsSL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" \
+            -o /tmp/session-manager-plugin.deb
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+          session-manager-plugin --version
+
       - name: Execute Compile Gate
         if: inputs.action == 'compile-gate' && inputs.cloud_provider == 'aws'
         run: |
+          set -euo pipefail
           CLUSTER="${{ steps.config.outputs.cluster_name }}"
           SERVICE="${{ inputs.app_service_name }}"
           CONTAINER="${{ inputs.app_container_name }}"
@@ -77,19 +88,42 @@ jobs:
             echo "❌ No active tasks found for service $SERVICE in cluster $CLUSTER."
             exit 1
           fi
-
           echo "✅ Found task: $TASK_ARN"
-          echo "🚀 Executing compile gate..."
 
-          aws ecs execute-command --cluster "$CLUSTER" --task "$TASK_ARN" \
+          # IMPORTANT: `aws ecs execute-command` returns the exit status of the SSM
+          # session, NOT of the remote command — a failed theme:compile would still
+          # exit 0. We therefore append a success sentinel that only prints if every
+          # step succeeded, and fail the job if it is absent from the transcript.
+          # The sentinel is split ("COMPILE_""GATE_PASSED") so the command echo in the
+          # transcript can't itself match the grep and produce a false positive.
+          echo "🚀 Executing compile gate (non-TTY; success asserted via sentinel)..."
+          set +e
+          OUTPUT=$(aws ecs execute-command --cluster "$CLUSTER" --task "$TASK_ARN" \
             --container "$CONTAINER" --interactive --region "$REGION" \
-            --command "/bin/sh -c 'theme:refresh && theme:compile --no-debug && cache:clear'"
-          
+            --command "/bin/sh -c 'theme:refresh && theme:compile --no-debug && cache:clear && echo \"COMPILE_\"\"GATE_PASSED\"'" 2>&1)
+          EXEC_RC=$?
+          set -e
+
+          echo "----- ECS Exec output -----"
+          echo "$OUTPUT"
+          echo "---------------------------"
+
+          if [[ $EXEC_RC -ne 0 ]]; then
+            echo "❌ Could not open ECS Exec session (rc=$EXEC_RC). Is 'enable execute command' set on the service?"
+            exit 1
+          fi
+
+          if ! echo "$OUTPUT" | grep -q "COMPILE_GATE_PASSED"; then
+            echo "❌ Compile gate FAILED — success sentinel absent. One of theme:refresh / theme:compile / cache:clear errored."
+            exit 1
+          fi
+
           echo "✅ Compile gate completed successfully."
 
       - name: Invalidate CloudFront
         if: inputs.action == 'compile-gate' && inputs.cloud_provider == 'aws' && inputs.distribution_id != ''
         run: |
+          set -euo pipefail
           DIST_ID="${{ inputs.distribution_id }}"
           echo "🚀 Invalidating CloudFront distribution $DIST_ID..."
           aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
