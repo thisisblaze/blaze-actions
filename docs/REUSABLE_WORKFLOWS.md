@@ -508,7 +508,7 @@ jobs:
     secrets: inherit
 ```
 
-**What it does**: Checks out code → sets up PHP (if `php_version` set) → runs `build_command` (if set) → zips source excluding `.git/.github/.agent/tests` → uploads bundle to S3 → creates EB Application Version → deploys to EB environment.
+**What it does**: Checks out code → sets up PHP (if `php_version` set) → runs `build_command` (if set) → zips source excluding `.git/.github/.agents/tests` → uploads bundle to S3 → creates EB Application Version → deploys to EB environment.
 
 ---
 

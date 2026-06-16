@@ -11,7 +11,7 @@ Thank you for contributing to blaze-actions!
 
 ### 1. Adding a New Workflow
 
-See [.agent/workflows/01-add-workflow.md](.agent/workflows/01-add-workflow.md) for detailed guide.
+See [.agents/workflows/01-add-workflow.md](.agents/workflows/01-add-workflow.md) for detailed guide.
 
 **Quick steps**:
 

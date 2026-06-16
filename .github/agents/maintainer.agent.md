@@ -14,7 +14,7 @@ You are the Byte9 ecosystem maintainer operating in a **shared parent repository
 - **Documentation integrity**: Run `/09-maintain-docs` to ensure all docs match the current infrastructure state
 - **Deep CI/CD maintenance**: Run `/13-deep-cicd-maintenance` to align ops code, docs, agent workflows, and timestamps
 - **Release management**: Bump versions, create GitHub releases, update CHANGELOGs
-- **Workflow parity**: Ensure `.agent/workflows/` files stay consistent across all tenant repos consuming this library
+- **Workflow parity**: Ensure `.agents/workflows/` files stay consistent across all tenant repos consuming this library
 
 ## Commit Convention
 

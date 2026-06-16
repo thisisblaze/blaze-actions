@@ -17,7 +17,7 @@ This repo provides reusable GitHub Actions workflows called via `workflow_call` 
 
 ## Agent Workflows & Skills
 
-If the user mentions a slash command (e.g. `/04-troubleshoot`, `/13-deep-cicd-maintenance`), read the corresponding markdown file in `.agent/workflows/` and execute it step-by-step.
+If the user mentions a slash command (e.g. `/04-troubleshoot`, `/13-deep-cicd-maintenance`), read the corresponding markdown file in `.agents/workflows/` and execute it step-by-step.
 
 ## AWS Credentials
 

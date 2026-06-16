@@ -1,6 +1,6 @@
 ---
 # AI Agent Auto-Learning Configuration
-# Location: .agent/config.yml
+# Location: .agents/config.yml
 # Purpose: Automatically capture critical learnings during work sessions
 ---
 # ============================================================================
@@ -59,7 +59,7 @@ auto_learning:
 
   # Storage configuration
   storage:
-    directory: ".agent/learnings"
+    directory: ".agents/learnings"
     filename_format: "{timestamp}-{category}-{slug}.md"
 
     # Auto-organize by category

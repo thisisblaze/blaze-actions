@@ -288,12 +288,12 @@
 
 #### lint-agent-workflows.yml
 
-**Purpose**: Validate agent workflow markdown files on push to dev or PRs touching `.agent/workflows/**`  
+**Purpose**: Validate agent workflow markdown files on push to dev or PRs touching `.agents/workflows/**`  
 **Trigger**: Automatic (push/PR)
 
 **What it does**:
 
-- Lints `.agent/workflows/` markdown for formatting issues
+- Lints `.agents/workflows/` markdown for formatting issues
 - Blocks PRs that break agent workflow syntax
 
 **When to run**: Automatic CI gate
@@ -780,7 +780,7 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 | Resource | Description |
 | :--- | :--- |
 | [`docs/learning/REFERENCE_SOURCE_LIBRARY.md`](learning/REFERENCE_SOURCE_LIBRARY.md) | 5-domain reference library: GH Actions patterns, OIDC, Terraform CI/CD, deployment, access control. Cross-links all `docs/knowledge/` smart fixes. |
-| [`.agent/workflows/12-best-practice-audit.md`](../.agent/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
+| [`.agents/workflows/12-best-practice-audit.md`](../.agents/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
 
 ---
 

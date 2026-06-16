@@ -12,7 +12,7 @@ The Blaze ecosystem consists of 4 distinct functional layers (repositories):
 **CRITICAL RULE**: Do not duplicate workflows or modules into the Tenant Implementation Repo. Always reference them natively from the shared parent repositories (`blaze-actions` / `blaze-terraform-infra-core`).
 
 ## 2. Agent Workflows & The 5-Role Model
-When executing slash commands or workflows in `.agent/workflows/`, you must adopt the specified role to maintain context:
+When executing slash commands or workflows in `.agents/workflows/`, you must adopt the specified role to maintain context:
 - 🧑‍💼 **Product Manager (PM)**: Analysis, requirements gathering, planning (`/01-analyze`, `/engage`).
 - 🎨 **Designer**: UI/UX architecture and aesthetic validation.
 - 🔧 **Engineer**: Writing code, fixing bugs, deploying infrastructure (`/04-troubleshoot`, `/05-fix`).
@@ -31,7 +31,7 @@ When executing slash commands or workflows in `.agent/workflows/`, you must adop
 ## 4. Execution Directives
 - **Grep-First**: Always use `grep_search` to verify file existence and contents before modifying or reading blindly.
 - **Graceful Degradation**: Workflows support both native Antigravity 2.0 tools and Claude Code CLI fallbacks. Follow the conditional logic blocks `💡 Antigravity 2.0` vs `💡 Claude Code` exactly.
-- **Slash Commands**: If the user asks for a command like `/01-analyze`, manually read the file in `.agent/workflows/` and execute it step by step.
+- **Slash Commands**: If the user asks for a command like `/01-analyze`, manually read the file in `.agents/workflows/` and execute it step by step.
 
 ## 5. File Exclusions (Claude Code / Cowork)
 Do NOT read, index, or modify these paths (mirrors `.agentignore`):

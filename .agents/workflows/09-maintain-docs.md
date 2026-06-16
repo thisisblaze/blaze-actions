@@ -59,7 +59,7 @@ Iterate through these directories. For each, check **Date Freshness** (< 30 days
   - Must reference **5-Killchain Security** (not 4).
   - Must reference **all 3 cloud providers** (not just AWS).
 
-### 3. Agent Workflows (`.agent/workflows/`)
+### 3. Agent Workflows (`.agents/workflows/`)
 
 - **Check**: All `.md` files.
 - **Criteria**:

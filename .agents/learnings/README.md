@@ -52,7 +52,7 @@ Each learning includes:
 ### Directory Structure
 
 ```
-.agent/learnings/
+.agents/learnings/
 ├── .template.md              # Template for new learnings
 ├── README.md                # This file
 ├── terraform/               # Terraform-specific learnings
@@ -69,7 +69,7 @@ Each learning includes:
 
 ## Configuration
 
-See `.agent/config.yml` for:
+See `.agents/config.yml` for:
 
 - Trigger settings
 - Quality thresholds
@@ -98,7 +98,7 @@ See `.agent/config.yml` for:
 
 ```
 1. Encounter error
-2. Check .agent/learnings/{category}/
+2. Check .agents/learnings/{category}/
 3. Find similar issue
 4. Apply documented fix
 5. If new: auto-capture learning
@@ -108,16 +108,16 @@ See `.agent/config.yml` for:
 
 ```bash
 # List all learnings
-ls -la .agent/learnings/*/*.md
+ls -la .agents/learnings/*/*.md
 
 # View specific learning
-cat .agent/learnings/terraform/2026-01-13-critical-lock-timestamp-bug.md
+cat .agents/learnings/terraform/2026-01-13-critical-lock-timestamp-bug.md
 
 # Search for pattern
-grep -r "permission denied" .agent/learnings/
+grep -r "permission denied" .agents/learnings/
 
 # List by recency
-ls -lt .agent/learnings/*/*.md | head -10
+ls -lt .agents/learnings/*/*.md | head -10
 ```
 
 ## Quality Metrics
@@ -165,14 +165,14 @@ Auto-suggest workflow guide creation
    ↓
 Human reviews and approves
    ↓
-Workflow guide created in .agent/workflows/
+Workflow guide created in .agents/workflows/
 ```
 
 ### With Documentation
 
 Auto-captured learnings complement:
 
-- `.agent/workflows/` - Process guides
+- `.agents/workflows/` - Process guides
 - `README.md` - Project documentation
 - Code comments - Inline explanations
 

@@ -25,4 +25,4 @@ See `.github/agents/` for named custom agents:
 - `@sre` — Health checks, incident response, AWS troubleshooting
 
 > [!TIP]
-> **Antigravity 2.0 Standard**: The legacy `docs/prompts` directory has been **deleted and deprecated**. All AI instructions, system prompts, and personas MUST reside in `.agent/workflows/` and `.github/agents/`. Agents must be invoked autonomously using these definitions.
+> **Antigravity 2.0 Standard**: The legacy `docs/prompts` directory has been **deleted and deprecated**. All AI instructions, system prompts, and personas MUST reside in `.agents/workflows/` and `.github/agents/`. Agents must be invoked autonomously using these definitions.

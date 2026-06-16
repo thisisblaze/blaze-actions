@@ -126,7 +126,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - **fix(ci)** (Plan 158 §1.3): Repointed the `provision` job's `reusable-terraform.yml@dev` self-reference in `01-provision-infra.yml` to the released tag `@v2.2.2`, matching the 97 other internal pins. Zero active `@dev` references remain.
 - **docs** (Plan 158 §1.3): README version badge corrected `v2.3.7` (non-existent tag) → `v2.2.2` (the in-use released tag).
 - **refactor(azure)** (Plan 158 §1.2): Renamed the now-secret-only "Decode Azure Credentials" steps to "Set Azure Credentials (OIDC)" across 7 workflows; rewrote 18 `secrets.AZURE_* || steps.*.outputs.*` fallbacks to plain `secrets.AZURE_*`.
-- **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agent/workflows`, `.github/agents`, and governance documents.
+- **chore(ai)**: Removed legacy `docs/prompts` and completed migration to Antigravity 2.0 standards across `.agents/workflows`, `.github/agents`, and governance documents.
 - **fix(infra)**: Implemented ECS scale-to-zero in `reusable-pre-destroy-cleanup.yml` to prevent `ResourceInUseException` during environment teardown.
 - **refactor(ci)**: Stripped explicit `secrets:` from all `99-ops-*.yml` wrapper workflows to natively leverage the `secrets: inherit` standard.
 - **fix(cicd)**: Deep CI/CD maintenance sync: regenerated `WORKFLOW_CATALOG.md` inputs, aligned reusable workflow references in AI agent markdown files, and bumped markdown timestamps globally.
@@ -415,7 +415,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Changed
@@ -439,7 +439,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ### Changed
 
 - **docs**: Added Cloudflare provider validation failure troubleshooting (dummy token requirement `abcdefghijklmnopqrstuvwxyz0123456789ABCD` for disconnected applies) to `cloudflare-operations.md`.
-- **chore(ai)**: Migrated to Google Antigravity 2.0 (Environment Agnostic) standard — `.antigravity/` consolidated into `.agent/`, `.antigravityignore` renamed to `.agentignore`, hardcoded IDE paths eradicated, `AI_CONTEXT_GOVERNANCE.md` upgraded.
+- **chore(ai)**: Migrated to Google Antigravity 2.0 (Environment Agnostic) standard — `.antigravity/` consolidated into `.agents/`, `.antigravityignore` renamed to `.agentignore`, hardcoded IDE paths eradicated, `AI_CONTEXT_GOVERNANCE.md` upgraded.
 - **chore(ai)**: Purged all 21 hardcoded `/Users/marek/` absolute paths from utility scripts and agent workflows — now use relative resolution and `SCRIPT_DIR`.
 - **fix(infra)**: Bumped `dev-mini-network/main.tf` module ref `v2.6.4` → `v2.6.5` to resolve split-brain with `blaze-template-deploy`.
 
@@ -660,7 +660,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Agent Tooling
 - **`docs/learning/REFERENCE_SOURCE_LIBRARY.md`** — New curated 5-domain reference source library. Domains: GH Actions reusable workflow patterns, AWS OIDC, Terraform CI/CD, deployment patterns, access control. Cross-references all `docs/knowledge/*.md` smart fixes with 🔴/🟡/🟢 relevance tiers. 9 priority audit checks defined.
-- **`.agent/workflows/12-best-practice-audit.md`** — New read-only monthly audit workflow. Checks OIDC role scoping, actionlint coverage, SHA pinning, concurrency groups, secret inheritance, timeout-minutes, check-access gating, and pre-destroy cleanup. Includes knowledge base freshness check. Produces `docs/reports/YYYY-MM-DD-best-practice-audit.md`.
+- **`.agents/workflows/12-best-practice-audit.md`** — New read-only monthly audit workflow. Checks OIDC role scoping, actionlint coverage, SHA pinning, concurrency groups, secret inheritance, timeout-minutes, check-access gating, and pre-destroy cleanup. Includes knowledge base freshness check. Produces `docs/reports/YYYY-MM-DD-best-practice-audit.md`.
 
 ### Governance
 - chore: end-of-day governance sync — 2026-05-12. Governance files verified (14/14 ✅).
@@ -682,7 +682,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
  — 2026-05-09 — /13-deep-cicd-maintenance
 
 ### Changed
@@ -760,7 +760,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -878,7 +878,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -886,7 +886,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 
 ### Added
 
@@ -1270,7 +1270,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -1278,7 +1278,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -1428,7 +1428,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -1436,7 +1436,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -1731,7 +1731,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -1739,7 +1739,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -1769,7 +1769,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -1777,7 +1777,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 - **CI/CD Maintenance**: Deep synchronization executed (Engine 6 & 8 checks passed).
 - **Architecture**: Enforced Single-Tenant Elastic Beanstalk paradigm in AI prompts.
 - **Hygiene**: Purged deploy temp directories globally.
@@ -1993,7 +1993,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -2001,7 +2001,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -2030,7 +2030,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -2038,7 +2038,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -2729,7 +2729,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -2737,7 +2737,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -2766,7 +2766,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -2774,7 +2774,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4548,7 +4548,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4556,7 +4556,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4585,7 +4585,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4593,7 +4593,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4640,7 +4640,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4648,7 +4648,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4677,7 +4677,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4685,7 +4685,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4729,7 +4729,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4737,7 +4737,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4766,7 +4766,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4774,7 +4774,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4841,7 +4841,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4849,7 +4849,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4878,7 +4878,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -4886,7 +4886,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -4993,7 +4993,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5001,7 +5001,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -5030,7 +5030,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5038,7 +5038,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -5410,7 +5410,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5418,7 +5418,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -5447,7 +5447,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5455,7 +5455,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -5500,7 +5500,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5508,7 +5508,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -5537,7 +5537,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -5545,7 +5545,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6120,7 +6120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6128,7 +6128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6157,7 +6157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6165,7 +6165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6196,8 +6196,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tags**: Slid proxy engine tags `v1.4.14`, `v1.4.19`, and `v1.4.20` gracefully onto `main` HEAD to bypass Github's global immutable execution cache natively.
 
 ### Added
-- Added `.agent/fixtures` to `/checkengines` sweep validations.
-- Enhanced `/.agent/scripts/run_sweep.py` with Python harnesses for deterministic validation.
+- Added `.agents/fixtures` to `/checkengines` sweep validations.
+- Enhanced `/.agents/scripts/run_sweep.py` with Python harnesses for deterministic validation.
 - Improved agent test execution logic to fail-fast on missing test harnesses.
 - Updated `macro_flow_checkengines.mermaid` and `macro_flow_allstop.mermaid` visualizations.
 
@@ -6217,7 +6217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6225,7 +6225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6254,7 +6254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6262,7 +6262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6314,7 +6314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6322,7 +6322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6351,7 +6351,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6359,7 +6359,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6408,7 +6408,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6416,7 +6416,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6445,7 +6445,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6453,7 +6453,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6499,7 +6499,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6507,7 +6507,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6536,7 +6536,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6544,7 +6544,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6595,7 +6595,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6603,7 +6603,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6632,7 +6632,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6640,7 +6640,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6735,7 +6735,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6743,7 +6743,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6772,7 +6772,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6780,7 +6780,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6856,7 +6856,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6864,7 +6864,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -6893,7 +6893,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -6901,7 +6901,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -7068,7 +7068,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: add debug for lock table
 - chore: increase terraform timeout to 60m
 - docs: add terraform init -upgrade to CHANGELOG
-- chore: add .agent/ to .gitignore for security
+- chore: add .agents/ to .gitignore for security
 - docs: clarify DEV uses Cloudflare only (no CloudFront/image resize)
 - docs: add comprehensive workflow guides for automation
 - docs: update CHANGELOG with admin deployment fixes
@@ -7114,7 +7114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -7122,7 +7122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.
@@ -7151,7 +7151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **docs(plan-154)**: `CLAUDE.md` root definitions. Consolidated AI context, naming conventions, and constraints directly into the repo root.
-- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agent/workflows/*.md` files.
+- **chore(ai)**: Formalised 5-Role Sub-Agent mental model (PM, Designer, Engineer, QA, SRE). Injected role mappings into all `.agents/workflows/*.md` files.
 
 
 ### Agent — 2026-05-13 — Client Governance Workflows
@@ -7159,7 +7159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No code changes to blaze-actions today.
 - Client seeding work in `KELSEYMedia/shopware-km` relies on `blaze-actions` public reusable workflows — no changes required.
 
-- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agent/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
+- **Docs**: Deep ECS Fargate Governance Sweep — modernized all `.agents/` workflows, persona instructions, and audit files to strictly mandate ECS Fargate boundaries and purged legacy Elastic Beanstalk context.
 ### Added
 - Added `enable_tunnel`, `enable_vpc_peering`, and Azure specific inputs to `01-provision-infra.yml`.
 - Added `frontend_launch_type`, `frontend_cpu_architecture`, and Azure specific inputs to `02-deploy-app.yml`.

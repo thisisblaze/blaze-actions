@@ -1,7 +1,7 @@
 ---
 Last Updated: 2026-05-12
 Owner: Infrastructure Team
-Used By: .agent/workflows/12-best-practice-audit.md
+Used By: .agents/workflows/12-best-practice-audit.md
 ---
 
 # blaze-actions — Reference Source Library
