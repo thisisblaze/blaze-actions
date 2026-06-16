@@ -1,0 +1,96 @@
+name: "97 - Ops Maintenance"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        type: string
+        required: true
+      cloud_provider:
+        description: "Cloud Provider"
+        type: string
+        default: "aws"
+      action:
+        description: "Maintenance Action"
+        type: string
+        required: true
+      app_service_name:
+        description: "App Service Name"
+        type: string
+        default: "app"
+      app_container_name:
+        description: "App Container Name"
+        type: string
+        default: "app"
+      distribution_id:
+        description: "CloudFront Distribution ID (optional)"
+        type: string
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  maintenance:
+    name: Run Maintenance Action
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.0
+        with:
+          environment: ${{ inputs.environment }}
+          terraform_stack: "app"
+          deploy_infra: "false"
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+          cloud_provider: ${{ inputs.cloud_provider }}
+
+      - name: Configure AWS Credentials
+        if: inputs.cloud_provider == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ steps.config.outputs.aws_region }}
+
+      - name: Execute Compile Gate
+        if: inputs.action == 'compile-gate' && inputs.cloud_provider == 'aws'
+        run: |
+          CLUSTER="${{ steps.config.outputs.cluster_name }}"
+          SERVICE="${{ inputs.app_service_name }}"
+          CONTAINER="${{ inputs.app_container_name }}"
+          REGION="${{ steps.config.outputs.aws_region }}"
+
+          echo "🔍 Finding active task in cluster $CLUSTER for service $SERVICE..."
+          TASK_ARN=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SERVICE" \
+            --query 'taskArns[0]' --output text --region "$REGION")
+
+          if [[ "$TASK_ARN" == "None" || -z "$TASK_ARN" ]]; then
+            echo "❌ No active tasks found for service $SERVICE in cluster $CLUSTER."
+            exit 1
+          fi
+
+          echo "✅ Found task: $TASK_ARN"
+          echo "🚀 Executing compile gate..."
+
+          aws ecs execute-command --cluster "$CLUSTER" --task "$TASK_ARN" \
+            --container "$CONTAINER" --interactive --region "$REGION" \
+            --command "/bin/sh -c 'theme:refresh && theme:compile --no-debug && cache:clear'"
+          
+          echo "✅ Compile gate completed successfully."
+
+      - name: Invalidate CloudFront
+        if: inputs.action == 'compile-gate' && inputs.cloud_provider == 'aws' && inputs.distribution_id != ''
+        run: |
+          DIST_ID="${{ inputs.distribution_id }}"
+          echo "🚀 Invalidating CloudFront distribution $DIST_ID..."
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
+          echo "✅ CloudFront invalidation triggered."
