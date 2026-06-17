@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 **Owner**: Infrastructure Team
 
 ---
@@ -12,7 +12,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 30 main + 24 reusable = 54 total  
 **Version**: v2.5.7  
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 
 ---
 
@@ -690,6 +690,12 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 
 ## Version History
 
+**v2.7.9** (2026-06-17):
+- Deep CI/CD maintenance sync: Resolved checkengines split-brain parity errors.
+- Standardized all GitHub Actions calls to `v2.7.9`.
+- Bumped all internal reusable workflow references to `v2.7.9`.
+
+
 **v2.2.3** (2026-06-02):
 - AI governance: Added `AGENTS.md` (root) and `.github/agents/` directory with `@maintainer` and `@sre` custom agent persona definitions across all 4 repos.
 - Upgraded `.github/copilot-instructions.md` across all 4 repos from a stub to a substantive guide.
@@ -784,6 +790,6 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 
 ---
 
-**Last Updated**: 2026-06-13  
+**Last Updated: 2026-06-17
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

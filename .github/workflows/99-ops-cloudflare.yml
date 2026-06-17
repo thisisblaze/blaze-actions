@@ -168,7 +168,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -280,7 +280,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -917,7 +917,7 @@ jobs:
 
       - name: Calculate Config
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: tunnel
