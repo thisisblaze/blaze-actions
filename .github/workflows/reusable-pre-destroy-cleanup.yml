@@ -155,6 +155,29 @@ jobs:
           role-session-name: GitHubActions-PreDestroy
           aws-region: ${{ inputs.aws_region || 'eu-west-1' }}
 
+      - name: Authenticate to Google Cloud
+        if: inputs.cloud_provider == 'gcp'
+        id: google-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || '' }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || '' }}
+          audience: ${{ inputs.wif_audience }}
+          token_format: 'access_token'
+          create_credentials_file: false
+
+      - name: Export GCP Token for CLI
+        if: inputs.cloud_provider == 'gcp'
+        run: echo "GOOGLE_OAUTH_ACCESS_TOKEN=${{ steps.google-auth.outputs.access_token }}" >> "$GITHUB_ENV"
+
+      - name: Authenticate to Azure
+        if: inputs.cloud_provider == 'azure'
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Parse Context
         id: context
         run: |
@@ -1426,3 +1449,89 @@ jobs:
           fi
 
           echo "tasks_deleted=true" >> "$GITHUB_OUTPUT"
+
+      - name: Azure Cleanup - Empty Blob Containers & Front Door
+        if: inputs.cloud_provider == 'azure' && env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          echo "🧹 Cleaning up Azure resources for $PROJECT_KEY-$STAGE_KEY"
+          
+          RG="blaze-$PROJECT_KEY-$STAGE_KEY-rg"
+          
+          # 1. Front Door Endpoints (dangling endpoints block profile deletion)
+          echo "🔍 Scanning for Front Door profiles in $RG..."
+          PROFILES=$(az afd profile list -g "$RG" --query "[].name" -o tsv 2>/dev/null || echo "")
+          for PROFILE in $PROFILES; do
+             ENDPOINTS=$(az afd endpoint list -g "$RG" --profile-name "$PROFILE" --query "[].name" -o tsv 2>/dev/null || echo "")
+             for EP in $ENDPOINTS; do
+                 echo "   🗑️ Deleting AFD Endpoint: $EP"
+                 if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                    echo "      [DRY RUN] Would delete endpoint $EP"
+                 else
+                    az afd endpoint delete -g "$RG" --profile-name "$PROFILE" --endpoint-name "$EP" --yes || true
+                 fi
+             done
+          done
+          
+          # 2. Empty Blob Containers
+          ACCOUNTS=$(az storage account list -g "$RG" --query "[].name" -o tsv 2>/dev/null || echo "")
+          for ACCT in $ACCOUNTS; do
+              echo "   🗑️ Emptying containers in account $ACCT"
+              if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                 echo "      [DRY RUN] Would empty containers in $ACCT"
+              else
+                 CONTAINERS=$(az storage container list --account-name "$ACCT" --auth-mode login --query "[].name" -o tsv 2>/dev/null || echo "")
+                 for CONT in $CONTAINERS; do
+                    echo "      🔪 Deleting container $CONT"
+                    az storage container delete --name "$CONT" --account-name "$ACCT" --auth-mode login || true
+                 done
+              fi
+          done
+
+      - name: GCP Cleanup - Empty GCS Buckets
+        if: inputs.cloud_provider == 'gcp' && env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          echo "🧹 Emptying GCS Buckets for Project=$PROJECT_KEY Stage=$STAGE_KEY"
+          
+          # Match buckets by name prefix or labels
+          BUCKETS=$(gcloud storage ls --format="value(name)" --filter="labels.blaze-project=$PROJECT_KEY AND labels.blaze-environment=$STAGE_KEY" 2>/dev/null || echo "")
+          for BUCKET in $BUCKETS; do
+             echo "   🗑️ Emptying $BUCKET"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "      [DRY RUN] Would empty bucket $BUCKET"
+             else
+                gcloud storage rm -r "$BUCKET**" || true
+             fi
+          done
+
+      - name: GCP Cleanup - Delete Orphaned NEGs & Secrets
+        if: inputs.cloud_provider == 'gcp' && env.PROJECT_KEY != ''
+        run: |
+          PROJECT_KEY="${{ env.PROJECT_KEY }}"
+          STAGE_KEY="${{ env.STAGE_KEY }}"
+          REGION="${{ inputs.aws_region || 'us-central1' }}"
+          echo "🧹 Cleaning up GCP Serverless NEGs for $PROJECT_KEY-$STAGE_KEY"
+          
+          NEGS=$(gcloud compute network-endpoint-groups list --region="$REGION" --format="value(name)" --filter="name:$PROJECT_KEY-$STAGE_KEY" 2>/dev/null || echo "")
+          for NEG in $NEGS; do
+             echo "   🗑️ Deleting NEG $NEG"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "      [DRY RUN] Would delete NEG $NEG"
+             else
+                gcloud compute network-endpoint-groups delete "$NEG" --region="$REGION" --quiet || true
+             fi
+          done
+          
+          echo "🧹 Cleaning up GCP Secrets for $PROJECT_KEY-$STAGE_KEY"
+          SECRETS=$(gcloud secrets list --format="value(name)" --filter="name:$PROJECT_KEY-$STAGE_KEY" 2>/dev/null || echo "")
+          for SECRET in $SECRETS; do
+             echo "   🗑️ Deleting Secret $SECRET"
+             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+                echo "      [DRY RUN] Would delete Secret $SECRET"
+             else
+                gcloud secrets delete "$SECRET" --quiet || true
+             fi
+          done

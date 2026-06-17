@@ -2,15 +2,19 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
-## [Unreleased]
-- feat(cicd) (Plan 158 §3.2): `02-deploy-pages.yml` gains native static-SPA admin paths — GCP `deploy-admin-gcs` (GCS rsync + Cloud CDN invalidation) and opt-in Azure `deploy-admin-azure-blob` (Blob `$web` upload + Front Door purge), gated by new `static_admin_target` input (default `cloudflare`). Job-level `id-token: write`. Assumes infra targets exist; CDN/Front-Door purge is best-effort.
-- feat(ci): add `node:test` based smoke fixture for post-deployment gating in AWS, Azure, and GCP.
-- fix(security): scoped OIDC token write permissions strictly to the jobs that require them, removing them from generic utility tasks.
-- chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
-- Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
+## [v2.10.0] - 2026-06-17
 
 ### Added
+- feat(cicd) (Plan 158 §3.2): `02-deploy-pages.yml` gains native static-SPA admin paths — GCP `deploy-admin-gcs` (GCS rsync + Cloud CDN invalidation) and opt-in Azure `deploy-admin-azure-blob` (Blob `$web` upload + Front Door purge), gated by new `static_admin_target` input (default `cloudflare`). Job-level `id-token: write`. Assumes infra targets exist; CDN/Front-Door purge is best-effort.
+- feat(ci): add `node:test` based smoke fixture for post-deployment gating in AWS, Azure, and GCP.
 - feat(cicd) (Plan 169 / L21): add `97-ops-maintenance.yml` reusable workflow — resolves cluster via `calculate-config`, runs the post-reprovision compile gate over ECS Exec, optional CloudFront invalidation.
+- feat(cicd): Updated `reusable-pre-destroy-cleanup.yml` with GCP/Azure orphaned resource cleanups (GCS empty, NEG delete, Secrets delete, Azure Front Door & empty blob).
+
+### Changed
+- chore(cicd): Upgraded `blaze-terraform-infra-core` references to `v2.10.0` globally.
+- chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
+- Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
+- fix(security): scoped OIDC token write permissions strictly to the jobs that require them, removing them from generic utility tasks.
 
 ### Fixed
 - fix(cicd): make `97` compile gate actually gate failures — install `session-manager-plugin` (absent on `ubuntu-latest`), assert a split success sentinel since `execute-command` returns the SSM session exit code rather than the remote command's, `set -euo pipefail`, drop unused `actions: write` permission.
