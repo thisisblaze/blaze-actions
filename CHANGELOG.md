@@ -3,6 +3,8 @@
 All notable changes to the `blaze-actions` project will be documented in this file.
 
 ## [Unreleased]
+- feat(ci): add `node:test` based smoke fixture for post-deployment gating in AWS, Azure, and GCP.
+- fix(security): scoped OIDC token write permissions strictly to the jobs that require them, removing them from generic utility tasks.
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Added
