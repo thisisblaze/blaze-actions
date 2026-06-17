@@ -339,7 +339,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.0
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -515,7 +515,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.0
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -562,7 +562,7 @@ jobs:
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.0
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -690,7 +690,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true ||
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' ||
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.0
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -740,7 +740,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.0
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -790,7 +790,7 @@ jobs:
       == 'skipped') && (inputs.deploy_services == true || inputs.deploy_services
       == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.0
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -840,7 +840,7 @@ jobs:
       (inputs.deploy_services == true || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.0
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"

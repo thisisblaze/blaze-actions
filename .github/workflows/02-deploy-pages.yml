@@ -3,6 +3,10 @@ name: "02 - Deploy App (Pages)"
 on:
   workflow_dispatch:
     inputs:
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
       cloud_provider:
         description: "Cloud Provider"
         type: choice
@@ -70,6 +74,10 @@ on:
   # Enable usage by other workflows (Stress Test)
   workflow_call:
     inputs:
+      smoke_test_url:
+        required: false
+        type: string
+        default: ""
       cloud_provider:
         required: false
         type: string
@@ -328,7 +336,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.0
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
