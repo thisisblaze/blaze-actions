@@ -248,6 +248,7 @@ jobs:
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
       project_key: ${{ steps.config.outputs.project_key }}
+      image_project_key: ${{ inputs.image_project_key || steps.config.outputs.project_key }}
       client_key: ${{ steps.config.outputs.client_key }}
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
@@ -755,6 +756,7 @@ jobs:
       branch_name: ${{ inputs.branch_name }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
+      image_project_key: ${{ needs.configuration.outputs.image_project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}
@@ -803,6 +805,7 @@ jobs:
       branch_name: ${{ inputs.branch_name }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
+      image_project_key: ${{ needs.configuration.outputs.image_project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}
@@ -852,6 +855,7 @@ jobs:
       branch_name: ${{ inputs.branch_name }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       project_key: ${{ needs.configuration.outputs.project_key }}
+      image_project_key: ${{ needs.configuration.outputs.image_project_key }}
       client_key: ${{ needs.configuration.outputs.client_key }}
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}

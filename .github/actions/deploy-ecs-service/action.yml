@@ -23,6 +23,9 @@ inputs:
   project_key:
     description: "Project Key"
     required: true
+  image_project_key:
+    description: "Image Project Key (defaults to project_key if not provided)"
+    required: false
   client_key:
     description: "Client Key"
     required: true
@@ -141,9 +144,10 @@ runs:
         SERVICE_NAME: ${{ inputs.service_name }}
         BASE_STAGE: ${{ inputs.stage_key }}
         HOST_TAG: ${{ inputs.branch_name }}
+        PROJECT_KEY: ${{ inputs.project_key }}
+        IMAGE_PROJECT_KEY: ${{ inputs.image_project_key || inputs.project_key }}
         REGISTRY: ${{ inputs.registry }}
         CLIENT_KEY: ${{ inputs.client_key }}
-        PROJECT_KEY: ${{ inputs.project_key }}
         CLOUD_PLATFORM: ${{ inputs.cloud_platform }}
         DOMAIN_ROOT: ${{ inputs.domain_root }}
         EFS_ID: ${{ inputs.efs_id }}
@@ -381,11 +385,11 @@ runs:
         TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
 
         # ---------------------------------------------------------
-        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/mongo:latest"
-        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/elasticsearch:9.2.2"
-        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/kibana:9.2.2"
-        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/tunnel:latest"
-        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${PROJECT_KEY}-web/${PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
+        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/mongo:latest"
+        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/elasticsearch:9.2.2"
+        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/kibana:9.2.2"
+        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/tunnel:latest"
+        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
         fi
 
         echo "📦 Image: $IMAGE_URI"
