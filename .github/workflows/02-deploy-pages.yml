@@ -377,7 +377,7 @@ jobs:
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.project_key }}-web/${{ 
+            needs.configuration.outputs.client_key }}-web/${{ 
             needs.configuration.outputs.project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
