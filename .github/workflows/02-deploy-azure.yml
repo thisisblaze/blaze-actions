@@ -263,6 +263,7 @@ jobs:
       config_env: ${{ steps.config.outputs.config_env }}
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
+      image_project_key: ${{ steps.config.outputs.image_project_key }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -379,7 +380,7 @@ jobs:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
             needs.configuration.outputs.client_key }}-web/${{ 
-            needs.configuration.outputs.project_key }}/api
+            needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"

@@ -266,6 +266,7 @@ jobs:
       admin_bucket: ${{ steps.config.outputs.admin_bucket }}
       project_slug: ${{ steps.config.outputs.project_slug }}
       stack_id: ${{ steps.config.outputs.stack_id }}
+      image_project_key: ${{ steps.config.outputs.image_project_key }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -382,7 +383,7 @@ jobs:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
             needs.configuration.outputs.client_key }}-web/${{ 
-            needs.configuration.outputs.project_key }}/api
+            needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -521,6 +522,7 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/api
       context: .
       image_name: ${{ (inputs.cloud_provider == 'gcp') && 
         format('{0}-docker.pkg.dev/{1}/{2}/api', 
@@ -531,13 +533,13 @@ jobs:
         needs.configuration.outputs.azure_acr_name, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) || 
+        needs.configuration.outputs.image_project_key) || 
         format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', 
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) }}
+        needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -569,6 +571,7 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/frontend
       context: .
       image_name: ${{ (inputs.cloud_provider == 'gcp') && 
         format('{0}-docker.pkg.dev/{1}/{2}/frontend', 
@@ -579,13 +582,13 @@ jobs:
         needs.configuration.outputs.azure_acr_name, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) || 
+        needs.configuration.outputs.image_project_key) || 
         format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', 
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) }}
+        needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
@@ -682,7 +685,6 @@ jobs:
         with:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
-          retention-days: 1
 
   package-admin-docker:
     name: Package Admin (Docker)
@@ -698,6 +700,7 @@ jobs:
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/admin
       context: .
       image_name: ${{ (inputs.cloud_provider == 'gcp') && 
         format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', 
@@ -705,18 +708,18 @@ jobs:
         needs.configuration.outputs.gcp_project_id, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) || (inputs.cloud_provider == 
+        needs.configuration.outputs.image_project_key) || (inputs.cloud_provider == 
         'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', 
         needs.configuration.outputs.azure_acr_name, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) || 
+        needs.configuration.outputs.image_project_key) || 
         format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', 
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.client_key,
-        needs.configuration.outputs.project_key) }}
+        needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
         'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 
@@ -748,6 +751,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/api
       environment: ${{ inputs.environment || 'dev' }}
       # Pass forced uppercase env to prevent duplicates
       config_environment: ${{ needs.configuration.outputs.config_env }}
@@ -797,6 +801,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/frontend
       environment: ${{ inputs.environment || 'dev' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}
@@ -846,6 +851,7 @@ jobs:
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
+      docker_image_name: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/admin
       environment: ${{ inputs.environment || 'dev' }}
       config_environment: ${{ needs.configuration.outputs.config_env }}
       stage_key: ${{ needs.configuration.outputs.stage_key }}

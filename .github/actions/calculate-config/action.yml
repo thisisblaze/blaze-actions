@@ -69,6 +69,9 @@ outputs:
   shared_host_project:
     description: "Shared Host Project"
     value: ${{ steps.config.outputs.shared_host_project }}
+  image_project_key:
+    description: "Project Key used for Images (Shared Host or Project)"
+    value: ${{ steps.config.outputs.image_project_key }}
   namespace:
     description: "Namespace"
     value: ${{ steps.config.outputs.namespace }}
@@ -298,6 +301,10 @@ runs:
         echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
         echo "shared_host_project=$SHARED_HOST_PROJECT" >> "$GITHUB_OUTPUT"
+        
+        IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+        echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
+        
         echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
         echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
         echo "cloud_provider=$CLOUD_PROVIDER" >> "$GITHUB_OUTPUT"
