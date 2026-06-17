@@ -12,6 +12,11 @@ on:
         type: choice
         options: ["aws", "gcp", "azure"]
         default: "aws"
+      static_admin_target:
+        description: "Admin SPA static host: 'cloudflare' (Pages) or 'native' (GCP GCS+Cloud CDN / Azure Blob+Front Door). GCP always uses native."
+        type: choice
+        options: ["cloudflare", "native"]
+        default: "cloudflare"
       wif_audience:
         description: "WIF Audience (Optional)"
         required: false
@@ -82,6 +87,10 @@ on:
         required: false
         type: string
         default: "aws"
+      static_admin_target:
+        required: false
+        type: string
+        default: "cloudflare"
       environment:
         required: true
         type: string
@@ -573,10 +582,10 @@ jobs:
 
     # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && 
-      inputs.cloud_provider != null && (inputs.branch_name == '' || 
-      inputs.branch_name == null) && (inputs.deploy_services == true || 
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
+    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' &&
+      inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' ||
+      inputs.branch_name == null) && (inputs.deploy_services == true ||
+      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
       || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -657,9 +666,119 @@ jobs:
 
           echo "✅ Cache purged for $DOMAIN"
 
+  # --- NATIVE STATIC-SPA PATHS (Plan 158 §3.2) ---
+  # NOTE: these assume the static-host targets already exist in the live infra
+  # (GCP: a backend GCS bucket fronted by the Cloud CDN url-map; Azure: a Storage
+  # Account with the static-website `$web` container behind Front Door). The
+  # bucket / account / endpoint names below follow the Blaze label convention and
+  # MUST match what the cdn / storage modules provision. CDN/Front-Door purge is
+  # best-effort. Validate against a real DEV run before relying on these.
+
+  deploy-admin-gcs:
+    name: Deploy Admin (GCP — GCS + Cloud CDN)
+    needs: [configuration, build-admin, pre-flight-check]
+    # GCP has no Cloudflare Pages path — this is GCP's native admin static deploy.
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' ||
+      inputs.branch_name == null) && (inputs.deploy_services == true ||
+      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
+      || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
+          path: packages/admin/dist
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
+      - name: Sync to GCS + invalidate Cloud CDN
+        env:
+          NS: ${{ needs.configuration.outputs.namespace }}
+          CK: ${{ needs.configuration.outputs.client_key }}
+          PK: ${{ needs.configuration.outputs.project_key }}
+          SK: ${{ needs.configuration.outputs.stage_key }}
+          GCP_PROJECT: ${{ needs.configuration.outputs.gcp_project_id }}
+        run: |
+          set -euo pipefail
+          BUCKET="${NS}-${CK}-${PK}-gcp-${SK}-admin"
+          URLMAP="${NS}-${CK}-${PK}-${SK}-urlmap"
+          echo "🚀 Syncing admin SPA to gs://${BUCKET} ..."
+          gcloud storage rsync -r --delete-unmatched-destination-objects \
+            packages/admin/dist "gs://${BUCKET}"
+          echo "✅ Synced."
+          # Best-effort Cloud CDN invalidation (url-map name must match infra).
+          if gcloud compute url-maps describe "$URLMAP" --project "$GCP_PROJECT" >/dev/null 2>&1; then
+            gcloud compute url-maps invalidate-cdn-cache "$URLMAP" \
+              --project "$GCP_PROJECT" --path "/*" --async || \
+              echo "::warning::Cloud CDN invalidation request failed (non-fatal)."
+          else
+            echo "::warning::url-map '$URLMAP' not found — skipping CDN invalidation."
+          fi
+
+  deploy-admin-azure-blob:
+    name: Deploy Admin (Azure — Blob $web + Front Door)
+    needs: [configuration, build-admin, pre-flight-check]
+    # Opt-in native Azure static path (set static_admin_target=native); otherwise
+    # Azure uses the Cloudflare Pages job above.
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' &&
+      (inputs.branch_name == '' || inputs.branch_name == null) &&
+      (inputs.deploy_services == true || inputs.deploy_services == null) &&
+      (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' ||
+      inputs.target_services == null) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
+          path: packages/admin/dist
+      - name: Authenticate to Azure (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Upload to Blob $web + purge Front Door
+        env:
+          NS: ${{ needs.configuration.outputs.namespace }}
+          CK: ${{ needs.configuration.outputs.client_key }}
+          PK: ${{ needs.configuration.outputs.project_key }}
+          SK: ${{ needs.configuration.outputs.stage_key }}
+        run: |
+          set -euo pipefail
+          # Storage account names: lowercase alphanumeric, max 24 chars.
+          ACCOUNT="$(printf '%s%s%s%sadmin' "$NS" "$CK" "$PK" "$SK" | tr -d '-' | tr '[:upper:]' '[:lower:]' | cut -c1-24)"
+          RG="${NS}-${CK}-${PK}-${SK}-rg"
+          echo "🚀 Uploading admin SPA to \$web on ${ACCOUNT} ..."
+          az storage blob upload-batch --account-name "$ACCOUNT" --auth-mode login \
+            --destination '$web' --source packages/admin/dist --overwrite true
+          echo "✅ Uploaded."
+          # Best-effort Front Door purge (profile/endpoint must match infra).
+          AFD_PROFILE="${NS}-${CK}-${PK}-${SK}-afd"
+          AFD_ENDPOINT="${NS}-${CK}-${PK}-${SK}-admin"
+          if az afd endpoint show --profile-name "$AFD_PROFILE" --resource-group "$RG" --endpoint-name "$AFD_ENDPOINT" >/dev/null 2>&1; then
+            az afd endpoint purge --profile-name "$AFD_PROFILE" --resource-group "$RG" \
+              --endpoint-name "$AFD_ENDPOINT" --content-paths '/*' --no-wait || \
+              echo "::warning::Front Door purge failed (non-fatal)."
+          else
+            echo "::warning::Front Door endpoint not found — skipping purge."
+          fi
+
   summary:
     name: 📝 Deployment Summary
-    needs: [configuration, deploy-admin-pages]
+    needs: [configuration, deploy-admin-pages, deploy-admin-gcs, deploy-admin-azure-blob]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -693,6 +812,8 @@ jobs:
 
 
             echo "| **Admin (Pages)** | $(get_icon "${{ needs.deploy-admin-pages.result }}") | Cloudflare Pages |"
+            echo "| **Admin (GCS)** | $(get_icon "${{ needs.deploy-admin-gcs.result }}") | GCS + Cloud CDN |"
+            echo "| **Admin (Blob)** | $(get_icon "${{ needs.deploy-admin-azure-blob.result }}") | Azure Blob + Front Door |"
 
 
             echo ""

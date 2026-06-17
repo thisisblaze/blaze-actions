@@ -3,6 +3,7 @@
 All notable changes to the `blaze-actions` project will be documented in this file.
 
 ## [Unreleased]
+- feat(cicd) (Plan 158 §3.2): `02-deploy-pages.yml` gains native static-SPA admin paths — GCP `deploy-admin-gcs` (GCS rsync + Cloud CDN invalidation) and opt-in Azure `deploy-admin-azure-blob` (Blob `$web` upload + Front Door purge), gated by new `static_admin_target` input (default `cloudflare`). Job-level `id-token: write`. Assumes infra targets exist; CDN/Front-Door purge is best-effort.
 - feat(ci): add `node:test` based smoke fixture for post-deployment gating in AWS, Azure, and GCP.
 - fix(security): scoped OIDC token write permissions strictly to the jobs that require them, removing them from generic utility tasks.
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
