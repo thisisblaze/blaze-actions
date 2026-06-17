@@ -94,7 +94,7 @@ Run `git pull origin dev` (or current branch) in each repo (`blaze-template-depl
 
 For each repo, verify the 14 standard governance files exist:
 
-`.cursorrules`, `.github/copilot-instructions.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/dependabot.yml`, `.agentignore`, `.cursorignore`, `.gitignore`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE`, `README.md`, `docs/AI_CONTEXT_GOVERNANCE.md`, `.agent/config.yml`, `.agent/workflows/09-maintain-docs.md`
+`.cursorrules`, `.github/copilot-instructions.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/dependabot.yml`, `.agentignore`, `.cursorignore`, `.gitignore`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE`, `README.md`, `docs/AI_CONTEXT_GOVERNANCE.md`, `.agents/config.yml`, `.agents/workflows/09-maintain-docs.md`
 
 Report any missing files immediately.
 

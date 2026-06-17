@@ -81,9 +81,7 @@ on:
         type: string
 
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -93,6 +91,9 @@ env:
 
 jobs:
   fix:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: stage

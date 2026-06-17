@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-02
+**Last Updated**: 2026-06-17
 **Owner**: Infrastructure Team
 
 ---
@@ -8,7 +8,7 @@
 > [!TIP]
 > **Status: SCALED (ECS Fargate Environment & Environment Agnostic)**. All agents (including Google Antigravity 2.0) must enforce and operate within the ECS Fargate architectural boundaries (Legacy EB is deprecated).
 > 
-> **Antigravity 2.0 Standard**: This ecosystem is environment-agnostic. Workflows, context, and MCP tools rely strictly on the `.agent/` directory paradigm. Do not assume execution originates from a specific IDE or local GUI. The agent operates identically across headless CLI, background pipelines, and interactive IDE sessions.
+> **Antigravity 2.0 Standard**: This ecosystem is environment-agnostic. Workflows, context, and MCP tools rely strictly on the `.agents/` directory paradigm. Do not assume execution originates from a specific IDE or local GUI. The agent operates identically across headless CLI, background pipelines, and interactive IDE sessions.
 
 **STATUS: MANDATORY**
 **TARGET AUDIENCE: AI AGENTS, DEVELOPERS, ARCHITECTS**
@@ -58,11 +58,11 @@ Before writing a single line of code or answering a complex architectural questi
 ### A. Start of Session (Bootstrapping)
 
 **Command**: `/init-context`
-_(Source: [.agent/workflows/slash-init-context.md](.agent/workflows/slash-init-context.md))_
+_(Source: [.agents/workflows/slash-init-context.md](.agents/workflows/slash-init-context.md))_
 
 **Action**:
 
-1.  Read the **Constitution**: `AGENTS.md` and `.agent/workflows/`
+1.  Read the **Constitution**: `AGENTS.md` and `.agents/workflows/`
 3.  View the **Dependencies**: `docs/graphs/module_dependency_map.mermaid`
 4.  **Ack**: "Context Loaded. I am ready to work on the Multi-Cloud (AWS) Blaze stack."
 
@@ -77,7 +77,7 @@ If you are unsure where a resource lives or how data flows:
 ### C. End of Cycle (Maintenance)
 
 **Command**: `/weekly-graph`
-_(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly-graph.md))_
+_(Source: [.agents/workflows/slash-weekly-graph.md](.agents/workflows/slash-weekly-graph.md))_
 
 **Trigger**: Weekly or after significant architectural changes.
 **Action**:
@@ -96,19 +96,19 @@ _(Source: [.agent/workflows/slash-weekly-graph.md](.agent/workflows/slash-weekly
 
 Consult these approved workflows for specific operational tasks:
 
-- **Analysis**: `/01-analyze` → `.agent/workflows/01-analyze.md`
-- **Testing**: `/02-test` → `.agent/workflows/02-test.md`
-- **Security Audit**: `/08-audit` → `.agent/workflows/08-audit.md`
-- **Consistency Check**: `/cross-environment-consistency` → `.agent/workflows/cross-environment-consistency.md`
-- **Image Resize Deploy**: `/09-deploy-image-resize` → `.agent/workflows/09-deploy-image-resize.md` (AWS only)
-- **Troubleshooting**: `/04-troubleshoot` → `.agent/workflows/04-troubleshoot.md`
-- **Docs Maintenance**: `/09-maintain-docs` → `.agent/workflows/09-maintain-docs.md`
+- **Analysis**: `/01-analyze` → `.agents/workflows/01-analyze.md`
+- **Testing**: `/02-test` → `.agents/workflows/02-test.md`
+- **Security Audit**: `/08-audit` → `.agents/workflows/08-audit.md`
+- **Consistency Check**: `/cross-environment-consistency` → `.agents/workflows/cross-environment-consistency.md`
+- **Image Resize Deploy**: `/09-deploy-image-resize` → `.agents/workflows/09-deploy-image-resize.md` (AWS only)
+- **Troubleshooting**: `/04-troubleshoot` → `.agents/workflows/04-troubleshoot.md`
+- **Docs Maintenance**: `/09-maintain-docs` → `.agents/workflows/09-maintain-docs.md`
 
 ## 6. Key References
 
 - **Naming Standard**: `docs/reference/NETWORK_STACK_RESOURCES.md`
 - **Visual Hub**: `docs/graphs/`
-- **Maintenance Workflow**: `.agent/workflows/slash-weekly-graph.md`
+- **Maintenance Workflow**: `.agents/workflows/slash-weekly-graph.md`
 
 ## 7. Stage Safety Protocol (Cost Control)
 

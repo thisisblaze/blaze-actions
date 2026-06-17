@@ -7,7 +7,7 @@ role: 🔧 Engineer
 ---
 
 
-**Last Updated**: 2026-06-13
+**Last Updated**: 2026-06-17
 
 # Deep CI/CD Maintenance Sync
 
@@ -45,26 +45,26 @@ This is a master command to actively perform deep maintenance across all **four*
 ## Phase 2: Agent Workflows & Prompts Sync (All Repos)
 
 1. **Review Agent Commands**:
-   - Scan `.agent/workflows/*.md` across all 4 repos.
+   - Scan `.agents/workflows/*.md` across all 4 repos.
    - **Deep Analysis Required**: Read the agent workflow files and compare them against the actual GitHub Actions. Are the `gh workflow run` commands still passing the correct inputs? Are they referencing workflows that still exist? Fix any drift.
    - Specifically verify: all "4 repos" references have been updated to "4 repos" in agent workflows.
 2. **Review AI Agent Instructions**:
-   - In `blaze-template-deploy`, review `.agent/workflows/` and `.github/agents/` files.
+   - In `blaze-template-deploy`, review `.agents/workflows/` and `.github/agents/` files.
    - **Deep Analysis Required**: Read the agent workflows. Do they accurately reflect how CI/CD currently works (e.g., native ECS blue/green, newest multi-cloud pipelines, changes to stress testing)? If the pipeline has evolved, update the agent workflow to teach the AI the new reality.
 
 ## Phase 3: Deep Timestamp Sync (All Repos)
 
 Any file that receives a material update to its content during this sync MUST have its timestamp updated.
 
-1. **Find Timestamps**: Run grep to locate files with timestamps across `docs/`, `governance/`, and `.agent/` folders:
+1. **Find Timestamps**: Run grep to locate files with timestamps across `docs/`, `governance/`, and `.agents/` folders:
    ```bash
-   grep -riE "Last Updated|Updated:" docs/ .agent/
+   grep -riE "Last Updated|Updated:" docs/ .agents/
    ```
 2. **Enforce Freshness via Verification**:
    - You are **forbidden** from writing a python or bash script to find and replace dates globally.
    - For each file you identified, you must briefly verify its claims against the codebase.
    - If the instructions or architecture described in a file have changed recently, fix the content, then update the timestamp string to today's date (`YYYY-MM-DD`).
-   - Treat "Last Updated: 2026-05-09" as a hard requirement for all modified files.
+   - Treat "Last Updated: 2026-06-17" as a hard requirement for all modified files.
 
 ## Phase 4: Global Changelog Compilation
 

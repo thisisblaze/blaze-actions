@@ -123,9 +123,7 @@ on:
         value: ${{ jobs.cleanup.outputs.tasks_deleted }}
 
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: cleanup-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.cloud_provider }}
   cancel-in-progress: false
@@ -135,6 +133,9 @@ env:
 
 jobs:
   cleanup:
+    permissions:
+      contents: read
+      id-token: write
     name: Pre-Destroy Cleanup
     runs-on: ubuntu-latest
     timeout-minutes: 15

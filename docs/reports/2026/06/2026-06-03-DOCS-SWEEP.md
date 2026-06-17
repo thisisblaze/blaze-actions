@@ -17,9 +17,9 @@
 - **Status**: ❌ Failed
 - **Finding**: `maintainer.agent.md` and `sre.agent.md` lack the required references to the **12-Domain Framework**, **5-Killchain Security**, and **all 3 cloud providers**. 
 
-### 3. Agent Workflows (`.agent/workflows/`)
+### 3. Agent Workflows (`.agents/workflows/`)
 - **Status**: ❌ Failed
-- **Finding**: The rule states workflows must map 1:1 with `docs/ai-workflows/`, but the `docs/ai-workflows/` directory does not exist. (Note: `AGENTS.md` states the legacy directories were deprecated in favour of `.agent/workflows`, so this rule in the `/09-maintain-docs` workflow might be legacy itself, but technically fails the check).
+- **Finding**: The rule states workflows must map 1:1 with `docs/ai-workflows/`, but the `docs/ai-workflows/` directory does not exist. (Note: `AGENTS.md` states the legacy directories were deprecated in favour of `.agents/workflows`, so this rule in the `/09-maintain-docs` workflow might be legacy itself, but technically fails the check).
 
 ### 4. Infrastructure Stacks (`.github/{aws,gcp,azure}/`)
 - **Status**: ✅ Passed (AWS & GCP)

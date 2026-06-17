@@ -140,7 +140,6 @@ on:
         type: string
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -173,7 +172,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -243,6 +242,9 @@ jobs:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     needs: [validate]
     # Run for all actions except kill-workflows
@@ -297,7 +299,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -350,6 +352,9 @@ jobs:
           fi
 
   state-operations:
+    permissions:
+      contents: read
+      id-token: write
     name: State Ops
     needs: [configuration]
     if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || inputs.action == 'rm-state'
@@ -460,10 +465,13 @@ jobs:
           fi
 
   pre-cleanup:
+    permissions:
+      contents: read
+      id-token: write
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.7.9
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -479,6 +487,9 @@ jobs:
       dry_run: ${{ inputs.dry_run }}
 
   destroy-resources:
+    permissions:
+      contents: read
+      id-token: write
     name: Destroy
     needs: [configuration, pre-cleanup]
     if: |
@@ -486,7 +497,7 @@ jobs:
       inputs.action == 'destroy-resources' &&
       needs.configuration.result == 'success' &&
       (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.9
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure

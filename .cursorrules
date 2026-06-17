@@ -162,4 +162,4 @@ default_tags {
 - ❌ Using `terraform import` or `import {}` blocks for orphaned resources that can be safely deleted — delete the zombie from AWS first, then let Terraform create cleanly.
 
 ## 8. Agent Workflows & Skills
-If the user mentions a slash command (e.g. `/09-maintain-docs`), you MUST manually read the corresponding markdown file in `.agent/workflows/` and execute it step-by-step.
+If the user mentions a slash command (e.g. `/09-maintain-docs`), you MUST manually read the corresponding markdown file in `.agents/workflows/` and execute it step-by-step.

@@ -27,7 +27,7 @@
 - This is a public repo — no secrets, no real ARNs, no account IDs allowed anywhere in the code.
 
 ### 5. The AI Agent Slash Commands (1.5 min)
-- 21 slash commands in `.agent/workflows/` — markdown procedures for AI tools like Antigravity or Cursor.
+- 21 slash commands in `.agents/workflows/` — markdown procedures for AI tools like Antigravity or Cursor.
 - Demo the cycle: `/engage` in the morning (pull, check governance, read sprint board), work, `/checkengines` (10-engine automated sweep), `/allstop` (commit and push all 4 repos).
 - The clever one: `/orchestrate` — chains multiple sub-workflows, retries failures up to 3 times using a failure-type → recovery-workflow mapping, then escalates.
 

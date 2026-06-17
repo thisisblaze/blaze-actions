@@ -25,13 +25,13 @@ For each sub-workflow in the sequence:
 1. Load and execute the workflow instructions.
 2. If the workflow succeeds, move to the next.
 3. **If the workflow fails** (e.g., test fails, terraform plan fails), activate the **Self-Healing Loop**:
-   - Check `.agent/config.yml` under `on_failure` for the mapping.
+   - Check `.agents/config.yml` under `on_failure` for the mapping.
    - Automatically execute the recovery workflow (e.g., `/04-troubleshoot`).
    - Re-attempt the failed workflow up to 3 times.
    - If it fails 3 times, break the loop and notify the user.
 
 ## 3. Playbook Pattern Capture
-If a complex orchestration sequence succeeds (especially one involving self-healing), record the sequence into the auto-learning system (`.agent/learnings/patterns/`) under the `playbook-pattern` category.
+If a complex orchestration sequence succeeds (especially one involving self-healing), record the sequence into the auto-learning system (`.agents/learnings/patterns/`) under the `playbook-pattern` category.
 
 ## 4. Final Notification
 > 💡 **Antigravity 2.0**: Present the final orchestration summary using an artifact with `RequestFeedback=false`.

@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 **Owner**: Infrastructure Team
 
 ---
@@ -12,7 +12,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 30 main + 24 reusable = 54 total  
 **Version**: v2.5.7  
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 
 ---
 
@@ -288,12 +288,12 @@
 
 #### lint-agent-workflows.yml
 
-**Purpose**: Validate agent workflow markdown files on push to dev or PRs touching `.agent/workflows/**`  
+**Purpose**: Validate agent workflow markdown files on push to dev or PRs touching `.agents/workflows/**`  
 **Trigger**: Automatic (push/PR)
 
 **What it does**:
 
-- Lints `.agent/workflows/` markdown for formatting issues
+- Lints `.agents/workflows/` markdown for formatting issues
 - Blocks PRs that break agent workflow syntax
 
 **When to run**: Automatic CI gate
@@ -690,6 +690,12 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 
 ## Version History
 
+**v2.7.9** (2026-06-17):
+- Deep CI/CD maintenance sync: Resolved checkengines split-brain parity errors.
+- Standardized all GitHub Actions calls to `v2.7.9`.
+- Bumped all internal reusable workflow references to `v2.7.9`.
+
+
 **v2.2.3** (2026-06-02):
 - AI governance: Added `AGENTS.md` (root) and `.github/agents/` directory with `@maintainer` and `@sre` custom agent persona definitions across all 4 repos.
 - Upgraded `.github/copilot-instructions.md` across all 4 repos from a stub to a substantive guide.
@@ -780,10 +786,10 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 | Resource | Description |
 | :--- | :--- |
 | [`docs/learning/REFERENCE_SOURCE_LIBRARY.md`](learning/REFERENCE_SOURCE_LIBRARY.md) | 5-domain reference library: GH Actions patterns, OIDC, Terraform CI/CD, deployment, access control. Cross-links all `docs/knowledge/` smart fixes. |
-| [`.agent/workflows/12-best-practice-audit.md`](../.agent/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
+| [`.agents/workflows/12-best-practice-audit.md`](../.agents/workflows/12-best-practice-audit.md) | Monthly read-only CI/CD audit workflow. 9 priority checks + knowledge base freshness step. |
 
 ---
 
-**Last Updated**: 2026-06-13  
+**Last Updated: 2026-06-17
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

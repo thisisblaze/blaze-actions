@@ -30,6 +30,9 @@ on:
       project_key:
         required: true
         type: string
+      image_project_key:
+        required: false
+        type: string
       client_key:
         required: true
         type: string
@@ -191,7 +194,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Blaze (Credentials)
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.7.9
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
@@ -199,7 +202,7 @@ jobs:
           terraform: "false"
 
       - name: Deploy Service
-        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.7.9
         with:
           service_name: ${{ inputs.service_name }}
           environment: ${{ inputs.environment }}
@@ -207,6 +210,7 @@ jobs:
           branch_name: ${{ inputs.branch_name }}
           image_tag: ${{ inputs.image_tag }}
           project_key: ${{ inputs.project_key }}
+          image_project_key: ${{ inputs.image_project_key || inputs.project_key }}
           client_key: ${{ inputs.client_key }}
           cloud_platform: ${{ inputs.cloud_platform }}
           domain_root: ${{ inputs.domain_root }}

@@ -1,4 +1,4 @@
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated**: 2026-06-13
+**Last Updated: 2026-06-17
 
 ---
 
@@ -508,7 +508,7 @@ jobs:
     secrets: inherit
 ```
 
-**What it does**: Checks out code → sets up PHP (if `php_version` set) → runs `build_command` (if set) → zips source excluding `.git/.github/.agent/tests` → uploads bundle to S3 → creates EB Application Version → deploys to EB environment.
+**What it does**: Checks out code → sets up PHP (if `php_version` set) → runs `build_command` (if set) → zips source excluding `.git/.github/.agents/tests` → uploads bundle to S3 → creates EB Application Version → deploys to EB environment.
 
 ---
 
@@ -609,6 +609,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated**: 2026-06-13  
+**Last Updated: 2026-06-17
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

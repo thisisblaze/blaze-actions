@@ -121,7 +121,6 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -201,10 +200,13 @@ jobs:
   # --------------------------------------------------------------------------------
   # V1 path: separate api/frontend ECS services (tenant-app, feature-branch)
   deploy-app:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.app_stack != 'multi-site-app'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.7.9
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
@@ -248,6 +250,9 @@ jobs:
   # infra cycle, not pod readiness.
   # ─────────────────────────────────────────────────────────────────────────────
   deploy-multi-site:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.app_stack == 'multi-site-app' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '')
     needs: [config]
     name: "🌐 Deploy Multi-Site Apps (AWS)"

@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - '.agent/workflows/**'
+      - '.agents/workflows/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,7 +45,7 @@ jobs:
           def lint():
               workflow_dir = os.path.join(".agent", "workflows")
               if not os.path.exists(workflow_dir):
-                  print("No .agent/workflows directory found. Skipping.")
+                  print("No .agents/workflows directory found. Skipping.")
                   return 0
 
               workflows = glob.glob(os.path.join(workflow_dir, "*.md"))

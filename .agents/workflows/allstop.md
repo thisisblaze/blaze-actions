@@ -39,8 +39,8 @@ For EACH of the 4 repos, verify ALL of these files exist:
 | `LICENSE`                              | ✅         |
 | `README.md`                            | ✅         |
 | `docs/AI_CONTEXT_GOVERNANCE.md`        | ✅         |
-| `.agent/config.yml`                    | ✅         |
-| `.agent/workflows/09-maintain-docs.md` | ✅         |
+| `.agents/config.yml`                    | ✅         |
+| `.agents/workflows/09-maintain-docs.md` | ✅         |
 
 If any file is missing, create it following the patterns from the other repos.
 
@@ -79,7 +79,7 @@ Verify these patterns exist in ALL 3 `.gitignore` files using a search tool:
 - `*.tmp` / `*.temp`
 - `.env` / `.secrets`
 
-Verify `.agent/` is **NOT** in any `.gitignore` (critical — it was previously gitignored in blaze-actions).
+Verify `.agents/` is **NOT** in any `.gitignore` (critical — it was previously gitignored in blaze-actions).
 
 ### 5. CHANGELOG Check
 

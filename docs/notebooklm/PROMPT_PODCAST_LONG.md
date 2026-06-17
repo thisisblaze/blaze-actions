@@ -67,7 +67,7 @@
 
 ### CHAPTER 5: "The AI Agent Layer" (7 min)
 
-- Introduce the `.agent/workflows/` directory: 21 markdown files, each defining a slash-command procedure for AI tools (Antigravity, Cursor, Claude).
+- Introduce the `.agents/workflows/` directory: 21 markdown files, each defining a slash-command procedure for AI tools (Antigravity, Cursor, Claude).
 
 - The session lifecycle:
   - `/engage` — morning startup: git pull all 4 repos, check 14 governance files per repo, read sprint board from `HANDOFF.md`, check module version sync (Python script), report overnight commits. Output: START-OF-DAY REPORT.
@@ -82,7 +82,7 @@
 
 - The `/orchestrate` meta-workflow: reads high-level intent, chains sub-workflows, runs 3 retry attempts on failure using a failure-type→recovery-workflow map, escalates to human after 3 failures.
 
-- The auto-learning system (`config.yml`): agent captures learnings after >3 debug iterations, complexity ≥7 root causes, same error appearing twice. Learnings stored in `.agent/learnings/` for future sessions.
+- The auto-learning system (`config.yml`): agent captures learnings after >3 debug iterations, complexity ≥7 root causes, same error appearing twice. Learnings stored in `.agents/learnings/` for future sessions.
 
 ---
 

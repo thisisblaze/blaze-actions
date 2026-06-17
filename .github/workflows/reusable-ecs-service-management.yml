@@ -118,6 +118,9 @@ permissions:
 
 jobs:
   manage:
+    permissions:
+      contents: read
+      id-token: write
     name: ECS ${{ inputs.action }}
     runs-on: ubuntu-latest
     timeout-minutes: 15

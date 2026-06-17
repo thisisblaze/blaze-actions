@@ -55,6 +55,9 @@ permissions:
 
 jobs:
   sleep:
+    permissions:
+      contents: read
+      id-token: write
     name: "😴 Sleep — ECS → RDS"
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -107,6 +110,9 @@ jobs:
           echo "**Done**: $(date -u '+%Y-%m-%d %H:%M UTC') | Cluster: ${{ inputs.cluster }} | RDS: ${{ inputs.db_instance || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
 
   wake:
+    permissions:
+      contents: read
+      id-token: write
     name: "☀️ Wake — RDS → ECS"
     runs-on: ubuntu-latest
     timeout-minutes: 20

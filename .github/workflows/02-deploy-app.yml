@@ -136,6 +136,8 @@ on:
         default: ""
 
     secrets:
+      BASIC_AUTH_CREDENTIALS:
+        required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
@@ -203,9 +205,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: deploy-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
@@ -215,8 +215,11 @@ env:
 
 jobs:
   dispatch-aws:
+    permissions:
+      contents: read
+      id-token: write
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.7.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -234,6 +237,7 @@ jobs:
       skip_stability_wait: ${{ inputs.skip_stability_wait }}
       smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -264,8 +268,11 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   dispatch-gcp:
+    permissions:
+      contents: read
+      id-token: write
     if: inputs.cloud_provider == 'gcp'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.7.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -276,13 +283,9 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
       smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -313,8 +316,11 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   dispatch-azure:
+    permissions:
+      contents: read
+      id-token: write
     if: inputs.cloud_provider == 'azure'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@v2.7.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -325,13 +331,9 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
       smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -362,8 +364,11 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   dispatch-pages:
+    permissions:
+      contents: read
+      id-token: write
     if: inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && (inputs.branch_name == '' || inputs.branch_name == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE')
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@v2.7.9
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -374,12 +379,8 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
     secrets:
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}

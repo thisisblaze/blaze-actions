@@ -150,9 +150,7 @@ on:
         value: ${{ inputs.image_tag }}
 
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ inputs.environment }}-${{ github.ref }}
   cancel-in-progress: true
@@ -165,6 +163,9 @@ jobs:
   # BUILD AMD64 (x86_64)
   # ─────────────────────────────────────────────
   build-amd64:
+    permissions:
+      contents: read
+      id-token: write
     name: "Build ${{ inputs.display_name }} (amd64)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
@@ -285,6 +286,9 @@ jobs:
   # BUILD ARM64 (Graviton)
   # ─────────────────────────────────────────────
   build-arm64:
+    permissions:
+      contents: read
+      id-token: write
     name: "Build ${{ inputs.display_name }} (arm64)"
     runs-on: ubuntu-24.04-arm # Native ARM64 runner — 13x faster than QEMU
     environment: ${{ inputs.environment }}
@@ -405,6 +409,9 @@ jobs:
   # CREATE MULTI-ARCH MANIFEST
   # ─────────────────────────────────────────────
   create-manifest:
+    permissions:
+      contents: read
+      id-token: write
     name: "Create Multi-Arch Manifest (${{ inputs.display_name }})"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}

@@ -136,6 +136,8 @@ on:
         description: "Set to 'true' to skip ECS stabilisation wait (for stress tests)"
 
     secrets:
+      BASIC_AUTH_CREDENTIALS:
+        required: false
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
       BLAZE_ELASTICSEARCH_PASSWORD:
@@ -203,9 +205,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: deploy-azure-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
@@ -235,6 +235,9 @@ jobs:
       # - run: npm run test:coverage
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -243,6 +246,8 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || 
       needs.quality-check.result == 'skipped')
     outputs:
+      should_build: ${{ steps.config.outputs.should_build }}
+      should_deploy_app: ${{ steps.config.outputs.should_deploy_app }}
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
       project_key: ${{ steps.config.outputs.project_key }}
@@ -261,6 +266,7 @@ jobs:
       config_env: ${{ steps.config.outputs.config_env }}
       gcp_docker_repo: ${{ steps.config.outputs.gcp_docker_repo }}
       azure_acr_name: ${{ steps.config.outputs.azure_acr_name }}
+      image_project_key: ${{ steps.config.outputs.image_project_key }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -334,19 +340,22 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
           terraform_stack: "app"
           branch_name: ${{ inputs.branch_name }}
           deploy_infra: "false"
-          build_images: ${{ inputs.build_images || 'true' }}
-          deploy_services: ${{ inputs.deploy_services || 'true' }}
+          build_images: ${{ inputs.build_images == false && 'false' || 'true' }}
+          deploy_services: ${{ inputs.deploy_services == false && 'false' || 'true' }}
           event_name: ${{ github.event_name }}
           cloud_provider: ${{ inputs.cloud_provider }}
 
   pre-flight-check:
+    permissions:
+      contents: read
+      id-token: write
     name: 🛡️ Pre-Flight Checks
     needs: [configuration]
     environment: ${{ inputs.environment || 'DEV' }}
@@ -376,8 +385,8 @@ jobs:
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.project_key }}-web/${{ 
-            needs.configuration.outputs.project_key }}/api
+            needs.configuration.outputs.client_key }}-web/${{ 
+            needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -490,12 +499,13 @@ jobs:
   # --- BUILD JOBS ---
 
   build-api:
+    permissions:
+      contents: read
+      id-token: write
     name: Build API
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
-      || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -536,12 +546,15 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   build-frontend:
+    permissions:
+      contents: read
+      id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -584,6 +597,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   package-admin-docker:
+    permissions:
+      contents: read
+      id-token: write
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
@@ -591,7 +607,7 @@ jobs:
       inputs.branch_name != null && (inputs.build_images == true || 
       inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
       inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -632,13 +648,16 @@ jobs:
   # --- DEPLOY JOBS ---
 
   deploy-api-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy API (Container App)
     needs: [configuration, build-api, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.7.9
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -672,13 +691,16 @@ jobs:
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
   deploy-frontend-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Frontend (Container App)
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
       || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.7.9
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -709,15 +731,18 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-admin-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Admin (Container App)
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY
     if: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'DEV' && 
       inputs.branch_name != '' && inputs.branch_name != null && 
-      (inputs.deploy_services == true || inputs.deploy_services == null) && 
+      needs.configuration.outputs.should_deploy_app == 'true' && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.7.9
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -752,22 +777,26 @@ jobs:
   smoke-test:
     name: 🩺 Post-Deploy Smoke Test
     needs: [configuration, deploy-api-azure, deploy-frontend-azure, deploy-admin-azure]
-    if: always() && (inputs.deploy_services == true || inputs.deploy_services == null) && inputs.smoke_test_url != ''
+    if: always() && needs.configuration.outputs.should_deploy_app == 'true' && inputs.smoke_test_url != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Hit Smoke Test URL
-        run: |
-          URL="${{ inputs.smoke_test_url }}"
-          echo "🔍 Hitting smoke test URL: $URL"
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-          echo "Response HTTP Status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-             echo "❌ Post-deploy smoke test failed with status $HTTP_STATUS!"
-             echo "💡 Rollback hint: Consider reverting the deployment to the previous task definition or commit."
-             exit 1
-          fi
-          echo "✅ Smoke test passed with 200 OK!"
+      - name: Checkout Actions Repository
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-actions
+          ref: ${{ github.action_ref || github.ref }}
+          path: .blaze-actions
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Smoke Test
+        env:
+          SMOKE_TEST_URL: ${{ inputs.smoke_test_url }}
+        run: node --test .blaze-actions/.github/scripts/smoke-test.js
 
   summary:
     name: 📝 Deployment Summary

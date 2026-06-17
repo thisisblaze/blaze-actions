@@ -237,7 +237,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write # OIDC cloud auth
 
 jobs:
   terraform:
@@ -859,7 +858,7 @@ jobs:
               
               if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
                  echo "Searching certificates for $DOMAIN_ROOT in us-east-1 (CloudFront)..."
-                 ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='${DOMAIN_ROOT}'].CertificateArn" --output text | head -n 1)
+                 ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='${DOMAIN_ROOT}'].CertificateArn" --output text | awk '{print $1}')
                  
                  if [[ -n "$ARN" && "$ARN" != "None" ]]; then
                     echo "✅ Resolved ACM ARN: $ARN"

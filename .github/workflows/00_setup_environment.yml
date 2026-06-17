@@ -170,9 +170,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: setup-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ github.ref }}
   cancel-in-progress: false
@@ -198,7 +196,7 @@ jobs:
       
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.7.9
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: network
@@ -208,6 +206,9 @@ jobs:
   # JOB 1: INIT BACKEND (S3 & DYNAMODB)
   # -----------------------------------------------------------------------------------------
   init-backend:
+    permissions:
+      contents: read
+      id-token: write
     name: Init Backend (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Init Backend"
     if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init Backend')
@@ -233,7 +234,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -246,7 +247,7 @@ jobs:
 
       - name: Setup Blaze Infra
         if: inputs.cloud_provider == 'aws'
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.7.9
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
@@ -405,6 +406,9 @@ jobs:
   # JOB 2: MIRROR IMAGES TO ECR
   # -----------------------------------------------------------------------------------------
   mirror-images:
+    permissions:
+      contents: read
+      id-token: write
     name: Mirror Images (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Mirror Images" — Skip for Azure (ACR managed by Terraform)
     if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) && inputs.cloud_provider != 'azure'

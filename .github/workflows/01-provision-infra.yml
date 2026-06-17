@@ -261,7 +261,6 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -274,6 +273,9 @@ env:
 
 jobs:
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
@@ -316,7 +318,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -378,7 +380,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.0
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -394,6 +396,9 @@ jobs:
           # Importer logic sequence moved to Terraform pre-apply phase (see lines below)
 
   build_sharp_layer:
+    permissions:
+      contents: read
+      id-token: write
     name: Build Sharp Lambda Layer
     needs: [configuration]
     if: >
@@ -432,7 +437,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.2.2
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.7.9
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -440,10 +445,13 @@ jobs:
           upload-to-s3: 'false'
 
   provision:
+    permissions:
+      contents: read
+      id-token: write
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.0
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.9
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -688,10 +696,13 @@ jobs:
             echo "⚠️  Sample Dataset is already loaded or currently loading."
 
   auto-cleanup-dns:
+    permissions:
+      contents: read
+      id-token: write
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.2.2
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.7.9
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
@@ -710,6 +721,9 @@ jobs:
   # gets a static FQDN (default_domain). Front Door needs this as its app origin.
   # This job reads it from TF state and re-applies the network stack automatically.
   post_provision_azure_cdn:
+    permissions:
+      contents: read
+      id-token: write
     name: 🌐 Azure Front Door — Wire Origin (Auto)
     needs: [configuration, provision]
     if: >
