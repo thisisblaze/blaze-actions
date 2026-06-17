@@ -237,7 +237,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write # OIDC cloud auth
 
 jobs:
   terraform:

@@ -134,9 +134,7 @@ on:
           DEPLOY_KEY:
             required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref }}-${{ inputs.environment }}
   cancel-in-progress: false

@@ -133,7 +133,6 @@ on:
         type: string
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -224,6 +223,9 @@ jobs:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     needs: [validate]
     # Run for all actions except kill-workflows
@@ -332,6 +334,9 @@ jobs:
           fi
 
   manage-environment:
+    permissions:
+      contents: read
+      id-token: write
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
@@ -347,6 +352,9 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   cleanup-orphaned-lambdas:
+    permissions:
+      contents: read
+      id-token: write
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
     if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
@@ -456,6 +464,9 @@ jobs:
           fi
 
   cleanup-orphaned-buckets:
+    permissions:
+      contents: read
+      id-token: write
     name: 🧹 Cleanup Orphaned Buckets
     needs: [configuration]
     if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)

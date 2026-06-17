@@ -134,9 +134,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.site_key }}-${{ inputs.environment }}
   cancel-in-progress: false
@@ -146,6 +144,9 @@ env:
 
 jobs:
   deploy-site:
+    permissions:
+      contents: read
+      id-token: write
     name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"
     runs-on: ubuntu-latest
     timeout-minutes: 20

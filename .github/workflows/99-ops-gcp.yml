@@ -130,7 +130,6 @@ on:
         type: string
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -221,6 +220,9 @@ jobs:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     needs: [validate]
     # Run for all actions except kill-workflows
@@ -328,6 +330,9 @@ jobs:
           fi
 
   manage-environment-gcp:
+    permissions:
+      contents: read
+      id-token: write
     name: Manage Env (GCP)
     needs: [configuration]
     if: inputs.action == 'manage-environment' && inputs.cloud_provider == 'gcp'

@@ -205,9 +205,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: deploy-azure-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
@@ -237,6 +235,9 @@ jobs:
       # - run: npm run test:coverage
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -352,6 +353,9 @@ jobs:
           cloud_provider: ${{ inputs.cloud_provider }}
 
   pre-flight-check:
+    permissions:
+      contents: read
+      id-token: write
     name: 🛡️ Pre-Flight Checks
     needs: [configuration]
     environment: ${{ inputs.environment || 'DEV' }}
@@ -495,6 +499,9 @@ jobs:
   # --- BUILD JOBS ---
 
   build-api:
+    permissions:
+      contents: read
+      id-token: write
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
@@ -539,6 +546,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   build-frontend:
+    permissions:
+      contents: read
+      id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
@@ -587,6 +597,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   package-admin-docker:
+    permissions:
+      contents: read
+      id-token: write
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
@@ -635,6 +648,9 @@ jobs:
   # --- DEPLOY JOBS ---
 
   deploy-api-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy API (Container App)
     needs: [configuration, build-api, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
@@ -675,6 +691,9 @@ jobs:
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
   deploy-frontend-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Frontend (Container App)
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
@@ -712,6 +731,9 @@ jobs:
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-admin-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Admin (Container App)
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY

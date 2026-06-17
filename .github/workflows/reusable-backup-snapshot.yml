@@ -50,9 +50,7 @@ on:
         required: true
 
 permissions:
-  id-token: write
   contents: read
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -61,6 +59,9 @@ jobs:
   # JOB 1: RDS Snapshot
   # ─────────────────────────────────────────────
   rds-snapshot:
+    permissions:
+      contents: read
+      id-token: write
     name: 💾 RDS Snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -124,6 +125,9 @@ jobs:
   # JOB 2: SSM Inventory Export
   # ─────────────────────────────────────────────
   ssm-inventory:
+    permissions:
+      contents: read
+      id-token: write
     name: 📋 SSM Inventory
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -166,6 +170,9 @@ jobs:
   # JOB 3: S3 Integrity Assertions
   # ─────────────────────────────────────────────
   s3-verify:
+    permissions:
+      contents: read
+      id-token: write
     name: 🔍 S3 Integrity Assert
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -234,6 +241,9 @@ jobs:
   # JOB 4: DocumentDB Snapshot (optional)
   # ─────────────────────────────────────────────
   docdb-snapshot:
+    permissions:
+      contents: read
+      id-token: write
     name: 🗄️ DocumentDB Snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 30

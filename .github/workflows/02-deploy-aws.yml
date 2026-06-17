@@ -205,9 +205,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: deploy-aws-${{ inputs.environment || 'dev' }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
@@ -237,6 +235,9 @@ jobs:
       # - run: npm run test:coverage
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -355,6 +356,9 @@ jobs:
           cloud_provider: ${{ inputs.cloud_provider }}
 
   pre-flight-check:
+    permissions:
+      contents: read
+      id-token: write
     name: 🛡️ Pre-Flight Checks
     needs: [configuration]
     environment: ${{ inputs.environment || 'dev' }}
@@ -513,6 +517,9 @@ jobs:
   # --- BUILD JOBS ---
 
   build-api:
+    permissions:
+      contents: read
+      id-token: write
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
@@ -559,6 +566,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   build-frontend:
+    permissions:
+      contents: read
+      id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && 
@@ -684,6 +694,9 @@ jobs:
           path: packages/admin/dist
 
   package-admin-docker:
+    permissions:
+      contents: read
+      id-token: write
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
@@ -734,6 +747,9 @@ jobs:
   # --- DEPLOY JOBS ---
 
   deploy-api:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
@@ -783,6 +799,9 @@ jobs:
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
   deploy-frontend:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
@@ -831,6 +850,9 @@ jobs:
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
   deploy-admin-ecs:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Admin (ECS)
     needs: [configuration, package-admin-docker, pre-flight-check]
 
@@ -876,6 +898,9 @@ jobs:
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
   deploy-admin-aws:
+    permissions:
+      contents: read
+      id-token: write
     name: Deploy Admin (AWS S3/CF)
     needs: [configuration, build-admin, pre-flight-check]
     # Run for Host Environments (Dev, Stage, Prod) on AWS

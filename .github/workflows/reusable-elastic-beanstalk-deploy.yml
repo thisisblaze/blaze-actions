@@ -44,6 +44,9 @@ permissions:
 
 jobs:
   deploy:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: ${{ inputs.environment }}

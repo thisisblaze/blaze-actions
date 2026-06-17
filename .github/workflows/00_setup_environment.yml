@@ -170,9 +170,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: setup-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ github.ref }}
   cancel-in-progress: false
@@ -208,6 +206,9 @@ jobs:
   # JOB 1: INIT BACKEND (S3 & DYNAMODB)
   # -----------------------------------------------------------------------------------------
   init-backend:
+    permissions:
+      contents: read
+      id-token: write
     name: Init Backend (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Init Backend"
     if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init Backend')
@@ -405,6 +406,9 @@ jobs:
   # JOB 2: MIRROR IMAGES TO ECR
   # -----------------------------------------------------------------------------------------
   mirror-images:
+    permissions:
+      contents: read
+      id-token: write
     name: Mirror Images (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Mirror Images" — Skip for Azure (ACR managed by Terraform)
     if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) && inputs.cloud_provider != 'azure'

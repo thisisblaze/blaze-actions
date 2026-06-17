@@ -115,7 +115,6 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -194,6 +193,9 @@ jobs:
   # 4. PROVISION (Rebuild)
   # --------------------------------------------------------------------------------
   provision-network:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host'
     needs: [config]
     name: "🏗️ Provision Network"
@@ -218,6 +220,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-tunnel:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
@@ -241,6 +246,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-data-pod:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
     needs: [config, provision-network]
     name: "🏗️ Provision Data Pod (V2)"
@@ -267,6 +275,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-app:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped') && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped') && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped') && (needs.provision-third-party-mongodb.result == 'success' || needs.provision-third-party-mongodb.result == 'skipped') && (needs.provision-third-party-elastic.result == 'success' || needs.provision-third-party-elastic.result == 'skipped')
     needs: [config, provision-network, provision-tunnel, provision-data-pod, provision-third-party-mongodb, provision-third-party-elastic]
     name: "🏗️ Provision App"
@@ -294,6 +305,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   provision-third-party-mongodb:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
@@ -317,6 +331,9 @@ jobs:
       MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
 
   provision-third-party-elastic:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"

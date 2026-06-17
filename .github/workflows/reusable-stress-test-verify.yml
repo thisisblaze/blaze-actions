@@ -115,7 +115,6 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -194,6 +193,9 @@ jobs:
   # 6. VERIFY
   # --------------------------------------------------------------------------------
   verify-aws:
+    permissions:
+      contents: read
+      id-token: write
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'aws'
     needs: [config]
     name: "✅ Verify Environment (AWS)"
@@ -210,6 +212,9 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   verify-gcp:
+    permissions:
+      contents: read
+      id-token: write
     name: "✅ Verify Environment (GCP)"
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'gcp'
     needs: [config]
@@ -227,6 +232,9 @@ jobs:
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
   verify-azure:
+    permissions:
+      contents: read
+      id-token: write
     name: "✅ Verify Environment (Azure)"
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
     needs: [config]

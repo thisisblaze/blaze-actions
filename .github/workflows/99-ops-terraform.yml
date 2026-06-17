@@ -140,7 +140,6 @@ on:
         type: string
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -243,6 +242,9 @@ jobs:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   configuration:
+    permissions:
+      contents: read
+      id-token: write
     name: Configuration
     needs: [validate]
     # Run for all actions except kill-workflows
@@ -350,6 +352,9 @@ jobs:
           fi
 
   state-operations:
+    permissions:
+      contents: read
+      id-token: write
     name: State Ops
     needs: [configuration]
     if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || inputs.action == 'rm-state'
@@ -460,6 +465,9 @@ jobs:
           fi
 
   pre-cleanup:
+    permissions:
+      contents: read
+      id-token: write
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
@@ -479,6 +487,9 @@ jobs:
       dry_run: ${{ inputs.dry_run }}
 
   destroy-resources:
+    permissions:
+      contents: read
+      id-token: write
     name: Destroy
     needs: [configuration, pre-cleanup]
     if: |

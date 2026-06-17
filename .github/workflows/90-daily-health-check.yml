@@ -96,9 +96,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
-  id-token: write
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -191,6 +189,9 @@ jobs:
   # Bumping to the current release tag causes a GitHub Actions self-referencing
   # loop that results in startup_failure. These pins are deliberately stable.
   drift-check-network:
+    permissions:
+      contents: read
+      id-token: write
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
@@ -232,6 +233,9 @@ jobs:
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
 
   drift-check-app:
+    permissions:
+      contents: read
+      id-token: write
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
