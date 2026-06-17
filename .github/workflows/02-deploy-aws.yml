@@ -382,7 +382,7 @@ jobs:
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
           REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.client_key }}-web/${{ 
+            needs.configuration.outputs.image_project_key }}-web/${{ 
             needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
@@ -537,7 +537,7 @@ jobs:
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
+        needs.configuration.outputs.image_project_key,
         needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
@@ -585,7 +585,7 @@ jobs:
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
+        needs.configuration.outputs.image_project_key,
         needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
@@ -715,7 +715,7 @@ jobs:
         needs.configuration.outputs.aws_account_id, 
         needs.configuration.outputs.aws_region, 
         needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
+        needs.configuration.outputs.image_project_key,
         needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
