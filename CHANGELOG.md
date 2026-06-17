@@ -10,6 +10,42 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Changed
 
+- chore: update CHANGELOG for v2.10.0
+- chore: release v2.10.0
+- chore: end-of-day governance sync — 2026-06-17
+- chore: end-of-day governance sync — 2026-06-17
+- chore: end-of-day governance sync — 2026-06-17
+- chore: update CHANGELOG for v2.7.9
+- chore: update CHANGELOG for v2.7.8
+- chore: update CHANGELOG for v2.7.8
+- chore: update CHANGELOG for v2.7.7
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+
+### Fixed
+
+
+## v2.10.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: release v2.10.0
 - chore: end-of-day governance sync — 2026-06-17
 - chore: end-of-day governance sync — 2026-06-17
