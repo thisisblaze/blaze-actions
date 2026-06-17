@@ -8,13 +8,556 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(security): scoped OIDC token write permissions strictly to the jobs that require them, removing them from generic utility tasks.
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
-### Added
 
+### Added
 - feat(cicd) (Plan 169 / L21): add `97-ops-maintenance.yml` reusable workflow — resolves cluster via `calculate-config`, runs the post-reprovision compile gate over ECS Exec, optional CloudFront invalidation.
 
 ### Fixed
-
 - fix(cicd): make `97` compile gate actually gate failures — install `session-manager-plugin` (absent on `ubuntu-latest`), assert a split success sentinel since `execute-command` returns the SSM session exit code rather than the remote command's, `set -euo pipefail`, drop unused `actions: write` permission.
+## v2.7.9 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.8
+- chore: update CHANGELOG for v2.7.8
+- chore: update CHANGELOG for v2.7.7
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.8 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.8
+- chore: update CHANGELOG for v2.7.7
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.8 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.7
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.7 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.6 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.6 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.5 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.4 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.3 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.2 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.1 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
+## v2.7.0 (2026-06-15)
+
+### Added
+
+- feat: accept tf_vars input for reusable dns handoff
+- feat: reusable dns handoff workflows
+- feat: configure bump-terraform-modules script and workflow to use GH_PAT for authentication
+- feat: add automated bump-terraform-modules script and workflow
+
+### Changed
+
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+- chore: end-of-day governance sync — 2026-06-14
+- chore: add debug for cloudflare secrets
+- chore: end-of-day governance sync — 2026-06-14
+- chore: end-of-day governance sync — 2026-06-14
+- chore: bump GCP stack infra-core module refs to v2.7.1
+- chore: bump infra-core module refs to v2.7.1
+- chore: end-of-day governance sync - update CHANGELOG for bump script and workflow
+- chore: remove non-existent azure directories from dependabot.yml
+- chore: configure dependabot for terraform package-ecosystem
+- chore: end-of-day governance sync — 2026-06-13
+- chore: bump infra-core module refs to v2.7.0
+- chore: dual-tool parity — add Claude Code bootstrap blocks to engage/02-dry-run/03-monitor-stress + CLAUDE.md exclusions
+- chore: point reusable-terraform to dev branch for testing
+- refactor: remove Cloudflare sanitization from provision workflow
+- refactor: remove Cloudflare logic from shared engine
+- docs: add NotebookLM educational prompts (infographic + short/long podcast) — 2026-06-03
+- chore: clean up transient sync scripts
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-session governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-06-02
+- chore: end-of-day governance sync — 2026-05-31
+- chore: resolve split-brain — bump GHA self-refs v2.1.74→v2.2.2, Terraform pins →v2.6.9
+- chore: update CHANGELOG for v2.2.2
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+- fix: use tr -cd to strictly sanitize Cloudflare secrets
+- fix: explicitly map secrets to reusable terraform
+- fix: absolute path for nested reusable workflow
+- fix: yaml syntax in reusable workflows
+- fix: pass Cloudflare secrets to pre-apply script
+>>>>>>> origin/dev
 
 ## v2.6.0 (2026-06-14)
 
