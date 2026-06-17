@@ -279,11 +279,6 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
       smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
@@ -329,11 +324,6 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
       smoke_test_url: ${{ inputs.smoke_test_url }}
     secrets:
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
@@ -379,11 +369,6 @@ jobs:
       build_images: ${{ inputs.build_images }}
       deploy_services: ${{ inputs.deploy_services }}
       override_image_tag: ${{ inputs.override_image_tag }}
-      api_launch_type: ${{ inputs.api_launch_type }}
-      api_cpu_architecture: ${{ inputs.api_cpu_architecture }}
-      frontend_launch_type: ${{ inputs.frontend_launch_type }}
-      frontend_cpu_architecture: ${{ inputs.frontend_cpu_architecture }}
-      skip_stability_wait: ${{ inputs.skip_stability_wait }}
     secrets:
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
