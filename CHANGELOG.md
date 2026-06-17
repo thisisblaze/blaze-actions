@@ -2,6 +2,39 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.7.7 (2026-06-17)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.6
+- chore: update CHANGELOG for v2.7.5
+- chore: update CHANGELOG for v2.7.4
+- chore: update CHANGELOG for v2.7.3
+- chore: update CHANGELOG for v2.7.2
+- chore: update CHANGELOG for v2.7.1
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: update CHANGELOG for v2.7.0
+- chore: pin internal refs @v2.7.0 for release
+- chore: remove stray helper scripts and secrets template
+- chore: update CHANGELOG for v2.6.0
+- chore: update CHANGELOG for v2.6.0
+
+### Fixed
+
+- fix: use current branch for calculate-config in 01-provision-infra
+- fix: export TF_VAR_default_basic_auth_credentials
+
 ## v2.7.6 (2026-06-17)
 
 ### Added
