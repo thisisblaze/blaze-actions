@@ -245,6 +245,8 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || 
       needs.quality-check.result == 'skipped')
     outputs:
+      should_build: ${{ steps.config.outputs.should_build }}
+      should_deploy_app: ${{ steps.config.outputs.should_deploy_app }}
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
       project_key: ${{ steps.config.outputs.project_key }}
@@ -344,8 +346,8 @@ jobs:
           terraform_stack: "app"
           branch_name: ${{ inputs.branch_name }}
           deploy_infra: "false"
-          build_images: ${{ inputs.build_images || 'true' }}
-          deploy_services: ${{ inputs.deploy_services || 'true' }}
+          build_images: ${{ inputs.build_images == false && 'false' || 'true' }}
+          deploy_services: ${{ inputs.deploy_services == false && 'false' || 'true' }}
           event_name: ${{ github.event_name }}
           cloud_provider: ${{ inputs.cloud_provider }}
 
@@ -497,9 +499,7 @@ jobs:
   build-api:
     name: Build API
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
-      || inputs.target_services == null) }}
+    if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.0
     with:
       display_name: "API"
@@ -756,7 +756,7 @@ jobs:
     # Run for Feature Branches ONLY
     if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'DEV' && 
       inputs.branch_name != '' && inputs.branch_name != null && 
-      (inputs.deploy_services == true || inputs.deploy_services == null) && 
+      needs.configuration.outputs.should_deploy_app == 'true' && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.7.0
@@ -808,7 +808,7 @@ jobs:
     name: "🌐 Deploy Multi-Site Fleet (GCP)"
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE'
-      && (inputs.deploy_services == true || inputs.deploy_services == null) }}
+      && needs.configuration.outputs.should_deploy_app == 'true' }}
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
@@ -838,7 +838,7 @@ jobs:
   smoke-test:
     name: 🩺 Post-Deploy Smoke Test
     needs: [configuration, deploy-api-gcp, deploy-frontend-gcp, deploy-admin-gcp, deploy-sites-multi-site-gcp]
-    if: always() && (inputs.deploy_services == true || inputs.deploy_services == null) && inputs.smoke_test_url != ''
+    if: always() && needs.configuration.outputs.should_deploy_app == 'true' && inputs.smoke_test_url != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
