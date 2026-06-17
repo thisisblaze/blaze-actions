@@ -248,7 +248,6 @@ jobs:
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
       project_key: ${{ steps.config.outputs.project_key }}
-      image_project_key: ${{ inputs.image_project_key || steps.config.outputs.project_key }}
       client_key: ${{ steps.config.outputs.client_key }}
       namespace: ${{ steps.config.outputs.namespace }}
       platform: ${{ steps.config.outputs.platform }}
