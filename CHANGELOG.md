@@ -14,6 +14,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Fixed
 
+- fix: restored secrets block to 99-ops-utility to resolve startup_failure in CI engine
 
 ## v2.10.3 (2026-06-17)
 
