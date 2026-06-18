@@ -163,3 +163,6 @@ default_tags {
 
 ## 8. Agent Workflows & Skills
 If the user mentions a slash command (e.g. `/09-maintain-docs`), you MUST manually read the corresponding markdown file in `.agents/workflows/` and execute it step-by-step.
+
+## Branch Protection
+`main` and `dev` branches are protected. No direct pushes are allowed. Use feature branches and PRs.
