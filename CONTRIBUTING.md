@@ -193,6 +193,14 @@ Brief description
 - Address feedback
 - Squash commits before merge
 
+### 4. Branch Protection & Protected Environments
+
+> [!WARNING]
+> The `main` and `dev` branches are strictly protected.
+> - **No Direct Pushes**: `git push origin <branch>` is blocked.
+> - **PR Required**: All changes must be submitted via a feature branch and a Pull Request.
+> - **Squash Merges Only**: Linear history is strictly enforced.
+
 ---
 
 ## Release Process (Maintainers Only)

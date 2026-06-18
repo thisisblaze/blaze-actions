@@ -124,6 +124,9 @@ Read the Sprint Board in `docs/HANDOFF.md`:
 
 For each repo that has changes:
 
+> [!WARNING]
+> If you are currently on a protected branch (`main`, `dev`), `git push` will be rejected. You MUST branch off and submit a Pull Request instead.
+
 ```bash
 git add -A
 git status  # Review what's staged

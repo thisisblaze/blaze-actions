@@ -2,6 +2,11 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## Unreleased
+
+### Added
+- chore(governance): Enforced strict branch protection on `main` and `dev` branches across the repository. Automated slash-workflows must now branch and PR instead of pushing directly to protected environments. Added `docs/governance/branch-protection.md`.
+
 ## v2.10.4 (2026-06-17)
 
 ### Added
@@ -762,6 +767,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: pass Cloudflare secrets to pre-apply script
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 <!-- ───────────── Plans 161–164 — CI/CD Hardening Sweep — 2026-06-14 ───────────── -->
@@ -1073,6 +1081,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: bump dev-mini-network module refs v2.6.4 → v2.6.5 (resolve split-brain)
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Added
@@ -1351,6 +1362,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-05-10
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -1430,6 +1444,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -1549,6 +1566,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -1942,6 +1962,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(ops): explicitly force-delete ASG before Launch Template cleanup (282b580)
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -2101,6 +2124,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -2405,6 +2431,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -2444,6 +2473,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -2669,6 +2701,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -2707,6 +2742,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -3407,6 +3445,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ---
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -3445,6 +3486,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5228,6 +5272,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-03-29
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5266,6 +5313,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5322,6 +5372,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-03-27
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5360,6 +5413,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5413,6 +5469,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5451,6 +5510,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5527,6 +5589,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5565,6 +5630,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5681,6 +5749,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -5719,6 +5790,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6100,6 +6174,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: inject timeout-minutes and pin github action shas globally
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6138,6 +6215,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6192,6 +6272,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6230,6 +6313,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6814,6 +6900,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use GITHUB_WORKSPACE for pre-apply script path
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6852,6 +6941,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6913,6 +7005,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -6951,6 +7046,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7012,6 +7110,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Context**: Maintained agent workflows sweep 2026-03-16.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7050,6 +7151,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7108,6 +7212,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7146,6 +7253,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7201,6 +7311,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7239,6 +7352,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7299,6 +7415,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7337,6 +7456,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7441,6 +7563,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7479,6 +7604,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7564,6 +7692,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7602,6 +7733,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7824,6 +7958,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
@@ -7862,6 +7999,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+
+### Changed
+- **chore(cicd)** (2026-06-18): Executed `/13-deep-cicd-maintenance`. Standardized Terraform module versions globally to `v2.10.0`. Enforced scale-to-zero in GCP/Azure stage environments. Automated documentation parsing for GitHub Action inputs in `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md`. Corrected workflow CLI triggers in agent instructions (fixing `02-test.md` and `03-fire-stress-test.md`).
 - chore(cicd): Deep CI/CD maintenance sync (2026-06-17) - Resolved split-brain tagging and standardized pins.
 - Chore: Update AI_CONTEXT_GOVERNANCE.md Last Updated to 2026-06-17.
 ### Changed
