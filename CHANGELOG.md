@@ -4,6 +4,9 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## v2.10.4 (2026-06-17)
 
+### Governance Update
+- **Security**: Enforced strict branch protection on `main`, `dev`, and `stage` branches. Direct pushes are blocked, requiring a PR-based workflow with linear history.
+
 ### Added
 
 - No new features in this release
