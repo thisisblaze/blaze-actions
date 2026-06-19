@@ -660,7 +660,7 @@ jobs:
       inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
       || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.10.4
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -723,7 +723,7 @@ jobs:
       inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
       || inputs.target_services == 'frontend' || inputs.target_services == null)
       }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.10.4
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -781,7 +781,7 @@ jobs:
       needs.configuration.outputs.should_deploy_app == 'true' && 
       (inputs.target_services == 'Blaze all' || inputs.target_services == 
       'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.10.4
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
