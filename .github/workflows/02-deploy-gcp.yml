@@ -837,7 +837,7 @@ jobs:
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.10.4
     with:
       site_key: ${{ matrix.site_key }}
       # Service name must match TF naming: the network module uses project_key="multi-site"
