@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "blaze-arch-linter": {
+      "command": "node",
+      "args": [
+        "${BLAZE_DOCS_ROOT}/servers/blaze-arch-linter/index.js"
+      ]
+    },
+    "blaze-tf-validator": {
+      "command": "node",
+      "args": [
+        "${BLAZE_DOCS_ROOT}/servers/blaze-tf-validator/index.js"
+      ]
+    }
+  }
+}
