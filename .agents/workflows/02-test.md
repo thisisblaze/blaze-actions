@@ -98,7 +98,7 @@ For CloudFront / image resize changes specifically:
 ./tests/image-resize-test.sh <environment> cdn-<environment>.example.com
 
 # CI/CD
-gh workflow run 90-daily-health-check.yml -f environment=<env>
+gh workflow run 93a-test-image-resize.yml -f environment=<env>
 ```
 
 Lambda@Edge logs (us-east-1 only):
@@ -114,7 +114,7 @@ aws logs tail /aws/lambda/us-east-1.blaze-{client}-{project}-<env>-lambda-edge-r
 > For CloudFront and image resize infrastructure, use the automated test suite:
 >
 > - **Local**: `./tests/image-resize-test.sh <environment> <domain>`
-> - **CI/CD**: `gh workflow run 90-daily-health-check.yml -f environment=<env>`
+> - **CI/CD**: `gh workflow run 93a-test-image-resize.yml -f environment=<env>`
 > - **Results**: JSON output in `test-results/`, GitHub Actions summary
 
 ## Testing Workflow
@@ -159,7 +159,7 @@ aws s3 cp test-images/ s3://blaze-{client}-{project}-<env>-image-resize/test/ --
 ./tests/image-resize-test.sh <environment> cdn-<environment>.example.com
 
 # Or via CI/CD
-gh workflow run 90-daily-health-check.yml -f environment=<env> -f upload_test_images=true
+gh workflow run 93a-test-image-resize.yml -f environment=<env> -f upload_test_images=true
 ```
 
 **For Other Infrastructure**:

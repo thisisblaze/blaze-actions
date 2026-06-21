@@ -1,4 +1,4 @@
-**Last Updated: 2026-06-17
+**Last Updated: 2026-06-18
 **Owner**: Infrastructure Team
 
 ---
@@ -12,7 +12,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 30 main + 24 reusable = 54 total  
 **Version**: v2.5.7  
-**Last Updated: 2026-06-17
+**Last Updated: 2026-06-18
 
 ---
 
@@ -29,16 +29,17 @@
 
 **Inputs**:
 
-- `cloud_provider` (optional): 
-- `elasticsearch_tag` (optional): 
-- `environment` (required): 
-- `images` (optional): 
-- `kibana_tag` (optional): 
-- `mongo_tag` (optional): 
-- `task` (optional): 
-- `terraform_version` (optional): 
-- `tunnel_tag` (optional): 
-- `wif_audience` (optional):
+- `cloud_provider` (optional)
+- `elasticsearch_tag` (optional)
+- `environment` (optional)
+- `images` (optional)
+- `kibana_tag` (optional)
+- `mongo_tag` (optional)
+- `task` (optional)
+- `terraform_version` (optional)
+- `tunnel_tag` (optional)
+- `wif_audience` (optional)
+
 **What it does**:
 
 - Creates GitHub OIDC provider
@@ -56,30 +57,28 @@
 
 **Inputs**:
 
-- `api_cpu_architecture` (optional): 
-- `api_launch_type` (optional): 
-- `apply` (optional): 
-- `azure_client_id_rev` (optional): 
-- `azure_subscription_id_rev` (optional): 
-- `azure_tenant_id_rev` (optional): 
-- `branch_name` (optional): 
-- `cloud_provider` (optional): 
-- `cluster_tier` (optional): 
-- `destroy` (optional): 
-- `enable_ec2` (optional): 
-- `enable_image_resize` (optional): 
-- `enable_tunnel` (optional): 
-- `enable_vpc_peering` (optional): Enable Atlas VPC peering (Plan 135). Requires non-flex cluster (M10+). Passed as TF_VAR_enable_vpc_peering.
-- `environment` (required): 
-- `force_destructive_reconcile` (optional): 
-- `frontend_cpu_architecture` (optional): 
-- `frontend_launch_type` (optional): 
-- `kibana_size` (optional): 
-- `project` (required): 
-- `stack` (required): 
-- `terraform_version` (optional): 
-- `wif_audience` (optional): 
-- `workers_json` (optional): Background Workers Configuration (JSON String)
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `apply` (optional)
+- `branch_name` (optional)
+- `cloud_provider` (optional)
+- `cluster_tier` (optional)
+- `destroy` (optional)
+- `enable_ec2` (optional)
+- `enable_image_resize` (optional)
+- `enable_tunnel` (optional)
+- `enable_vpc_peering` (optional)
+- `environment` (optional)
+- `force_destructive_reconcile` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `kibana_size` (optional)
+- `project` (optional)
+- `stack` (optional)
+- `terraform_version` (optional)
+- `wif_audience` (optional)
+- `workers_json` (optional)
+
 **What it does**:
 
 - Runs Terraform init/plan/apply
@@ -97,24 +96,22 @@
 
 **Inputs**:
 
-- `api_cpu_architecture` (optional): 
-- `api_launch_type` (optional): 
-- `azure_client_id_rev` (optional): 
-- `azure_subscription_id_rev` (optional): 
-- `azure_tenant_id_rev` (optional): 
-- `branch_name` (optional): 
-- `build_images` (optional): 
-- `cloud_provider` (optional): 
-- `deploy_services` (optional): 
-- `environment` (required): 
-- `frontend_cpu_architecture` (optional): 
-- `frontend_launch_type` (optional): 
-- `override_image_tag` (optional): 
-- `project` (required): 
-- `skip_stability_wait` (optional): Set to 'true' to skip ECS stabilisation wait (for stress tests)
-- `smoke_test_url` (optional): URL to hit for post-deploy smoke test
-- `target_services` (optional): 
-- `wif_audience` (optional):
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
+
 **What it does**: Delegates to `02-deploy-aws.yml`, `02-deploy-gcp.yml`, or `02-deploy-azure.yml`
 
 **When to run**: Code deployments
@@ -131,8 +128,9 @@
 
 **Inputs**:
 
-- `run_integration` (optional): Run integration tests
-- `scan_path` (optional): Path to scan for Terraform modules/stacks
+- `run_integration` (optional)
+- `scan_path` (optional)
+
 **What it does**:
 - Creates AWS resources for integration testing
 
@@ -159,8 +157,9 @@
 
 **Inputs**:
 
-- `cloud_provider` (optional): 
-- `environment` (optional):
+- `cloud_provider` (optional)
+- `environment` (optional)
+
 **What it does**:
 
 - Checks ECS service status
@@ -228,22 +227,21 @@
 
 **Inputs**:
 
-- `action` (required): 
-- `branch_tag` (optional): 
-- `bulk_pattern` (optional): 
-- `cloud_provider` (optional): 
-- `confirmation` (optional): for destructive actions on **manual dispatch**, must be the target-scoped keyword `DESTROY-<environment>-<stack>` (99-ops-terraform/utility) or `DESTROY-<environment>-<cloud_provider>` (99-ops-nuke); programmatic `workflow_call` accepts `DESTROY`/`EXECUTE` (plan 163 O3)
-- `desired_count` (optional): 
-- `dist_id` (optional): 
-- `dry_run` (optional): 
-- `environment` (optional): 
-- `manage_action` (optional): 
-- `retention_count` (optional): 
-- `retention_days` (optional): 
-- `run_id` (optional): 
-- `skip_lambda_destroy` (optional): 
-- `stack` (optional):
-**When to run**: Operational tasks
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
 
 ---
 
@@ -254,9 +252,10 @@
 
 **Inputs**:
 
-- `environment` (required): Target Environment
-- `services` (optional): Services to sync
-- `sync_github` (optional): Sync to GitHub Secrets?
+- `environment` (optional)
+- `services` (optional)
+- `sync_github` (optional)
+
 **What it does**:
 
 - Reads secrets from AWS SSM
@@ -337,7 +336,8 @@
 
 **Inputs**:
 
-- `target_cname` (required): CNAME to search for
+- `target_cname` (optional)
+
 **What it does**:
 - Finds zombie cloudfront distributions
 
@@ -352,8 +352,9 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `stack` (optional): Specific stack
+- `branch_tag` (optional)
+- `environment` (optional)
+- `stack` (optional)
 
 **What it does**:
 
@@ -372,10 +373,11 @@
 
 **Inputs**:
 
-- `environment` (required)
-- `stack` (required)
-- `reason` (required on manual dispatch — recorded in the audit trail; plan 163 O4)
-- `lock_id` (required): Lock ID from error message
+- `branch_tag` (optional)
+- `cloud_provider` (optional)
+- `environment` (optional)
+- `reason` (optional)
+- `stack` (optional)
 
 **What it does**:
 
@@ -394,9 +396,10 @@
 
 **Inputs**:
 
-- `dynamodb_table` (required): DynamoDB Lock Table Name
-- `environment` (required): Environment (DEV/STAGE/PROD)
-- `state_key_path` (required): S3 Key to Clean (e.g., infra/.../cloudflare.tfstate)
+- `dynamodb_table` (optional)
+- `environment` (optional)
+- `state_key_path` (optional)
+
 **What it does**:
 
 - State refresh
@@ -414,7 +417,8 @@
 
 **Inputs**:
 
-- `dist_id` (required): Distribution ID (or Domain Name) to strip aliases from
+- `dist_id` (optional)
+
 **What it does**:
 
 - Identifies conflicting records
@@ -432,6 +436,25 @@
 #### 02-deploy-app.yml
 **Purpose**: Generic multi-cloud app deployment entrypoint. Routes to the appropriate cloud-specific deploy workflow (`02-deploy-aws`, `02-deploy-gcp`, `02-deploy-azure`) based on `cloud_provider` input.
 
+
+**Inputs**:
+
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
+
 ---
 #### 02-deploy-aws.yml
 **Purpose**: AWS-specific deployment entrypoint. Orchestrates Docker build, ECR push, native ECS B/G update for API + frontend rolling for frontend. Called by `02-deploy-app.yml`.
@@ -443,54 +466,278 @@
 - `api_cpu_architecture` (choice): `X86_64` or `ARM64`
 - `smoke_test_url` (optional): URL to hit for post-deploy smoke test
 
+
+**Inputs**:
+
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
+
 ---
 #### 02-deploy-azure.yml
 **Purpose**: Azure Container Apps deployment entrypoint. Builds image, pushes to ACR, rolls out new revision.
+
+
+**Inputs**:
+
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
 
 ---
 #### 02-deploy-gcp.yml
 **Purpose**: GCP Cloud Run deployment entrypoint. Builds image, pushes to Artifact Registry, shifts traffic to new revision.
 
+
+**Inputs**:
+
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
+
 ---
 #### 02-deploy-pages.yml
 **Purpose**: Cloudflare Pages deployment (DEV-MINI admin SPA). Builds Next.js admin and deploys to Cloudflare Pages project.
+
+
+**Inputs**:
+
+- `api_cpu_architecture` (optional)
+- `api_launch_type` (optional)
+- `branch_name` (optional)
+- `build_images` (optional)
+- `cloud_provider` (optional)
+- `deploy_services` (optional)
+- `environment` (optional)
+- `frontend_cpu_architecture` (optional)
+- `frontend_launch_type` (optional)
+- `override_image_tag` (optional)
+- `project` (optional)
+- `skip_stability_wait` (optional)
+- `smoke_test_url` (optional)
+- `static_admin_target` (optional)
+- `target_services` (optional)
+- `wif_audience` (optional)
 
 ---
 #### 99-ops-aws.yml
 **Purpose**: AWS operational tasks — view config, list stacks, destroy resources, cleanup orphaned lambdas. Upgraded natively with CloudFront Active Telemetry to assure precise Surgical Garbage Collection during teardowns; explicitly hardened to gracefully manage zero-state environments (where zero CloudFront metadata exists) without crashing dry runs.
 
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
+
 ---
 #### 99-ops-azure.yml
 **Purpose**: Azure operational tasks — resource group inspection, Container App management, teardown.
+
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
 
 ---
 #### 99-ops-cloudflare.yml
 **Purpose**: Cloudflare DNS and zone operations — list records, delete conflicts, manage tunnel configs.
 
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
+
 ---
 #### 99-ops-gcp.yml
 **Purpose**: GCP operational tasks — Cloud Run inspection, Artifact Registry cleanup, project teardown.
+
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
 
 ---
 #### 99-ops-nuke.yml
 **Purpose**: Full environment nuke across any cloud provider. Inputs: `cloud_provider`, `environment`, `action` (default: nuke-environment), `skip_lambda_destroy` (boolean). Destroys all Terraform stacks in reverse dependency order.
 
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
+
 ---
 #### 99-ops-utility.yml
 **Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
+
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
 
 ---
 #### 99-ops-terraform.yml
 **Purpose**: Direct Terraform operations — plan, apply, destroy, state management for a specific stack without the full workflow pipeline.
 
+
+**Inputs**:
+
+- `action` (optional)
+- `branch_tag` (optional)
+- `bulk_pattern` (optional)
+- `cloud_provider` (optional)
+- `confirmation` (optional)
+- `desired_count` (optional)
+- `dist_id` (optional)
+- `dry_run` (optional)
+- `environment` (optional)
+- `manage_action` (optional)
+- `retention_count` (optional)
+- `retention_days` (optional)
+- `run_id` (optional)
+- `skip_lambda_destroy` (optional)
+- `stack` (optional)
+- `target_resource` (optional)
+
 ---
 #### 99-verify-azure.yml
 **Purpose**: Azure environment health verification — checks Container App status, DNS resolution, HTTPS endpoints.
+
+
+**Inputs**:
+
+- `domain_root` (optional)
+- `environment` (optional)
+- `run_image_resize` (optional)
 
 ---
 
 #### release.yml
 **Purpose**: Semantic versioning release — bumps version tag, generates CHANGELOG entry, creates GitHub Release.
+
+
+**Inputs**:
+
+- `dry_run` (optional)
+- `version_type` (optional)
 
 ---
 #### update-changelog.yml
@@ -499,6 +746,19 @@
 ---
 #### reusable-provision-db-users.yml
 **Purpose**: ~~Provision MongoDB database users for a given project/environment.~~ **DEPRECATED for multi-site environments (2026-04-14).** Superseded by the `enable_db_users` flag in `multi-site-app` module (v2.3.3+), which provisions Atlas users automatically per `project_key` in the `sites` map when `01c` runs. Still used for legacy single-tenant stacks.
+
+
+**Inputs**:
+
+- `client_key` (optional)
+- `cloud_platform` (optional)
+- `cloud_provider` (optional)
+- `db_ssm_path` (optional)
+- `environment` (optional)
+- `namespace` (optional)
+- `project` (optional)
+- `ssm_target_path_override` (optional)
+- `stage_key` (optional)
 
 ---
 
@@ -562,21 +822,116 @@ These are called by main workflows, not directly by users.
 #### reusable-azure-multi-site-deploy.yml
 **Purpose**: Azure Container Apps multi-site deployment. Iterates site definitions, updates container app revisions per site.
 
+
+**Inputs**:
+
+- `azure_region` (optional)
+- `azure_registry_server` (optional)
+- `container_app_name` (optional)
+- `environment` (optional)
+- `image_repository` (optional)
+- `image_tag` (optional)
+- `multi_revision` (optional)
+- `resource_group_name` (optional)
+- `shift_strategy` (optional)
+- `site_key` (optional)
+- `target_port` (optional)
+
 ---
 #### reusable-cloudrun-deploy.yml
 **Purpose**: GCP Cloud Run service update. Deploys new image URI to a Cloud Run service and shifts traffic.
+
+
+**Inputs**:
+
+- `branch_name` (optional)
+- `client_key` (optional)
+- `cpu` (optional)
+- `dfp_network_id` (optional)
+- `domain_root` (optional)
+- `elasticsearch_endpoint` (optional)
+- `environment` (optional)
+- `gcp_project_id` (optional)
+- `gcp_region` (optional)
+- `graphql_uri` (optional)
+- `gtm_id` (optional)
+- `image_tag` (optional)
+- `image_uri` (optional)
+- `max_instances` (optional)
+- `memory` (optional)
+- `min_instances` (optional)
+- `namespace` (optional)
+- `port` (optional)
+- `project_key` (optional)
+- `s3_bucket` (optional)
+- `s3_endpoint` (optional)
+- `s3_public_url` (optional)
+- `sentry_dsn` (optional)
+- `service_name` (optional)
+- `stage_key` (optional)
+- `wif_audience` (optional)
 
 ---
 #### reusable-container-app-deploy.yml
 **Purpose**: Azure Container App revision deployment. Creates new revision with updated container image.
 
+
+**Inputs**:
+
+- `azure_region` (optional)
+- `azure_registry_server` (optional)
+- `branch_name` (optional)
+- `client_key` (optional)
+- `cpu` (optional)
+- `domain_root` (optional)
+- `elasticsearch_endpoint` (optional)
+- `environment` (optional)
+- `image_tag` (optional)
+- `max_replicas` (optional)
+- `memory` (optional)
+- `min_replicas` (optional)
+- `namespace` (optional)
+- `project_key` (optional)
+- `service_name` (optional)
+- `stage_key` (optional)
+- `target_port` (optional)
+
 ---
 #### reusable-gcp-multi-site-deploy.yml
 **Purpose**: GCP multi-site Cloud Run deployment orchestrator. Loops through site configs and delegates to `reusable-cloudrun-deploy`.
 
+
+**Inputs**:
+
+- `artifact_registry_url` (optional)
+- `environment` (optional)
+- `gcp_project_id` (optional)
+- `gcp_region` (optional)
+- `image_repository` (optional)
+- `image_tag` (optional)
+- `multi_revision` (optional)
+- `service_name` (optional)
+- `shift_strategy` (optional)
+- `site_key` (optional)
+
 ---
 #### reusable-multi-site-deploy.yml
 **Purpose**: AWS multi-site ECS deployment orchestrator. Iterates site configs, triggers per-site native ECS rolling updates.
+
+
+**Inputs**:
+
+- `azure_region` (optional)
+- `azure_registry_server` (optional)
+- `container_app_name` (optional)
+- `environment` (optional)
+- `image_repository` (optional)
+- `image_tag` (optional)
+- `multi_revision` (optional)
+- `resource_group_name` (optional)
+- `shift_strategy` (optional)
+- `site_key` (optional)
+- `target_port` (optional)
 
 ---
 #### reusable-noop.yml
@@ -588,13 +943,14 @@ These are called by main workflows, not directly by users.
 **Purpose**: Packages application code and pushes an Application Version to AWS Elastic Beanstalk via S3. Supports optional PHP setup and pre-package build commands.
 
 **Inputs**:
-artifact_registry_url, environment, gcp_project_id, gcp_region, image_repository, image_tag, multi_revision, service_name, shift_strategy, site_key
-- `application_name` (required): Elastic Beanstalk application name
-- `environment_name` (required): Elastic Beanstalk environment name
-- `aws_region` (optional): AWS region (default: `eu-west-1`)
-- `s3_bucket` (optional): S3 bucket for bundle upload; uses EB default if omitted
-- `build_command` (optional): Shell command to run before zipping artifact (e.g. `composer install --no-dev`)
-- `php_version` (optional): PHP version to set up before build (e.g. `"8.4"`)
+
+- `application_name` (optional)
+- `aws_region` (optional)
+- `build_command` (optional)
+- `environment` (optional)
+- `environment_name` (optional)
+- `php_version` (optional)
+- `s3_bucket` (optional)
 
 **Secrets**: `AWS_ROLE_ARN` (required)
 
@@ -604,37 +960,146 @@ artifact_registry_url, environment, gcp_project_id, gcp_region, image_repository
 #### reusable-verify-aws.yml
 **Purpose**: AWS environment health verification. Checks ECS service counts, ALB target health, and HTTPS endpoint responses.
 
+
+**Inputs**:
+
+- `aws_region` (optional)
+- `azure_acr_name` (optional)
+- `branch_tag` (optional)
+- `client_key` (optional)
+- `cloud_region` (optional)
+- `cluster_name` (optional)
+- `domain_root` (optional)
+- `environment` (optional)
+- `gcp_project_id` (optional)
+- `namespace` (optional)
+- `project_key` (optional)
+- `stage_key` (optional)
+- `target_type` (optional)
+
 ---
 #### reusable-verify-azure.yml
 **Purpose**: Azure environment health verification. Validates Container App running state and HTTPS endpoint responses.
+
+
+**Inputs**:
+
+- `aws_region` (optional)
+- `azure_acr_name` (optional)
+- `branch_tag` (optional)
+- `client_key` (optional)
+- `cloud_region` (optional)
+- `cluster_name` (optional)
+- `domain_root` (optional)
+- `environment` (optional)
+- `gcp_project_id` (optional)
+- `namespace` (optional)
+- `project_key` (optional)
+- `stage_key` (optional)
+- `target_type` (optional)
 
 ---
 #### reusable-verify-gcp.yml
 **Purpose**: GCP environment health verification. Validates Cloud Run serving state and HTTPS endpoint responses.
 
+
+**Inputs**:
+
+- `aws_region` (optional)
+- `azure_acr_name` (optional)
+- `branch_tag` (optional)
+- `client_key` (optional)
+- `cloud_region` (optional)
+- `cluster_name` (optional)
+- `domain_root` (optional)
+- `environment` (optional)
+- `gcp_project_id` (optional)
+- `namespace` (optional)
+- `project_key` (optional)
+- `stage_key` (optional)
+- `target_type` (optional)
+- `wif_audience` (optional)
+
 ---
 #### reusable-stress-test-provision.yml
 **Purpose**: Stress test provision phase. Runs `01-provision-infra` for network, app, and third-party stacks. Uses `project_key` from `calculate-config` — no hardcoded project names.
+
+
+**Inputs**:
+
+- `branch_tag` (optional)
+- `cloud_provider` (optional)
+- `environment` (optional)
+- `include_third_party` (optional)
+- `mode` (optional)
+- `preserve_host` (optional)
+- `target_type` (optional)
+- `wif_audience` (optional)
 
 ---
 #### reusable-stress-test-deploy.yml
 **Purpose**: Stress test deploy phase. Calls `02-deploy-app.yml` with the calculated project config. Uses `project_key` from `calculate-config`.
 
+
+**Inputs**:
+
+- `app_stack` (optional)
+- `branch_tag` (optional)
+- `cloud_provider` (optional)
+- `environment` (optional)
+- `include_third_party` (optional)
+- `mode` (optional)
+- `preserve_host` (optional)
+- `target_type` (optional)
+- `wif_audience` (optional)
+
 ---
 #### reusable-stress-test-teardown.yml
 **Purpose**: Stress test teardown phase. Destroys all stacks in reverse order after a stress test cycle.
 
+
+**Inputs**:
+
+- `app_stack` (optional)
+- `branch_tag` (optional)
+- `cloud_provider` (optional)
+- `environment` (optional)
+- `include_third_party` (optional)
+- `mode` (optional)
+- `network_stack` (optional)
+- `preserve_host` (optional)
+- `target_type` (optional)
+- `wif_audience` (optional)
+
 ---
 #### reusable-stress-test-verify.yml
 **Purpose**: Stress test verification phase. Runs URL health checks and ECS service validation after deployment.
+
+
+**Inputs**:
+
+- `branch_tag` (optional)
+- `cloud_provider` (optional)
+- `environment` (optional)
+- `include_third_party` (optional)
+- `mode` (optional)
+- `preserve_host` (optional)
+- `target_type` (optional)
+- `wif_audience` (optional)
 
 ---
 #### reusable-backup-snapshot.yml
 **Purpose**: Multi-service backup snapshot workflow (Plan 151 L14 + Plan 152 Phase 4). Runs four sequential backup jobs: RDS MySQL snapshot, S3 CRR sync verification, SSM parameter inventory export, and DocumentDB cluster snapshot.
 
 **Inputs**:
-aws_region, azure_acr_name, branch_tag, client_key, cloud_region, cluster_name, domain_root, environment, gcp_project_id, namespace, project_key, stage_key, target_type, wif_audience
-- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+- `aws_region` (optional)
+- `docdb_cluster_identifier` (optional)
+- `environment` (optional)
+- `rds_identifier` (optional)
+- `s3_bucket_prefix` (optional)
+- `ssm_inventory_bucket` (optional)
+- `ssm_path_prefix` (optional)
 
 **Secrets**: `AWS_ROLE_ARN` (required)
 
@@ -647,9 +1112,14 @@ aws_region, azure_acr_name, branch_tag, client_key, cloud_region, cluster_name, 
 **Purpose**: FinOps dev environment sleep/wake schedule (Plan 151 L4). Scales down ECS services to 0 and stops RDS in the correct dependency order (ECS first, then RDS), or reverses the order for wake-up (RDS first, then ECS).
 
 **Inputs**:
-action, aws_region, cluster, db_instance, desired_count_wake, rds_wait_minutes, services
-- `action` (required): `sleep` or `wake`
-- `aws_region` (optional): AWS region (default: `eu-west-1`)
+
+- `action` (optional)
+- `aws_region` (optional)
+- `cluster` (optional)
+- `db_instance` (optional)
+- `desired_count_wake` (optional)
+- `rds_wait_minutes` (optional)
+- `services` (optional)
 
 **Secrets**: `AWS_ROLE_ARN` (required)
 
@@ -662,9 +1132,14 @@ action, aws_region, cluster, db_instance, desired_count_wake, rds_wait_minutes, 
 **Purpose**: Single-click ECS incident health snapshot (Plan 151 L7). Produces a consolidated report covering ECS service states, container health checks, stopped task failure reasons, and endpoint availability.
 
 **Inputs**:
-aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lines
-- `aws_region` (optional): AWS region (default: `eu-west-1`)
-- `endpoint_url` (optional): HTTPS endpoint to probe for availability
+
+- `aws_region` (optional)
+- `cluster` (optional)
+- `endpoint` (optional)
+- `environment` (optional)
+- `log_group_prefix` (optional)
+- `services` (optional)
+- `tail_lines` (optional)
 
 **Secrets**: `AWS_ROLE_ARN` (required)
 
@@ -689,6 +1164,10 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 ---
 
 ## Version History
+
+**v2.10.0** (2026-06-18):
+- Standardized Terraform module versions to `v2.10.0` globally.
+- Standardized GitHub Actions inputs dynamically in documentation.
 
 **v2.7.9** (2026-06-17):
 - Deep CI/CD maintenance sync: Resolved checkengines split-brain parity errors.
@@ -790,6 +1269,6 @@ aws_region, cluster, endpoint, environment, log_group_prefix, services, tail_lin
 
 ---
 
-**Last Updated: 2026-06-17
+**Last Updated: 2026-06-18
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
