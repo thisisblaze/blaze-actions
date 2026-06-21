@@ -41,7 +41,7 @@ data "terraform_remote_state" "app" {
 # ── Shared Global Ingress (CDN Stack) ──
 
 module "cdn" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v2.10.0"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/gcp/cdn/global-https-lb?ref=v2.10.1"
 
   context        = data.terraform_remote_state.network.outputs.label_context
   gcp_project_id = var.gcp_project_id

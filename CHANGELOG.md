@@ -2,6 +2,13 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.10.5 (2026-06-21)
+
+### Changed
+- chore: end-of-day governance sync — 2026-06-17
+- docs: added branch protection and governance rules
+- build: bump terraform module dependencies to v2.10.1
+
 ## v2.10.4 (2026-06-17)
 
 ### Added
