@@ -23,10 +23,10 @@ When executing slash commands or workflows in `.agents/workflows/`, you must ado
 - **Infrastructure**: Terraform (S3 Backend, DynamoDB Locking). Native AWS ECS Fargate/EC2 Blue/Green. **NO CodeDeploy**.
 - **CI/CD**: GitHub Actions.
 - **Environment Model**:
-  - `DEV-MINI`: Local/Feature-branch sandbox (Cloudflare Tunnel).
-  - `DEV`: Mirrored staging layer.
-  - `STAGE`: Pre-production.
-  - `PROD`: Production layer.
+  - `dev-mini`: Local/Feature-branch sandbox (Cloudflare Tunnel).
+  - `dev`: Mirrored staging layer.
+  - `stage`: Pre-production.
+  - `prod`: Production layer.
 
 ## 4. Execution Directives
 - **Grep-First**: Always use `grep_search` to verify file existence and contents before modifying or reading blindly.
