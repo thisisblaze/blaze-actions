@@ -1,0 +1,1 @@
+> This file is a thin pointer. The single authoritative source of truth for AI instructions and governance rules is `CLAUDE.md`. Please read `CLAUDE.md` first.\n
