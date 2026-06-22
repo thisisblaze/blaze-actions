@@ -6,6 +6,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 permissions:
+  id-token: write        # REQUIRED for GitHub→GCP OIDC
   contents: write
   pull-requests: write
   actions: write
@@ -21,12 +22,16 @@ jobs:
       - name: Install Antigravity CLI
         run: curl -fsSL https://antigravity.google/cli/install.sh | bash
 
+      - name: Authenticate to Google Cloud (WIF → ADC)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: antigravity-ci@<PROJECT_ID>.iam.gserviceaccount.com
+
       - name: Run Antigravity Module Bump
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          # TODO: Connect GCP Service Account for headless auth
-          
           ~/.local/bin/agy -p "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
             --add-dir . \
             --dangerously-skip-permissions < /dev/null
