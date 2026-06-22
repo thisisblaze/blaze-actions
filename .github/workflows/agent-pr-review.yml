@@ -1,0 +1,60 @@
+name: Agent PR Review (Routine 1)
+
+on:
+  workflow_call:
+    secrets:
+      ANTIGRAVITY_API_KEY:
+        required: true
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  pr-review:
+    name: 🕵️ QA Daemon Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Conductor (for MCP)
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-conductor
+          path: .conductor
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Install Antigravity CLI
+        run: curl -sSfL https://storage.googleapis.com/antigravity-cli/install.sh | bash
+
+      - name: Run Antigravity PR Review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
+          BLAZE_DOCS_ROOT: ${{ github.workspace }}/.conductor
+        run: |
+          if [ -f .mcp.json ]; then
+            envsubst < .mcp.json > .mcp-expanded.json
+            mv .mcp-expanded.json .mcp.json
+          fi
+          
+          # Fetch the diff to review
+          gh pr diff ${{ github.event.pull_request.number }} > pr.diff
+          
+          # Run the Antigravity CLI to review the PR
+          antigravity run \
+            --prompt "Adopt the QA Daemon persona. Run the 5-Kill-Chain audit on the diff:
+            (1) billing traps (missing timeout-minutes, dev/stage ECS over-provision)
+            (2) secret hygiene (hardcoded b9/thisisblaze, non-OIDC)
+            (3) Terraform integrity (wildcard IAM, prevent_destroy, 0.0.0.0/0, destroy scripts must use resourcegroupstaggingapi not list-*+grep)
+            (4) modern prod patterns (NO CodeDeploy / aws deploy, /health ALB path, worker task separation)
+            (5) supply chain (mutable action tags).
+            Enforce the 4-repo no-duplication rule.
+            Output inline comments + ❌ REJECTED / ⚠️ WARNING / ✅ APPROVED. Do NOT write fixes.
+            Use the 'gh' CLI to post your review to the PR #${{ github.event.pull_request.number }}." \
+            --workspace . \
+            --input pr.diff

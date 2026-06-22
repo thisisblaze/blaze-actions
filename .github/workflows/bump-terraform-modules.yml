@@ -1,8 +1,8 @@
 name: 🔄 Bump Terraform Modules
 
 on:
-  schedule:
-    - cron: "0 0 * * 0" # Every Sunday at midnight
+  repository_dispatch:
+    types: [infra-core-release]
   workflow_dispatch: # Allow manual trigger
 
 permissions:
@@ -16,54 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.x"
+      - name: Install Antigravity CLI
+        run: curl -sSfL https://storage.googleapis.com/antigravity-cli/install.sh | bash
 
-      - name: Run bump script
-        id: run_bump
+      - name: Run Antigravity Module Bump
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
         run: |
-          python3 scripts/bump_tf_modules.py > bump_output.txt
-          cat bump_output.txt
-          
-          # Extract version from output
-          LATEST_VERSION=$(grep -oE "Latest version found: v[0-9]+\.[0-9]+\.[0-9]+" bump_output.txt | awk '{print $4}')
-          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          
-          # Check if files were updated
-          if grep -q "Updating" bump_output.txt; then
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes_detected=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Pull Request
-        if: steps.run_bump.outputs.changes_detected == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LATEST_VERSION: ${{ steps.run_bump.outputs.latest_version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          BRANCH="automation/bump-tf-modules"
-          git checkout -b $BRANCH
-          git add .
-          git commit -m "chore(deps): bump terraform modules to $LATEST_VERSION"
-          git push origin $BRANCH --force
-          
-          # Create PR if it doesn't exist
-          PR_EXISTS=$(gh pr list --head $BRANCH --json number --jq '.[0].number')
-          if [ -z "$PR_EXISTS" ]; then
-            gh pr create --title "chore(deps): bump terraform modules to $LATEST_VERSION" \
-                         --body "Automated pull request to bump all blaze-terraform-infra-core module references to $LATEST_VERSION." \
-                         --base dev \
-                         --head $BRANCH
-          else
-            echo "PR already exists for branch $BRANCH."
-          fi
+          antigravity run \
+            --prompt "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
+            --workspace .
