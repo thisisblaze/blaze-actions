@@ -518,3 +518,11 @@ Follow semantic versioning:
 > Admin SPA: S3+CloudFront on DEV/STAGE/PROD · Cloudflare Pages on DEV-MINI
 
 See [WORKFLOW_CATALOG.md](docs/WORKFLOW_CATALOG.md) for complete reference.
+
+---
+
+## Architecture Compliance
+
+- **Active Compute Patterns**: Native ECS Blue/Green, Hybrid ECS (Fargate + EC2), GCP Cloud Run, Azure Container Apps.
+- **Reporting**: Refer to [2026 Reports](docs/reports/2026/) for active infrastructure analyses.
+- **Agent Context**: Refer to [AI Context Governance](docs/AI_CONTEXT_GOVERNANCE.md) for strict AI agent rules.

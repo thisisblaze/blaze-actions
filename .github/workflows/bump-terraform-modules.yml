@@ -19,13 +19,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Antigravity CLI
-        run: curl -sSfL https://storage.googleapis.com/antigravity-cli/install.sh | bash
+        run: curl -fsSL https://antigravity.google/cli/install.sh | bash
 
       - name: Run Antigravity Module Bump
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
-          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
         run: |
-          antigravity run \
-            --prompt "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
-            --workspace .
+          # TODO: Connect GCP Service Account for headless auth
+          
+          ~/.local/bin/agy -p "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
+            --add-dir . \
+            --yes < /dev/null

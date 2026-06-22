@@ -225,15 +225,18 @@ jobs:
       # --- 6. ANTIGRAVITY INCIDENT TRIAGE ---
       - name: Install Antigravity CLI
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.alert_text != ''
-        run: curl -sSfL https://storage.googleapis.com/antigravity-cli/install.sh | bash
+        run: curl -fsSL https://antigravity.google/cli/install.sh | bash
 
       - name: Antigravity Incident Triage
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.alert_text != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
         run: |
-          antigravity run \
-            --prompt "Correlate the alert text with recent commits, identify the failure layer (Terraform / ingress / ECS / app), open a draft PR on the agent branch with a proposed fix + link to the alert. Honour the Agent-TDD rule (failing reproduction first, no speculative fixes presented as verified). Post a triage summary to Slack." \
-            --workspace . \
-            --input "${{ github.event.inputs.alert_text }}"
+          # TODO: Connect GCP Service Account for headless auth
+          
+          echo "${{ github.event.inputs.alert_text }}" > alert_text.txt
+          
+          ~/.local/bin/agy -p "Correlate the alert text with recent commits, identify the failure layer (Terraform / ingress / ECS / app), open a draft PR on the agent branch with a proposed fix + link to the alert. Honour the Agent-TDD rule (failing reproduction first, no speculative fixes presented as verified). Post a triage summary to Slack." \
+            --prompt-file alert_text.txt \
+            --add-dir . \
+            --yes < /dev/null
