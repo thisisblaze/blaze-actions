@@ -27,7 +27,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.ANTIGRAVITY_GCP_SA }}
-          audience: 'https://github.com/thebyte9'
+          audience: ${{ secrets.GCP_WIF_AUDIENCE }}
 
       - name: Run Antigravity Module Bump
         env:
