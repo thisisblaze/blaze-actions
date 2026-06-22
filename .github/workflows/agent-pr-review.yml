@@ -2,6 +2,13 @@ name: Agent PR Review (Routine 1)
 
 on:
   workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      ANTIGRAVITY_GCP_SA:
+        required: false
 
 permissions:
   id-token: write        # REQUIRED for GitHub→GCP OIDC
