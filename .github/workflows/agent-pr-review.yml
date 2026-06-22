@@ -2,9 +2,6 @@ name: Agent PR Review (Routine 1)
 
 on:
   workflow_call:
-    secrets:
-      ANTIGRAVITY_API_KEY:
-        required: true
 
 permissions:
   id-token: write        # REQUIRED for GitHub→GCP OIDC
