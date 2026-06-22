@@ -29,4 +29,4 @@ jobs:
           
           ~/.local/bin/agy -p "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
             --add-dir . \
-            --yes < /dev/null
+            --dangerously-skip-permissions < /dev/null

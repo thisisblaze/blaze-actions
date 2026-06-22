@@ -234,9 +234,9 @@ jobs:
         run: |
           # TODO: Connect GCP Service Account for headless auth
           
-          echo "${{ github.event.inputs.alert_text }}" > alert_text.txt
+          ~/.local/bin/agy -p "Correlate the alert text with recent commits, identify the failure layer (Terraform / ingress / ECS / app), open a draft PR on the agent branch with a proposed fix + link to the alert. Honour the Agent-TDD rule (failing reproduction first, no speculative fixes presented as verified). Post a triage summary to Slack.
           
-          ~/.local/bin/agy -p "Correlate the alert text with recent commits, identify the failure layer (Terraform / ingress / ECS / app), open a draft PR on the agent branch with a proposed fix + link to the alert. Honour the Agent-TDD rule (failing reproduction first, no speculative fixes presented as verified). Post a triage summary to Slack." \
-            --prompt-file alert_text.txt \
+          Alert text:
+          ${{ github.event.inputs.alert_text }}" \
             --add-dir . \
-            --yes < /dev/null
+            --dangerously-skip-permissions < /dev/null

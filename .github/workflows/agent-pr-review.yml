@@ -55,8 +55,10 @@ jobs:
             (5) supply chain (mutable action tags).
             Enforce the 4-repo no-duplication rule.
             Output inline comments + ❌ REJECTED / ⚠️ WARNING / ✅ APPROVED. Do NOT write fixes.
-            Use the 'gh' CLI to post your review to the PR #${{ github.event.pull_request.number }}." \
-            --prompt-file pr.diff \
+            Use the 'gh' CLI to post your review to the PR #${{ github.event.pull_request.number }}.
+            
+            Diff to review:
+            $(cat pr.diff)" \
             --add-dir . \
             --add-dir .conductor \
-            --yes < /dev/null
+            --dangerously-skip-permissions < /dev/null
