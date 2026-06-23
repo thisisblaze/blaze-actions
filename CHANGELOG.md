@@ -2,6 +2,10 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+### Changed
+- feat: `calculate-config` now natively derives infrastructure routing (`DB_TIER`, `ELASTIC_TIER`, `DEDICATED_ALB`, etc.) from `PROJECT_TIER` and `POD` inputs, centralizing the environment capacity tier mapping (Plan 168).
+
 ## v2.10.5 (2026-06-21)
 
 ### Changed

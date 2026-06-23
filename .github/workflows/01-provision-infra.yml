@@ -375,7 +375,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.10.3
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.3
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
