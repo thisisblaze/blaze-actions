@@ -64,7 +64,7 @@ Any file that receives a material update to its content during this sync MUST ha
    - You are **forbidden** from writing a python or bash script to find and replace dates globally.
    - For each file you identified, you must briefly verify its claims against the codebase.
    - If the instructions or architecture described in a file have changed recently, fix the content, then update the timestamp string to today's date (`YYYY-MM-DD`).
-   - Treat "Last Updated: 2026-06-17" as a hard requirement for all modified files.
+   - Treat "Last Updated: 2026-06-23" as a hard requirement for all modified files.
 
 ## Phase 4: Global Changelog Compilation
 
