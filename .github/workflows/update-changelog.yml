@@ -9,7 +9,7 @@ on:
             - "v*.*.*" # Triggers on version tags like v1.4.0, v2.0.0, etc.
 
 permissions:
-  id-token: write
+    id-token: write
     contents: write # Needed to commit CHANGELOG updates
     pull-requests: write # Needed to create PR if desired
 

@@ -14,7 +14,7 @@ on:
             - ".github/actions/**"
 
 permissions:
-  id-token: write
+    id-token: write
     contents: read
     pull-requests: read
 
