@@ -51,8 +51,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write # OIDC cloud auth
-
 jobs:
   sleep:
     permissions:
@@ -63,51 +61,52 @@ jobs:
     timeout-minutes: 15
     if: inputs.action == 'sleep'
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ inputs.aws_region }}
+    - name: Configure AWS Credentials
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ inputs.aws_region }}
 
-      - name: "Step 1 — Scale ECS Services to 0"
-        run: |
-          CLUSTER="${{ inputs.cluster }}"
-          REGION="${{ inputs.aws_region }}"
-          IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
-          echo "## 😴 Sleep: ECS first, RDS second" >> $GITHUB_STEP_SUMMARY
-          for SVC in "${SERVICES[@]}"; do
-            SVC=$(echo "$SVC" | xargs)
-            STATUS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
-              --region "$REGION" --query 'services[0].status' --output text 2>/dev/null || echo "NOT_FOUND")
-            if [[ "$STATUS" == "NOT_FOUND" || "$STATUS" == "INACTIVE" ]]; then
-              echo "⚠️  $SVC not found — skipping."; echo "| $SVC | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; continue
-            fi
-            aws ecs update-service --cluster "$CLUSTER" --service "$SVC" \
-              --desired-count 0 --region "$REGION" --output json > /dev/null
-            echo "✅ $SVC → desiredCount=0"; echo "| $SVC | ✅ Scaled to 0 | OK |" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "⏳ Draining ECS tasks (30s)..."; sleep 30
-          echo "✅ ECS drained. Safe to stop RDS."
-
-      - name: "Step 2 — Stop RDS Instance"
-        if: inputs.db_instance != ''
-        run: |
-          DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
-          STATUS=$(aws rds describe-db-instances --db-instance-identifier "$DB" --region "$REGION" \
-            --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null || echo "not-found")
-          if [[ "$STATUS" == "not-found" || "$STATUS" == "stopped" || "$STATUS" == "stopping" ]]; then
-            echo "✅ RDS $DB is $STATUS — skipping stop."; echo "| RDS $DB | ✅ $STATUS | OK |" >> $GITHUB_STEP_SUMMARY; exit 0
+    - name: "Step 1 — Scale ECS Services to 0"
+      run: |
+        CLUSTER="${{ inputs.cluster }}"
+        REGION="${{ inputs.aws_region }}"
+        IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
+        echo "## 😴 Sleep: ECS first, RDS second" >> $GITHUB_STEP_SUMMARY
+        for SVC in "${SERVICES[@]}"; do
+          SVC=$(echo "$SVC" | xargs)
+          STATUS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
+            --region "$REGION" --query 'services[0].status' --output text 2>/dev/null || echo "NOT_FOUND")
+          if [[ "$STATUS" == "NOT_FOUND" || "$STATUS" == "INACTIVE" ]]; then
+            echo "⚠️  $SVC not found — skipping."; echo "| $SVC | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; continue
           fi
-          if [[ "$STATUS" != "available" ]]; then
-            echo "⚠️ RDS $DB state=$STATUS — cannot stop."; echo "| RDS $DB | ⚠️ $STATUS | Skipped |" >> $GITHUB_STEP_SUMMARY; exit 0
-          fi
-          aws rds stop-db-instance --db-instance-identifier "$DB" --region "$REGION" --output json > /dev/null
-          echo "✅ RDS stop initiated for $DB."; echo "| RDS $DB | ✅ Stop initiated | OK |" >> $GITHUB_STEP_SUMMARY
+          aws ecs update-service --cluster "$CLUSTER" --service "$SVC" \
+            --desired-count 0 --region "$REGION" --output json > /dev/null
+          echo "✅ $SVC → desiredCount=0"; echo "| $SVC | ✅ Scaled to 0 | OK |" >> $GITHUB_STEP_SUMMARY
+        done
+        echo "⏳ Draining ECS tasks (30s)..."; sleep 30
+        echo "✅ ECS drained. Safe to stop RDS."
 
-      - name: "📋 Sleep Summary"
-        if: always()
-        run: |
-          echo "**Done**: $(date -u '+%Y-%m-%d %H:%M UTC') | Cluster: ${{ inputs.cluster }} | RDS: ${{ inputs.db_instance || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+    - name: "Step 2 — Stop RDS Instance"
+      if: inputs.db_instance != ''
+      run: |
+        DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
+        STATUS=$(aws rds describe-db-instances --db-instance-identifier "$DB" --region "$REGION" \
+          --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null || echo "not-found")
+        if [[ "$STATUS" == "not-found" || "$STATUS" == "stopped" || "$STATUS" == "stopping" ]]; then
+          echo "✅ RDS $DB is $STATUS — skipping stop."; echo "| RDS $DB | ✅ $STATUS | OK |" >> $GITHUB_STEP_SUMMARY; exit 0
+        fi
+        if [[ "$STATUS" != "available" ]]; then
+          echo "⚠️ RDS $DB state=$STATUS — cannot stop."; echo "| RDS $DB | ⚠️ $STATUS | Skipped |" >> $GITHUB_STEP_SUMMARY; exit 0
+        fi
+        aws rds stop-db-instance --db-instance-identifier "$DB" --region "$REGION" --output json > /dev/null
+        echo "✅ RDS stop initiated for $DB."; echo "| RDS $DB | ✅ Stop initiated | OK |" >> $GITHUB_STEP_SUMMARY
+
+    - name: "📋 Sleep Summary"
+      if: always()
+      run: |
+        echo "**Done**: $(date -u '+%Y-%m-%d %H:%M UTC') | Cluster: ${{ inputs.cluster }} | RDS: ${{ inputs.db_instance || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
 
   wake:
     permissions:
@@ -118,67 +117,68 @@ jobs:
     timeout-minutes: 20
     if: inputs.action == 'wake'
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ inputs.aws_region }}
+    - name: Configure AWS Credentials
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ inputs.aws_region }}
 
-      - name: "Step 1 — Start RDS Instance"
-        if: inputs.db_instance != ''
-        run: |
-          DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
-          echo "## ☀️ Wake: RDS first, ECS second" >> $GITHUB_STEP_SUMMARY
+    - name: "Step 1 — Start RDS Instance"
+      if: inputs.db_instance != ''
+      run: |
+        DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
+        echo "## ☀️ Wake: RDS first, ECS second" >> $GITHUB_STEP_SUMMARY
+        STATUS=$(aws rds describe-db-instances --db-instance-identifier "$DB" --region "$REGION" \
+          --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null || echo "not-found")
+        if [[ "$STATUS" == "not-found" ]]; then
+          echo "⚠️ RDS $DB not found — skipping."; echo "| RDS $DB | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; exit 0
+        fi
+        if [[ "$STATUS" == "available" ]]; then
+          echo "✅ RDS $DB already available."; echo "| RDS $DB | ✅ Available | OK |" >> $GITHUB_STEP_SUMMARY; exit 0
+        fi
+        if [[ "$STATUS" != "stopped" ]]; then
+          echo "⚠️ RDS $DB state=$STATUS — proceeding (ECS may fail if DB unavailable)."; exit 0
+        fi
+        aws rds start-db-instance --db-instance-identifier "$DB" --region "$REGION" --output json > /dev/null
+        echo "✅ RDS start initiated for $DB."; echo "| RDS $DB | ✅ Start initiated | OK |" >> $GITHUB_STEP_SUMMARY
+
+    - name: "Step 2 — Wait for RDS Available"
+      if: inputs.db_instance != ''
+      run: |
+        DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
+        MAX_WAIT=${{ inputs.rds_wait_minutes }}; INTERVAL=30; ELAPSED=0
+        echo "⏳ Waiting for RDS $DB (max ${MAX_WAIT}m)..."
+        while true; do
           STATUS=$(aws rds describe-db-instances --db-instance-identifier "$DB" --region "$REGION" \
             --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null || echo "not-found")
-          if [[ "$STATUS" == "not-found" ]]; then
-            echo "⚠️ RDS $DB not found — skipping."; echo "| RDS $DB | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; exit 0
+          echo "  [${ELAPSED}s] $STATUS"
+          [[ "$STATUS" == "available" ]] && echo "✅ RDS available." && break
+          ELAPSED=$((ELAPSED + INTERVAL))
+          if [[ $ELAPSED -ge $((MAX_WAIT * 60)) ]]; then
+            echo "⚠️ RDS wait timeout after ${MAX_WAIT}m — proceeding anyway."; break
           fi
-          if [[ "$STATUS" == "available" ]]; then
-            echo "✅ RDS $DB already available."; echo "| RDS $DB | ✅ Available | OK |" >> $GITHUB_STEP_SUMMARY; exit 0
+          sleep $INTERVAL
+        done
+
+    - name: "Step 3 — Scale ECS Services to ${{ inputs.desired_count_wake }}"
+      run: |
+        CLUSTER="${{ inputs.cluster }}"; REGION="${{ inputs.aws_region }}"; DESIRED=${{ inputs.desired_count_wake }}
+        IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
+        echo "## ⬆️ Scaling ECS to ${DESIRED}" >> $GITHUB_STEP_SUMMARY
+        for SVC in "${SERVICES[@]}"; do
+          SVC=$(echo "$SVC" | xargs)
+          STATUS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
+            --region "$REGION" --query 'services[0].status' --output text 2>/dev/null || echo "NOT_FOUND")
+          if [[ "$STATUS" == "NOT_FOUND" || "$STATUS" == "INACTIVE" ]]; then
+            echo "⚠️ $SVC not found — skipping."; echo "| $SVC | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; continue
           fi
-          if [[ "$STATUS" != "stopped" ]]; then
-            echo "⚠️ RDS $DB state=$STATUS — proceeding (ECS may fail if DB unavailable)."; exit 0
-          fi
-          aws rds start-db-instance --db-instance-identifier "$DB" --region "$REGION" --output json > /dev/null
-          echo "✅ RDS start initiated for $DB."; echo "| RDS $DB | ✅ Start initiated | OK |" >> $GITHUB_STEP_SUMMARY
+          aws ecs update-service --cluster "$CLUSTER" --service "$SVC" \
+            --desired-count "$DESIRED" --region "$REGION" --output json > /dev/null
+          echo "✅ $SVC → desiredCount=${DESIRED}"; echo "| $SVC | ✅ Scaled to ${DESIRED} | OK |" >> $GITHUB_STEP_SUMMARY
+        done
 
-      - name: "Step 2 — Wait for RDS Available"
-        if: inputs.db_instance != ''
-        run: |
-          DB="${{ inputs.db_instance }}"; REGION="${{ inputs.aws_region }}"
-          MAX_WAIT=${{ inputs.rds_wait_minutes }}; INTERVAL=30; ELAPSED=0
-          echo "⏳ Waiting for RDS $DB (max ${MAX_WAIT}m)..."
-          while true; do
-            STATUS=$(aws rds describe-db-instances --db-instance-identifier "$DB" --region "$REGION" \
-              --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null || echo "not-found")
-            echo "  [${ELAPSED}s] $STATUS"
-            [[ "$STATUS" == "available" ]] && echo "✅ RDS available." && break
-            ELAPSED=$((ELAPSED + INTERVAL))
-            if [[ $ELAPSED -ge $((MAX_WAIT * 60)) ]]; then
-              echo "⚠️ RDS wait timeout after ${MAX_WAIT}m — proceeding anyway."; break
-            fi
-            sleep $INTERVAL
-          done
-
-      - name: "Step 3 — Scale ECS Services to ${{ inputs.desired_count_wake }}"
-        run: |
-          CLUSTER="${{ inputs.cluster }}"; REGION="${{ inputs.aws_region }}"; DESIRED=${{ inputs.desired_count_wake }}
-          IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
-          echo "## ⬆️ Scaling ECS to ${DESIRED}" >> $GITHUB_STEP_SUMMARY
-          for SVC in "${SERVICES[@]}"; do
-            SVC=$(echo "$SVC" | xargs)
-            STATUS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
-              --region "$REGION" --query 'services[0].status' --output text 2>/dev/null || echo "NOT_FOUND")
-            if [[ "$STATUS" == "NOT_FOUND" || "$STATUS" == "INACTIVE" ]]; then
-              echo "⚠️ $SVC not found — skipping."; echo "| $SVC | ⚠️ Not Found | Skipped |" >> $GITHUB_STEP_SUMMARY; continue
-            fi
-            aws ecs update-service --cluster "$CLUSTER" --service "$SVC" \
-              --desired-count "$DESIRED" --region "$REGION" --output json > /dev/null
-            echo "✅ $SVC → desiredCount=${DESIRED}"; echo "| $SVC | ✅ Scaled to ${DESIRED} | OK |" >> $GITHUB_STEP_SUMMARY
-          done
-
-      - name: "📋 Wake Summary"
-        if: always()
-        run: |
-          echo "**Done**: $(date -u '+%Y-%m-%d %H:%M UTC') | Cluster: ${{ inputs.cluster }} | ECS desired: ${{ inputs.desired_count_wake }}" >> $GITHUB_STEP_SUMMARY
+    - name: "📋 Wake Summary"
+      if: always()
+      run: |
+        echo "**Done**: $(date -u '+%Y-%m-%d %H:%M UTC') | Cluster: ${{ inputs.cluster }} | ECS desired: ${{ inputs.desired_count_wake }}" >> $GITHUB_STEP_SUMMARY

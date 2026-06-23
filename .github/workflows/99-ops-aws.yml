@@ -385,7 +385,7 @@ jobs:
           STAGE_KEY: ${{ needs.configuration.outputs.stage_key }}
         run: |
           # 1. Debug & Setup
-          set -o pipefail
+          set -euo pipefail
           echo "🔎 PARAMETER CHECK:"
           echo "   - NAMESPACE: '$NAMESPACE'"
           echo "   - STAGE_KEY: '$STAGE_KEY'"
