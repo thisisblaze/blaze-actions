@@ -319,7 +319,7 @@ jobs:
 
     - name: Check Access
       if: steps.load-access.outputs.allowed != ''
-      uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.5
+      uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
       with:
         allowed_users: ${{ steps.load-access.outputs.allowed }}
         actor: ${{ github.actor }}
@@ -386,7 +386,7 @@ jobs:
 
     - name: Calculate Configuration
       id: config
-      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.5
+      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
       with:
         environment: ${{ inputs.environment }}
         project: ${{ inputs.project }}
@@ -446,7 +446,7 @@ jobs:
     - name: Build and Publish Sharp Layer
       id: build
       if: steps.existing.outputs.exists != 'true'
-      uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.5
+      uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.6
       with:
         aws-region: 'us-east-1'
         layer-name: 'sharp-image-processing'
@@ -463,7 +463,7 @@ jobs:
       id-token: write
       contents: read
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.5
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -718,7 +718,7 @@ jobs:
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && 
       (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.5
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.6
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
