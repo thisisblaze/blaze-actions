@@ -170,6 +170,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
+  id-token: write
   contents: read
 concurrency:
   group: setup-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ github.ref }}

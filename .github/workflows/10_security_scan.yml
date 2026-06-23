@@ -21,6 +21,7 @@ on:
 # Least-privilege default for ALL jobs; elevated scopes are granted per-job below
 # (id-token only on the Scorecard job, pull-requests only on the reporting job).
 permissions:
+  id-token: write
   contents: read
 
 concurrency:
