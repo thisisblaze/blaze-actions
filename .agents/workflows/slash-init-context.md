@@ -84,6 +84,7 @@ gh run list --workflow="01-provision-infra.yml" -f stack="network" --repo <tenan
 ### 3. Frugal Reading
 
 - Do **NOT** read the full `AGENTS.md` automatically here (it should be loaded in `/engage`).
+- **MUST READ**: `docs/AI_CONTEXT_GOVERNANCE.md` to ensure awareness of the Stage Safety Protocol and dynamic namespace rules before proceeding.
 - Do **NOT** read `docs/reference/NETWORK_STACK_RESOURCES.md` completely. Instead use `grep_search` on it to find the specific Resource Naming convention for the service you are about to build.
 
 ### 4. Output Summary

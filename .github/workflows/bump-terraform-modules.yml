@@ -1,69 +1,58 @@
-name: 🔄 Bump Terraform Modules
+name: 🔄 Bump Terraform Modules (reusable)
+
+# Reusable workflow. A tenant calls this on an infra-core release to bump its OWN
+# blaze-terraform-infra-core module `?ref=` pins and open a PR. Runs in the CALLER's
+# context (its GITHUB_TOKEN), so no cross-repo PAT and no agy/GCP auth are needed.
+# Trigger lives in the tenant; this public engine only exposes the logic.
 
 on:
-  schedule:
-    - cron: "0 0 * * 0" # Every Sunday at midnight
-  workflow_dispatch: # Allow manual trigger
+  workflow_call:
+    inputs:
+      version:
+        description: Target infra-core module version (e.g. v2.10.1)
+        required: true
+        type: string
+  workflow_dispatch: # manual ops escape hatch (matches the 99-ops-* convention)
+    inputs:
+      version:
+        description: Target infra-core module version (e.g. v2.10.1)
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
-  actions: write
 
 jobs:
   bump:
     name: Bump Modules
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.x"
-
-      - name: Run bump script
-        id: run_bump
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          python3 scripts/bump_tf_modules.py > bump_output.txt
-          cat bump_output.txt
-          
-          # Extract version from output
-          LATEST_VERSION=$(grep -oE "Latest version found: v[0-9]+\.[0-9]+\.[0-9]+" bump_output.txt | awk '{print $4}')
-          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          
-          # Check if files were updated
-          if grep -q "Updating" bump_output.txt; then
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes_detected=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Pull Request
-        if: steps.run_bump.outputs.changes_detected == 'true'
+      - name: Bump module source refs + open PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LATEST_VERSION: ${{ steps.run_bump.outputs.latest_version }}
+          V: ${{ inputs.version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          BRANCH="automation/bump-tf-modules"
-          git checkout -b $BRANCH
-          git add .
-          git commit -m "chore(deps): bump terraform modules to $LATEST_VERSION"
-          git push origin $BRANCH --force
-          
-          # Create PR if it doesn't exist
-          PR_EXISTS=$(gh pr list --head $BRANCH --json number --jq '.[0].number')
-          if [ -z "$PR_EXISTS" ]; then
-            gh pr create --title "chore(deps): bump terraform modules to $LATEST_VERSION" \
-                         --body "Automated pull request to bump all blaze-terraform-infra-core module references to $LATEST_VERSION." \
-                         --base dev \
-                         --head $BRANCH
-          else
-            echo "PR already exists for branch $BRANCH."
+          if [ "$V" = "v2.8.0" ]; then
+            echo "::error::v2.8.0 is burned — refusing to pin to it"; exit 1
           fi
+          BRANCH="claude/bump-infra-core-$V"
+          git config user.name  "blaze-bot"
+          git config user.email "blaze-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          # Repin every blaze-terraform-infra-core module ref to $V across the repo.
+          grep -rlE "blaze-terraform-infra-core\.git//" --include="*.tf" . \
+            | xargs -r sed -i -E "s|(blaze-terraform-infra-core\.git//[^?]+\?ref=)[^\"']+|\1$V|g"
+          if git diff --quiet; then
+            echo "No infra-core module refs to bump — nothing to do."; exit 0
+          fi
+          git commit -am "chore: bump infra-core module to $V"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: bump infra-core module to $V" \
+            --body "Automated module-ref bump to \`$V\` (Routine 3). Review \`terraform plan\` before merge." \
+            --head "$BRANCH" \
+            --base "$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"

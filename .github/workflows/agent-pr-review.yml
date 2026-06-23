@@ -1,0 +1,89 @@
+name: Agent PR Review (Routine 1)
+
+# Reusable workflow — invoked by tenant repos on pull_request.
+# Native Anthropic API path (no agy): runs the blaze-conductor orchestrator,
+# the same logic 11-mcp-pr-review.yml uses. Canonical definition:
+# blaze-actions/routines/routine-1-pr-review.md
+
+on:
+  workflow_call:
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: false
+      GH_PAT:
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-review:
+    name: 🕵️ Architecture Review (blaze-conductor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout caller repo (tenant)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout blaze-conductor
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-conductor
+          token: ${{ secrets.GH_PAT }}
+          path: .conductor
+          ref: main # TODO: pin to a release SHA/tag in production (Kill-Chain 5)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install blaze-conductor deps
+        working-directory: .conductor
+        run: npm ci --prefer-offline
+
+      - name: Extract Terraform diff
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          git diff "origin/${{ github.base_ref }}...HEAD" -- '*.tf' | head -c 8000 > /tmp/tf_diff.txt
+
+      - name: Detect cloud provider
+        id: detect
+        run: |
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if   echo "$CHANGED" | grep -q "^\.github/aws/";   then echo "cloud=aws"   >> "$GITHUB_OUTPUT"
+          elif echo "$CHANGED" | grep -q "^\.github/gcp/";   then echo "cloud=gcp"   >> "$GITHUB_OUTPUT"
+          elif echo "$CHANGED" | grep -q "^\.github/azure/"; then echo "cloud=azure" >> "$GITHUB_OUTPUT"
+          else echo "cloud=aws" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Run architecture review (native Anthropic API)
+        id: review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BLAZE_DOCS_ROOT: ${{ github.workspace }}/docs/architecture
+          CLOUD_PROVIDER: ${{ steps.detect.outputs.cloud }}
+        run: |
+          export TF_DIFF=$(cat /tmp/tf_diff.txt)
+          node .conductor/orchestrators/pr-architecture-review.js
+        continue-on-error: true # CRITICAL is re-raised below; keeps the comment step running
+
+      - name: Post review comment (false-green guard)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f mcp-review-comment.md ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body-file mcp-review-comment.md
+          else
+            echo "::error::No review produced — orchestrator did not emit mcp-review-comment.md"
+            exit 1
+          fi
+
+      - name: Fail on CRITICAL risk
+        if: steps.review.outcome == 'failure'
+        run: |
+          echo "::error::blaze-conductor flagged CRITICAL architectural risk — review before merge."
+          exit 1
