@@ -127,6 +127,7 @@ on:
       DEPLOY_KEY:
         required: false
 permissions:
+  id-token: write
   contents: read
   actions: write
 
