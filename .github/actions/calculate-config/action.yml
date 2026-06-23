@@ -558,10 +558,12 @@ runs:
                   fi
                fi
 
-               # multi-site stacks are NOT scoped per-env — dirs are named globally.
-               # dev, dev-mini, and multi-site all use the unprefixed stack name.
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" || "$STAGE_KEY" == "multi-site" ]]; then
+               # dev and multi-site use the unprefixed stack name. dev-mini uses explicitly dev-mini prefixed stacks.
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "multi-site" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${STACK_DIR}"
+               elif [[ "$STAGE_KEY" == "dev-mini" ]]; then
+                  # Remove "multi-site-" if present to map to "dev-mini-network" and "dev-mini-app"
+                  TF_DIR="${INFRA_PREFIX}/dev-mini-${STACK_DIR#multi-site-}"
                else
                   # For stage/prod, prefix the env: stage-multi-site-app or stage-multi-site-app-support
                   if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
