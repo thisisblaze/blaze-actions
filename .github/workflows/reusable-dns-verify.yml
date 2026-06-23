@@ -126,7 +126,7 @@ jobs:
       ready: ${{ steps.check.outputs.ready }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
 
       - name: Verify DNS Records
         id: check
@@ -239,7 +239,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
 
       - name: Update State and Close Issue
         env:

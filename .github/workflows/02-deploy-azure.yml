@@ -782,14 +782,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout Actions Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thisisblaze/blaze-actions
           ref: ${{ github.action_ref || github.ref }}
           path: .blaze-actions
       
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 

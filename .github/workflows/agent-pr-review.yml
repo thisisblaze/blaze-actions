@@ -24,12 +24,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout caller repo (tenant)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Checkout blaze-conductor
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thisisblaze/blaze-conductor
           token: ${{ secrets.GH_PAT }}
@@ -37,7 +37,7 @@ jobs:
           ref: 5141a3d6b5ff454759aecaadf6fd112b1ba2d09e
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
 

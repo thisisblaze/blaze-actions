@@ -171,7 +171,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
 
       - name: Render Markdown and JSON State
         run: |
