@@ -288,7 +288,7 @@ jobs:
           aws-region: ${{ inputs.aws_region }}
 
       - name: Authenticate to Google Cloud
-        if: inputs.cloud_provider == 'gcp'
+        if: inputs.cloud_provider == 'gcp' || contains(inputs.tf_dir, 'db-pod-premium')
         id: google-auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
@@ -299,12 +299,12 @@ jobs:
           create_credentials_file: false
 
       - name: Export GCP Token for Terraform
-        if: inputs.cloud_provider == 'gcp'
+        if: inputs.cloud_provider == 'gcp' || contains(inputs.tf_dir, 'db-pod-premium')
         run: echo "GOOGLE_OAUTH_ACCESS_TOKEN=${{ steps.google-auth.outputs.access_token }}" >> "$GITHUB_ENV"
 
 
       - name: Authenticate to Azure
-        if: inputs.cloud_provider == 'azure'
+        if: inputs.cloud_provider == 'azure' || contains(inputs.tf_dir, 'db-pod-premium')
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -388,7 +388,7 @@ jobs:
             echo "MONGODB_ATLAS_PRIVATE_KEY=$MONGODB_ATLAS_PRIVATE_KEY"
             echo "MONGODB_ATLAS_PROJECT_ID=$MONGODB_ATLAS_PROJECT_ID"
             echo "TF_VAR_ec_api_key=$EC_API_KEY"
-            echo "ARM_USE_OIDC=${{ inputs.cloud_provider == 'azure' && 'true' || 'false' }}"
+            echo "ARM_USE_OIDC=${{ (inputs.cloud_provider == 'azure' || contains(inputs.tf_dir, 'db-pod-premium')) && 'true' || 'false' }}"
             echo "ARM_CLIENT_ID=$ARM_CLIENT_ID"
             echo "ARM_TENANT_ID=$ARM_TENANT_ID"
             echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
