@@ -165,7 +165,7 @@ jobs:
             echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.5
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.6
         with:
           cloud-provider: ${{ inputs.cloud_platform }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
