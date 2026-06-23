@@ -15,6 +15,10 @@ inputs:
   branch_tag:
     required: false
     description: "Feature branch tag (for feature-branch stacks)"
+  project:
+    required: false
+    default: "thisisblaze"
+    description: "Project (App Identity) - e.g. thisisblaze, support"
 
 outputs:
   stage_key:
@@ -92,8 +96,12 @@ runs:
           exit 1
         fi
 
-        # Load PROJECT config (vars/thisisblaze/blaze-env.json)
-        PROJECT_CONFIG="${{ github.workspace }}/vars/thisisblaze/blaze-env.json"
+        # Load PROJECT config
+        INPUT_PROJECT="${{ inputs.project }}"
+        if [[ -z "$INPUT_PROJECT" ]]; then
+           INPUT_PROJECT="thisisblaze"
+        fi
+        PROJECT_CONFIG="${{ github.workspace }}/vars/$INPUT_PROJECT/blaze-env.json"
         if ! test -f "$PROJECT_CONFIG"; then
           echo "❌ ERROR: Project config file $PROJECT_CONFIG not found!"
           exit 1
