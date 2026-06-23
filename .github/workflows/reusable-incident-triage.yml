@@ -38,7 +38,7 @@ jobs:
           repository: thisisblaze/blaze-conductor
           token: ${{ secrets.GH_PAT }}
           path: .conductor
-          ref: main # TODO: pin to a release SHA/tag in production (Kill-Chain 5)
+          ref: 5141a3d6b5ff454759aecaadf6fd112b1ba2d09e
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
