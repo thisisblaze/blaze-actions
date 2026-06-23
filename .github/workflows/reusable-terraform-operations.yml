@@ -188,8 +188,8 @@ jobs:
         env:
           TF_VARS_JSON: ${{ inputs.terraform_vars }}
         run: |
-          set -e
-          set -o pipefail
+          # Export TF_VARs for inputs
+          set -euo pipefail
 
           # 🎯 NOTE: Common variables (client_key, project_key, etc.) are passed directly in the
           # Terraform step's env: block below. This JSON parsing is for ADDITIONAL variables only

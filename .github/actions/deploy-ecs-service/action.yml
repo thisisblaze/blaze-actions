@@ -559,7 +559,7 @@ runs:
         echo "🏷️  Container name resolved: $CONTAINER_NAME (service: $TARGET_SERVICE)"
 
         echo "📝 Rendering $TEMPLATE to task-def.json..."
-        set -o pipefail
+        set -euo pipefail
         envsubst < "$TEMPLATE" > task-def.json
 
         # Validation — fail fast on malformed or under-populated task-defs (plan 161 S3).
