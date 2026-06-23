@@ -1,38 +1,58 @@
-name: 🔄 Bump Terraform Modules
+name: 🔄 Bump Terraform Modules (reusable)
+
+# Reusable workflow. A tenant calls this on an infra-core release to bump its OWN
+# blaze-terraform-infra-core module `?ref=` pins and open a PR. Runs in the CALLER's
+# context (its GITHUB_TOKEN), so no cross-repo PAT and no agy/GCP auth are needed.
+# Trigger lives in the tenant; this public engine only exposes the logic.
 
 on:
-  repository_dispatch:
-    types: [infra-core-release]
-  workflow_dispatch: # Allow manual trigger
+  workflow_call:
+    inputs:
+      version:
+        description: Target infra-core module version (e.g. v2.10.1)
+        required: true
+        type: string
+  workflow_dispatch: # manual ops escape hatch (matches the 99-ops-* convention)
+    inputs:
+      version:
+        description: Target infra-core module version (e.g. v2.10.1)
+        required: true
+        type: string
 
 permissions:
-  id-token: write        # REQUIRED for GitHub→GCP OIDC
   contents: write
   pull-requests: write
-  actions: write
 
 jobs:
   bump:
     name: Bump Modules
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Antigravity CLI
-        run: curl -fsSL https://antigravity.google/cli/install.sh | bash
-
-      - name: Authenticate to Google Cloud (WIF → ADC)
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.ANTIGRAVITY_GCP_SA }}
-          audience: ${{ secrets.GCP_WIF_AUDIENCE }}
-
-      - name: Run Antigravity Module Bump
+      - name: Bump module source refs + open PR
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ inputs.version }}
         run: |
-          ~/.local/bin/agy -p "Detect the new module version tag from blaze-terraform-infra-core. For each tenant repo, bump the module source ref. Run 'terraform init' and 'terraform validate' where possible. Open a PR with title 'chore: bump infra-core module to <version>'. Respect v2.8.0-burned: never reset to v2.8.0; target v2.8.3+. Do not push to protected branches." \
-            --add-dir . \
-            --dangerously-skip-permissions < /dev/null
+          if [ "$V" = "v2.8.0" ]; then
+            echo "::error::v2.8.0 is burned — refusing to pin to it"; exit 1
+          fi
+          BRANCH="claude/bump-infra-core-$V"
+          git config user.name  "blaze-bot"
+          git config user.email "blaze-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          # Repin every blaze-terraform-infra-core module ref to $V across the repo.
+          grep -rlE "blaze-terraform-infra-core\.git//" --include="*.tf" . \
+            | xargs -r sed -i -E "s|(blaze-terraform-infra-core\.git//[^?]+\?ref=)[^\"']+|\1$V|g"
+          if git diff --quiet; then
+            echo "No infra-core module refs to bump — nothing to do."; exit 0
+          fi
+          git commit -am "chore: bump infra-core module to $V"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: bump infra-core module to $V" \
+            --body "Automated module-ref bump to \`$V\` (Routine 3). Review \`terraform plan\` before merge." \
+            --head "$BRANCH" \
+            --base "$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"

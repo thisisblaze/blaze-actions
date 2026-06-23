@@ -1,0 +1,80 @@
+name: 🚨 Incident Triage (reusable)
+
+# Reusable workflow. A tenant calls this (on workflow_dispatch / an alert webhook) to triage an
+# incident: runs the blaze-conductor incident-triage orchestrator (native Anthropic API, no agy)
+# and opens a DRAFT PR with the report. Runs in the CALLER's context. The trigger lives in the tenant.
+
+on:
+  workflow_call:
+    inputs:
+      alert_text:
+        description: Free-text alert body to triage
+        required: true
+        type: string
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: false
+      GH_PAT:
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  triage:
+    name: 🚨 Incident Triage (blaze-conductor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout caller repo (tenant)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout blaze-conductor
+        uses: actions/checkout@v4
+        with:
+          repository: thisisblaze/blaze-conductor
+          token: ${{ secrets.GH_PAT }}
+          path: .conductor
+          ref: main # TODO: pin to a release SHA/tag in production (Kill-Chain 5)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install blaze-conductor deps
+        working-directory: .conductor
+        run: npm ci --prefer-offline
+
+      - name: Run incident triage (native Anthropic API)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BLAZE_DOCS_ROOT: ${{ github.workspace }}/docs/architecture
+          ALERT_TEXT: ${{ inputs.alert_text }}
+        run: node .conductor/orchestrators/incident-triage.js
+
+      - name: Open draft PR from triage report
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f incident-triage.md ]; then
+            echo "::error::no triage report produced (orchestrator did not emit incident-triage.md)"; exit 1
+          fi
+          BRANCH="claude/incident-triage-${{ github.run_id }}"
+          git config user.name  "blaze-bot"
+          git config user.email "blaze-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          mkdir -p docs/incidents
+          cp incident-triage.md "docs/incidents/triage-${{ github.run_id }}.md"
+          git add docs/incidents/
+          git commit -m "triage: incident report ${{ github.run_id }} (proposed fix — not applied)"
+          git push origin "$BRANCH"
+          gh pr create --draft \
+            --title "🚨 Incident triage ${{ github.run_id }}" \
+            --body-file incident-triage.md \
+            --head "$BRANCH" \
+            --base "$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
