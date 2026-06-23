@@ -1,126 +1,126 @@
 name: "99 - Ops (Force Unlock State)"
 
 on:
-    workflow_dispatch:
-        inputs:
-            cloud_provider:
-                description: "Cloud Provider"
-                type: choice
-                options: ["aws", "gcp"]
-                default: "aws"
-            environment:
-                description: "Target Environment"
-                type: choice
-                options: ["DEV", "STAGE", "PROD"]
-                required: true
-            stack:
-                description: "Terraform Stack"
-                type: choice
-                options:
-                    - "network"
-                    - "acm"
-                    - "tunnel"
-                    - "app"
-                    - "third-party-mongodb"
-                    - "third-party-elastic"
-                required: true
-            branch_tag:
-                description: "Feature Tag (if applicable)"
-                required: false
-                type: string
-            reason:
-                description: "Why is this lock being force-removed? (required — recorded in the audit trail)"
-                required: true
-                type: string
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp"]
+        default: "aws"
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "STAGE", "PROD"]
+        required: true
+      stack:
+        description: "Terraform Stack"
+        type: choice
+        options:
+        - "network"
+        - "acm"
+        - "tunnel"
+        - "app"
+        - "third-party-mongodb"
+        - "third-party-elastic"
+        required: true
+      branch_tag:
+        description: "Feature Tag (if applicable)"
+        required: false
+        type: string
+      reason:
+        description: "Why is this lock being force-removed? (required — recorded in
+          the audit trail)"
+        required: true
+        type: string
 
-    workflow_call:
-        inputs:
-            cloud_provider:
-                type: string
-                default: "aws"
-                required: false
-            environment:
-                type: string
-                required: true
-            stack:
-                type: string
-                required: true
-            branch_tag:
-                type: string
-                required: false
-            reason:
-                type: string
-                required: false
-        secrets:
-          BLAZE_ELASTICSEARCH_USERNAME:
-            required: false
-          BLAZE_ELASTICSEARCH_PASSWORD:
-            required: false
-          BLAZE_ELASTICSEARCH_ENDPOINT:
-            required: false
-          AWS_ROLE_ARN:
-            required: false
-          GCP_WORKLOAD_IDENTITY_PROVIDER:
-            required: false
-          GCP_SERVICE_ACCOUNT:
-            required: false
-          AZURE_CLIENT_ID:
-            required: false
-          AZURE_TENANT_ID:
-            required: false
-          AZURE_SUBSCRIPTION_ID:
-            required: false
-          CLOUDFLARE_API_TOKEN:
-            required: false
-          CLOUDFLARE_ACCOUNT_ID:
-            required: false
-          CLOUDFLARE_ZONE_ID:
-            required: false
-          GH_PAT:
-            required: false
-          NPM_TOKEN:
-            required: false
-          INFRACOST_API_KEY:
-            required: false
-          BLAZE_CONNECTION_STRING:
-            required: false
-          BLAZE_AUTH_JWT_PRIVATE_KEY:
-            required: false
-          BLAZE_AUTH_ADMIN_EMAIL:
-            required: false
-          BLAZE_AUTH_ADMIN_PASSWORD:
-            required: false
-          BLAZE_FILES_S3_ACCESS_KEY:
-            required: false
-          BLAZE_FILES_S3_SECRET_ACCESS_KEY:
-            required: false
-          BLAZE_GRAPHQL_CACHE_SETTINGS:
-            required: false
-          BLAZE_CLIENT_HEADER:
-            required: false
-          EC_API_KEY:
-            required: false
-          MONGODB_ATLAS_PUBLIC_KEY:
-            required: false
-          MONGODB_ATLAS_PRIVATE_KEY:
-            required: false
-          MONGODB_ATLAS_ORG_ID:
-            required: false
-          MONGODB_ATLAS_PROJECT_ID:
-            required: false
-          ACM_CERTIFICATE_ARN:
-            required: false
-          BLAZE_SENTRY_AUTH_TOKEN:
-            required: false
-          BLAZE_SENTRY_DSN:
-            required: false
-          SLACK_WEBHOOK_URL:
-            required: false
-          DEPLOY_KEY:
-            required: false
+  workflow_call:
+    inputs:
+      cloud_provider:
+        type: string
+        default: "aws"
+        required: false
+      environment:
+        type: string
+        required: true
+      stack:
+        type: string
+        required: true
+      branch_tag:
+        type: string
+        required: false
+      reason:
+        type: string
+        required: false
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
 permissions:
-    id-token: write
-    contents: read
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -130,131 +130,136 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-    configuration:
-        name: Configuration
-        runs-on: ubuntu-latest
+  configuration:
+    name: Configuration
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 5
+    outputs:
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0         # v7.0.0
+
+    - name: Load Access List
+      id: load-access
+      run: |
+        if [[ -f "vars/blaze-env.json" ]]; then
+          ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
+          echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
+        else
+          echo "⚠️ vars/blaze-env.json not found. Skipping access control."
+          echo "allowed=" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Check Access
+      if: steps.load-access.outputs.allowed != ''
+      uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
+      with:
+        allowed_users: ${{ steps.load-access.outputs.allowed }}
+        actor: ${{ github.actor }}
+
+    - name: Calculate Configuration
+      id: config
+      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
+      with:
         environment: ${{ inputs.environment }}
-        timeout-minutes: 5
-        outputs:
-            bucket: ${{ steps.config.outputs.bucket }}
-            state_key: ${{ steps.config.outputs.state_key }}
-            lock_table: ${{ steps.config.outputs.lock_table }}
-            aws_region: ${{ steps.config.outputs.aws_region }}
-        steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        terraform_stack: ${{ inputs.stack }}
+        branch_name: ${{ inputs.branch_tag }}
+        deploy_infra: "true"
+        build_images: "false"
+        deploy_services: "false"
+        event_name: "workflow_dispatch"
 
-            - name: Load Access List
-              id: load-access
-              run: |
-                  if [[ -f "vars/blaze-env.json" ]]; then
-                    ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
-                    echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
-                  else
-                    echo "⚠️ vars/blaze-env.json not found. Skipping access control."
-                    echo "allowed=" >> "$GITHUB_OUTPUT"
-                  fi
+  force-unlock:
+    name: 🔓 Force Unlock State
+    permissions:
+      id-token: write
+      contents: read
+    needs: [configuration]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 10
+    steps:
+    - name: Configure AWS Credentials
+      if: inputs.cloud_provider != 'gcp'
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37             # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ needs.configuration.outputs.aws_region }}
 
-            - name: Check Access
-              if: steps.load-access.outputs.allowed != ''
-              uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
-              with:
-                  allowed_users: ${{ steps.load-access.outputs.allowed }}
-                  actor: ${{ github.actor }}
+    - name: Authenticate to GCP
+      if: inputs.cloud_provider == 'gcp'
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093         # v3.0.0
+      with:
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER 
+          }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-            - name: Calculate Configuration
-              id: config
-              uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
-              with:
-                  environment: ${{ inputs.environment }}
-                  terraform_stack: ${{ inputs.stack }}
-                  branch_name: ${{ inputs.branch_tag }}
-                  deploy_infra: "true"
-                  build_images: "false"
-                  deploy_services: "false"
-                  event_name: "workflow_dispatch"
+    - name: Force Unlock Terraform State (AWS)
+      if: inputs.cloud_provider != 'gcp'
+      run: |
+        BUCKET="${{ needs.configuration.outputs.bucket }}"
+        KEY="${{ needs.configuration.outputs.state_key }}"
+        TABLE="${{ needs.configuration.outputs.lock_table }}"
+        REGION="${{ needs.configuration.outputs.aws_region }}"
+        if [[ -z "$TABLE" ]]; then TABLE="$BUCKET"; fi
+        LOCK_ID="${BUCKET}/${KEY}"
+        REASON="${{ inputs.reason }}"
+        # Audit trail (plan 163 O4): force-unlock must be attributable.
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -z "$REASON" ]]; then
+          echo "❌ ERROR: 'reason' is required for a manual force-unlock."
+          exit 1
+        fi
+        echo "🔓 Force unlocking Terraform state lock (AWS)..."
+        echo "   Bucket: $BUCKET"
+        echo "   Key: $KEY"
+        echo "   Lock ID: $LOCK_ID"
+        aws dynamodb delete-item \
+          --table-name "$TABLE" \
+          --region "$REGION" \
+          --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" || true
+        aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+        echo "✅ State lock removed successfully"
+        # Durable audit record (run log + job summary).
+        echo "AUDIT force-unlock actor=${{ github.actor }} event=${{ github.event_name }} env=${{ inputs.environment }} stack=${{ inputs.stack }} lock=$LOCK_ID reason=\"$REASON\" at=$(date -u +%FT%TZ)"
+        {
+          echo "### 🔓 Force-unlock audit"
+          echo "- **Actor**: ${{ github.actor }}"
+          echo "- **Env / Stack**: ${{ inputs.environment }} / ${{ inputs.stack }}"
+          echo "- **Lock ID**: \`$LOCK_ID\`"
+          echo "- **Reason**: $REASON"
+          echo "- **When (UTC)**: $(date -u +%FT%TZ)"
+        } >> "$GITHUB_STEP_SUMMARY"
 
-    force-unlock:
-        name: 🔓 Force Unlock State
-        needs: [configuration]
-        runs-on: ubuntu-latest
-        environment: ${{ inputs.environment }}
-        timeout-minutes: 10
-        steps:
-            - name: Configure AWS Credentials
-              if: inputs.cloud_provider != 'gcp'
-              uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-              with:
-                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-                  aws-region: ${{ needs.configuration.outputs.aws_region }}
-
-            - name: Authenticate to GCP
-              if: inputs.cloud_provider == 'gcp'
-              uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-              with:
-                  workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-                  service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-            - name: Force Unlock Terraform State (AWS)
-              if: inputs.cloud_provider != 'gcp'
-              run: |
-                  BUCKET="${{ needs.configuration.outputs.bucket }}"
-                  KEY="${{ needs.configuration.outputs.state_key }}"
-                  TABLE="${{ needs.configuration.outputs.lock_table }}"
-                  REGION="${{ needs.configuration.outputs.aws_region }}"
-                  if [[ -z "$TABLE" ]]; then TABLE="$BUCKET"; fi
-                  LOCK_ID="${BUCKET}/${KEY}"
-                  REASON="${{ inputs.reason }}"
-                  # Audit trail (plan 163 O4): force-unlock must be attributable.
-                  if [[ "${{ github.event_name }}" == "workflow_dispatch" && -z "$REASON" ]]; then
-                    echo "❌ ERROR: 'reason' is required for a manual force-unlock."
-                    exit 1
-                  fi
-                  echo "🔓 Force unlocking Terraform state lock (AWS)..."
-                  echo "   Bucket: $BUCKET"
-                  echo "   Key: $KEY"
-                  echo "   Lock ID: $LOCK_ID"
-                  aws dynamodb delete-item \
-                    --table-name "$TABLE" \
-                    --region "$REGION" \
-                    --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" || true
-                  aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
-                  echo "✅ State lock removed successfully"
-                  # Durable audit record (run log + job summary).
-                  echo "AUDIT force-unlock actor=${{ github.actor }} event=${{ github.event_name }} env=${{ inputs.environment }} stack=${{ inputs.stack }} lock=$LOCK_ID reason=\"$REASON\" at=$(date -u +%FT%TZ)"
-                  {
-                    echo "### 🔓 Force-unlock audit"
-                    echo "- **Actor**: ${{ github.actor }}"
-                    echo "- **Env / Stack**: ${{ inputs.environment }} / ${{ inputs.stack }}"
-                    echo "- **Lock ID**: \`$LOCK_ID\`"
-                    echo "- **Reason**: $REASON"
-                    echo "- **When (UTC)**: $(date -u +%FT%TZ)"
-                  } >> "$GITHUB_STEP_SUMMARY"
-
-            - name: Force Unlock Terraform State (GCP)
-              if: inputs.cloud_provider == 'gcp'
-              run: |
-                  BUCKET="${{ needs.configuration.outputs.bucket }}"
-                  KEY="${{ needs.configuration.outputs.state_key }}"
-                  REASON="${{ inputs.reason }}"
-                  # Audit trail (plan 163 O4): force-unlock must be attributable.
-                  if [[ "${{ github.event_name }}" == "workflow_dispatch" && -z "$REASON" ]]; then
-                    echo "❌ ERROR: 'reason' is required for a manual force-unlock."
-                    exit 1
-                  fi
-                  echo "🔓 Force unlocking Terraform state lock (GCP)..."
-                  echo "   Bucket: $BUCKET"
-                  echo "   Key: $KEY"
-                  # GCS backend uses a .tflock object for locking
-                  gcloud storage rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || true
-                  # Also try the lock file pattern Terraform uses
-                  gcloud storage rm "gs://$BUCKET/${KEY}.lock" 2>/dev/null || true
-                  echo "✅ GCS state lock removed successfully"
-                  echo "AUDIT force-unlock actor=${{ github.actor }} event=${{ github.event_name }} env=${{ inputs.environment }} stack=${{ inputs.stack }} bucket=$BUCKET key=$KEY reason=\"$REASON\" at=$(date -u +%FT%TZ)"
-                  {
-                    echo "### 🔓 Force-unlock audit (GCP)"
-                    echo "- **Actor**: ${{ github.actor }}"
-                    echo "- **Env / Stack**: ${{ inputs.environment }} / ${{ inputs.stack }}"
-                    echo "- **State**: \`gs://$BUCKET/$KEY\`"
-                    echo "- **Reason**: $REASON"
-                    echo "- **When (UTC)**: $(date -u +%FT%TZ)"
-                  } >> "$GITHUB_STEP_SUMMARY"
+    - name: Force Unlock Terraform State (GCP)
+      if: inputs.cloud_provider == 'gcp'
+      run: |
+        BUCKET="${{ needs.configuration.outputs.bucket }}"
+        KEY="${{ needs.configuration.outputs.state_key }}"
+        REASON="${{ inputs.reason }}"
+        # Audit trail (plan 163 O4): force-unlock must be attributable.
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -z "$REASON" ]]; then
+          echo "❌ ERROR: 'reason' is required for a manual force-unlock."
+          exit 1
+        fi
+        echo "🔓 Force unlocking Terraform state lock (GCP)..."
+        echo "   Bucket: $BUCKET"
+        echo "   Key: $KEY"
+        # GCS backend uses a .tflock object for locking
+        gcloud storage rm "gs://$BUCKET/$KEY.tflock" 2>/dev/null || true
+        # Also try the lock file pattern Terraform uses
+        gcloud storage rm "gs://$BUCKET/${KEY}.lock" 2>/dev/null || true
+        echo "✅ GCS state lock removed successfully"
+        echo "AUDIT force-unlock actor=${{ github.actor }} event=${{ github.event_name }} env=${{ inputs.environment }} stack=${{ inputs.stack }} bucket=$BUCKET key=$KEY reason=\"$REASON\" at=$(date -u +%FT%TZ)"
+        {
+          echo "### 🔓 Force-unlock audit (GCP)"
+          echo "- **Actor**: ${{ github.actor }}"
+          echo "- **Env / Stack**: ${{ inputs.environment }} / ${{ inputs.stack }}"
+          echo "- **State**: \`gs://$BUCKET/$KEY\`"
+          echo "- **Reason**: $REASON"
+          echo "- **When (UTC)**: $(date -u +%FT%TZ)"
+        } >> "$GITHUB_STEP_SUMMARY"

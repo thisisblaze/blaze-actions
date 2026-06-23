@@ -41,7 +41,8 @@ on:
         required: false
         type: string
         default: ""
-        description: "CloudWatch log group prefix for log tail (e.g. /ecs/blaze-b9-thisisblaze-dev). Each service appended as /{service}"
+        description: "CloudWatch log group prefix for log tail (e.g. /ecs/blaze-b9-thisisblaze-dev).
+          Each service appended as /{service}"
       endpoint:
         required: false
         type: string
@@ -65,8 +66,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write # OIDC cloud auth
-
 jobs:
   ecs-health-snapshot:
     permissions:
@@ -77,197 +76,198 @@ jobs:
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ inputs.aws_region }}
+    - name: Configure AWS Credentials
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ inputs.aws_region }}
 
-      - name: "📊 ECS Service Overview"
-        id: services
-        run: |
-          CLUSTER="${{ inputs.cluster }}"
-          REGION="${{ inputs.aws_region }}"
-          IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
-          OVERALL=0
+    - name: "📊 ECS Service Overview"
+      id: services
+      run: |
+        CLUSTER="${{ inputs.cluster }}"
+        REGION="${{ inputs.aws_region }}"
+        IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
+        OVERALL=0
 
-          echo "## 🩺 ECS Health Snapshot — $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "**Cluster**: \`$CLUSTER\` | **Region**: \`$REGION\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Service Overview" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | Status | Desired | Running | Pending | Rollout |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+        echo "## 🩺 ECS Health Snapshot — $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "**Cluster**: \`$CLUSTER\` | **Region**: \`$REGION\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Service Overview" >> $GITHUB_STEP_SUMMARY
+        echo "| Service | Status | Desired | Running | Pending | Rollout |" >> $GITHUB_STEP_SUMMARY
+        echo "|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
 
-          for SVC in "${SERVICES[@]}"; do
-            SVC=$(echo "$SVC" | xargs)
-            INFO=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
-              --region "$REGION" --output json 2>/dev/null)
+        for SVC in "${SERVICES[@]}"; do
+          SVC=$(echo "$SVC" | xargs)
+          INFO=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC" \
+            --region "$REGION" --output json 2>/dev/null)
 
-            if [[ -z "$INFO" ]]; then
-              echo "| $SVC | ❌ Not Found | — | — | — | — |" >> $GITHUB_STEP_SUMMARY
-              OVERALL=1; continue
-            fi
+          if [[ -z "$INFO" ]]; then
+            echo "| $SVC | ❌ Not Found | — | — | — | — |" >> $GITHUB_STEP_SUMMARY
+            OVERALL=1; continue
+          fi
 
-            STATUS=$(echo "$INFO" | jq -r '.services[0].status // "UNKNOWN"')
-            DESIRED=$(echo "$INFO" | jq -r '.services[0].desiredCount // 0')
-            RUNNING=$(echo "$INFO" | jq -r '.services[0].runningCount // 0')
-            PENDING=$(echo "$INFO" | jq -r '.services[0].pendingCount // 0')
-            ROLLOUT=$(echo "$INFO" | jq -r '.services[0].deployments[0].rolloutState // "UNKNOWN"')
+          STATUS=$(echo "$INFO" | jq -r '.services[0].status // "UNKNOWN"')
+          DESIRED=$(echo "$INFO" | jq -r '.services[0].desiredCount // 0')
+          RUNNING=$(echo "$INFO" | jq -r '.services[0].runningCount // 0')
+          PENDING=$(echo "$INFO" | jq -r '.services[0].pendingCount // 0')
+          ROLLOUT=$(echo "$INFO" | jq -r '.services[0].deployments[0].rolloutState // "UNKNOWN"')
 
-            ICON="✅"
-            if [[ "$RUNNING" -lt "$DESIRED" ]]; then ICON="⚠️"; OVERALL=1; fi
-            if [[ "$STATUS" != "ACTIVE" ]]; then ICON="❌"; OVERALL=1; fi
+          ICON="✅"
+          if [[ "$RUNNING" -lt "$DESIRED" ]]; then ICON="⚠️"; OVERALL=1; fi
+          if [[ "$STATUS" != "ACTIVE" ]]; then ICON="❌"; OVERALL=1; fi
 
-            echo "| $SVC | $ICON $STATUS | $DESIRED | $RUNNING | $PENDING | $ROLLOUT |" >> $GITHUB_STEP_SUMMARY
+          echo "| $SVC | $ICON $STATUS | $DESIRED | $RUNNING | $PENDING | $ROLLOUT |" >> $GITHUB_STEP_SUMMARY
 
-            # ── Container Health Detail ──
-            TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC" \
-              --region "$REGION" --query 'taskArns' --output json 2>/dev/null || echo "[]")
-            TASK_COUNT=$(echo "$TASKS" | jq 'length')
+          # ── Container Health Detail ──
+          TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC" \
+            --region "$REGION" --query 'taskArns' --output json 2>/dev/null || echo "[]")
+          TASK_COUNT=$(echo "$TASKS" | jq 'length')
 
-            if [[ "$TASK_COUNT" -gt 0 ]]; then
-              TASK_ARNS=$(echo "$TASKS" | jq -r '.[]' | head -5 | tr '\n' ' ')
-              TASK_INFO=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks $TASK_ARNS \
-                --region "$REGION" --output json 2>/dev/null)
-
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**$SVC containers:**" >> $GITHUB_STEP_SUMMARY
-              echo "| Task (short) | Container | Status | Health | Exit Code |" >> $GITHUB_STEP_SUMMARY
-              echo "|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
-
-              echo "$TASK_INFO" | jq -r '.tasks[] | 
-                .taskArn as $arn | 
-                ($arn | split("/") | last | .[0:8]) as $short |
-                .containers[] | 
-                "\($short)|\(.name)|\(.lastStatus // "?")|\(.healthStatus // "UNKNOWN")|\(.exitCode // "-")"' \
-              | while IFS='|' read -r SHORT NAME LSTATUS HEALTH EXIT; do
-                  ICON="✅"
-                  [[ "$HEALTH" == "UNHEALTHY" ]] && ICON="❌" && OVERALL=1
-                  [[ "$HEALTH" == "UNKNOWN" || "$LSTATUS" != "RUNNING" ]] && ICON="⚠️"
-                  echo "| \`$SHORT\` | $NAME | $LSTATUS | $ICON $HEALTH | $EXIT |" >> $GITHUB_STEP_SUMMARY
-                done
-            fi
-          done
-
-          echo "OVERALL_STATUS=$OVERALL" >> $GITHUB_ENV
-
-      - name: "🔴 Stopped Tasks (Last 3)"
-        run: |
-          CLUSTER="${{ inputs.cluster }}"
-          REGION="${{ inputs.aws_region }}"
-          IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔴 Recently Stopped Tasks (last 3 per service)" >> $GITHUB_STEP_SUMMARY
-
-          for SVC in "${SERVICES[@]}"; do
-            SVC=$(echo "$SVC" | xargs)
-            STOPPED=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC" \
-              --desired-status STOPPED --region "$REGION" \
-              --query 'taskArns[0:3]' --output json 2>/dev/null || echo "[]")
-
-            COUNT=$(echo "$STOPPED" | jq 'length')
-            if [[ "$COUNT" -eq 0 ]]; then
-              echo "**$SVC**: No stopped tasks." >> $GITHUB_STEP_SUMMARY; continue
-            fi
-
-            TASK_ARNS=$(echo "$STOPPED" | jq -r '.[]' | tr '\n' ' ')
+          if [[ "$TASK_COUNT" -gt 0 ]]; then
+            TASK_ARNS=$(echo "$TASKS" | jq -r '.[]' | head -5 | tr '\n' ' ')
             TASK_INFO=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks $TASK_ARNS \
               --region "$REGION" --output json 2>/dev/null)
 
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**$SVC stopped tasks:**" >> $GITHUB_STEP_SUMMARY
-            echo "| Task (short) | Stopped Reason | Container | Exit Code |" >> $GITHUB_STEP_SUMMARY
-            echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+            echo "**$SVC containers:**" >> $GITHUB_STEP_SUMMARY
+            echo "| Task (short) | Container | Status | Health | Exit Code |" >> $GITHUB_STEP_SUMMARY
+            echo "|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
 
             echo "$TASK_INFO" | jq -r '.tasks[] | 
               .taskArn as $arn | 
               ($arn | split("/") | last | .[0:8]) as $short |
-              .stoppedReason as $reason |
               .containers[] | 
-              "\($short)|\($reason // "-")|\(.name)|\(.exitCode // "-")"' \
-            | while IFS='|' read -r SHORT REASON NAME EXIT; do
-                echo "| \`$SHORT\` | $REASON | $NAME | $EXIT |" >> $GITHUB_STEP_SUMMARY
+              "\($short)|\(.name)|\(.lastStatus // "?")|\(.healthStatus // "UNKNOWN")|\(.exitCode // "-")"' \
+            | while IFS='|' read -r SHORT NAME LSTATUS HEALTH EXIT; do
+                ICON="✅"
+                [[ "$HEALTH" == "UNHEALTHY" ]] && ICON="❌" && OVERALL=1
+                [[ "$HEALTH" == "UNKNOWN" || "$LSTATUS" != "RUNNING" ]] && ICON="⚠️"
+                echo "| \`$SHORT\` | $NAME | $LSTATUS | $ICON $HEALTH | $EXIT |" >> $GITHUB_STEP_SUMMARY
               done
-          done
+          fi
+        done
 
-      - name: "📜 CloudWatch Log Tail"
-        if: inputs.log_group_prefix != ''
-        run: |
-          PREFIX="${{ inputs.log_group_prefix }}"
-          REGION="${{ inputs.aws_region }}"
-          LINES=${{ inputs.tail_lines }}
-          IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
+        echo "OVERALL_STATUS=$OVERALL" >> $GITHUB_ENV
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📜 CloudWatch Log Tail (last $LINES lines per service)" >> $GITHUB_STEP_SUMMARY
+    - name: "🔴 Stopped Tasks (Last 3)"
+      run: |
+        CLUSTER="${{ inputs.cluster }}"
+        REGION="${{ inputs.aws_region }}"
+        IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
 
-          for SVC in "${SERVICES[@]}"; do
-            SVC=$(echo "$SVC" | xargs)
-            LOG_GROUP="${PREFIX}/${SVC}"
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Log group**: \`$LOG_GROUP\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔴 Recently Stopped Tasks (last 3 per service)" >> $GITHUB_STEP_SUMMARY
 
-            # Get most recent log stream
-            STREAM=$(aws logs describe-log-streams \
-              --log-group-name "$LOG_GROUP" \
-              --order-by LastEventTime --descending \
-              --max-items 1 --region "$REGION" \
-              --query 'logStreams[0].logStreamName' \
-              --output text 2>/dev/null || echo "")
+        for SVC in "${SERVICES[@]}"; do
+          SVC=$(echo "$SVC" | xargs)
+          STOPPED=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC" \
+            --desired-status STOPPED --region "$REGION" \
+            --query 'taskArns[0:3]' --output json 2>/dev/null || echo "[]")
 
-            if [[ -z "$STREAM" || "$STREAM" == "None" ]]; then
-              echo "_No log streams found._" >> $GITHUB_STEP_SUMMARY; continue
-            fi
-
-            LOGS=$(aws logs get-log-events \
-              --log-group-name "$LOG_GROUP" \
-              --log-stream-name "$STREAM" \
-              --limit "$LINES" --region "$REGION" \
-              --query 'events[*].message' \
-              --output text 2>/dev/null || echo "")
-
-            if [[ -z "$LOGS" ]]; then
-              echo "_No recent log events._" >> $GITHUB_STEP_SUMMARY; continue
-            fi
-
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "$LOGS" | tail -"$LINES" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          done
-
-      - name: "🌐 ALB Endpoint HTTP Check"
-        if: inputs.endpoint != ''
-        run: |
-          ENDPOINT="${{ inputs.endpoint }}"
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🌐 Endpoint Check" >> $GITHUB_STEP_SUMMARY
-
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 10 --retry 2 \
-            -H "User-Agent: blaze-health-check/1.0" \
-            "$ENDPOINT" || echo "000")
-
-          if [[ "$HTTP_CODE" =~ ^2 ]]; then
-            echo "| $ENDPOINT | ✅ HTTP $HTTP_CODE |" >> $GITHUB_STEP_SUMMARY
-          elif [[ "$HTTP_CODE" =~ ^3 ]]; then
-            echo "| $ENDPOINT | ↗️ HTTP $HTTP_CODE (redirect) |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| $ENDPOINT | ❌ HTTP $HTTP_CODE |" >> $GITHUB_STEP_SUMMARY
-            echo "HTTP_FAIL=1" >> $GITHUB_ENV
+          COUNT=$(echo "$STOPPED" | jq 'length')
+          if [[ "$COUNT" -eq 0 ]]; then
+            echo "**$SVC**: No stopped tasks." >> $GITHUB_STEP_SUMMARY; continue
           fi
 
-      - name: "🏁 Overall Health Status"
-        run: |
-          OVERALL="${OVERALL_STATUS:-0}"
-          HTTP_FAIL="${HTTP_FAIL:-0}"
+          TASK_ARNS=$(echo "$STOPPED" | jq -r '.[]' | tr '\n' ' ')
+          TASK_INFO=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks $TASK_ARNS \
+            --region "$REGION" --output json 2>/dev/null)
+
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          if [[ "$OVERALL" == "0" && "$HTTP_FAIL" == "0" ]]; then
-            echo "## ✅ OVERALL: HEALTHY" >> $GITHUB_STEP_SUMMARY
-            echo "All ECS services running at desired count. Endpoint responding."
-          else
-            echo "## ❌ OVERALL: DEGRADED" >> $GITHUB_STEP_SUMMARY
-            echo "One or more services are not healthy. Review the details above."
-            exit 1
+          echo "**$SVC stopped tasks:**" >> $GITHUB_STEP_SUMMARY
+          echo "| Task (short) | Stopped Reason | Container | Exit Code |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          echo "$TASK_INFO" | jq -r '.tasks[] | 
+            .taskArn as $arn | 
+            ($arn | split("/") | last | .[0:8]) as $short |
+            .stoppedReason as $reason |
+            .containers[] | 
+            "\($short)|\($reason // "-")|\(.name)|\(.exitCode // "-")"' \
+          | while IFS='|' read -r SHORT REASON NAME EXIT; do
+              echo "| \`$SHORT\` | $REASON | $NAME | $EXIT |" >> $GITHUB_STEP_SUMMARY
+            done
+        done
+
+    - name: "📜 CloudWatch Log Tail"
+      if: inputs.log_group_prefix != ''
+      run: |
+        PREFIX="${{ inputs.log_group_prefix }}"
+        REGION="${{ inputs.aws_region }}"
+        LINES=${{ inputs.tail_lines }}
+        IFS=',' read -ra SERVICES <<< "${{ inputs.services }}"
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📜 CloudWatch Log Tail (last $LINES lines per service)" >> $GITHUB_STEP_SUMMARY
+
+        for SVC in "${SERVICES[@]}"; do
+          SVC=$(echo "$SVC" | xargs)
+          LOG_GROUP="${PREFIX}/${SVC}"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Log group**: \`$LOG_GROUP\`" >> $GITHUB_STEP_SUMMARY
+
+          # Get most recent log stream
+          STREAM=$(aws logs describe-log-streams \
+            --log-group-name "$LOG_GROUP" \
+            --order-by LastEventTime --descending \
+            --max-items 1 --region "$REGION" \
+            --query 'logStreams[0].logStreamName' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$STREAM" || "$STREAM" == "None" ]]; then
+            echo "_No log streams found._" >> $GITHUB_STEP_SUMMARY; continue
           fi
+
+          LOGS=$(aws logs get-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --log-stream-name "$STREAM" \
+            --limit "$LINES" --region "$REGION" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$LOGS" ]]; then
+            echo "_No recent log events._" >> $GITHUB_STEP_SUMMARY; continue
+          fi
+
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$LOGS" | tail -"$LINES" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        done
+
+    - name: "🌐 ALB Endpoint HTTP Check"
+      if: inputs.endpoint != ''
+      run: |
+        ENDPOINT="${{ inputs.endpoint }}"
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌐 Endpoint Check" >> $GITHUB_STEP_SUMMARY
+
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+          --max-time 10 --retry 2 \
+          -H "User-Agent: blaze-health-check/1.0" \
+          "$ENDPOINT" || echo "000")
+
+        if [[ "$HTTP_CODE" =~ ^2 ]]; then
+          echo "| $ENDPOINT | ✅ HTTP $HTTP_CODE |" >> $GITHUB_STEP_SUMMARY
+        elif [[ "$HTTP_CODE" =~ ^3 ]]; then
+          echo "| $ENDPOINT | ↗️ HTTP $HTTP_CODE (redirect) |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| $ENDPOINT | ❌ HTTP $HTTP_CODE |" >> $GITHUB_STEP_SUMMARY
+          echo "HTTP_FAIL=1" >> $GITHUB_ENV
+        fi
+
+    - name: "🏁 Overall Health Status"
+      run: |
+        OVERALL="${OVERALL_STATUS:-0}"
+        HTTP_FAIL="${HTTP_FAIL:-0}"
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        if [[ "$OVERALL" == "0" && "$HTTP_FAIL" == "0" ]]; then
+          echo "## ✅ OVERALL: HEALTHY" >> $GITHUB_STEP_SUMMARY
+          echo "All ECS services running at desired count. Endpoint responding."
+        else
+          echo "## ❌ OVERALL: DEGRADED" >> $GITHUB_STEP_SUMMARY
+          echo "One or more services are not healthy. Review the details above."
+          exit 1
+        fi

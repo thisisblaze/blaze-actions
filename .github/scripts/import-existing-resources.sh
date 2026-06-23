@@ -1,6 +1,6 @@
 
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 
 echo "=================================================="
 echo " 🧹 Pre-Apply Cleanup & Import"

@@ -34,11 +34,13 @@ on:
       ssm_target_path_override:
         required: false
         type: string
-        description: "Override the default destination SSM path (using V2 Tenant-Isolation pattern if provided)."
+        description: "Override the default destination SSM path (using V2 Tenant-Isolation
+          pattern if provided)."
       db_ssm_path:
         required: false
         type: string
-        description: "Path to the MongoDB Semantic Hub (derived from Shared Host Project). Used for retrieving Mongo connection properties."
+        description: "Path to the MongoDB Semantic Hub (derived from Shared Host Project).
+          Used for retrieving Mongo connection properties."
 
     secrets:
       AWS_ROLE_ARN:
@@ -59,8 +61,6 @@ env:
 
 permissions:
   contents: read
-  id-token: write # OIDC cloud auth
-
 jobs:
   provision-db-users:
     permissions:
@@ -73,287 +73,286 @@ jobs:
     env:
       ELASTIC_ENDPOINT: ""
       ELASTIC_ADMIN_USER: ""
-    
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+    - name: Configure AWS Credentials
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
 
-      - name: Set Variables
-        id: vars
-        run: |
-          SSM_BASE_PATH="/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}"
-          # Project-scoped path: matches where thisisblaze-db Terraform writes cluster info
-          # TF aws_ssm_prefix = /blaze/{client}/{platform}/{stage}/{project}/mongodb
-          SSM_PROJECT_PATH="${SSM_BASE_PATH}/${{ inputs.project }}"
-          echo "SSM_BASE_PATH=${SSM_BASE_PATH}" >> $GITHUB_ENV
-          echo "SSM_PROJECT_PATH=${SSM_PROJECT_PATH}" >> $GITHUB_ENV
+    - name: Set Variables
+      id: vars
+      run: |
+        SSM_BASE_PATH="/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.cloud_platform }}/${{ inputs.stage_key }}"
+        # Project-scoped path: matches where thisisblaze-db Terraform writes cluster info
+        # TF aws_ssm_prefix = /blaze/{client}/{platform}/{stage}/{project}/mongodb
+        SSM_PROJECT_PATH="${SSM_BASE_PATH}/${{ inputs.project }}"
+        echo "SSM_BASE_PATH=${SSM_BASE_PATH}" >> $GITHUB_ENV
+        echo "SSM_PROJECT_PATH=${SSM_PROJECT_PATH}" >> $GITHUB_ENV
 
-          if [[ -n "${{ inputs.ssm_target_path_override }}" ]]; then
-            echo "SSM_TARGET_PATH=${{ inputs.ssm_target_path_override }}" >> $GITHUB_ENV
-          fi
+        if [[ -n "${{ inputs.ssm_target_path_override }}" ]]; then
+          echo "SSM_TARGET_PATH=${{ inputs.ssm_target_path_override }}" >> $GITHUB_ENV
+        fi
 
-          APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
-          echo "APP_USER=$APP_USER" >> $GITHUB_ENV
+        APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
+        echo "APP_USER=$APP_USER" >> $GITHUB_ENV
 
-          # PROJECT_UPPER: e.g. "THISISBLAZE" or "SUPPORT" — used for namespaced GitHub secret names
-          PROJECT_UPPER=$(echo "${{ inputs.project }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-          echo "PROJECT_UPPER=$PROJECT_UPPER" >> $GITHUB_ENV
+        # PROJECT_UPPER: e.g. "THISISBLAZE" or "SUPPORT" — used for namespaced GitHub secret names
+        PROJECT_UPPER=$(echo "${{ inputs.project }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+        echo "PROJECT_UPPER=$PROJECT_UPPER" >> $GITHUB_ENV
 
-      - name: Generate Secure Passwords
-        id: generate-passwords
-        run: |
-          MONGO_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
-          ELASTIC_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
+    - name: Generate Secure Passwords
+      id: generate-passwords
+      run: |
+        MONGO_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
+        ELASTIC_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
 
-          echo "::add-mask::$MONGO_PASS"
-          echo "::add-mask::$ELASTIC_PASS"
+        echo "::add-mask::$MONGO_PASS"
+        echo "::add-mask::$ELASTIC_PASS"
 
-          echo "MONGO_PASS=$MONGO_PASS" >> $GITHUB_ENV
-          echo "ELASTIC_PASS=$ELASTIC_PASS" >> $GITHUB_ENV
+        echo "MONGO_PASS=$MONGO_PASS" >> $GITHUB_ENV
+        echo "ELASTIC_PASS=$ELASTIC_PASS" >> $GITHUB_ENV
 
-      - name: Fetch Cluster Info from SSM
-        id: fetch-ssm
-        run: |
-          echo "Fetching cluster information from SSM..."
+    - name: Fetch Cluster Info from SSM
+      id: fetch-ssm
+      run: |
+        echo "Fetching cluster information from SSM..."
 
-          # Elastic cluster info lives at the base path (not project-scoped; one cluster per env)
-          ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-          ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-          ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        # Elastic cluster info lives at the base path (not project-scoped; one cluster per env)
+        ELASTIC_ENDPOINT=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/endpoint" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        ELASTIC_ADMIN_USER=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/username" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        ELASTIC_ADMIN_PASS=$(aws ssm get-parameter --name "$SSM_BASE_PATH/elastic/password" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
 
-          # MongoDB host: try injected db_ssm_path first, then project-scoped path, then fallback to base path
-          if [[ -n "${{ inputs.db_ssm_path }}" ]]; then
-            echo "   ℹ️  Semantic DB Path provided: ${{ inputs.db_ssm_path }}"
-            MONGO_HOST=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-          fi
+        # MongoDB host: try injected db_ssm_path first, then project-scoped path, then fallback to base path
+        if [[ -n "${{ inputs.db_ssm_path }}" ]]; then
+          echo "   ℹ️  Semantic DB Path provided: ${{ inputs.db_ssm_path }}"
+          MONGO_HOST=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+          ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "${{ inputs.db_ssm_path }}/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        fi
 
-          if [[ -z "$MONGO_HOST" ]]; then
-            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-          fi
+        if [[ -z "$MONGO_HOST" ]]; then
+          MONGO_HOST=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+          ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_PROJECT_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        fi
 
-          if [[ -z "$MONGO_HOST" ]]; then
-            echo "   ℹ️  Project-scoped SSM path empty, trying base path..."
-            MONGO_HOST=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-            ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
-          fi
+        if [[ -z "$MONGO_HOST" ]]; then
+          echo "   ℹ️  Project-scoped SSM path empty, trying base path..."
+          MONGO_HOST=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/host" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+          ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
+        fi
 
-          echo "::add-mask::$ELASTIC_ADMIN_PASS"
-          echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
-          echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
-          echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
-          echo "ATLAS_PROJECT_SSM=$ATLAS_PROJECT_SSM" >> $GITHUB_ENV
+        echo "::add-mask::$ELASTIC_ADMIN_PASS"
+        echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
+        echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
+        echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
+        echo "ATLAS_PROJECT_SSM=$ATLAS_PROJECT_SSM" >> $GITHUB_ENV
 
-          if [[ -n "$MONGO_HOST" ]]; then
-            echo "MONGO_HOST=$MONGO_HOST" >> $GITHUB_ENV
+        if [[ -n "$MONGO_HOST" ]]; then
+          echo "MONGO_HOST=$MONGO_HOST" >> $GITHUB_ENV
+        else
+          echo "Warning: MongoDB host not found in SSM at $SSM_PROJECT_PATH/mongodb/host or $SSM_BASE_PATH/mongodb/host"
+          echo "MONGO_HOST=" >> $GITHUB_ENV
+        fi
+
+    - name: Provision MongoDB Atlas App User
+      env:
+        ATLAS_PUBLIC: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+        ATLAS_PRIVATE: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        ATLAS_PROJECT_SECRET: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+      run: |
+        ATLAS_PROJECT="${ATLAS_PROJECT_SSM:-$ATLAS_PROJECT_SECRET}"
+
+        if [[ -z "$ATLAS_PROJECT" ]]; then
+           echo "❌ ERROR: ATLAS_PROJECT is empty. Make sure SSM parameter exists or secret is set."
+           exit 1
+        fi
+
+        DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
+        ROLE_NAME="${DB_NAME}-role"
+
+        CLUSTER_TIER="${{ vars.CLUSTER_TIER }}"
+        if [[ -z "$CLUSTER_TIER" || "$CLUSTER_TIER" == "auto" ]]; then
+          if [[ "${{ inputs.environment }}" == "dev"* ]]; then
+            CLUSTER_TIER="flex"
           else
-            echo "Warning: MongoDB host not found in SSM at $SSM_PROJECT_PATH/mongodb/host or $SSM_BASE_PATH/mongodb/host"
-            echo "MONGO_HOST=" >> $GITHUB_ENV
+            CLUSTER_TIER="M10"
           fi
+        fi
 
-      - name: Provision MongoDB Atlas App User
-        env:
-          ATLAS_PUBLIC: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-          ATLAS_PRIVATE: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
-          ATLAS_PROJECT_SECRET: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
-        run: |
-          ATLAS_PROJECT="${ATLAS_PROJECT_SSM:-$ATLAS_PROJECT_SECRET}"
-          
-          if [[ -z "$ATLAS_PROJECT" ]]; then
-             echo "❌ ERROR: ATLAS_PROJECT is empty. Make sure SSM parameter exists or secret is set."
-             exit 1
-          fi
+        echo "Cluster tier evaluated to: $CLUSTER_TIER"
 
-          DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
-          ROLE_NAME="${DB_NAME}-role"
-          
-          CLUSTER_TIER="${{ vars.CLUSTER_TIER }}"
-          if [[ -z "$CLUSTER_TIER" || "$CLUSTER_TIER" == "auto" ]]; then
-            if [[ "${{ inputs.environment }}" == "dev"* ]]; then
-              CLUSTER_TIER="flex"
-            else
-              CLUSTER_TIER="M10"
-            fi
-          fi
-          
-          echo "Cluster tier evaluated to: $CLUSTER_TIER"
-          
-          if [[ "$CLUSTER_TIER" == "flex" ]]; then
-            echo "1. Flex cluster detected. Skipping Custom DB Role creation (forbidden on serverless)."
-            # For flex, we use built-in roles assigned to the target database
-            ASSIGN_ROLE="readWrite"
-            ASSIGN_DB="$DB_NAME"
-          else
-            echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
-            # Find, Insert, Update, Remove
-            PAYLOAD=$(jq -n \
-              --arg role "$ROLE_NAME" \
-              --arg db "$DB_NAME" \
-              '{
-                "actions": [
-                  {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
-                ],
-                "roleName": $role
-              }')
-            
-            curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-              -H "Content-Type: application/json" -X POST \
-              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
-              -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
-              
-            # For Advanced clusters, custom roles live on the admin database
-            ASSIGN_ROLE="$ROLE_NAME"
-            ASSIGN_DB="admin"
-          fi
-            
-          echo ""
-          echo "2. Creating Database User: $APP_USER"
-          USER_PAYLOAD=$(jq -n \
-            --arg user "$APP_USER" \
-            --arg pass "$MONGO_PASS" \
-            --arg role "$ASSIGN_ROLE" \
-            --arg db "$ASSIGN_DB" \
-            '{
-              "databaseName": "admin",
-              "password": $pass,
-              "roles": [{"databaseName": $db, "roleName": $role}],
-              "username": $user
-            }')
-            
-          # Try to create, if fails (e.g. user exists), try to patch
-          RES=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-            -H "Content-Type: application/json" -X POST \
-            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers" \
-            -d "$USER_PAYLOAD")
-          
-          echo "$RES"
-          
-          if echo "$RES" | grep -q 'HTTP_CODE:4[0-9][0-9]'; then
-            echo "POST failed, trying PATCH..."
-            curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-              -H "Content-Type: application/json" -X PATCH \
-              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers/admin/$APP_USER" \
-              -d "$USER_PAYLOAD"
-          fi
-            
-      - name: Provision Elastic Cloud App User
-        if: env.ELASTIC_ENDPOINT != '' && env.ELASTIC_ADMIN_USER != ''
-        run: |
-          # Fix: role name MUST include project to avoid shared-role collision between tenants
-          ROLE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-role"
-          
-          echo "1. Creating Elastic Role: $ROLE_NAME"
-          ROLE_PAYLOAD=$(jq -n \
-            '{
-              "indices": [
-                {
-                  "names": ["${{ inputs.namespace }}-*", "logs-*", "metrics-*"],
-                  "privileges": ["read", "write", "create_index", "manage", "all"]
-                }
-              ]
-            }')
-            
-          curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
-            -H "Content-Type: application/json" -X POST \
-            "$ELASTIC_ENDPOINT/_security/role/$ROLE_NAME" \
-            -d "$ROLE_PAYLOAD"
-            
-          echo "2. Creating Elastic User: $APP_USER"
-          USER_PAYLOAD=$(jq -n \
-            --arg pass "$ELASTIC_PASS" \
+        if [[ "$CLUSTER_TIER" == "flex" ]]; then
+          echo "1. Flex cluster detected. Skipping Custom DB Role creation (forbidden on serverless)."
+          # For flex, we use built-in roles assigned to the target database
+          ASSIGN_ROLE="readWrite"
+          ASSIGN_DB="$DB_NAME"
+        else
+          echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
+          # Find, Insert, Update, Remove
+          PAYLOAD=$(jq -n \
             --arg role "$ROLE_NAME" \
+            --arg db "$DB_NAME" \
             '{
-              "password": $pass,
-              "roles": [$role]
+              "actions": [
+                {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
+                {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
+              ],
+              "roleName": $role
             }')
-            
-          curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
+          
+          curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
             -H "Content-Type: application/json" -X POST \
-            "$ELASTIC_ENDPOINT/_security/user/$APP_USER" \
-            -d "$USER_PAYLOAD"
-
-      - name: Push to AWS SSM Parameter Store
-        run: |
-          # Use SSM_TARGET_PATH if defined, otherwise fallback to the reading SSM_BASE_PATH
-          TARGET="${SSM_TARGET_PATH:-$SSM_BASE_PATH}"
-          
-          aws ssm put-parameter --name "$TARGET/mongodb/app_username" --value "$APP_USER" --type "String" --overwrite
-          aws ssm put-parameter --name "$TARGET/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
-          
-          if [[ -n "$MONGO_HOST" ]]; then
-            # Construct standard connection string pattern
-            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
-            aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
-            # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
-            aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite
-            # deploy-ecs-service reads sub-project URI from:
-            #   /${NAMESPACE}/${CLIENT_KEY}/${PROJECT_KEY}/${BASE_STAGE}/BLAZE_CONNECTION_STRING
-            # Write an alias at that path so deploy-ecs-service finds the correct project URI
-            DEPLOY_ECS_SSM="/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.project }}/${{ inputs.stage_key }}/BLAZE_CONNECTION_STRING"
-            aws ssm put-parameter --name "$DEPLOY_ECS_SSM" --value "$MONGO_URI" --type "SecureString" --overwrite
-            echo "MONGO_URI=$MONGO_URI" >> $GITHUB_ENV
-            echo "   💾  SSM aliases written:"
-            echo "   ├─ $TARGET/mongodb/uri"
-            echo "   └─ $DEPLOY_ECS_SSM (deploy-ecs-service read alias)"
-          fi
-          
-          if [[ -n "$ELASTIC_ENDPOINT" ]]; then
-            aws ssm put-parameter --name "$TARGET/elastic/app_username" --value "$APP_USER" --type "String" --overwrite
-            aws ssm put-parameter --name "$TARGET/elastic/app_password" --value "$ELASTIC_PASS" --type "SecureString" --overwrite
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
+            -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
             
-            # Construct standard authenticated URL pattern for V2 multi-site-tenant-app: https://user:pass@host:port
-            # We strip the https:// prefix from the endpoint, prepend the basic auth, and add https:// back.
-            CLEAN_HOST=$(echo "$ELASTIC_ENDPOINT" | sed 's|^https://||' | sed 's|^http://||')
-            ELASTIC_URL="https://$APP_USER:$ELASTIC_PASS@$CLEAN_HOST"
-            aws ssm put-parameter --name "$TARGET/elastic/url" --value "$ELASTIC_URL" --type "SecureString" --overwrite
+          # For Advanced clusters, custom roles live on the admin database
+          ASSIGN_ROLE="$ROLE_NAME"
+          ASSIGN_DB="admin"
+        fi
+          
+        echo ""
+        echo "2. Creating Database User: $APP_USER"
+        USER_PAYLOAD=$(jq -n \
+          --arg user "$APP_USER" \
+          --arg pass "$MONGO_PASS" \
+          --arg role "$ASSIGN_ROLE" \
+          --arg db "$ASSIGN_DB" \
+          '{
+            "databaseName": "admin",
+            "password": $pass,
+            "roles": [{"databaseName": $db, "roleName": $role}],
+            "username": $user
+          }')
+          
+        # Try to create, if fails (e.g. user exists), try to patch
+        RES=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+          -H "Content-Type: application/json" -X POST \
+          "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers" \
+          -d "$USER_PAYLOAD")
+
+        echo "$RES"
+
+        if echo "$RES" | grep -q 'HTTP_CODE:4[0-9][0-9]'; then
+          echo "POST failed, trying PATCH..."
+          curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+            -H "Content-Type: application/json" -X PATCH \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/databaseUsers/admin/$APP_USER" \
+            -d "$USER_PAYLOAD"
+        fi
+          
+    - name: Provision Elastic Cloud App User
+      if: env.ELASTIC_ENDPOINT != '' && env.ELASTIC_ADMIN_USER != ''
+      run: |
+        # Fix: role name MUST include project to avoid shared-role collision between tenants
+        ROLE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-role"
+
+        echo "1. Creating Elastic Role: $ROLE_NAME"
+        ROLE_PAYLOAD=$(jq -n \
+          '{
+            "indices": [
+              {
+                "names": ["${{ inputs.namespace }}-*", "logs-*", "metrics-*"],
+                "privileges": ["read", "write", "create_index", "manage", "all"]
+              }
+            ]
+          }')
+          
+        curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
+          -H "Content-Type: application/json" -X POST \
+          "$ELASTIC_ENDPOINT/_security/role/$ROLE_NAME" \
+          -d "$ROLE_PAYLOAD"
+          
+        echo "2. Creating Elastic User: $APP_USER"
+        USER_PAYLOAD=$(jq -n \
+          --arg pass "$ELASTIC_PASS" \
+          --arg role "$ROLE_NAME" \
+          '{
+            "password": $pass,
+            "roles": [$role]
+          }')
+          
+        curl --fail --silent --show-error -u "$ELASTIC_ADMIN_USER:$ELASTIC_ADMIN_PASS" \
+          -H "Content-Type: application/json" -X POST \
+          "$ELASTIC_ENDPOINT/_security/user/$APP_USER" \
+          -d "$USER_PAYLOAD"
+
+    - name: Push to AWS SSM Parameter Store
+      run: |
+        # Use SSM_TARGET_PATH if defined, otherwise fallback to the reading SSM_BASE_PATH
+        TARGET="${SSM_TARGET_PATH:-$SSM_BASE_PATH}"
+
+        aws ssm put-parameter --name "$TARGET/mongodb/app_username" --value "$APP_USER" --type "String" --overwrite
+        aws ssm put-parameter --name "$TARGET/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
+
+        if [[ -n "$MONGO_HOST" ]]; then
+          # Construct standard connection string pattern
+          MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
+          aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
+          # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
+          aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite
+          # deploy-ecs-service reads sub-project URI from:
+          #   /${NAMESPACE}/${CLIENT_KEY}/${PROJECT_KEY}/${BASE_STAGE}/BLAZE_CONNECTION_STRING
+          # Write an alias at that path so deploy-ecs-service finds the correct project URI
+          DEPLOY_ECS_SSM="/${{ inputs.namespace }}/${{ inputs.client_key }}/${{ inputs.project }}/${{ inputs.stage_key }}/BLAZE_CONNECTION_STRING"
+          aws ssm put-parameter --name "$DEPLOY_ECS_SSM" --value "$MONGO_URI" --type "SecureString" --overwrite
+          echo "MONGO_URI=$MONGO_URI" >> $GITHUB_ENV
+          echo "   💾  SSM aliases written:"
+          echo "   ├─ $TARGET/mongodb/uri"
+          echo "   └─ $DEPLOY_ECS_SSM (deploy-ecs-service read alias)"
+        fi
+
+        if [[ -n "$ELASTIC_ENDPOINT" ]]; then
+          aws ssm put-parameter --name "$TARGET/elastic/app_username" --value "$APP_USER" --type "String" --overwrite
+          aws ssm put-parameter --name "$TARGET/elastic/app_password" --value "$ELASTIC_PASS" --type "SecureString" --overwrite
+          
+          # Construct standard authenticated URL pattern for V2 multi-site-tenant-app: https://user:pass@host:port
+          # We strip the https:// prefix from the endpoint, prepend the basic auth, and add https:// back.
+          CLEAN_HOST=$(echo "$ELASTIC_ENDPOINT" | sed 's|^https://||' | sed 's|^http://||')
+          ELASTIC_URL="https://$APP_USER:$ELASTIC_PASS@$CLEAN_HOST"
+          aws ssm put-parameter --name "$TARGET/elastic/url" --value "$ELASTIC_URL" --type "SecureString" --overwrite
+        fi
+
+    - name: Sync to GitHub Environment Secrets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      run: |
+        # Map stage name to actual environment name (if it differs)
+        ENV_TARGET="${{ inputs.environment }}"
+
+        echo "Syncing GitHub Secrets for environment: $ENV_TARGET (project: ${{ inputs.project }})"
+
+        if [[ -n "$ELASTIC_ENDPOINT" ]]; then
+          # Project-namespaced secrets (supports multiple tenants per env):
+          # e.g. THISISBLAZE_BLAZE_ELASTICSEARCH_USERNAME, SUPPORT_BLAZE_ELASTICSEARCH_USERNAME
+          gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_USERNAME" --env "$ENV_TARGET" --body "$APP_USER" --repo "${{ github.repository }}"
+          gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_PASSWORD" --env "$ENV_TARGET" --body "$ELASTIC_PASS" --repo "${{ github.repository }}"
+          gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_ENDPOINT" --env "$ENV_TARGET" --body "$ELASTIC_ENDPOINT" --repo "${{ github.repository }}"
+          # Also keep the legacy unprefixed names for the host project (thisisblaze) so
+          # existing workflows that reference BLAZE_ELASTICSEARCH_* continue to work.
+          if [[ "${{ inputs.project }}" == "thisisblaze" ]]; then
+            gh secret set "BLAZE_ELASTICSEARCH_USERNAME" --env "$ENV_TARGET" --body "$APP_USER" --repo "${{ github.repository }}"
+            gh secret set "BLAZE_ELASTICSEARCH_PASSWORD" --env "$ENV_TARGET" --body "$ELASTIC_PASS" --repo "${{ github.repository }}"
+            gh secret set "BLAZE_ELASTICSEARCH_ENDPOINT" --env "$ENV_TARGET" --body "$ELASTIC_ENDPOINT" --repo "${{ github.repository }}"
           fi
+        fi
 
-      - name: Sync to GitHub Environment Secrets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          # Map stage name to actual environment name (if it differs)
-          ENV_TARGET="${{ inputs.environment }}"
+    - name: Sync to GitHub Repository Secrets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      run: |
+        STAGE_UPPER=$(echo "${{ inputs.stage_key }}" | tr '[:lower:]' '[:upper:]')
 
-          echo "Syncing GitHub Secrets for environment: $ENV_TARGET (project: ${{ inputs.project }})"
-
-          if [[ -n "$ELASTIC_ENDPOINT" ]]; then
-            # Project-namespaced secrets (supports multiple tenants per env):
-            # e.g. THISISBLAZE_BLAZE_ELASTICSEARCH_USERNAME, SUPPORT_BLAZE_ELASTICSEARCH_USERNAME
-            gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_USERNAME" --env "$ENV_TARGET" --body "$APP_USER" --repo "${{ github.repository }}"
-            gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_PASSWORD" --env "$ENV_TARGET" --body "$ELASTIC_PASS" --repo "${{ github.repository }}"
-            gh secret set "${PROJECT_UPPER}_BLAZE_ELASTICSEARCH_ENDPOINT" --env "$ENV_TARGET" --body "$ELASTIC_ENDPOINT" --repo "${{ github.repository }}"
-            # Also keep the legacy unprefixed names for the host project (thisisblaze) so
-            # existing workflows that reference BLAZE_ELASTICSEARCH_* continue to work.
-            if [[ "${{ inputs.project }}" == "thisisblaze" ]]; then
-              gh secret set "BLAZE_ELASTICSEARCH_USERNAME" --env "$ENV_TARGET" --body "$APP_USER" --repo "${{ github.repository }}"
-              gh secret set "BLAZE_ELASTICSEARCH_PASSWORD" --env "$ENV_TARGET" --body "$ELASTIC_PASS" --repo "${{ github.repository }}"
-              gh secret set "BLAZE_ELASTICSEARCH_ENDPOINT" --env "$ENV_TARGET" --body "$ELASTIC_ENDPOINT" --repo "${{ github.repository }}"
-            fi
+        if [[ -n "$MONGO_URI" ]]; then
+          # Project-namespaced repo secret: DEV_SUPPORT_BLAZE_CONNECTION_STRING
+          gh secret set "${STAGE_UPPER}_${PROJECT_UPPER}_BLAZE_CONNECTION_STRING" --body "$MONGO_URI" --repo "${{ github.repository }}"
+          echo "   🔒  Wrote ${STAGE_UPPER}_${PROJECT_UPPER}_BLAZE_CONNECTION_STRING"
+          # Keep the legacy unprefixed name for the host project so existing workflows work
+          if [[ "${{ inputs.project }}" == "thisisblaze" ]]; then
+            gh secret set "${STAGE_UPPER}_BLAZE_CONNECTION_STRING" --body "$MONGO_URI" --repo "${{ github.repository }}"
+            echo "   🔒  Wrote ${STAGE_UPPER}_BLAZE_CONNECTION_STRING (host project alias)"
           fi
-
-      - name: Sync to GitHub Repository Secrets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          STAGE_UPPER=$(echo "${{ inputs.stage_key }}" | tr '[:lower:]' '[:upper:]')
-
-          if [[ -n "$MONGO_URI" ]]; then
-            # Project-namespaced repo secret: DEV_SUPPORT_BLAZE_CONNECTION_STRING
-            gh secret set "${STAGE_UPPER}_${PROJECT_UPPER}_BLAZE_CONNECTION_STRING" --body "$MONGO_URI" --repo "${{ github.repository }}"
-            echo "   🔒  Wrote ${STAGE_UPPER}_${PROJECT_UPPER}_BLAZE_CONNECTION_STRING"
-            # Keep the legacy unprefixed name for the host project so existing workflows work
-            if [[ "${{ inputs.project }}" == "thisisblaze" ]]; then
-              gh secret set "${STAGE_UPPER}_BLAZE_CONNECTION_STRING" --body "$MONGO_URI" --repo "${{ github.repository }}"
-              echo "   🔒  Wrote ${STAGE_UPPER}_BLAZE_CONNECTION_STRING (host project alias)"
-            fi
-          fi
+        fi

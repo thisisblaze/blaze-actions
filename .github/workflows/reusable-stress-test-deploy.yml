@@ -8,6 +8,12 @@ on:
         required: true
         type: string
 
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze, support"
+        required: false
+        default: "thisisblaze"
+        type: string
+
       target_type:
         description: "What to test"
         required: false
@@ -177,10 +183,10 @@ jobs:
       azure_acr_name: ${{ steps.calc.outputs.azure_acr_name }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Checkout Actions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
@@ -191,6 +197,7 @@ jobs:
         uses: ./.blaze-actions/.github/actions/calculate-env-config
         with:
           environment: ${{ inputs.environment }}
+          project: ${{ inputs.project }}
           terraform_stack: ${{ needs.setup.outputs.terraform_stack }}
           branch_tag: ${{ needs.setup.outputs.branch_tag }}
           cloud_provider: ${{ inputs.cloud_provider }}
@@ -209,6 +216,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.7.9
     with:
       environment: ${{ inputs.environment }}
+      project: ${{ inputs.project }}
       target_services: "Blaze all"
       # Hybrid ECS: Prod uses EC2/ARM64, Dev/Stage use FARGATE/X86_64
       api_launch_type: ${{ contains(inputs.environment, 'prod') && 'EC2' || 'FARGATE' }}

@@ -153,6 +153,12 @@ outputs:
   stack_id:
     description: "Stack UUID for precise resource targeting"
     value: ${{ steps.config.outputs.stack_id }}
+  project_tier:
+    description: "Project Capacity Tier"
+    value: ${{ steps.config.outputs.project_tier }}
+  pod:
+    description: "Infrastructure Placement Pod"
+    value: ${{ steps.config.outputs.pod }}
 
 runs:
   using: "composite"
@@ -229,14 +235,34 @@ runs:
         GTM_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.GTM_ID')
         DFP_NETWORK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.DFP_NETWORK_ID')
         DB_SSM_PATH=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_SSM_PATH // ""')
-        DB_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.DB_TIER // "shared"')
-        ELASTIC_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.ELASTIC_TIER // "shared"')
-        ECS_COMPUTE_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.ECS_COMPUTE_TIER // "standard"')
         PROJECT_SLUG=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_SLUG // ""')
         CLOUDFLARE_ZONE_ID_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUDFLARE_ZONE_ID_KEY // "CLOUDFLARE_ZONE_ID"')
-        DEDICATED_ALB=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_ALB // "false"')
-        DEDICATED_WAF=$(echo "$MERGED_CONFIG" | jq -r '.common.DEDICATED_WAF // "false"')
         STACK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.STACK_ID // ""')
+
+        # ── TIER CONSOLIDATION LOGIC (Plan 168) ──
+        PROJECT_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_TIER // "T1"')
+        POD=$(echo "$MERGED_CONFIG" | jq -r '.common.POD // "alpha"')
+
+        if [[ "$PROJECT_TIER" == "T3" ]]; then
+           DB_TIER="dedicated"
+           ELASTIC_TIER="dedicated"
+           DEDICATED_ALB="true"
+           DEDICATED_WAF="true"
+           ECS_COMPUTE_TIER="premium"
+        elif [[ "$PROJECT_TIER" == "T2" ]]; then
+           DB_TIER="dedicated"
+           ELASTIC_TIER="dedicated"
+           DEDICATED_ALB="false"
+           DEDICATED_WAF="false"
+           ECS_COMPUTE_TIER="premium"
+        else
+           # Default T1
+           DB_TIER="shared"
+           ELASTIC_TIER="shared"
+           DEDICATED_ALB="false"
+           DEDICATED_WAF="false"
+           ECS_COMPUTE_TIER="standard"
+        fi
         
         # Resolve templated variables in DB_SSM_PATH
         DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
@@ -326,6 +352,8 @@ runs:
         echo "dedicated_alb=$DEDICATED_ALB" >> $GITHUB_OUTPUT
         echo "dedicated_waf=$DEDICATED_WAF" >> $GITHUB_OUTPUT
         echo "stack_id=$STACK_ID" >> $GITHUB_OUTPUT
+        echo "project_tier=$PROJECT_TIER" >> $GITHUB_OUTPUT
+        echo "pod=$POD" >> $GITHUB_OUTPUT
         
         WORKERS_JSON=$(echo "$MERGED_CONFIG" | jq -c '.common.WORKERS // {}')
         echo "workers_json=$WORKERS_JSON" >> $GITHUB_OUTPUT
@@ -375,6 +403,9 @@ runs:
           "db-pod-alpha")
             STACK="db-pod-alpha"
             ;;
+          "db-pod-premium")
+            STACK="db-pod-premium"
+            ;;
           "dedicated-db")
             STACK="dedicated-db"
             ;;
@@ -417,7 +448,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -480,7 +511,7 @@ runs:
             fi
 
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
-            if [[ "$STACK" == "db-pod-alpha" || "$STACK" == "data" ]]; then
+            if [[ "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
                
@@ -527,10 +558,12 @@ runs:
                   fi
                fi
 
-               # multi-site stacks are NOT scoped per-env — dirs are named globally.
-               # dev, dev-mini, and multi-site all use the unprefixed stack name.
-               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" || "$STAGE_KEY" == "multi-site" ]]; then
+               # dev and multi-site use the unprefixed stack name. dev-mini uses explicitly dev-mini prefixed stacks.
+               if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "multi-site" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${STACK_DIR}"
+               elif [[ "$STAGE_KEY" == "dev-mini" ]]; then
+                  # Remove "multi-site-" if present to map to "dev-mini-network" and "dev-mini-app"
+                  TF_DIR="${INFRA_PREFIX}/dev-mini-${STACK_DIR#multi-site-}"
                else
                   # For stage/prod, prefix the env: stage-multi-site-app or stage-multi-site-app-support
                   if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then

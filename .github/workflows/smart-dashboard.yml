@@ -4,13 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "**.tf"
-      - "**.hcl"
-      - ".github/workflows/smart-dashboard.yml"
+    - "**.tf"
+    - "**.hcl"
+    - ".github/workflows/smart-dashboard.yml"
   workflow_dispatch:
 
 permissions:
-  id-token: write # Required for AWS OIDC
   contents: read # Required for checkout
   pull-requests: write # Required for commenting
   checks: write # Required for test reporting
@@ -31,71 +30,73 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout Code
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
 
-      - name: Load Region from Config
-        id: load-config
-        run: |
-          CLOUD_PROVIDER=$(jq -r '.common.CLOUD_PROVIDER // "aws"' vars/blaze-env.json)
-          if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-            REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
-            PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
-            echo "GCP_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
-          else
-            REGION=$(jq -r '.common.AWS_REGION // "eu-west-1"' vars/blaze-env.json)
-          fi
-          echo "CLOUD_PROVIDER=$CLOUD_PROVIDER" >> "$GITHUB_ENV"
-          echo "AWS_REGION=$REGION" >> "$GITHUB_ENV"
-          echo "✅ Cloud: $CLOUD_PROVIDER | Region: $REGION"
+    - name: Load Region from Config
+      id: load-config
+      run: |
+        CLOUD_PROVIDER=$(jq -r '.common.CLOUD_PROVIDER // "aws"' vars/blaze-env.json)
+        if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+          REGION=$(jq -r '.common.GCP_REGION // "europe-west1"' vars/blaze-env.json)
+          PROJECT_ID=$(jq -r '.common.GCP_PROJECT_ID // ""' vars/blaze-env.json)
+          echo "GCP_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+        else
+          REGION=$(jq -r '.common.AWS_REGION // "eu-west-1"' vars/blaze-env.json)
+        fi
+        echo "CLOUD_PROVIDER=$CLOUD_PROVIDER" >> "$GITHUB_ENV"
+        echo "AWS_REGION=$REGION" >> "$GITHUB_ENV"
+        echo "✅ Cloud: $CLOUD_PROVIDER | Region: $REGION"
 
       # --- 1. SECURITY SCAN (Trivy) ---
       # Scans config before Terraform runs to fail fast on risks (but outputting to file for dashboard)
-      - name: Security Scan (Trivy)
-        uses: aquasecurity/trivy-action@master
-        continue-on-error: true # Don't block build, let dashboard show issues
-        with:
-          scan-type: "config"
-          hide-progress: true
-          format: "table"
-          output: "trivy-results.txt"
-          exit-code: "0"
-          severity: "CRITICAL,HIGH"
+    - name: Security Scan (Trivy)
+      uses: aquasecurity/trivy-action@master
+      continue-on-error: true   # Don't block build, let dashboard show issues
+      with:
+        scan-type: "config"
+        hide-progress: true
+        format: "table"
+        output: "trivy-results.txt"
+        exit-code: "0"
+        severity: "CRITICAL,HIGH"
 
       # --- 2. COST ESTIMATION (Infracost) ---
-      - name: Setup Infracost
-        uses: infracost/actions/setup@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832 # v3
-        with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+    - name: Setup Infracost
+      uses: infracost/actions/setup@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832   # v3
+      with:
+        api-key: ${{ secrets.INFRACOST_API_KEY }}
 
-      - name: Generate Cost Baseline
-        continue-on-error: true # Don't fail if Infracost errors (e.g. key missing in dev)
-        run: |
-          infracost breakdown --path . --format json --out-file infracost.json
-          # Convert to markdown snippet for dashboard
-          infracost output --path infracost.json --format github-comment > cost-summary.md
+    - name: Generate Cost Baseline
+      continue-on-error: true   # Don't fail if Infracost errors (e.g. key missing in dev)
+      run: |
+        infracost breakdown --path . --format json --out-file infracost.json
+        # Convert to markdown snippet for dashboard
+        infracost output --path infracost.json --format github-comment > cost-summary.md
 
       # --- 3. TERRAFORM & VISUALIZATION ---
-      - name: Configure AWS Credentials (OIDC)
-        if: env.CLOUD_PROVIDER == 'aws'
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+    - name: Configure AWS Credentials (OIDC)
+      if: env.CLOUD_PROVIDER == 'aws'
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Authenticate to GCP
-        if: env.CLOUD_PROVIDER == 'gcp'
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+    - name: Authenticate to GCP
+      if: env.CLOUD_PROVIDER == 'gcp'
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093   # v3.0.0
+      with:
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER 
+          }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
-        with:
-          terraform_version: "1.9.0"
+    - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e   # v4
+      with:
+        terraform_version: "1.9.0"
 
-      - name: Terraform Init & Plan
-        id: plan
+    - name: Terraform Init & Plan
+      id: plan
         # Note: This runs a generic plan on root folder. Adjust '--path' if needed.
         # Assuming we want to scan the WHOLE repo or specific live dirs?
         # For this dashboard blueprint, we'll scan the root (or modules) or rely on path filters to trigger.
@@ -105,114 +106,114 @@ jobs:
         # But to be "Smart", let's assume we run where the change IS.
         # For now, we'll use a safer dummy plan or just init valid directories.
         # Actually, let's keep it simple: run on current dir if it has TF files, else skip.
-        run: |
-          if [ -f "main.tf" ] || [ -f "versions.tf" ]; then
-            terraform init
-            terraform plan -out=tfplan.binary -no-color
-            terraform show -json tfplan.binary > plan.json
-          else
-            echo "Skipping root plan (no main.tf in root)."
-            echo "{}" > plan.json
-          fi
-        env:
+      run: |
+        if [ -f "main.tf" ] || [ -f "versions.tf" ]; then
+          terraform init
+          terraform plan -out=tfplan.binary -no-color
+          terraform show -json tfplan.binary > plan.json
+        else
+          echo "Skipping root plan (no main.tf in root)."
+          echo "{}" > plan.json
+        fi
+      env:
           # Fake inputs for modules if needed, or rely on .tfvars
-          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
 
       # Generate Infrastructure Diagram (Mermaid.js)
       # Using RoseSecurity/Terramaid (Community Action)
       # Generate Infrastructure Diagram (Mermaid.js)
       # Replaces 'uses: RoseSecurity/Terramaid@v1' which is not a valid Action
-      - name: Generate Diagram
-        continue-on-error: true
-        run: |
-          go install github.com/RoseSecurity/Terramaid@latest
-          # Add GOPATH/bin to PATH for this step
-          export PATH=$PATH:$(go env GOPATH)/bin
+    - name: Generate Diagram
+      continue-on-error: true
+      run: |
+        go install github.com/RoseSecurity/Terramaid@latest
+        # Add GOPATH/bin to PATH for this step
+        export PATH=$PATH:$(go env GOPATH)/bin
 
-          # Run Terramaid
-          # Assumes 'terraform' is in PATH from previous setup-terraform step
-          terramaid run \
-            --working-dir . \
-            --output Terramaid.md \
-            --chart-type flowchart \
-            --direction TD
+        # Run Terramaid
+        # Assumes 'terraform' is in PATH from previous setup-terraform step
+        terramaid run \
+          --working-dir . \
+          --output Terramaid.md \
+          --chart-type flowchart \
+          --direction TD
 
       # --- 4. COMPILE THE SMART DASHBOARD ---
-      - name: 📊 Publish Smart Dashboard
-        if: always()
-        run: |
-          {
-            echo "# 🚀 Smart Infrastructure Dashboard"
-            echo "### 📅 Build: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+    - name: 📊 Publish Smart Dashboard
+      if: always()
+      run: |
+        {
+          echo "# 🚀 Smart Infrastructure Dashboard"
+          echo "### 📅 Build: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
-            # --- Section 1: Terraform Change Summary ---
-            if [ -f plan.json ] && [ -s plan.json ] && grep -q "resource_changes" plan.json; then
-              echo "### 🏗️ Change Summary"
-              
-              # Calculate counts
-              ADD=$(jq '[.resource_changes[] | select(.change.actions[] | contains("create"))] | length' plan.json)
-              CHANGE=$(jq '[.resource_changes[] | select(.change.actions[] | contains("update"))] | length' plan.json)
-              DESTROY=$(jq '[.resource_changes[] | select(.change.actions[] | contains("delete"))] | length' plan.json)
+          # --- Section 1: Terraform Change Summary ---
+          if [ -f plan.json ] && [ -s plan.json ] && grep -q "resource_changes" plan.json; then
+            echo "### 🏗️ Change Summary"
+            
+            # Calculate counts
+            ADD=$(jq '[.resource_changes[] | select(.change.actions[] | contains("create"))] | length' plan.json)
+            CHANGE=$(jq '[.resource_changes[] | select(.change.actions[] | contains("update"))] | length' plan.json)
+            DESTROY=$(jq '[.resource_changes[] | select(.change.actions[] | contains("delete"))] | length' plan.json)
 
-              echo "| 🟢 Added | 🟡 Modified | 🔴 Destroyed |"
-              echo "| :---: | :---: | :---: |"
-              echo "| **$ADD** | **$CHANGE** | **$DESTROY** |"
-              
-              # 🚨 CRITICAL DESTRUCTION CHECK
-              # Lists specific resources being destroyed if they look important (db, s3, iam, vpc, etc.)
-              CRITICAL_DESTROYS=$(jq -r '.resource_changes[] | select(.change.actions[] | contains("delete")) | .address' plan.json | grep -E "rds|s3|iam|vpc|db" || true)
-              
-              if [ ! -z "$CRITICAL_DESTROYS" ]; then
-                echo " "
-                echo "> [!CAUTION]"
-                echo "> **CRITICAL DESTRUCTIONS DETECTED**"
-                echo "> The following sensitive resources are being destroyed:"
-                echo "> \`\`\`"
-                echo "$CRITICAL_DESTROYS"
-                echo "> \`\`\`"
-              fi
-            else
-               echo "> ℹ️ **No Plan Generated** or Root directory has no Terraform configuration."
-            fi
-
-            # --- Section 2: FinOps (Infracost) ---
-            if [ -f cost-summary.md ] && [ -s cost-summary.md ]; then
-              echo "### 💰 FinOps Impact"
-              cat cost-summary.md
-            fi
-
-            # --- Section 3: Topology (Collapsible) ---
-            if [ -f Terramaid.md ]; then
-              echo "### 🗺️ Visual Topology"
-              echo "<details><summary>Click to view Infrastructure Graph</summary>"
+            echo "| 🟢 Added | 🟡 Modified | 🔴 Destroyed |"
+            echo "| :---: | :---: | :---: |"
+            echo "| **$ADD** | **$CHANGE** | **$DESTROY** |"
+            
+            # 🚨 CRITICAL DESTRUCTION CHECK
+            # Lists specific resources being destroyed if they look important (db, s3, iam, vpc, etc.)
+            CRITICAL_DESTROYS=$(jq -r '.resource_changes[] | select(.change.actions[] | contains("delete")) | .address' plan.json | grep -E "rds|s3|iam|vpc|db" || true)
+            
+            if [ ! -z "$CRITICAL_DESTROYS" ]; then
               echo " "
-              echo "\`\`\`mermaid"
-              cat Terramaid.md
-              echo "\`\`\`"
-              echo " "
-              echo "</details>"
+              echo "> [!CAUTION]"
+              echo "> **CRITICAL DESTRUCTIONS DETECTED**"
+              echo "> The following sensitive resources are being destroyed:"
+              echo "> \`\`\`"
+              echo "$CRITICAL_DESTROYS"
+              echo "> \`\`\`"
             fi
+          else
+             echo "> ℹ️ **No Plan Generated** or Root directory has no Terraform configuration."
+          fi
 
-            # --- Section 4: Security (Collapsible) ---
-            if [ -f trivy-results.txt ] && [ -s trivy-results.txt ]; then
-              echo "### 🛡️ Security Scan"
-              echo "<details><summary>Click to view Top Security Issues</summary>"
-              echo " "
-              echo "\`\`\`"
-              # Show first 30 lines to ensure we capture headers + top failures
-              head -n 30 trivy-results.txt
-              echo "\`\`\`"
-              echo " "
-              echo "</details>"
-            fi
+          # --- Section 2: FinOps (Infracost) ---
+          if [ -f cost-summary.md ] && [ -s cost-summary.md ]; then
+            echo "### 💰 FinOps Impact"
+            cat cost-summary.md
+          fi
 
-            # --- Section 5: Quick Links ---
-            echo "### 🔗 Reference"
-            if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-              echo "- [GCP Console](https://console.cloud.google.com/home/dashboard?project=$GCP_PROJECT_ID)"
-            else
-              echo "- [AWS Console](https://console.aws.amazon.com/console/home?region=$AWS_REGION)"
-            fi
-            echo "- [Job Logs]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+          # --- Section 3: Topology (Collapsible) ---
+          if [ -f Terramaid.md ]; then
+            echo "### 🗺️ Visual Topology"
+            echo "<details><summary>Click to view Infrastructure Graph</summary>"
+            echo " "
+            echo "\`\`\`mermaid"
+            cat Terramaid.md
+            echo "\`\`\`"
+            echo " "
+            echo "</details>"
+          fi
 
-          } >> $GITHUB_STEP_SUMMARY
+          # --- Section 4: Security (Collapsible) ---
+          if [ -f trivy-results.txt ] && [ -s trivy-results.txt ]; then
+            echo "### 🛡️ Security Scan"
+            echo "<details><summary>Click to view Top Security Issues</summary>"
+            echo " "
+            echo "\`\`\`"
+            # Show first 30 lines to ensure we capture headers + top failures
+            head -n 30 trivy-results.txt
+            echo "\`\`\`"
+            echo " "
+            echo "</details>"
+          fi
+
+          # --- Section 5: Quick Links ---
+          echo "### 🔗 Reference"
+          if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
+            echo "- [GCP Console](https://console.cloud.google.com/home/dashboard?project=$GCP_PROJECT_ID)"
+          else
+            echo "- [AWS Console](https://console.aws.amazon.com/console/home?region=$AWS_REGION)"
+          fi
+          echo "- [Job Logs]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+
+        } >> $GITHUB_STEP_SUMMARY

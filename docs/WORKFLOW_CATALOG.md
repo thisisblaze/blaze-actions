@@ -1,4 +1,4 @@
-**Last Updated: 2026-06-18
+**Last Updated: 2026-06-23
 **Owner**: Infrastructure Team
 
 ---
@@ -10,9 +10,9 @@
 # Workflow Catalog
 
 **Repository**: blaze-actions  
-**Total Workflows**: 30 main + 24 reusable = 54 total  
+**Total Workflows**: 31 main + 27 reusable = 58 total  
 **Version**: v2.5.7  
-**Last Updated: 2026-06-18
+**Last Updated: 2026-06-23
 
 ---
 
@@ -29,7 +29,7 @@
 
 **Inputs**:
 
-- `cloud_provider` (optional)
+cloud_provider, elasticsearch_tag, environment, images, kibana_tag, mongo_tag, task, terraform_version, tunnel_tag, wif_audience
 - `elasticsearch_tag` (optional)
 - `environment` (optional)
 - `images` (optional)
@@ -57,7 +57,7 @@
 
 **Inputs**:
 
-- `api_cpu_architecture` (optional)
+api_cpu_architecture, api_launch_type, apply, branch_name, cloud_provider, cluster_tier, destroy, enable_ec2, enable_image_resize, enable_tunnel, enable_vpc_peering, environment, force_destructive_reconcile, frontend_cpu_architecture, frontend_launch_type, kibana_size, project, stack, terraform_version, wif_audience, workers_json
 - `api_launch_type` (optional)
 - `apply` (optional)
 - `branch_name` (optional)
@@ -96,7 +96,7 @@
 
 **Inputs**:
 
-- `api_cpu_architecture` (optional)
+api_cpu_architecture, api_launch_type, branch_name, build_images, cloud_provider, deploy_services, environment, frontend_cpu_architecture, frontend_launch_type, override_image_tag, project, skip_stability_wait, smoke_test_url, target_services, wif_audience
 - `api_launch_type` (optional)
 - `branch_name` (optional)
 - `build_images` (optional)
@@ -128,7 +128,7 @@
 
 **Inputs**:
 
-- `run_integration` (optional)
+run_integration, scan_path
 - `scan_path` (optional)
 
 **What it does**:
@@ -157,7 +157,7 @@
 
 **Inputs**:
 
-- `cloud_provider` (optional)
+cloud_provider, environment
 - `environment` (optional)
 
 **What it does**:
@@ -227,7 +227,7 @@
 
 **Inputs**:
 
-- `action` (optional)
+action, branch_tag, bulk_pattern, cloud_provider, confirmation, desired_count, dist_id, dry_run, environment, manage_action, retention_count, retention_days, run_id, skip_lambda_destroy, stack
 - `branch_tag` (optional)
 - `bulk_pattern` (optional)
 - `cloud_provider` (optional)
@@ -252,7 +252,7 @@
 
 **Inputs**:
 
-- `environment` (optional)
+environment, services, sync_github
 - `services` (optional)
 - `sync_github` (optional)
 
@@ -329,6 +329,40 @@
 
 ### Debugging & Fixes
 
+---
+
+#### 97-ops-maintenance.yml
+
+**Purpose**: Operations maintenance  
+**Use Case**: App/Container management  
+
+**Inputs**:
+- `action` (optional)
+- `app_container_name` (optional)
+- `app_service_name` (optional)
+- `cloud_provider` (optional)
+- `distribution_id` (optional)
+- `environment` (optional)
+
+---
+
+#### agent-pr-review.yml
+
+**Purpose**: Agent PR Review  
+**Use Case**: AI Code Review  
+
+---
+
+#### bump-terraform-modules.yml
+
+**Purpose**: Bump Terraform Modules  
+**Use Case**: Update all callers  
+
+**Inputs**:
+- `version` (optional)
+
+
+
 #### find-zombie.yml
 
 **Purpose**: Find Zombie CloudFront
@@ -336,7 +370,7 @@
 
 **Inputs**:
 
-- `target_cname` (optional)
+target_cname
 
 **What it does**:
 - Finds zombie cloudfront distributions
@@ -352,7 +386,7 @@
 
 **Inputs**:
 
-- `branch_tag` (optional)
+branch_tag, environment, stack
 - `environment` (optional)
 - `stack` (optional)
 
@@ -373,7 +407,7 @@
 
 **Inputs**:
 
-- `branch_tag` (optional)
+branch_tag, cloud_provider, environment, reason, stack
 - `cloud_provider` (optional)
 - `environment` (optional)
 - `reason` (optional)
@@ -396,7 +430,7 @@
 
 **Inputs**:
 
-- `dynamodb_table` (optional)
+dynamodb_table, environment, state_key_path
 - `environment` (optional)
 - `state_key_path` (optional)
 
@@ -417,7 +451,7 @@
 
 **Inputs**:
 
-- `dist_id` (optional)
+dist_id
 
 **What it does**:
 
@@ -762,7 +796,30 @@
 
 ---
 
-## Reusable Workflows (19)
+## Reusable Workflows (24)
+
+---
+
+### reusable-incident-triage.yml
+
+**Purpose**: Incident Triage via AI  
+**Inputs**: alert_text
+
+---
+
+### reusable-dns-verify.yml
+
+**Purpose**: Verify DNS Records  
+**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience
+
+---
+
+### reusable-dns-handoff.yml
+
+**Purpose**: DNS Handoff  
+**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience
+
+
 
 These are called by main workflows, not directly by users.
 
@@ -771,7 +828,7 @@ These are called by main workflows, not directly by users.
 ### reusable-terraform.yml
 
 **Purpose**: Core Terraform operations (init/plan/apply)  
-**Inputs**: apply, aws_region, azure_client_id_rev, azure_subscription_id_rev, azure_tenant_id_rev, bucket, build_sharp, cloud_provider, destroy, detect_drift, enable_vpc_peering, environment, lock_table, orphan_lambda, orphan_lambda_namespace, pre_apply_script, sleep_seconds, split_apply, split_targets, stack_id, state_key, terraform_version, tf_dir, tf_vars, wif_audience
+**Inputs**: apply, aws_region, bucket, build_sharp, cloud_provider, destroy, detect_drift, enable_vpc_peering, environment, lock_table, orphan_lambda, orphan_lambda_namespace, pre_apply_script, sleep_seconds, split_apply, split_targets, stack_id, state_key, terraform_version, tf_dir, tf_vars, wif_audience
 **Outputs**: terraform_outputs
 
 ---
@@ -779,7 +836,7 @@ These are called by main workflows, not directly by users.
 ### reusable-docker-build.yml
 
 **Purpose**: Docker image build and push  
-**Inputs**: aws_region, azure_client_id_rev, azure_registry_server, azure_subscription_id_rev, azure_tenant_id_rev, build_args, cloud_provider, context, display_name, dockerfile, environment, gcp_project_id, gcp_region, image_name, image_tag, platforms, wif_audience
+**Inputs**: aws_region, azure_registry_server, build_args, cloud_provider, context, display_name, dockerfile, environment, gcp_project_id, gcp_region, image_name, image_tag, platforms, wif_audience
 **Outputs**: image_uri
 
 ---
@@ -787,7 +844,7 @@ These are called by main workflows, not directly by users.
 ### reusable-ecs-deploy.yml
 
 **Purpose**: ECS service deployment (Fargate or EC2)  
-**Inputs**: api_ap_id, aws_region, branch_name, client_key, cloud_platform, cloud_provider, config_environment, cpu_architecture, dfp_network_id, domain_root, efs_id, elasticsearch_endpoint, environment, es_ap_id, gtm_id, image_tag, launch_type, mongo_ap_id, namespace, ns_id, project_key, registry, s3_bucket, s3_public_url, service_name, skip_stability_wait, stage_key
+**Inputs**: api_ap_id, aws_region, branch_name, client_key, cloud_platform, cloud_provider, config_environment, cpu_architecture, dfp_network_id, domain_root, efs_id, elasticsearch_endpoint, environment, es_ap_id, gtm_id, image_project_key, image_tag, launch_type, mongo_ap_id, namespace, ns_id, project_key, registry, s3_bucket, s3_public_url, service_name, skip_stability_wait, stage_key
 **Outputs**: deployment_status
 
 ---
@@ -812,7 +869,7 @@ These are called by main workflows, not directly by users.
 ### reusable-terraform-operations.yml
 
 **Purpose**: Simplified Terraform operations wrapper  
-**Inputs**: action, aws_region, azure_client_id_rev, azure_subscription_id_rev, azure_tenant_id_rev, branch_name, bucket, client_key, cloud_platform, domain_root, environment, lock_table, namespace, project_key, stage_key, state_key, terraform_vars, tf_dir, wif_audience, working_directory
+**Inputs**: action, aws_region, branch_name, bucket, client_key, cloud_platform, domain_root, environment, lock_table, namespace, project_key, stage_key, state_key, terraform_vars, tf_dir, wif_audience, working_directory
 **Outputs**: outputs
 
 ---
@@ -951,8 +1008,6 @@ These are called by main workflows, not directly by users.
 - `environment_name` (optional)
 - `php_version` (optional)
 - `s3_bucket` (optional)
-
-**Secrets**: `AWS_ROLE_ARN` (required)
 
 **What it does**: Runs optional PHP setup → optional build command → zips source (excluding `.git`, `.github`, `.agent`, `tests`) → uploads bundle to S3 → creates EB Application Version → deploys to EB environment → (optionally) writes version label to SSM Parameter Store.
 
@@ -1101,8 +1156,6 @@ These are called by main workflows, not directly by users.
 - `ssm_inventory_bucket` (optional)
 - `ssm_path_prefix` (optional)
 
-**Secrets**: `AWS_ROLE_ARN` (required)
-
 **What it does**: Creates an RDS manual snapshot → Verifies S3 replication sync → Exports SSM parameter inventory → Creates a DocumentDB cluster snapshot. Each job is idempotent and named by date to prevent collisions.
 
 **Caller**: `98-backup-snapshot.yml`
@@ -1121,8 +1174,6 @@ These are called by main workflows, not directly by users.
 - `rds_wait_minutes` (optional)
 - `services` (optional)
 
-**Secrets**: `AWS_ROLE_ARN` (required)
-
 **What it does**: `sleep` — gracefully stops all ECS services (waits for stability), then stops the RDS instance. `wake` — starts RDS, waits for available state, then scales ECS services back to 1. Achieves ~55% compute cost saving on non-production environments.
 
 **Caller**: `04-dev-sleep-schedule.yml` (scheduled Mon–Fri: sleep 20:03 UTC, wake 06:50 UTC)
@@ -1140,8 +1191,6 @@ These are called by main workflows, not directly by users.
 - `log_group_prefix` (optional)
 - `services` (optional)
 - `tail_lines` (optional)
-
-**Secrets**: `AWS_ROLE_ARN` (required)
 
 **What it does**: Queries ECS cluster → Lists all services and running/stopped tasks → Extracts `stoppedReason` for failed containers → Tails CloudWatch logs for recent errors → Probes the endpoint URL and reports HTTP status. Outputs a structured markdown summary as a GitHub Step Summary.
 
@@ -1269,6 +1318,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated: 2026-06-18
+**Last Updated: 2026-06-23
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0
