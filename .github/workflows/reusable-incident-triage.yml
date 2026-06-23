@@ -17,11 +17,6 @@ on:
       GH_PAT:
         required: false
 
-permissions:
-  id-token: write
-  contents: write
-  pull-requests: write
-
 jobs:
   triage:
     name: 🚨 Incident Triage (blaze-conductor)

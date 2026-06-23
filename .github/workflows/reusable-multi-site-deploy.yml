@@ -154,9 +154,6 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions:
-  id-token: write
-  contents: read
 jobs:
   deploy-site:
     name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"

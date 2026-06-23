@@ -49,9 +49,6 @@ concurrency:
   group: dev-sleep-wake-${{ inputs.cluster }}-${{ inputs.action }}
   cancel-in-progress: false
 
-permissions:
-  id-token: write
-  contents: read
 jobs:
   sleep:
     permissions:

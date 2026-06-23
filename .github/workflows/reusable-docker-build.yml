@@ -149,9 +149,6 @@ on:
         description: "Multi-arch manifest tag"
         value: ${{ inputs.image_tag }}
 
-permissions:
-  id-token: write
-  contents: read
 concurrency:
   group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ inputs.environment }}-${{ github.ref }}
   cancel-in-progress: true
