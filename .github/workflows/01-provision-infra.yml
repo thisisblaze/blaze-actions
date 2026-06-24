@@ -47,16 +47,16 @@ on:
         type: string
       apply:
         description: "APPLY ( vs DRY RUN )"
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       destroy:
         description: "DESTROY (Teardown Stack)"
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       force_destructive_reconcile:
         description: "Force Destructive Reconciliation (CPs/Lambda)"
-        type: boolean
-        default: false
+        type: string
+        default: "false"
 
       terraform_version:
         description: "Terraform Version"
@@ -76,8 +76,8 @@ on:
         default: "1g"
       enable_image_resize:
         description: "Enable CloudFront for Image Resizing"
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       enable_ec2:
         description: "Enable EC2 Capacity Provider (Hybrid ECS)"
         type: string
