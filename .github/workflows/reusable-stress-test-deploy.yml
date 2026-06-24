@@ -36,7 +36,6 @@ on:
         required: false
         type: string
         default: "standard"
-        type: string
 
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
