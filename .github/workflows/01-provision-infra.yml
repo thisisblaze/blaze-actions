@@ -701,7 +701,15 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility-wconly.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      action: "remove_cname"
+      dns_record_name: "cae-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-${{ inputs.stack }}"
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   # ── Azure: Re-apply network with CAE hostname after app provision ──────────
   # After the Azure app stack is provisioned, the Container App Environment
   # gets a static FQDN (default_domain). Front Door needs this as its app origin.
