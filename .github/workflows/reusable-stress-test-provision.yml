@@ -210,7 +210,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "network"
-      apply: true
+      apply: "true"
       enable_ec2: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -238,7 +238,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "tunnel"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -265,7 +265,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "db-pod-alpha"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -295,7 +295,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "app"
-      apply: true
+      apply: "true"
       enable_tunnel: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
       enable_ec2: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'true' || 'false' }}
       api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
@@ -325,7 +325,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "third-party-mongodb"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -352,7 +352,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "third-party-elastic"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
