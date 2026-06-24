@@ -212,7 +212,7 @@ jobs:
       'multi-site-app'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@main
     with:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}

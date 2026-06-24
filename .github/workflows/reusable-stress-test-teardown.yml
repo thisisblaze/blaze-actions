@@ -369,7 +369,7 @@ jobs:
       - prod-safety-check
       - check-states
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
     with:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -397,7 +397,7 @@ jobs:
 
     needs: [config, cleanup-services, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.app_stack == 'multi-site-app' && 
@@ -487,7 +487,7 @@ jobs:
 
     needs: [config, destroy-app, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-db-pod-alpha"
@@ -519,7 +519,7 @@ jobs:
     name: "🧨 Destroy MongoDB"
     needs: [config, destroy-app, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
@@ -550,7 +550,7 @@ jobs:
     name: "🧨 Destroy Elastic"
     needs: [config, destroy-app, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
@@ -580,7 +580,7 @@ jobs:
 
     needs: [config, destroy-app, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
@@ -1024,7 +1024,7 @@ jobs:
     needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, 
           destroy-data-pod, check-states]
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.network_stack == 'multi-site-network' && 
