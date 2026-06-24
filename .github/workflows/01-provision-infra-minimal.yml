@@ -1,0 +1,283 @@
+name: "01 - Provision Infrastructure"
+# ⚠️ WARNING: DO NOT RUN THIS WORKFLOW DIRECTLY FOR DEPLOYMENTS ⚠️
+# This repository (blaze-actions) is a library of reusable workflows.
+# Deployments must be executed from the 'blaze-template-deploy' repository (or your derived project repo),
+# which contains the necessary secrets and environment configurations.
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
+        required: true
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
+        type: string
+        required: true
+        default: "thisisblaze"
+      stack:
+        description: "Infrastructure Layer"
+        type: choice
+        options:
+          - "network"
+          - "dedicated-network"
+          - "db-pod-alpha"
+          - "tenant-app"
+          - "single-network"
+          - "single-app"
+          - "app"
+          - "acm"
+          - "third-party-mongodb"
+          - "third-party-elastic"
+        required: true
+      branch_name:
+        description: "Feature Tag (e.g. jira-123). Leave empty for main."
+        required: false
+        type: string
+      apply:
+        description: "APPLY ( vs DRY RUN )"
+        type: boolean
+        default: false
+      destroy:
+        description: "DESTROY (Teardown Stack)"
+        type: boolean
+        default: false
+      force_destructive_reconcile:
+        description: "Force Destructive Reconciliation (CPs/Lambda)"
+        type: boolean
+        default: false
+
+      terraform_version:
+        description: "Terraform Version"
+        type: string
+        default: "1.9.0"
+
+      # Third-Party Options
+      cluster_tier:
+        description: "MongoDB Tier (Auto: Dev=Flex, Stage/Prod=M10)"
+        type: choice
+        options: ["auto", "flex", "M0", "M10", "M20", "M30"]
+        default: "auto"
+      kibana_size:
+        description: "Kibana RAM Size (Elastic only)"
+        type: choice
+        options: ["1g", "2g"]
+        default: "1g"
+      enable_image_resize:
+        description: "Enable CloudFront for Image Resizing"
+        type: boolean
+        default: false
+      enable_ec2:
+        description: "Enable EC2 Capacity Provider (Hybrid ECS)"
+        type: string
+        default: "false"
+      # Hybrid ECS Inputs
+      api_launch_type:
+        description: "API Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
+        type: choice
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
+      api_cpu_architecture:
+        description: "API CPU Architecture (ARM64 = default / X86_64 = fallback)"
+        type: choice
+        options: ["ARM64", "X86_64"]
+        default: "ARM64"
+      frontend_launch_type:
+        description: "Frontend Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
+        type: choice
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
+      frontend_cpu_architecture:
+        description: "Frontend CPU Architecture (ARM64 = default / X86_64 = fallback)"
+        type: choice
+        options: ["ARM64", "X86_64"]
+        default: "ARM64"
+
+  # Enable usage by other workflows (Stress Test)
+  workflow_call:
+    inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+      environment:
+        required: true
+        type: string
+      wif_audience:
+        required: false
+        type: string
+        default: ""
+      project:
+        required: true
+        type: string
+      stack:
+        required: true
+        type: string
+      branch_name:
+        required: false
+        type: string
+      apply:
+        required: false
+        type: boolean
+        default: false
+      destroy:
+        required: false
+        type: boolean
+        default: false
+      force_destructive_reconcile:
+        required: false
+        type: boolean
+        default: false
+
+      cluster_tier:
+        required: false
+        type: string
+        default: "auto"
+      kibana_size:
+        required: false
+        type: string
+        default: "1g"
+      terraform_version:
+        required: false
+        type: string
+        default: "1.9.0"
+
+      enable_tunnel:
+        required: false
+        type: string
+        default: "false"
+      enable_image_resize:
+        required: false
+        type: boolean
+        default: false
+      enable_ec2:
+        required: false
+        type: string
+        default: "false"
+      enable_vpc_peering:
+        description: "Enable Atlas VPC peering (Plan 135). Requires non-flex cluster (M10+). Passed as TF_VAR_enable_vpc_peering."
+        required: false
+        type: boolean
+        default: false
+      api_launch_type:
+        required: false
+        type: string
+        default: "EC2"
+      api_cpu_architecture:
+        required: false
+        type: string
+        default: "ARM64"
+      frontend_launch_type:
+        required: false
+        type: string
+        default: "EC2"
+      frontend_cpu_architecture:
+        required: false
+        type: string
+        default: "ARM64"
+      workers_json:
+        description: "Background Workers Configuration (JSON String)"
+        required: false
+        type: string
+        default: "{}"
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+concurrency:
+  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    name: "Test"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "Test job"
