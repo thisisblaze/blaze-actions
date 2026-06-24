@@ -17,20 +17,17 @@ on:
         type: string
         default: "eu-west-1"
       s3_bucket:
-        description: 'Optional S3 bucket for deployment bundle. If omitted, uses default
-          EB bucket.'
+        description: 'Optional S3 bucket for deployment bundle. If omitted, uses default EB bucket.'
         required: false
         type: string
         default: ""
       build_command:
-        description: 'Optional build command to run before zipping the artifact (e.g.
-          composer install or shopware-cli project build)'
+        description: 'Optional build command to run before zipping the artifact (e.g. composer install or shopware-cli project build)'
         required: false
         type: string
         default: ""
       php_version:
-        description: 'Optional PHP version to set up before running build commands
-          (e.g. "8.4")'
+        description: 'Optional PHP version to set up before running build commands (e.g. "8.4")'
         required: false
         type: string
         default: ""
@@ -38,6 +35,50 @@ on:
       AWS_ROLE_ARN:
         required: true
 
+      GH_PAT:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      EC_API_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -50,71 +91,70 @@ jobs:
     timeout-minutes: 60
     environment: ${{ inputs.environment }}
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-    - name: Setup PHP
-      if: inputs.php_version != ''
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240   # v2
-      with:
-        php-version: ${{ inputs.php_version }}
-        tools: composer:v2
+      - name: Setup PHP
+        if: inputs.php_version != ''
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ inputs.php_version }}
+          tools: composer:v2
 
-    - name: Configure AWS Credentials
-      uses: 
-        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
-      with:
-        aws-region: ${{ inputs.aws_region }}
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          aws-region: ${{ inputs.aws_region }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 
-    - name: Create Deployment Bundle
-      run: |
-        cat << 'EOF' > build_script.sh
-        ${{ inputs.build_command }}
-        EOF
-        bash build_script.sh
-        rm build_script.sh
-        echo "Packaging application source code and .ebextensions..."
-        zip -r build.zip . -x "*.git*" ".github/*" ".agents/*" "tests/*"
-        echo "Build bundle created."
+      - name: Create Deployment Bundle
+        run: |
+          cat << 'EOF' > build_script.sh
+          ${{ inputs.build_command }}
+          EOF
+          bash build_script.sh
+          rm build_script.sh
+          echo "Packaging application source code and .ebextensions..."
+          zip -r build.zip . -x "*.git*" ".github/*" ".agents/*" "tests/*"
+          echo "Build bundle created."
 
-    - name: Deploy to Elastic Beanstalk
-      run: |
-        VERSION_LABEL="${GITHUB_SHA}-${GITHUB_RUN_ID}"
-        APP_NAME="${{ inputs.application_name }}"
-        ENV_NAME="${{ inputs.environment_name }}"
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          VERSION_LABEL="${GITHUB_SHA}-${GITHUB_RUN_ID}"
+          APP_NAME="${{ inputs.application_name }}"
+          ENV_NAME="${{ inputs.environment_name }}"
 
-        if [ -z "${{ inputs.s3_bucket }}" ]; then
-          echo "No S3 bucket specified. Fetching default Elastic Beanstalk bucket..."
-          EB_BUCKET=$(aws elasticbeanstalk create-storage-location --query 'S3Bucket' --output text)
-        else
-          EB_BUCKET="${{ inputs.s3_bucket }}"
-        fi
+          if [ -z "${{ inputs.s3_bucket }}" ]; then
+            echo "No S3 bucket specified. Fetching default Elastic Beanstalk bucket..."
+            EB_BUCKET=$(aws elasticbeanstalk create-storage-location --query 'S3Bucket' --output text)
+          else
+            EB_BUCKET="${{ inputs.s3_bucket }}"
+          fi
 
-        echo "Using S3 Bucket: $EB_BUCKET"
-        S3_KEY="${APP_NAME}/${VERSION_LABEL}.zip"
+          echo "Using S3 Bucket: $EB_BUCKET"
+          S3_KEY="${APP_NAME}/${VERSION_LABEL}.zip"
 
-        # Upload bundle
-        aws s3 cp build.zip s3://$EB_BUCKET/$S3_KEY
+          # Upload bundle
+          aws s3 cp build.zip s3://$EB_BUCKET/$S3_KEY
 
-        # Create Application Version
-        aws elasticbeanstalk create-application-version \
-          --application-name "$APP_NAME" \
-          --version-label "$VERSION_LABEL" \
-          --source-bundle S3Bucket="$EB_BUCKET",S3Key="$S3_KEY"
+          # Create Application Version
+          aws elasticbeanstalk create-application-version \
+            --application-name "$APP_NAME" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="$EB_BUCKET",S3Key="$S3_KEY"
 
-        # Trigger Environment Update
-        echo "Triggering environment update..."
-        aws elasticbeanstalk update-environment \
-          --application-name "$APP_NAME" \
-          --environment-name "$ENV_NAME" \
-          --version-label "$VERSION_LABEL"
-          
-        # Publish Version to SSM for Terraform to consume
-        echo "Publishing VERSION_LABEL to SSM Parameter Store..."
-        aws ssm put-parameter \
-          --name "/eb/${APP_NAME}/latest_version" \
-          --value "$VERSION_LABEL" \
-          --type "String" \
-          --overwrite
+          # Trigger Environment Update
+          echo "Triggering environment update..."
+          aws elasticbeanstalk update-environment \
+            --application-name "$APP_NAME" \
+            --environment-name "$ENV_NAME" \
+            --version-label "$VERSION_LABEL"
+            
+          # Publish Version to SSM for Terraform to consume
+          echo "Publishing VERSION_LABEL to SSM Parameter Store..."
+          aws ssm put-parameter \
+            --name "/eb/${APP_NAME}/latest_version" \
+            --value "$VERSION_LABEL" \
+            --type "String" \
+            --overwrite
 
-        echo "Deployment initiated. Please check the AWS Console for health status."
+          echo "Deployment initiated. Please check the AWS Console for health status."

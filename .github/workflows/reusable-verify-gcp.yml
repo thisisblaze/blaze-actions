@@ -111,6 +111,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -130,8 +132,7 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 

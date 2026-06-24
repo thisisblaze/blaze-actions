@@ -42,17 +42,17 @@ on:
         required: false
         default: false
         type: boolean
-        
+
       cloud_provider:
         required: false
         type: string
         default: aws
-        
+
       wif_audience:
         description: "OIDC Audience"
         required: false
         type: string
-        
+
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -119,6 +119,8 @@ on:
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
         required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -290,15 +292,15 @@ jobs:
           # The specific cloud verification job will run (others skipped)
           # We just need one of them to succeed, based on cloud_provider
           CLOUD="${{ inputs.cloud_provider }}"
-          
+
           AWS_RES="${{ needs.verify-aws.result }}"
           GCP_RES="${{ needs.verify-gcp.result }}"
           AZR_RES="${{ needs.verify-azure.result }}"
-          
+
           echo "AWS Result: $AWS_RES"
           echo "GCP Result: $GCP_RES"
           echo "Azure Result: $AZR_RES"
-          
+
           if [ "$CLOUD" == "aws" ] && [ "$AWS_RES" == "success" ]; then
             echo "✅ Verification Succeeded"
             exit 0
@@ -309,7 +311,7 @@ jobs:
             echo "✅ Verification Succeeded"
             exit 0
           fi
-          
+
           echo "❌ Verification Failed"
           exit 1
 

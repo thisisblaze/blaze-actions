@@ -12,7 +12,7 @@ on:
         description: "🛠️ Select Action"
         type: choice
         options:
-        - kill-workflows
+          - kill-workflows
         required: true
         default: kill-workflows
       environment:
@@ -23,8 +23,7 @@ on:
       stack:
         description: "Terraform Stack (for state/destroy)"
         type: choice
-        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb",
-          "third-party-elastic"]
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
         default: "app"
         required: false
       branch_tag:
@@ -199,14 +198,15 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
   id-token: write
   contents: read
   actions: write
 
 concurrency:
-  group: ops-util-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ 
-    inputs.action }}-${{ github.ref }}
+  group: ops-util-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -218,58 +218,58 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-    - name: Load Access List
-      id: load-access
-      run: |
-        if [[ -f "vars/blaze-env.json" ]]; then
-          ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
-          echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
-        else
-          echo "⚠️ vars/blaze-env.json not found. Skipping access control."
-          echo "allowed=" >> "$GITHUB_OUTPUT"
-        fi
-
-    - name: Check Access
-      if: steps.load-access.outputs.allowed != ''
-      uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
-      with:
-        allowed_users: ${{ steps.load-access.outputs.allowed }}
-        actor: ${{ github.actor }}
-
-    - name: Validate Input
-      run: |
-        ACTION="${{ inputs.action }}"
-        CONF="${{ inputs.confirmation }}"
-
-        echo "🔍 Selected Action: $ACTION"
-
-        # Block separators and headers
-        if [[ "$ACTION" == "-"* ]]; then
-          echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
-          echo "   Please select a real action (e.g., 'manage-environment')."
-          exit 1
-        fi
-
-        # Validation for destructive actions (plan 163 O3 — kept consistent with
-        # 99-ops-terraform / 99-ops-nuke: manual dispatch requires a target-scoped keyword).
-        if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.stack }}"
-            if [[ "$CONF" != "$EXPECTED" ]]; then
-              echo "❌ ERROR: Confirmation for '$ACTION' must be EXACTLY: $EXPECTED"
-              echo "   (you typed: '$CONF') — this binds the confirmation to the chosen environment + stack."
-              exit 1
-            fi
+      - name: Load Access List
+        id: load-access
+        run: |
+          if [[ -f "vars/blaze-env.json" ]]; then
+            ALLOWED=$(jq -r '.common.ALLOWED_INFRA_USERS // empty' vars/blaze-env.json)
+            echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
           else
-            if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
-              echo "❌ ERROR: Confirmation required for $ACTION. Pass 'DESTROY' or 'EXECUTE'."
-              exit 1
+            echo "⚠️ vars/blaze-env.json not found. Skipping access control."
+            echo "allowed=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Access
+        if: steps.load-access.outputs.allowed != ''
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
+        with:
+          allowed_users: ${{ steps.load-access.outputs.allowed }}
+          actor: ${{ github.actor }}
+
+      - name: Validate Input
+        run: |
+          ACTION="${{ inputs.action }}"
+          CONF="${{ inputs.confirmation }}"
+
+          echo "🔍 Selected Action: $ACTION"
+
+          # Block separators and headers
+          if [[ "$ACTION" == "-"* ]]; then
+            echo "❌ ERROR: You selected a category header or separator ('$ACTION')."
+            echo "   Please select a real action (e.g., 'manage-environment')."
+            exit 1
+          fi
+
+          # Validation for destructive actions (plan 163 O3 — kept consistent with
+          # 99-ops-terraform / 99-ops-nuke: manual dispatch requires a target-scoped keyword).
+          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.stack }}"
+              if [[ "$CONF" != "$EXPECTED" ]]; then
+                echo "❌ ERROR: Confirmation for '$ACTION' must be EXACTLY: $EXPECTED"
+                echo "   (you typed: '$CONF') — this binds the confirmation to the chosen environment + stack."
+                exit 1
+              fi
+            else
+              if [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+                echo "❌ ERROR: Confirmation required for $ACTION. Pass 'DESTROY' or 'EXECUTE'."
+                exit 1
+              fi
             fi
           fi
-        fi
 
   debug-context:
     name: 🕵️ Debug Context
@@ -277,29 +277,29 @@ jobs:
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 5
     steps:
-    - name: Check Secrets Presence
-      run: |
-        echo "🔍 Checking Secret Availability..."
+      - name: Check Secrets Presence
+        run: |
+          echo "🔍 Checking Secret Availability..."
 
-        if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
-          echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
-        else
-          echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
-        fi
+          if [[ -n "${{ secrets.AWS_ROLE_ARN }}" ]]; then
+            echo "✅ AWS_ROLE_ARN is SET (Length: ${#AWS_ROLE_ARN})"
+          else
+            echo "❌ AWS_ROLE_ARN is MISSING or EMPTY"
+          fi
 
-        if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
-           echo "✅ CLOUDFLARE_API_TOKEN is SET"
-        else
-           echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
-        fi
+          if [[ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+             echo "✅ CLOUDFLARE_API_TOKEN is SET"
+          else
+             echo "❌ CLOUDFLARE_API_TOKEN is MISSING"
+          fi
 
-        if [[ -n "${{ secrets.GH_PAT }}" ]]; then
-           echo "✅ GH_PAT is SET"
-        else
-           echo "ℹ️ GH_PAT is MISSING (This might be expected)"
-        fi
-      env:
-        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          if [[ -n "${{ secrets.GH_PAT }}" ]]; then
+             echo "✅ GH_PAT is SET"
+          else
+             echo "ℹ️ GH_PAT is MISSING (This might be expected)"
+          fi
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
   configuration:
     name: Configuration
@@ -332,18 +332,18 @@ jobs:
       has_app: ${{ steps.check-dirs.outputs.has_app }}
       has_cdn: ${{ steps.check-dirs.outputs.has_cdn }}
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-    - name: Load AWS Region from Config
-      id: load-region
-      run: |
-        AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
-        if [[ -z "$AWS_REGION" ]]; then
-          echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
-          exit 1
-        fi
-        echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
-        echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
+      - name: Load AWS Region from Config
+        id: load-region
+        run: |
+          AWS_REGION=$(jq -r '.common.AWS_REGION' vars/blaze-env.json)
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "❌ ERROR: AWS_REGION not set in vars/blaze-env.json"
+            exit 1
+          fi
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+          echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
 
       # TODO: Re-enable if calculate-config needs AWS Account ID
       # Temporarily disabled to allow workflow to run without AWS_ROLE_ARN configured
@@ -354,59 +354,59 @@ jobs:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       #     aws-region: ${{ steps.load-region.outputs.aws_region }}
 
-    - name: Calculate Configuration
-      id: config
-      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
-      with:
-        environment: ${{ inputs.environment || 'DEV' }}
-        terraform_stack: ${{ inputs.stack || 'app' }}
-        branch_name: ${{ inputs.branch_tag }}
-        cloud_provider: ${{ inputs.cloud_provider }}
+      - name: Calculate Configuration
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
+        with:
+          environment: ${{ inputs.environment || 'DEV' }}
+          terraform_stack: ${{ inputs.stack || 'app' }}
+          branch_name: ${{ inputs.branch_tag }}
+          cloud_provider: ${{ inputs.cloud_provider }}
           # Ops Utility implies infra operations, so we must pass true to bypass safety check
-        deploy_infra: true
-        build_images: "false"
-        deploy_services: "false"
-        event_name: "workflow_dispatch"
+          deploy_infra: true
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
 
-    - name: Check Stack Directories
-      id: check-dirs
-      run: |
-        PREFIX="${{ steps.config.outputs.infra_prefix }}"
-        STAGE="${{ steps.config.outputs.stage_key }}"
+      - name: Check Stack Directories
+        id: check-dirs
+        run: |
+          PREFIX="${{ steps.config.outputs.infra_prefix }}"
+          STAGE="${{ steps.config.outputs.stage_key }}"
 
-        echo "🔍 Checking directories in $PREFIX for stage $STAGE..."
+          echo "🔍 Checking directories in $PREFIX for stage $STAGE..."
 
-        if [[ -d "$PREFIX/${STAGE}-network" ]]; then
-          echo "✅ Network dir found"
-          echo "has_network=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "⚠️ Network dir NOT found"
-          echo "has_network=false" >> "$GITHUB_OUTPUT"
-        fi
+          if [[ -d "$PREFIX/${STAGE}-network" ]]; then
+            echo "✅ Network dir found"
+            echo "has_network=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Network dir NOT found"
+            echo "has_network=false" >> "$GITHUB_OUTPUT"
+          fi
 
-        if [[ -d "$PREFIX/${STAGE}-data" ]]; then
-          echo "✅ Data dir found"
-          echo "has_data=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "⚠️ Data dir NOT found"
-          echo "has_data=false" >> "$GITHUB_OUTPUT"
-        fi
+          if [[ -d "$PREFIX/${STAGE}-data" ]]; then
+            echo "✅ Data dir found"
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Data dir NOT found"
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
 
-        if [[ -d "$PREFIX/${STAGE}-app" ]]; then
-          echo "✅ App dir found"
-          echo "has_app=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "⚠️ App dir NOT found"
-          echo "has_app=false" >> "$GITHUB_OUTPUT"
-        fi
+          if [[ -d "$PREFIX/${STAGE}-app" ]]; then
+            echo "✅ App dir found"
+            echo "has_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ App dir NOT found"
+            echo "has_app=false" >> "$GITHUB_OUTPUT"
+          fi
 
-        if [[ -d "$PREFIX/${STAGE}-cdn" ]]; then
-          echo "✅ CDN dir found"
-          echo "has_cdn=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "⚠️ CDN dir NOT found"
-          echo "has_cdn=false" >> "$GITHUB_OUTPUT"
-        fi
+          if [[ -d "$PREFIX/${STAGE}-cdn" ]]; then
+            echo "✅ CDN dir found"
+            echo "has_cdn=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ CDN dir NOT found"
+            echo "has_cdn=false" >> "$GITHUB_OUTPUT"
+          fi
 
   kill-workflows:
     name: 🧟‍♂️ Kill Workflows
@@ -415,35 +415,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-    - name: Kill Zombies
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        BRANCH_FILTER="${{ inputs.branch_tag }}"
-        CURRENT_ID="${{ github.run_id }}"
-        TARGET_ID="${{ inputs.run_id }}"
+      - name: Kill Zombies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_FILTER="${{ inputs.branch_tag }}"
+          CURRENT_ID="${{ github.run_id }}"
+          TARGET_ID="${{ inputs.run_id }}"
 
-        # Collect runs across ALL active statuses (in_progress, queued, pending)
-        echo "🔍 Collecting active runs (in_progress + queued + pending)..."
-        RUNS_IP=$(gh run list --repo "${{ github.repository }}" --status in_progress ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
-        RUNS_QU=$(gh run list --repo "${{ github.repository }}" --status queued ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
-        RUNS_PE=$(gh run list --repo "${{ github.repository }}" --status pending ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50 2>/dev/null || echo '[]')
-        RUNS=$(jq -s 'add | unique_by(.databaseId)' <(echo "$RUNS_IP") <(echo "$RUNS_QU") <(echo "$RUNS_PE"))
+          # Collect runs across ALL active statuses (in_progress, queued, pending)
+          echo "🔍 Collecting active runs (in_progress + queued + pending)..."
+          RUNS_IP=$(gh run list --repo "${{ github.repository }}" --status in_progress ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
+          RUNS_QU=$(gh run list --repo "${{ github.repository }}" --status queued ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50)
+          RUNS_PE=$(gh run list --repo "${{ github.repository }}" --status pending ${BRANCH_FILTER:+--branch "$BRANCH_FILTER"} --json databaseId,name --limit 50 2>/dev/null || echo '[]')
+          RUNS=$(jq -s 'add | unique_by(.databaseId)' <(echo "$RUNS_IP") <(echo "$RUNS_QU") <(echo "$RUNS_PE"))
 
-        echo "Found $(echo "$RUNS" | jq 'length') active runs"
+          echo "Found $(echo "$RUNS" | jq 'length') active runs"
 
-        for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
-          _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-          id=$(_jq '.databaseId')
-          name=$(_jq '.name')
-          if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
-          if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
-          echo "🔪 Killing Run $id ($name)..."
-          gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel" 2>&1 || \
-            gh run cancel $id --repo "${{ github.repository }}" 2>&1 || \
-            echo "⚠️ Could not force-cancel $id (may already be finalising)"
-        done
-        echo "✅ Kill sweep complete"
+          for row in $(echo "${RUNS}" | jq -r '.[] | @base64'); do
+            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
+            id=$(_jq '.databaseId')
+            name=$(_jq '.name')
+            if [[ "$id" == "$CURRENT_ID" ]]; then continue; fi
+            if [[ -n "$TARGET_ID" && "$id" != "$TARGET_ID" ]]; then continue; fi
+            echo "🔪 Killing Run $id ($name)..."
+            gh api --method POST "/repos/${{ github.repository }}/actions/runs/$id/force-cancel" 2>&1 || \
+              gh run cancel $id --repo "${{ github.repository }}" 2>&1 || \
+              echo "⚠️ Could not force-cancel $id (may already be finalising)"
+          done
+          echo "✅ Kill sweep complete"
 
   summary:
     name: 📝 Ops Summary
@@ -451,34 +451,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - name: Generate Summary
-      run: |
-        echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+      - name: Generate Summary
+        run: |
+          echo "# 🛠️ Ops Utility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-        # Helper function
-        get_icon() {
-          if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
-        }
+          # Helper function
+          get_icon() {
+            if [[ "$1" == "success" ]]; then echo "✅"; elif [[ "$1" == "skipped" ]]; then echo "⏭️"; elif [[ "$1" == "cancelled" ]]; then echo "🚫"; else echo "❌"; fi
+          }
 
-        echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
-        echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-        echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Action Context" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Action** | \`${{ inputs.action }}\` |" >> $GITHUB_STEP_SUMMARY
 
-        # If configuration ran successfully, we have more info
-        if [[ "${{ needs.configuration.result }}" == "success" ]]; then
-          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
-        fi
+          # If configuration ran successfully, we have more info
+          if [[ "${{ needs.configuration.result }}" == "success" ]]; then
+            echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Cluster** | \`${{ needs.configuration.outputs.cluster_name }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Region** | \`${{ needs.configuration.outputs.aws_region }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
 
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 Execution Status" >> $GITHUB_STEP_SUMMARY
 
-        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
 
-        if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
-           echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
-        fi
+          if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
+             echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -95,6 +95,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
   id-token: write
   contents: read

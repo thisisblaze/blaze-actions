@@ -169,6 +169,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
   id-token: write
   contents: read
@@ -194,7 +196,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      
       - name: Calculate Configuration
         id: calc
         uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.11.6

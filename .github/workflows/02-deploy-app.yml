@@ -204,6 +204,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
   id-token: write
   contents: read
@@ -422,7 +424,7 @@ jobs:
         run: |
           # shellcheck disable=SC2086
           echo "## 🚀 Application Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
-          
+
           if [[ "${{ needs.dispatch-aws.result }}" == "failure" || "${{ needs.dispatch-gcp.result }}" == "failure" || "${{ needs.dispatch-azure.result }}" == "failure" || "${{ needs.dispatch-pages.result }}" == "failure" ]]; then
              echo "❌ **Deployment Failed**" >> "$GITHUB_STEP_SUMMARY"
              

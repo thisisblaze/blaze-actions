@@ -88,6 +88,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
     inputs:
       scan_path:
         description: "Path to scan for Terraform modules/stacks"

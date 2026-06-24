@@ -42,17 +42,16 @@ on:
         required: false
         default: false
         type: boolean
-        
+
       cloud_provider:
         required: false
         type: string
         default: aws
-        
+
       wif_audience:
         required: false
         type: string
         default: ""
-        
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -119,6 +118,8 @@ on:
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
         required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
