@@ -139,6 +139,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [setup]
     name: "🏗️ Provision Network"
-    uses: thisisblaze/blaze-actions/.github/workflows/test-one-input.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/test-with-bool.yml@main
     with:
       env_name: ${{ inputs.environment }}
+      apply: true
