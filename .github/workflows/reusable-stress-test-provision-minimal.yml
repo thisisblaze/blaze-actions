@@ -141,7 +141,6 @@ jobs:
     name: "🏗️ Provision Network"
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@main
     with:
-      cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       apply: "true"
