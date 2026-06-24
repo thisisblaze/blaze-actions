@@ -1,0 +1,27 @@
+name: "01 Provision Infra V7 (Reusable Prefix Test)"
+
+on:
+  workflow_call:
+    inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+      environment:
+        required: true
+        type: string
+      stack:
+        required: true
+        type: string
+
+jobs:
+  configuration:
+    name: "Configuration"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "config"
+
+  auto-cleanup-dns:
+    name: Auto Cleanup DNS
+    needs: [configuration]
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-utility.yml@main
