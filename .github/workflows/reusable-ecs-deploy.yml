@@ -172,8 +172,7 @@ on:
       BASIC_AUTH_CREDENTIALS:
         required: false
 concurrency:
-  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref
-    }}-${{ inputs.environment }}
+  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref }}-${{ inputs.environment }}
   cancel-in-progress: false
 
 env:
@@ -210,8 +209,7 @@ jobs:
           branch_name: ${{ inputs.branch_name }}
           image_tag: ${{ inputs.image_tag }}
           project_key: ${{ inputs.project_key }}
-          image_project_key: ${{ inputs.image_project_key || inputs.project_key 
-            }}
+          image_project_key: ${{ inputs.image_project_key || inputs.project_key }}
           client_key: ${{ inputs.client_key }}
           cloud_platform: ${{ inputs.cloud_platform }}
           domain_root: ${{ inputs.domain_root }}
@@ -231,8 +229,7 @@ jobs:
           admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
           admin_password: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
           mongodb_uri: ${{ secrets.BLAZE_CONNECTION_STRING }}
-          elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || 
-            inputs.elasticsearch_endpoint }}
+          elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || inputs.elasticsearch_endpoint }}
 
           elasticsearch_username: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
           elasticsearch_password: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}

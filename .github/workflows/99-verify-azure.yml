@@ -138,8 +138,7 @@ jobs:
       - name: Read Front Door Endpoint from TF State
         id: tf_outputs
         env:
-          STAGE: ${{ inputs.environment == 'PROD' && 'prod' || 
-            inputs.environment == 'STAGE' && 'stage' || 'dev' }}
+          STAGE: ${{ inputs.environment == 'PROD' && 'prod' || inputs.environment == 'STAGE' && 'stage' || 'dev' }}
         run: |
           STAGE_LC="${STAGE,,}"
           NAMESPACE=$(jq -r '.common.NAMESPACE // "blaze"' vars/blaze-env.json 2>/dev/null || echo "blaze")

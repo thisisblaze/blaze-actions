@@ -199,13 +199,11 @@ jobs:
     needs: [configuration]
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
-      tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ 
-        needs.configuration.outputs.stage_key }}-network
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.network_tf_dir,
-        'multi-site') && 'multi-site' || needs.configuration.outputs.stage_key }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.network_tf_dir, 'multi-site') && 'multi-site' || needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: "1.9.0"
       apply: false
@@ -225,8 +223,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -269,8 +266,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}

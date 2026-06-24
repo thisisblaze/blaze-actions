@@ -197,8 +197,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: ops-azure-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ 
-    inputs.action }}-${{ github.ref }}
+  group: ops-azure-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:

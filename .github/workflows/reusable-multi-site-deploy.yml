@@ -149,8 +149,7 @@ on:
       BASIC_AUTH_CREDENTIALS:
         required: false
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.site_key }}-${{ 
-    inputs.environment }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.site_key }}-${{ inputs.environment }}
   cancel-in-progress: false
 
 env:
@@ -199,8 +198,7 @@ jobs:
         uses: 
           azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1           # v1
         with:
-          imageToDeploy: ${{ env.ACR }}/${{ env.REPO }}/${{ env.SITE_KEY }}:${{ 
-            env.TAG }}
+          imageToDeploy: ${{ env.ACR }}/${{ env.REPO }}/${{ env.SITE_KEY }}:${{ env.TAG }}
           resourceGroup: ${{ env.RG }}
           containerAppName: ${{ env.APP_NAME }}
           targetPort: ${{ inputs.target_port }}

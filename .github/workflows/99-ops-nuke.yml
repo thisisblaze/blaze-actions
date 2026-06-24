@@ -197,8 +197,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: ops-nuke-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ 
-    inputs.action }}-${{ github.ref }}
+  group: ops-nuke-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -480,8 +479,7 @@ jobs:
         uses: 
           google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ vars.WIF_AUDIENCE }}
 
@@ -636,8 +634,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -653,16 +650,14 @@ jobs:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-app"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-app"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       # Backend Config (Must match calculate-config logic)
       bucket: ${{ needs.configuration.outputs.bucket }}
       # Key format: infra/{project}/{stage}/{stack}.tfstate
       # We must reconstruct the key for each stack.
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/app.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/app.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -712,8 +707,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -729,16 +723,14 @@ jobs:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
       # Force explicit path for App stack instead of using config output (which relies on input.stack)
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-tenant-app"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-tenant-app"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       # Backend Config (Must match calculate-config logic)
       bucket: ${{ needs.configuration.outputs.bucket }}
       # Key format: infra/{project}/{stage}/{stack}.tfstate
       # We must reconstruct the key for each stack.
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/${{ needs.configuration.outputs.project_key }}.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/${{ needs.configuration.outputs.project_key }}.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -872,8 +864,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -887,13 +878,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-data"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/data.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -959,8 +948,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -1035,8 +1023,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1050,13 +1037,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-data"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/data.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -1096,8 +1081,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1105,13 +1089,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-cdn"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-cdn"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/cdn.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/cdn.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -1149,8 +1131,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1164,13 +1145,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: gcp
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-network"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -1207,8 +1186,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1222,13 +1200,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: azure
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-data"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-data"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/data.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -1275,13 +1251,11 @@ jobs:
       cloud_provider: azure
       # The Front Door + Blob resources live inside the network stack (cdn-modules.tf)
       # Destroy them by targeting only the CDN module resources in the network stack
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-network"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: false # We partially destroy by disabling CDN, then full network destroy follows
@@ -1324,8 +1298,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -1339,13 +1312,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: azure
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-network"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true
@@ -1383,8 +1354,7 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -1399,13 +1369,11 @@ jobs:
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
-      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key
-        }}-network"
+      tf_dir: "${{ needs.configuration.outputs.infra_prefix }}/${{ needs.configuration.outputs.stage_key }}-network"
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key
-        }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
       destroy: true

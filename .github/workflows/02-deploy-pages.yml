@@ -323,8 +323,7 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -390,9 +389,7 @@ jobs:
           inputs.cloud_provider == null
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
-          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.client_key }}-web/${{ 
-            needs.configuration.outputs.project_key }}/api
+          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -508,11 +505,7 @@ jobs:
     name: Build Admin (Shared)
     needs: [configuration, pre-flight-check]
     # Run for Host Environments (Prod, Stage, Dev Host)
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && 
-      (inputs.build_images == true || inputs.build_images == null || 
-      inputs.deploy_services == true || inputs.deploy_services == null) && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 
-      'admin' || inputs.target_services == null) }}
+    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.build_images == true || inputs.build_images == null || inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -583,11 +576,7 @@ jobs:
 
     # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' &&
-      inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' ||
-      inputs.branch_name == null) && (inputs.deploy_services == true ||
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
-      || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -679,10 +668,7 @@ jobs:
     name: Deploy Admin (GCP — GCS + Cloud CDN)
     needs: [configuration, build-admin, pre-flight-check]
     # GCP has no Cloudflare Pages path — this is GCP's native admin static deploy.
-    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' ||
-      inputs.branch_name == null) && (inputs.deploy_services == true ||
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
-      || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -729,11 +715,7 @@ jobs:
     needs: [configuration, build-admin, pre-flight-check]
     # Opt-in native Azure static path (set static_admin_target=native); otherwise
     # Azure uses the Cloudflare Pages job above.
-    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' &&
-      (inputs.branch_name == '' || inputs.branch_name == null) &&
-      (inputs.deploy_services == true || inputs.deploy_services == null) &&
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' ||
-      inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

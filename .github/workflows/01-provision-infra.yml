@@ -268,8 +268,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment 
-    }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
+  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
 env:
@@ -365,8 +364,7 @@ jobs:
       if: inputs.cloud_provider == 'gcp'
       uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093   # v3.0.0
       with:
-        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER 
-          }}
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         audience: ${{ inputs.wif_audience }}
 
@@ -415,8 +413,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
-      layer_arn: ${{ steps.build.outputs.layer-arn || 
-        steps.existing.outputs.layer_arn }}
+      layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
@@ -475,8 +472,7 @@ jobs:
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       # GCP
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       # Azure
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -495,8 +491,7 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
-      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 
-        'network' }}
+      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 'network' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -641,13 +636,10 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
         workers='${{ inputs.workers_json }}'
-      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 
-        'dedicated-network' || inputs.stack == 'multi-site-network' }}
+      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
-      split_targets: ${{ inputs.stack == 'tunnel' && 
-        'module.tunnel.random_id.tunnel_secret 
-        module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
+      split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
       stack_id: ${{ needs.configuration.outputs.stack_id }}
 
