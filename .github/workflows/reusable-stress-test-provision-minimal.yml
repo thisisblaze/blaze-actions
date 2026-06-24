@@ -34,14 +34,14 @@ on:
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       cloud_provider:
         required: false
@@ -145,7 +145,7 @@ jobs:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "network"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
