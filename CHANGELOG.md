@@ -3,6 +3,7 @@
 All notable changes to the `blaze-actions` project will be documented in this file.
 
 ## [Unreleased]
+- fix(actions): quote boolean apply in reusable-dns-verify to resolve startup_failure (#141) (2026-06-24)
 ### Changed
 - feat: `calculate-config` now natively derives infrastructure routing (`DB_TIER`, `ELASTIC_TIER`, `DEDICATED_ALB`, etc.) from `PROJECT_TIER` and `POD` inputs, centralizing the environment capacity tier mapping (Plan 168).
 
