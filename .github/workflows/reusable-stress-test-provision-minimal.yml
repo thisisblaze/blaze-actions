@@ -1,0 +1,133 @@
+name: "♻️ 🏗️ Phase 2: Provision"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        type: string
+
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze, support"
+        required: false
+        default: "thisisblaze"
+        type: string
+
+      target_type:
+        description: "What to test"
+        required: false
+        default: "host"
+        type: string
+
+      branch_tag:
+        description: "Feature branch tag (required if target_type=feature-branch)"
+        required: false
+        type: string
+
+      mode:
+        description: "Execution Mode"
+        required: false
+        type: string
+        default: "standard"
+
+      include_third_party:
+        description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
+        required: false
+        default: false
+        type: boolean
+
+      preserve_host:
+        description: "Preserve host network"
+        required: false
+        default: false
+        type: boolean
+
+      cloud_provider:
+        required: false
+        type: string
+        default: aws
+
+      wif_audience:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  setup:
+    name: "Initialize"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "test"
