@@ -486,7 +486,7 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
-      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' }}
+      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -631,8 +631,8 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
         workers='${{ inputs.workers_json }}'
-      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
-      split_apply: ${{ inputs.stack == 'tunnel' }}
+      orphan_lambda: ${{ (inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network') && 'true' || 'false' }}
+      split_apply: ${{ inputs.stack == 'tunnel' && 'true' || 'false' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
