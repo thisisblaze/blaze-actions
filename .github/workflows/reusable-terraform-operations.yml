@@ -15,7 +15,8 @@ on:
       lock_table:
         required: false
         type: string
-        description: "DynamoDB Lock Table name. If omitted, defaults to bucket name (legacy behavior)."
+        description: "DynamoDB Lock Table name. If omitted, defaults to bucket name
+          (legacy behavior)."
       action:
         required: true
         type: string
@@ -131,6 +132,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
     outputs:
       apply_status:
         value: ${{ jobs.terraform.outputs.status }}
@@ -160,9 +163,9 @@ jobs:
 
       - name: Set Azure Credentials (OIDC)
         run: |
-            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Setup Blaze
         uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.6
@@ -435,7 +438,8 @@ jobs:
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TF_VAR_domain_root: ${{ inputs.domain_root }}
-          TF_VAR_cloudfront_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          TF_VAR_cloudfront_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN
+            }}
           TF_VAR_acm_certificate_arn: ${{ secrets.ACM_CERTIFICATE_ARN }}
           AWS_REGION: ${{ inputs.aws_region }}
           # MongoDB / Elastic Secrets (Direct Mapping for reliability)
@@ -443,7 +447,8 @@ jobs:
           TF_VAR_atlas_project_id: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
           TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
           # Azure OIDC
-          ARM_USE_OIDC: ${{ inputs.cloud_platform == 'azure' && 'true' || 'false' }}
+          ARM_USE_OIDC: ${{ inputs.cloud_platform == 'azure' && 'true' || 
+            'false' }}
           ARM_CLIENT_ID: ${{ env.DECODED_AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ env.DECODED_AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}

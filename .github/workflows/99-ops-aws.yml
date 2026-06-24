@@ -26,7 +26,8 @@ on:
       stack:
         description: "Terraform Stack (for state/destroy)"
         type: choice
-        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb",
+          "third-party-elastic"]
         default: "app"
         required: false
       branch_tag:
@@ -132,13 +133,75 @@ on:
       dist_id:
         type: string
         required: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      EC_API_KEY:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      DEPLOY_KEY:
+        required: false
 permissions:
   id-token: write
   contents: read
   actions: write
 
 concurrency:
-  group: ops-aws-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
+  group: ops-aws-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ 
+    inputs.action }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -340,8 +403,10 @@ jobs:
       id-token: write
     name: Manage Env
     needs: [configuration]
-    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.6
+    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws'
+      || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.6
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -358,7 +423,8 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider ==
+      'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -374,7 +440,8 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           # Lambda@Edge is ALWAYS in us-east-1
@@ -398,7 +465,7 @@ jobs:
 
           # 2. Tag-based query (replacing brittle name pattern matching)
           echo "--------------------------------"
-          
+
           STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:StackID=${STACK_ID}..."
@@ -417,7 +484,7 @@ jobs:
               --query 'ResourceTagMappingList[*].ResourceARN' \
               --output text 2>/dev/null || echo "")
           fi
-          
+
           echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . > found_lambdas.txt || true
 
           if [ ! -s found_lambdas.txt ]; then
@@ -434,10 +501,10 @@ jobs:
           # Fetch all active Lambda@Edge bindings across all distributions in the AWS account to prevent false-positives
           ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
           ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
-          
+
           ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u || true)
           ACTIVE_COUNT=$(echo "$ACTIVE_LAMBDAS" | grep -v "^$" | wc -l | tr -d ' ' || echo "0")
-          
+
           echo "✅ Found $ACTIVE_COUNT Edge Lambdas currently bound to live CloudFront distributions."
           echo "--------------------------------"
 
@@ -470,7 +537,8 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Buckets
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider ==
+      'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -486,14 +554,16 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
       - name: Find and Delete Orphaned Buckets
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' 
+            }}
         run: |
           STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
@@ -542,7 +612,8 @@ jobs:
 
       - name: Find and Delete Orphaned Log Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' 
+            }}
         run: |
           STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
@@ -577,7 +648,8 @@ jobs:
 
       - name: Find and Delete Orphaned Target Groups
         env:
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' 
+            }}
         run: |
           STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
@@ -612,8 +684,11 @@ jobs:
 
       - name: Find and Delete Orphaned CloudFront Functions
         env:
-          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-${{ needs.configuration.outputs.project_key }}
-          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' }}
+          PREFIX: ${{ needs.configuration.outputs.namespace }}-${{ 
+            needs.configuration.outputs.client_key }}-${{ 
+            needs.configuration.outputs.project_key }}
+          ENV_KEY: ${{ inputs.environment == 'dev-mini' && 'dev-mini' || 'dev' 
+            }}
         run: |
           echo "🧹 Looking for orphaned CloudFront Functions matching *${PREFIX}-${ENV_KEY}*..."
           # Deduplicate: list-functions can return duplicate entries causing describe-function
@@ -642,7 +717,8 @@ jobs:
 
   summary:
     name: 📝 Ops Summary
-    needs: [configuration, manage-environment, cleanup-orphaned-lambdas, cleanup-orphaned-buckets]
+    needs: [configuration, manage-environment, cleanup-orphaned-lambdas, 
+          cleanup-orphaned-buckets]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30

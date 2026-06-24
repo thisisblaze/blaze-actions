@@ -18,7 +18,8 @@ on:
         type: string
         default: "."
       image_name:
-        description: "Full image name (e.g., ECR URI, Artifact Registry URI, or ACR URI)"
+        description: "Full image name (e.g., ECR URI, Artifact Registry URI, or ACR
+          URI)"
         required: true
         type: string
       display_name:
@@ -138,6 +139,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
     outputs:
       digest-amd64:
         description: "Digest of the amd64 image"
@@ -150,7 +153,8 @@ on:
         value: ${{ inputs.image_tag }}
 
 concurrency:
-  group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ inputs.environment }}-${{ github.ref }}
+  group: ${{ github.workflow }}-docker-build-${{ inputs.image_name }}-${{ 
+    inputs.environment }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -179,23 +183,27 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+        uses: 
+          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
         id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        uses: 
+          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
         with:
           token_format: 'access_token'
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -211,9 +219,9 @@ jobs:
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
@@ -225,7 +233,8 @@ jobs:
 
       - name: Login to Azure ACR
         if: inputs.cloud_provider == 'azure'
-        run: az acr login --name $(echo "${{ inputs.azure_registry_server }}" | cut -d'.' -f1)
+        run: az acr login --name $(echo "${{ inputs.azure_registry_server }}" | 
+          cut -d'.' -f1)
 
       - name: Setup .npmrc
         run: |
@@ -240,7 +249,7 @@ jobs:
             echo "❌ ERROR: NPM_TOKEN secret is empty or missing!"
             exit 1
           fi
-          
+
           # Test access to the private scope
           if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /dev/null 2>&1; then
             echo "❌ ERROR: The NPM_TOKEN is invalid, expired, or lacks access to private @blaze-cms packages."
@@ -251,7 +260,8 @@ jobs:
           echo "✅ NPM Token is valid and has read access to private packages."
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: 
+          docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd     # v4.0.0
 
       - name: Build and Push (amd64)
         id: build
@@ -302,23 +312,27 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+        uses: 
+          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
         id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        uses: 
+          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
         with:
           token_format: 'access_token'
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -334,9 +348,9 @@ jobs:
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
@@ -348,7 +362,8 @@ jobs:
 
       - name: Login to Azure ACR
         if: inputs.cloud_provider == 'azure'
-        run: az acr login --name $(echo "${{ inputs.azure_registry_server }}" | cut -d'.' -f1)
+        run: az acr login --name $(echo "${{ inputs.azure_registry_server }}" | 
+          cut -d'.' -f1)
 
       - name: Setup .npmrc
         run: |
@@ -363,7 +378,7 @@ jobs:
             echo "❌ ERROR: NPM_TOKEN secret is empty or missing!"
             exit 1
           fi
-          
+
           # Test access to the private scope
           if ! npm --userconfig ${{ runner.temp }}/.npmrc view @blaze-cms/core-logger versions > /dev/null 2>&1; then
             echo "❌ ERROR: The NPM_TOKEN is invalid, expired, or lacks access to private @blaze-cms packages."
@@ -374,7 +389,8 @@ jobs:
           echo "✅ NPM Token is valid and has read access to private packages."
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: 
+          docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd     # v4.0.0
 
       - name: Build and Push (arm64)
         id: build
@@ -423,23 +439,27 @@ jobs:
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+        uses: 
+          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
         id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        uses: 
+          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
         with:
           token_format: 'access_token'
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -455,9 +475,9 @@ jobs:
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'

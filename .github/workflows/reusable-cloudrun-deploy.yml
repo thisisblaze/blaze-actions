@@ -1,275 +1,288 @@
 name: "♻️ Reusable Cloud Run Deploy"
 
 on:
-    workflow_call:
-        inputs:
-            service_name:
-                required: true
-                type: string
-                description: "Service to deploy (e.g., api, frontend)"
-            environment:
-                required: true
-                type: string
-            stage_key:
-                required: true
-                type: string
-            wif_audience:
-                required: false
-                type: string
-            branch_name:
-                required: false
-                type: string
-            image_tag:
-                required: true
-                type: string
-            project_key:
-                required: true
-                type: string
-            client_key:
-                required: true
-                type: string
-            domain_root:
-                required: true
-                type: string
-            gcp_project_id:
-                required: true
-                type: string
-            gcp_region:
-                required: true
-                type: string
-            namespace:
-                required: false
-                type: string
-                default: "blaze"
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: "Service to deploy (e.g., api, frontend)"
+      environment:
+        required: true
+        type: string
+      stage_key:
+        required: true
+        type: string
+      wif_audience:
+        required: false
+        type: string
+      branch_name:
+        required: false
+        type: string
+      image_tag:
+        required: true
+        type: string
+      project_key:
+        required: true
+        type: string
+      client_key:
+        required: true
+        type: string
+      domain_root:
+        required: true
+        type: string
+      gcp_project_id:
+        required: true
+        type: string
+      gcp_region:
+        required: true
+        type: string
+      namespace:
+        required: false
+        type: string
+        default: "blaze"
             # Full Artifact Registry image URI (without tag)
-            image_uri:
-                required: true
-                type: string
-                description: "Full Artifact Registry URI (e.g., europe-west1-docker.pkg.dev/project/repo/image)"
+      image_uri:
+        required: true
+        type: string
+        description: "Full Artifact Registry URI (e.g., europe-west1-docker.pkg.dev/project/repo/image)"
             # Cloud Run config
-            cpu:
-                required: false
-                type: string
-                default: "1"
-            memory:
-                required: false
-                type: string
-                default: "512Mi"
-            min_instances:
-                required: false
-                type: number
-                default: 0
-            max_instances:
-                required: false
-                type: number
-                default: 10
-            port:
-                required: false
-                type: number
-                default: 3000
+      cpu:
+        required: false
+        type: string
+        default: "1"
+      memory:
+        required: false
+        type: string
+        default: "512Mi"
+      min_instances:
+        required: false
+        type: number
+        default: 0
+      max_instances:
+        required: false
+        type: number
+        default: 10
+      port:
+        required: false
+        type: number
+        default: 3000
             # Application config
-            s3_bucket:
-                required: false
-                type: string
-            s3_public_url:
-                required: false
-                type: string
-            s3_endpoint:
-                required: false
-                type: string
-                description: "S3-compatible endpoint (e.g. https://storage.googleapis.com for GCS)"
-            elasticsearch_endpoint:
-                required: false
-                type: string
-            dfp_network_id:
-                required: false
-                type: string
-            gtm_id:
-                required: false
-                type: string
-            sentry_dsn:
-                required: false
-                type: string
-            graphql_uri:
-                required: false
-                type: string
+      s3_bucket:
+        required: false
+        type: string
+      s3_public_url:
+        required: false
+        type: string
+      s3_endpoint:
+        required: false
+        type: string
+        description: "S3-compatible endpoint (e.g. https://storage.googleapis.com
+          for GCS)"
+      elasticsearch_endpoint:
+        required: false
+        type: string
+      dfp_network_id:
+        required: false
+        type: string
+      gtm_id:
+        required: false
+        type: string
+      sentry_dsn:
+        required: false
+        type: string
+      graphql_uri:
+        required: false
+        type: string
 
-        secrets:
-          BLAZE_ELASTICSEARCH_USERNAME:
-            required: false
-          BLAZE_ELASTICSEARCH_PASSWORD:
-            required: false
-          BLAZE_ELASTICSEARCH_ENDPOINT:
-            required: false
-          AWS_ROLE_ARN:
-            required: false
-          GCP_WORKLOAD_IDENTITY_PROVIDER:
-            required: false
-          GCP_SERVICE_ACCOUNT:
-            required: false
-          AZURE_CLIENT_ID:
-            required: false
-          AZURE_TENANT_ID:
-            required: false
-          AZURE_SUBSCRIPTION_ID:
-            required: false
-          CLOUDFLARE_API_TOKEN:
-            required: false
-          CLOUDFLARE_ACCOUNT_ID:
-            required: false
-          CLOUDFLARE_ZONE_ID:
-            required: false
-          GH_PAT:
-            required: false
-          NPM_TOKEN:
-            required: false
-          INFRACOST_API_KEY:
-            required: false
-          BLAZE_CONNECTION_STRING:
-            required: false
-          BLAZE_AUTH_JWT_PRIVATE_KEY:
-            required: false
-          BLAZE_AUTH_ADMIN_EMAIL:
-            required: false
-          BLAZE_AUTH_ADMIN_PASSWORD:
-            required: false
-          BLAZE_FILES_S3_ACCESS_KEY:
-            required: false
-          BLAZE_FILES_S3_SECRET_ACCESS_KEY:
-            required: false
-          BLAZE_GRAPHQL_CACHE_SETTINGS:
-            required: false
-          BLAZE_CLIENT_HEADER:
-            required: false
-          EC_API_KEY:
-            required: false
-          MONGODB_ATLAS_PUBLIC_KEY:
-            required: false
-          MONGODB_ATLAS_PRIVATE_KEY:
-            required: false
-          MONGODB_ATLAS_ORG_ID:
-            required: false
-          MONGODB_ATLAS_PROJECT_ID:
-            required: false
-          ACM_CERTIFICATE_ARN:
-            required: false
-          BLAZE_SENTRY_AUTH_TOKEN:
-            required: false
-          BLAZE_SENTRY_DSN:
-            required: false
-          SLACK_WEBHOOK_URL:
-            required: false
-          DEPLOY_KEY:
-            required: false
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
 concurrency:
-  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref }}-${{ inputs.environment }}
+  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref
+    }}-${{ inputs.environment }}
   cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-    deploy:
-        name: Deploy ${{ inputs.service_name }} (Cloud Run)
-        runs-on: ubuntu-latest
-        timeout-minutes: 15
-        environment: ${{ inputs.environment }}
-        steps:
-            - name: Checkout Code
-              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+  deploy:
+    name: Deploy ${{ inputs.service_name }} (Cloud Run)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0       # v7.0.0
 
-            - name: Authenticate to GCP
-              uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-              with:
-                  workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-                  service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-                  audience: ${{ inputs.wif_audience }}
+      - name: Authenticate to GCP
+        uses: 
+          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093           # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          audience: ${{ inputs.wif_audience }}
 
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Set up Cloud SDK
+        uses: 
+          google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db           # v3.0.1
 
-            - name: Compute Service Name
-              id: svc
-              run: |
-                  # Cloud Run service name: {namespace}-{client}-{project}-{stage}-{service}
-                  # e.g., blaze-b9-thisisblaze-dev-api
-                  BRANCH_TAG="${{ inputs.branch_name }}"
-                  if [[ -n "$BRANCH_TAG" ]]; then
-                    SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${BRANCH_TAG}-${{ inputs.service_name }}"
-                  else
-                    SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
-                  fi
-                  echo "service_name=$SVC_NAME" >> "$GITHUB_OUTPUT"
-                  echo "☁️ Cloud Run Service: $SVC_NAME"
+      - name: Compute Service Name
+        id: svc
+        run: |
+          # Cloud Run service name: {namespace}-{client}-{project}-{stage}-{service}
+          # e.g., blaze-b9-thisisblaze-dev-api
+          BRANCH_TAG="${{ inputs.branch_name }}"
+          if [[ -n "$BRANCH_TAG" ]]; then
+            SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${BRANCH_TAG}-${{ inputs.service_name }}"
+          else
+            SVC_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
+          fi
+          echo "service_name=$SVC_NAME" >> "$GITHUB_OUTPUT"
+          echo "☁️ Cloud Run Service: $SVC_NAME"
 
-            - name: Generate Env Vars File
-              env:
-                  BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
-                  BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
-                  BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
-                  BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
-                  BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
-                  BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
-                  BLAZE_ELASTICSEARCH_SECRET_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
-                  BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-                  BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
-                  BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
-                  BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
-                  NODE_ENV: "production"
-                  BLAZE_PROJECT_KEY: ${{ inputs.project_key }}
-                  BLAZE_STAGE: ${{ inputs.stage_key }}
-                  BLAZE_DOMAIN_ROOT: ${{ inputs.domain_root }}
-                  BLAZE_ELASTICSEARCH_ENDPOINT: ${{ inputs.elasticsearch_endpoint }}
-                  BLAZE_FILES_S3_BUCKET: ${{ inputs.s3_bucket }}
-                  BLAZE_FILES_S3_PUBLIC_URL: ${{ inputs.s3_public_url }}
-                  BLAZE_FILES_S3_ENDPOINT: ${{ inputs.s3_endpoint }}
-                  BLAZE_SENTRY_DSN: ${{ inputs.sentry_dsn }}
-                  BLAZE_GRAPHQL_URI: ${{ inputs.graphql_uri }}
-              run: |
-                  python3 -c '
-                  import os, yaml
+      - name: Generate Env Vars File
+        env:
+          BLAZE_AUTH_JWT_PRIVATE_KEY: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+          BLAZE_AUTH_ADMIN_EMAIL: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+          BLAZE_AUTH_ADMIN_PASSWORD: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+          BLAZE_CONNECTION_STRING: ${{ secrets.BLAZE_CONNECTION_STRING }}
+          BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME
+            }}
+          BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD
+            }}
+          BLAZE_ELASTICSEARCH_SECRET_ENDPOINT: ${{ 
+            secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
+          BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+          BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
+            secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+          BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS
+            }}
+          BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
+          NODE_ENV: "production"
+          BLAZE_PROJECT_KEY: ${{ inputs.project_key }}
+          BLAZE_STAGE: ${{ inputs.stage_key }}
+          BLAZE_DOMAIN_ROOT: ${{ inputs.domain_root }}
+          BLAZE_ELASTICSEARCH_ENDPOINT: ${{ inputs.elasticsearch_endpoint }}
+          BLAZE_FILES_S3_BUCKET: ${{ inputs.s3_bucket }}
+          BLAZE_FILES_S3_PUBLIC_URL: ${{ inputs.s3_public_url }}
+          BLAZE_FILES_S3_ENDPOINT: ${{ inputs.s3_endpoint }}
+          BLAZE_SENTRY_DSN: ${{ inputs.sentry_dsn }}
+          BLAZE_GRAPHQL_URI: ${{ inputs.graphql_uri }}
+        run: |
+          python3 -c '
+          import os, yaml
 
-                  # Allowlist of keys to include
-                  keys = [
-                    "NODE_ENV", "BLAZE_PROJECT_KEY", "BLAZE_STAGE", "BLAZE_DOMAIN_ROOT",
-                    "BLAZE_ELASTICSEARCH_ENDPOINT", "BLAZE_FILES_S3_BUCKET",
-                    "BLAZE_FILES_S3_PUBLIC_URL", "BLAZE_FILES_S3_ENDPOINT",
-                    "BLAZE_SENTRY_DSN", "BLAZE_GRAPHQL_URI", "BLAZE_AUTH_JWT_PRIVATE_KEY",
-                    "BLAZE_AUTH_ADMIN_EMAIL", "BLAZE_AUTH_ADMIN_PASSWORD", "BLAZE_CONNECTION_STRING",
-                    "BLAZE_ELASTICSEARCH_USERNAME", "BLAZE_ELASTICSEARCH_PASSWORD",
-                    "BLAZE_FILES_S3_ACCESS_KEY", "BLAZE_FILES_S3_SECRET_ACCESS_KEY",
-                    "BLAZE_GRAPHQL_CACHE_SETTINGS", "BLAZE_CLIENT_HEADER"
-                  ]
+          # Allowlist of keys to include
+          keys = [
+            "NODE_ENV", "BLAZE_PROJECT_KEY", "BLAZE_STAGE", "BLAZE_DOMAIN_ROOT",
+            "BLAZE_ELASTICSEARCH_ENDPOINT", "BLAZE_FILES_S3_BUCKET",
+            "BLAZE_FILES_S3_PUBLIC_URL", "BLAZE_FILES_S3_ENDPOINT",
+            "BLAZE_SENTRY_DSN", "BLAZE_GRAPHQL_URI", "BLAZE_AUTH_JWT_PRIVATE_KEY",
+            "BLAZE_AUTH_ADMIN_EMAIL", "BLAZE_AUTH_ADMIN_PASSWORD", "BLAZE_CONNECTION_STRING",
+            "BLAZE_ELASTICSEARCH_USERNAME", "BLAZE_ELASTICSEARCH_PASSWORD",
+            "BLAZE_FILES_S3_ACCESS_KEY", "BLAZE_FILES_S3_SECRET_ACCESS_KEY",
+            "BLAZE_GRAPHQL_CACHE_SETTINGS", "BLAZE_CLIENT_HEADER"
+          ]
 
-                  env_dict = {k: os.environ[k] for k in keys if k in os.environ and os.environ[k]}
-                  if "BLAZE_ELASTICSEARCH_SECRET_ENDPOINT" in os.environ and os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]:
-                      env_dict["BLAZE_ELASTICSEARCH_ENDPOINT"] = os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]
+          env_dict = {k: os.environ[k] for k in keys if k in os.environ and os.environ[k]}
+          if "BLAZE_ELASTICSEARCH_SECRET_ENDPOINT" in os.environ and os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]:
+              env_dict["BLAZE_ELASTICSEARCH_ENDPOINT"] = os.environ["BLAZE_ELASTICSEARCH_SECRET_ENDPOINT"]
 
-                  with open("gcp-env.yaml", "w") as f:
-                      yaml.dump(env_dict, f, default_flow_style=False)
-                  '
+          with open("gcp-env.yaml", "w") as f:
+              yaml.dump(env_dict, f, default_flow_style=False)
+          '
 
-            - name: Deploy to Cloud Run
-              id: deploy
-              uses: google-github-actions/deploy-cloudrun@2028e2d7d30a78c6910e0632e48dd561b064884d # v3
-              with:
-                  service: ${{ steps.svc.outputs.service_name }}
-                  image: ${{ inputs.image_uri }}:${{ inputs.image_tag }}
-                  region: ${{ inputs.gcp_region }}
-                  project_id: ${{ inputs.gcp_project_id }}
-                  flags: |
-                      --cpu=${{ inputs.cpu }}
-                      --memory=${{ inputs.memory }}
-                      --min-instances=${{ inputs.min_instances }}
-                      --max-instances=${{ inputs.max_instances }}
-                      --port=${{ inputs.port }}
-                      --allow-unauthenticated
-                      --env-vars-file=gcp-env.yaml
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 
+          google-github-actions/deploy-cloudrun@2028e2d7d30a78c6910e0632e48dd561b064884d           # v3
+        with:
+          service: ${{ steps.svc.outputs.service_name }}
+          image: ${{ inputs.image_uri }}:${{ inputs.image_tag }}
+          region: ${{ inputs.gcp_region }}
+          project_id: ${{ inputs.gcp_project_id }}
+          flags: |
+            --cpu=${{ inputs.cpu }}
+            --memory=${{ inputs.memory }}
+            --min-instances=${{ inputs.min_instances }}
+            --max-instances=${{ inputs.max_instances }}
+            --port=${{ inputs.port }}
+            --allow-unauthenticated
+            --env-vars-file=gcp-env.yaml
 
-            - name: "📋 Deploy Summary"
-              run: |
-                  echo "### ✅ Cloud Run Deploy: ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Service**: \`${{ steps.svc.outputs.service_name }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Image**: \`${{ inputs.image_uri }}:${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Region**: \`${{ inputs.gcp_region }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **URL**: \`${{ steps.deploy.outputs.url }}\`" >> $GITHUB_STEP_SUMMARY
+      - name: "📋 Deploy Summary"
+        run: |
+          echo "### ✅ Cloud Run Deploy: ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: \`${{ steps.svc.outputs.service_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ inputs.image_uri }}:${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: \`${{ inputs.gcp_region }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: \`${{ steps.deploy.outputs.url }}\`" >> $GITHUB_STEP_SUMMARY

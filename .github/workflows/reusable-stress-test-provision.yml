@@ -42,17 +42,16 @@ on:
         required: false
         default: false
         type: boolean
-        
+
       cloud_provider:
         required: false
         type: string
         default: aws
-        
+
       wif_audience:
         required: false
         type: string
         default: ""
-        
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -119,6 +118,8 @@ on:
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
+        required: false
+      BASIC_AUTH_CREDENTIALS:
         required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -199,11 +200,13 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test'
+      && inputs.preserve_host != true && inputs.target_type == 'host'
     needs: [config]
     name: "🏗️ Provision Network"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -217,7 +220,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -227,11 +231,15 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
+    if: always() && inputs.environment == 'dev-mini' && inputs.mode != 
+      'destroy-only' && inputs.mode != 'quick-test' && 
+      (needs.provision-network.result == 'success' || 
+      needs.provision-network.result == 'skipped')
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -244,7 +252,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -254,11 +263,15 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped')
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test'
+      && inputs.include_third_party && inputs.target_type == 'host' && 
+      (needs.provision-network.result == 'success' || 
+      needs.provision-network.result == 'skipped')
     needs: [config, provision-network]
     name: "🏗️ Provision Data Pod (V2)"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -274,7 +287,8 @@ jobs:
       MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
       MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
       MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -284,11 +298,23 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && (needs.provision-network.result == 'success' || needs.provision-network.result == 'skipped') && (needs.provision-tunnel.result == 'success' || needs.provision-tunnel.result == 'skipped') && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped') && (needs.provision-third-party-mongodb.result == 'success' || needs.provision-third-party-mongodb.result == 'skipped') && (needs.provision-third-party-elastic.result == 'success' || needs.provision-third-party-elastic.result == 'skipped')
-    needs: [config, provision-network, provision-tunnel, provision-data-pod, provision-third-party-mongodb, provision-third-party-elastic]
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test'
+      && (needs.provision-network.result == 'success' || 
+      needs.provision-network.result == 'skipped') && 
+      (needs.provision-tunnel.result == 'success' || 
+      needs.provision-tunnel.result == 'skipped') && 
+      (needs.provision-data-pod.result == 'success' || 
+      needs.provision-data-pod.result == 'skipped') && 
+      (needs.provision-third-party-mongodb.result == 'success' || 
+      needs.provision-third-party-mongodb.result == 'skipped') && 
+      (needs.provision-third-party-elastic.result == 'success' || 
+      needs.provision-third-party-elastic.result == 'skipped')
+    needs: [config, provision-network, provision-tunnel, provision-data-pod, 
+          provision-third-party-mongodb, provision-third-party-elastic]
     name: "🏗️ Provision App"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -296,16 +322,20 @@ jobs:
       stack: "app"
       apply: true
       enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
-      enable_ec2: ${{ contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage') }}
-      api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
-      frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
+      enable_ec2: ${{ contains(inputs.environment, 'prod') || 
+        contains(inputs.environment, 'stage') }}
+      api_launch_type: ${{ (contains(inputs.environment, 'prod') || 
+        contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
+      frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || 
+        contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -315,10 +345,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test'
+      && inputs.include_third_party && inputs.target_type == 'host' && 
+      (needs.provision-data-pod.result == 'success' || 
+      needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -328,7 +362,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -342,10 +377,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test'
+      && inputs.include_third_party && inputs.target_type == 'host' && 
+      (needs.provision-data-pod.result == 'success' || 
+      needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -355,7 +394,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

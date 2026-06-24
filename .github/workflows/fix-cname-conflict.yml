@@ -74,6 +74,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
     inputs:
       dist_id:
         description: "Distribution ID (or Domain Name) to strip aliases from"
@@ -114,7 +116,8 @@ jobs:
           echo "✅ Using AWS Region: $AWS_REGION (from vars/blaze-env.json)"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           aws-region: ${{ steps.load-config.outputs.aws_region }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}

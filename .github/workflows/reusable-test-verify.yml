@@ -108,6 +108,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -125,7 +127,8 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        uses: 
+          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
