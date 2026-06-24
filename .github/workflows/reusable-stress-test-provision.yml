@@ -206,7 +206,7 @@ jobs:
     name: "🏗️ Provision Network"
 
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -239,7 +239,7 @@ jobs:
     name: "🏗️ Provision Tunnel"
 
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -271,7 +271,7 @@ jobs:
     name: "🏗️ Provision Data Pod (V2)"
 
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -314,7 +314,7 @@ jobs:
     name: "🏗️ Provision App"
 
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -352,7 +352,7 @@ jobs:
     needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -384,7 +384,7 @@ jobs:
     needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"
     uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.6
+      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
