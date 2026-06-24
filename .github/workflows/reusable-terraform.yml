@@ -63,13 +63,13 @@ on:
       build_sharp:
         description: "Whether to build the Sharp binaries for Lambda@Edge (Linux x64). Set to false to skip."
         required: false
-        type: boolean
-        default: true
+        type: string
+        default: "true"
       orphan_lambda:
         description: "Skip Lambda@Edge destruction by removing from state (prevents 1h hang)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       orphan_lambda_namespace:
         description: "Namespace prefix for Lambda@Edge IAM resource names (e.g. 'blaze'). Used when orphan_lambda=true to re-import IAM roles/policies."
         required: false
@@ -83,8 +83,8 @@ on:
       split_apply:
         description: "Enable Split Apply (Targeted Apply -> Sleep -> Full Apply)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       split_targets:
         description: "Space-separated list of targets for the first apply step"
         required: false
