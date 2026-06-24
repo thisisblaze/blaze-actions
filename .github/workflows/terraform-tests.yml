@@ -17,8 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       run_integration:
-        description: "Run integration tests that create real AWS resources (costs
-          money)."
+        description: "Run integration tests that create real AWS resources (costs money)."
         type: boolean
         default: false
   workflow_call:
@@ -88,8 +87,6 @@ on:
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
-        required: false
-      BASIC_AUTH_CREDENTIALS:
         required: false
     inputs:
       scan_path:
@@ -205,8 +202,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     needs: static-analysis
-    if: github.event_name == 'workflow_dispatch' && 
-      github.event.inputs.run_integration == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
     environment: DEV
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -216,7 +212,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.6
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}

@@ -21,8 +21,7 @@ on:
         type: string
 
       app_stack:
-        description: "App stack type (tenant-app or multi-site-app). Controls which
-          deploy path is used."
+        description: "App stack type (tenant-app or multi-site-app). Controls which deploy path is used."
         required: false
         default: "tenant-app"
         type: string
@@ -49,16 +48,17 @@ on:
         required: false
         default: false
         type: boolean
-
+        
       cloud_provider:
         required: false
         type: string
         default: aws
-
+        
       wif_audience:
         required: false
         type: string
         default: ""
+        
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -125,8 +125,6 @@ on:
       SLACK_WEBHOOK_URL:
         required: false
       DEPLOY_KEY:
-        required: false
-      BASIC_AUTH_CREDENTIALS:
         required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -208,11 +206,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack != 
-      'multi-site-app'
+    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack != 'multi-site-app'
     needs: [config]
     name: "🚀 Deploy App"
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.6
     with:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
@@ -260,9 +257,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack == 
-      'multi-site-app' && (inputs.cloud_provider == 'aws' || 
-      inputs.cloud_provider == '')
+    if: always() && inputs.mode != 'destroy-only' && inputs.app_stack == 'multi-site-app' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '')
     needs: [config]
     name: "🌐 Deploy Multi-Site Apps (AWS)"
     runs-on: ubuntu-latest
@@ -270,7 +265,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}

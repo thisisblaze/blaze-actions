@@ -317,7 +317,8 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -340,7 +341,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -374,7 +375,8 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+            }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
@@ -383,7 +385,9 @@ jobs:
           inputs.cloud_provider == null
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
-          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.image_project_key }}/api
+          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
+            needs.configuration.outputs.client_key }}-web/${{ 
+            needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -502,7 +506,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -535,7 +539,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -547,8 +552,10 @@ jobs:
       id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    if: ${{ (inputs.build_images == true || inputs.build_images == null) && 
+      (inputs.target_services == 'Blaze all' || inputs.target_services == 
+      'frontend' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -583,7 +590,8 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -596,8 +604,11 @@ jobs:
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
-    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && 
+      inputs.branch_name != null && (inputs.build_images == true || 
+      inputs.build_images == null) && (inputs.target_services == 'Blaze all' || 
+      inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -620,13 +631,16 @@ jobs:
         needs.configuration.outputs.namespace, 
         needs.configuration.outputs.project_key) }}
       image_tag: ${{ github.sha }}
-      platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+      platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
+        'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 
+        'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -640,8 +654,11 @@ jobs:
       id-token: write
     name: Deploy API (Container App)
     needs: [configuration, build-api, pre-flight-check]
-    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@main
+    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
+      || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
+      (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
+      || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.11.6
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -669,7 +686,8 @@ jobs:
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
+        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
@@ -679,8 +697,11 @@ jobs:
       id-token: write
     name: Deploy Frontend (Container App)
     needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@main
+    if: ${{ inputs.cloud_provider == 'azure' && (inputs.deploy_services == true 
+      || inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
+      (inputs.target_services == 'Blaze all' || inputs.target_services == 
+      'frontend' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.11.6
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -706,7 +727,8 @@ jobs:
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
+        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
   deploy-admin-azure:
@@ -716,8 +738,12 @@ jobs:
     name: Deploy Admin (Container App)
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY
-    if: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@main
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'DEV' && 
+      inputs.branch_name != '' && inputs.branch_name != null && 
+      needs.configuration.outputs.should_deploy_app == 'true' && 
+      (inputs.target_services == 'Blaze all' || inputs.target_services == 
+      'admin' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.11.6
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -744,7 +770,8 @@ jobs:
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
+        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 

@@ -268,7 +268,8 @@ permissions:
   actions: write
 
 concurrency:
-  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
+  group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment 
+    }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
   cancel-in-progress: false
 
 env:
@@ -318,7 +319,7 @@ jobs:
 
     - name: Check Access
       if: steps.load-access.outputs.allowed != ''
-      uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+      uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
       with:
         allowed_users: ${{ steps.load-access.outputs.allowed }}
         actor: ${{ github.actor }}
@@ -355,7 +356,8 @@ jobs:
       if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
         inputs.cloud_provider == null) && (inputs.stack == 'network' || 
         inputs.stack == 'acm')
-      uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -364,7 +366,8 @@ jobs:
       if: inputs.cloud_provider == 'gcp'
       uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093   # v3.0.0
       with:
-        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER 
+          }}
         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         audience: ${{ inputs.wif_audience }}
 
@@ -383,7 +386,7 @@ jobs:
 
     - name: Calculate Configuration
       id: config
-      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+      uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
       with:
         environment: ${{ inputs.environment }}
         project: ${{ inputs.project }}
@@ -413,13 +416,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
-      layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
+      layer_arn: ${{ steps.build.outputs.layer-arn || 
+        steps.existing.outputs.layer_arn }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
 
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      uses: 
+        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: "us-east-1"
@@ -441,7 +446,7 @@ jobs:
     - name: Build and Publish Sharp Layer
       id: build
       if: steps.existing.outputs.exists != 'true'
-      uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@main
+      uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.6
       with:
         aws-region: 'us-east-1'
         layer-name: 'sharp-image-processing'
@@ -457,7 +462,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: 
+      thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -472,7 +478,8 @@ jobs:
       ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       # GCP
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+        }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       # Azure
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -491,7 +498,8 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
-      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 'network' }}
+      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 
+        'network' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -636,10 +644,13 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
         workers='${{ inputs.workers_json }}'
-      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network' }}
+      orphan_lambda: ${{ inputs.stack == 'network' || inputs.stack == 
+        'dedicated-network' || inputs.stack == 'multi-site-network' }}
       split_apply: ${{ inputs.stack == 'tunnel' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
-      split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
+      split_targets: ${{ inputs.stack == 'tunnel' && 
+        'module.tunnel.random_id.tunnel_secret 
+        module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
       stack_id: ${{ needs.configuration.outputs.stack_id }}
 
@@ -707,7 +718,7 @@ jobs:
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && 
       (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.6
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}

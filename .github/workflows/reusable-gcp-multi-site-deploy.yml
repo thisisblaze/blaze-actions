@@ -54,15 +54,13 @@ on:
         required: false
         type: boolean
         default: false
-        description: "true = Tier 2 Blue/Green (staged traffic shift). false = Tier
-          1 (100% immediately)."
+        description: "true = Tier 2 Blue/Green (staged traffic shift). false = Tier 1 (100% immediately)."
 
       shift_strategy:
         required: false
         type: string
         default: "10-50-100"
-        description: "Traffic shift strategy for Tier 2 (comma-separated percentages,
-          e.g. '10-50-100')"
+        description: "Traffic shift strategy for Tier 2 (comma-separated percentages, e.g. '10-50-100')"
 
       environment:
         required: true
@@ -135,8 +133,6 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.site_key }}-${{ inputs.environment }}
   cancel-in-progress: false
@@ -166,15 +162,13 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Google Auth (OIDC)
-        uses: 
-          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
-        uses: 
-          google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db     # v3.0.1
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       # ── Tier 1: Instant Deploy (100% traffic) ──────────────────────────
       - name: Deploy (Tier 1)

@@ -108,8 +108,6 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 

@@ -26,8 +26,7 @@ on:
       stack:
         description: "Terraform Stack (for state/destroy)"
         type: choice
-        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb",
-          "third-party-elastic"]
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
         default: "app"
         required: false
       branch_tag:
@@ -140,67 +139,6 @@ on:
       target_resource:
         type: string
         required: false
-    secrets:
-      AWS_ROLE_ARN:
-        required: false
-      GCP_WORKLOAD_IDENTITY_PROVIDER:
-        required: false
-      GCP_SERVICE_ACCOUNT:
-        required: false
-      AZURE_CLIENT_ID:
-        required: false
-      AZURE_TENANT_ID:
-        required: false
-      AZURE_SUBSCRIPTION_ID:
-        required: false
-      GH_PAT:
-        required: false
-      NPM_TOKEN:
-        required: false
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
-      MONGODB_ATLAS_PUBLIC_KEY:
-        required: false
-      MONGODB_ATLAS_PRIVATE_KEY:
-        required: false
-      MONGODB_ATLAS_ORG_ID:
-        required: false
-      MONGODB_ATLAS_PROJECT_ID:
-        required: false
-      EC_API_KEY:
-        required: false
-      ACM_CERTIFICATE_ARN:
-        required: false
-      BLAZE_CONNECTION_STRING:
-        required: false
-      BLAZE_AUTH_JWT_PRIVATE_KEY:
-        required: false
-      BLAZE_AUTH_ADMIN_EMAIL:
-        required: false
-      BLAZE_AUTH_ADMIN_PASSWORD:
-        required: false
-      BLAZE_FILES_S3_ACCESS_KEY:
-        required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
-      BLAZE_SENTRY_AUTH_TOKEN:
-        required: false
-      BLAZE_SENTRY_DSN:
-        required: false
-      BLAZE_ELASTICSEARCH_USERNAME:
-        required: false
-      BLAZE_ELASTICSEARCH_PASSWORD:
-        required: false
-      BLAZE_ELASTICSEARCH_ENDPOINT:
-        required: false
-      INFRACOST_API_KEY:
-        required: false
-      DEPLOY_KEY:
-        required: false
 permissions:
   id-token: write
   contents: read
@@ -235,7 +173,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -362,7 +300,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -420,36 +358,31 @@ jobs:
       id-token: write
     name: State Ops
     needs: [configuration]
-    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || 
-      inputs.action == 'rm-state'
+    if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || inputs.action == 'rm-state'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.configuration.outputs.aws_region }}
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: 
-          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         if: inputs.cloud_provider == 'gcp'
-        uses: 
-          google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db     # v3.0.1
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       - name: Execute Ops (AWS)
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         run: |
           ACTION="${{ inputs.action }}"
           BUCKET="${{ needs.configuration.outputs.bucket }}"
@@ -538,10 +471,8 @@ jobs:
       id-token: write
     name: Pre-Cleanup
     needs: [configuration]
-    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' 
-      || inputs.cloud_provider == '' || inputs.cloud_provider == null) && 
-      contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.6
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -567,7 +498,7 @@ jobs:
       inputs.action == 'destroy-resources' &&
       needs.configuration.result == 'success' &&
       (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure

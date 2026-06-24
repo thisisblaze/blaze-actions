@@ -15,8 +15,7 @@ on:
       lock_table:
         required: false
         type: string
-        description: "DynamoDB Lock Table name. If omitted, defaults to bucket name
-          (legacy behavior)."
+        description: "DynamoDB Lock Table name. If omitted, defaults to bucket name (legacy behavior)."
       action:
         required: true
         type: string
@@ -132,8 +131,6 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
     outputs:
       apply_status:
         value: ${{ jobs.terraform.outputs.status }}
@@ -163,12 +160,12 @@ jobs:
 
       - name: Set Azure Credentials (OIDC)
         run: |
-          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+            echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.6
         with:
           cloud-provider: ${{ inputs.cloud_platform }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}

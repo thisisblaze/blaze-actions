@@ -23,8 +23,7 @@ on:
       stack:
         description: "Terraform Stack (for state/destroy)"
         type: choice
-        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb",
-          "third-party-elastic"]
+        options: ["network", "data", "cdn", "acm", "tunnel", "app", "third-party-mongodb", "third-party-elastic"]
         default: "app"
         required: false
       branch_tag:
@@ -130,67 +129,6 @@ on:
       dist_id:
         type: string
         required: false
-    secrets:
-      AWS_ROLE_ARN:
-        required: false
-      GCP_WORKLOAD_IDENTITY_PROVIDER:
-        required: false
-      GCP_SERVICE_ACCOUNT:
-        required: false
-      AZURE_CLIENT_ID:
-        required: false
-      AZURE_TENANT_ID:
-        required: false
-      AZURE_SUBSCRIPTION_ID:
-        required: false
-      GH_PAT:
-        required: false
-      NPM_TOKEN:
-        required: false
-      CLOUDFLARE_API_TOKEN:
-        required: false
-      CLOUDFLARE_ACCOUNT_ID:
-        required: false
-      CLOUDFLARE_ZONE_ID:
-        required: false
-      MONGODB_ATLAS_PUBLIC_KEY:
-        required: false
-      MONGODB_ATLAS_PRIVATE_KEY:
-        required: false
-      MONGODB_ATLAS_ORG_ID:
-        required: false
-      MONGODB_ATLAS_PROJECT_ID:
-        required: false
-      EC_API_KEY:
-        required: false
-      ACM_CERTIFICATE_ARN:
-        required: false
-      BLAZE_CONNECTION_STRING:
-        required: false
-      BLAZE_AUTH_JWT_PRIVATE_KEY:
-        required: false
-      BLAZE_AUTH_ADMIN_EMAIL:
-        required: false
-      BLAZE_AUTH_ADMIN_PASSWORD:
-        required: false
-      BLAZE_FILES_S3_ACCESS_KEY:
-        required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
-      BLAZE_SENTRY_AUTH_TOKEN:
-        required: false
-      BLAZE_SENTRY_DSN:
-        required: false
-      BLAZE_ELASTICSEARCH_USERNAME:
-        required: false
-      BLAZE_ELASTICSEARCH_PASSWORD:
-        required: false
-      BLAZE_ELASTICSEARCH_ENDPOINT:
-        required: false
-      INFRACOST_API_KEY:
-        required: false
-      DEPLOY_KEY:
-        required: false
 permissions:
   id-token: write
   contents: read
@@ -225,7 +163,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -364,7 +302,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -430,9 +368,8 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' 
-      || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@main
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.6
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -449,9 +386,8 @@ jobs:
       id-token: write
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' 
-      || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.6
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -476,16 +412,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Authenticate to GCP
-        uses: 
-          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ vars.WIF_AUDIENCE }}
 
       - name: Set up Cloud SDK
-        uses: 
-          google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db     # v3.0.1
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       - name: Delete Cloud Run Services
         run: |
@@ -616,8 +550,7 @@ jobs:
       contents: read
       id-token: write
     name: 🗑️ Nuke 2/5 - App Stack
-    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp, 
-          nuke-stop-services-azure]
+    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
@@ -626,7 +559,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -689,8 +622,7 @@ jobs:
       contents: read
       id-token: write
     name: 🗑️ Nuke 2/5 - Tenant App Stack
-    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp, 
-          nuke-stop-services-azure]
+    needs: [configuration, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure]
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
@@ -699,7 +631,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_tenant_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -787,8 +719,7 @@ jobs:
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-app-gate]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' 
-      || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -857,7 +788,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -904,7 +835,7 @@ jobs:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-app-gate]
     if: inputs.action == 'nuke-environment'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
@@ -965,7 +896,7 @@ jobs:
   #    name: 💾 Nuke 4a/5 - Mongo
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -985,7 +916,7 @@ jobs:
   #    name: 💾 Nuke 4b/5 - Elastic
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/elastic"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -1016,7 +947,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1078,7 +1009,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_cdn == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -1124,7 +1055,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1179,7 +1110,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1236,7 +1167,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1291,7 +1222,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1346,7 +1277,7 @@ jobs:
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.6
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -1426,7 +1357,7 @@ jobs:
         # The nuke workflow must assume the Terraform state is corrupted and perform explicit, 
         # stateless AWS CLI purges based on resource names/tags before dropping the state bucket.
         echo "🔍 Checking for EC2 ASGs to clean up..."
-
+        
         STACK_ID="${{ needs.configuration.outputs.stack_id }}"
         if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
           echo "   → Using precise Stack UUID for targeting: $STACK_ID"
@@ -1483,7 +1414,7 @@ jobs:
 
         # ----- CLOUDFRONT CLEANUP (Plan 155 Phase 2) -----
         echo "🔍 Checking for orphaned CloudFront distributions to clean up..."
-
+        
         if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
           echo "   → Using precise Stack UUID for targeting: $STACK_ID"
           TAGGED_CF_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -1657,7 +1588,7 @@ jobs:
           echo "---------------------------------------------------"
           echo "🌐 Dynamic DNS Flush for Stage: $STAGE"
           echo "Fetching first 500 records to find residual environment records..."
-
+          
           ALL_RECORDS=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?per_page=500" \
             -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json")
@@ -1689,13 +1620,7 @@ jobs:
 
   summary:
     name: 📝 Ops Summary
-    needs: [configuration, nuke-stop-services, nuke-pre-cleanup, 
-          nuke-stop-services-gcp, nuke-stop-services-azure, nuke-destroy-app, 
-          nuke-app-gate, nuke-destroy-pages, nuke-destroy-data-aws, 
-          nuke-destroy-tunnel, nuke-destroy-data-gcp, nuke-destroy-cdn-gcp, 
-          nuke-destroy-network-gcp, nuke-destroy-data-azure, 
-          nuke-destroy-cdn-azure, nuke-destroy-network-azure, 
-          nuke-destroy-network, nuke-cleanup-dns]
+    needs: [configuration, nuke-stop-services, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure, nuke-destroy-app, nuke-app-gate, nuke-destroy-pages, nuke-destroy-data-aws, nuke-destroy-tunnel, nuke-destroy-data-gcp, nuke-destroy-cdn-gcp, nuke-destroy-network-gcp, nuke-destroy-data-azure, nuke-destroy-cdn-azure, nuke-destroy-network-azure, nuke-destroy-network, nuke-cleanup-dns]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30

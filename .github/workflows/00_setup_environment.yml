@@ -169,8 +169,6 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-      BASIC_AUTH_CREDENTIALS:
-        required: false
 permissions:
   id-token: write
   contents: read
@@ -196,9 +194,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.11.6
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: network
@@ -213,8 +212,7 @@ jobs:
       id-token: write
     name: Init Backend (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Init Backend"
-    if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init 
-      Backend')
+    if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init Backend')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: ${{ inputs.environment }}
@@ -237,7 +235,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.6
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -250,7 +248,7 @@ jobs:
 
       - name: Setup Blaze Infra
         if: inputs.cloud_provider == 'aws'
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.6
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
@@ -259,8 +257,7 @@ jobs:
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: 
-          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -415,8 +412,7 @@ jobs:
       id-token: write
     name: Mirror Images (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Mirror Images" — Skip for Azure (ACR managed by Terraform)
-    if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) 
-      && inputs.cloud_provider != 'azure'
+    if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) && inputs.cloud_provider != 'azure'
     needs: [calculate-config] # Removed init-backend dependency
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -428,15 +424,14 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
 
       - name: Authenticate to GCP
         if: inputs.cloud_provider == 'gcp'
-        uses: 
-          google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093     # v3.0.0
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -445,7 +440,7 @@ jobs:
       - name: Login to Amazon ECR
         if: inputs.cloud_provider != 'gcp'
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
       - name: Ensure ECR Repositories Exist
         if: inputs.cloud_provider != 'gcp'
