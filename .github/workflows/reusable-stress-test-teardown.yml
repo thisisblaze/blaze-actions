@@ -368,8 +368,7 @@ jobs:
       - config
       - prod-safety-check
       - check-states
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
     with:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
@@ -396,8 +395,7 @@ jobs:
     name: "🧨 Destroy App"
 
     needs: [config, cleanup-services, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.app_stack == 'multi-site-app' && 
@@ -442,8 +440,7 @@ jobs:
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
@@ -486,8 +483,7 @@ jobs:
     name: "🧨 Destroy Data Pod"
 
     needs: [config, destroy-app, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-db-pod-alpha"
@@ -518,8 +514,7 @@ jobs:
       needs.check-states.outputs.mongodb_exists == 'true' }}
     name: "🧨 Destroy MongoDB"
     needs: [config, destroy-app, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
@@ -549,8 +544,7 @@ jobs:
       needs.check-states.outputs.elastic_exists == 'true' }}
     name: "🧨 Destroy Elastic"
     needs: [config, destroy-app, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
@@ -579,8 +573,7 @@ jobs:
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
@@ -622,8 +615,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
@@ -1023,8 +1015,7 @@ jobs:
 
     needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, 
           destroy-data-pod, check-states]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.network_stack == 'multi-site-network' && 
@@ -1078,8 +1069,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}

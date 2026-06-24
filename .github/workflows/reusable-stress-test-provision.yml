@@ -205,8 +205,7 @@ jobs:
     needs: [config]
     name: "🏗️ Provision Network"
 
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -238,8 +237,7 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -270,8 +268,7 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Data Pod (V2)"
 
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -313,8 +310,7 @@ jobs:
           provision-third-party-mongodb, provision-third-party-elastic]
     name: "🏗️ Provision App"
 
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -351,8 +347,7 @@ jobs:
       needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -383,8 +378,7 @@ jobs:
       needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}

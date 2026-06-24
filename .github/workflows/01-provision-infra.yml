@@ -356,8 +356,7 @@ jobs:
       if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
         inputs.cloud_provider == null) && (inputs.stack == 'network' || 
         inputs.stack == 'acm')
-      uses: 
-        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ steps.load-region.outputs.aws_region }}
@@ -423,8 +422,7 @@ jobs:
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
 
     - name: Configure AWS Credentials
-      uses: 
-        aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
+      uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37       # v6.1.0
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: "us-east-1"
@@ -462,8 +460,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}

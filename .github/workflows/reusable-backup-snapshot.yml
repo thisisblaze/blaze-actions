@@ -126,8 +126,7 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions-BackupSnapshot
@@ -195,8 +194,7 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions-SSMInventory
@@ -239,8 +237,7 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions-S3Verify
@@ -313,8 +310,7 @@ jobs:
 
     steps:
       - name: Configure AWS Credentials
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: GitHubActions-DocDBSnapshot

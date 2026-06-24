@@ -122,8 +122,7 @@ on:
         required: false
 jobs:
   handoff:
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
