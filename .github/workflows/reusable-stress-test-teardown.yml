@@ -35,13 +35,13 @@ on:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
         default: false
-        type: boolean
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
         default: false
-        type: boolean
+        type: string
 
       cloud_provider:
         required: false
