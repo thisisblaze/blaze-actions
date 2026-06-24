@@ -3,6 +3,17 @@ name: "♻️ ✅ Phase 4: Verify"
 on:
   workflow_call:
     inputs:
+      app_stack:
+        description: "App stack type: tenant-app or multi-site-app"
+        required: false
+        default: "tenant-app"
+        type: string
+      network_stack:
+        description: "Network stack type: auto or multi-site-network"
+        required: false
+        default: "auto"
+        type: string
+
       environment:
         description: "Target Environment"
         required: true
