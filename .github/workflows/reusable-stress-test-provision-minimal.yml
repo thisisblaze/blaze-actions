@@ -144,7 +144,6 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
-      stack: "network"
       apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
