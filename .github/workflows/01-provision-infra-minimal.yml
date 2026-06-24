@@ -1,5 +1,10 @@
 name: "01 Provision Infra Minimal"
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: string
   workflow_call:
     inputs:
       environment:
@@ -33,4 +38,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: echo "Super minimal provision-infra with 5 inputs"
+      - run: echo "Test with workflow_dispatch"
