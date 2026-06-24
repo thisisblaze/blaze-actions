@@ -183,16 +183,14 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
@@ -312,16 +310,14 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
@@ -439,16 +435,14 @@ jobs:
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37     # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Login to Amazon ECR
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
-        uses: 
-          aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64     # v2
 
       # ── GCP: Workload Identity Federation + Artifact Registry ──
       - name: Authenticate to GCP
