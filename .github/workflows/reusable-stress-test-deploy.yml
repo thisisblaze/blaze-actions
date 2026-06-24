@@ -34,6 +34,7 @@ on:
       mode:
         description: "Execution Mode"
         required: false
+        type: string
         default: "standard"
         type: string
 
