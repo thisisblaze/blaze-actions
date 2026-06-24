@@ -34,14 +34,14 @@ on:
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       cloud_provider:
         required: false
@@ -200,7 +200,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.preserve_host != 'true' && inputs.target_type == 'host'
     needs: [config]
     name: "🏗️ Provision Network"
 
@@ -211,7 +211,7 @@ jobs:
       project: ${{ inputs.project }}
       stack: "network"
       apply: true
-      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      enable_ec2: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -296,8 +296,8 @@ jobs:
       project: ${{ inputs.project }}
       stack: "app"
       apply: true
-      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
-      enable_ec2: ${{ contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage') }}
+      enable_tunnel: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
+      enable_ec2: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'true' || 'false' }}
       api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
       frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
     secrets:
