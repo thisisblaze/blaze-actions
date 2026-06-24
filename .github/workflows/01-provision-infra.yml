@@ -1,4 +1,5 @@
 name: "01 - Provision Infrastructure"
+# cache-bust: 001
 # ⚠️ WARNING: DO NOT RUN THIS WORKFLOW DIRECTLY FOR DEPLOYMENTS ⚠️
 # This repository (blaze-actions) is a library of reusable workflows.
 # Deployments must be executed from the 'blaze-template-deploy' repository (or your derived project repo),
