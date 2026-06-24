@@ -484,8 +484,8 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ inputs.apply }}
-      destroy: ${{ inputs.destroy }}
+      apply: ${{ inputs.apply && 'true' || 'false' }}
+      destroy: ${{ inputs.destroy && 'true' || 'false' }}
       build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
@@ -633,7 +633,7 @@ jobs:
         workers='${{ inputs.workers_json }}'
       orphan_lambda: ${{ (inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network') && 'true' || 'false' }}
       split_apply: ${{ inputs.stack == 'tunnel' && 'true' || 'false' }}
-      enable_vpc_peering: ${{ inputs.enable_vpc_peering }}
+      enable_vpc_peering: ${{ inputs.enable_vpc_peering && 'true' || 'false' }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
       sleep_seconds: 60
       stack_id: ${{ needs.configuration.outputs.stack_id }}
