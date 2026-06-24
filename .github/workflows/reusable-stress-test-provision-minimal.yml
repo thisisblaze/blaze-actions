@@ -139,7 +139,13 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [setup]
     name: "🏗️ Provision Network"
-    uses: thisisblaze/blaze-actions/.github/workflows/test-with-bool.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@main
     with:
-      env_name: ${{ inputs.environment }}
+      environment: ${{ inputs.environment }}
+      project: ${{ inputs.project }}
+      stack: "network"
+      cloud_provider: ${{ inputs.cloud_provider }}
       apply: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
