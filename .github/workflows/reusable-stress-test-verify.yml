@@ -205,8 +205,7 @@ jobs:
       'aws'
     needs: [config]
     name: "✅ Verify Environment (AWS)"
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@main
     with:
       environment: ${{ inputs.environment }}
       cluster_name: ${{ needs.config.outputs.cluster_name }}
@@ -226,8 +225,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 
       'gcp'
     needs: [config]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-verify-gcp.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-gcp.yml@main
     with:
       environment: ${{ inputs.environment }}
       gcp_project_id: ${{ needs.config.outputs.gcp_project_id }}
@@ -249,8 +247,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 
       'azure'
     needs: [config]
-    uses: 
-      thisisblaze/blaze-actions/.github/workflows/reusable-verify-azure.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-azure.yml@main
     with:
       environment: ${{ inputs.environment }}
       cloud_region: ${{ needs.config.outputs.cloud_region }}
