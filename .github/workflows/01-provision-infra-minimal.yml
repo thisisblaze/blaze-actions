@@ -5,18 +5,12 @@ on:
       environment:
         required: true
         type: string
-      project:
-        required: false
-        type: string
-        default: "thisisblaze"
       apply:
         required: false
         type: boolean
         default: false
     secrets:
       AWS_ROLE_ARN:
-        required: false
-      GH_PAT:
         required: false
 
 jobs:
@@ -45,4 +39,3 @@ jobs:
       apply: ${{ inputs.apply }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      GH_PAT: ${{ secrets.GH_PAT }}
