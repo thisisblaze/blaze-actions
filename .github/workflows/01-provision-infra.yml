@@ -129,16 +129,16 @@ on:
         type: string
       apply:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       destroy:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       force_destructive_reconcile:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
 
       cluster_tier:
         required: false
@@ -159,8 +159,8 @@ on:
         default: "false"
       enable_image_resize:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       enable_ec2:
         required: false
         type: string
@@ -168,8 +168,8 @@ on:
       enable_vpc_peering:
         description: "Enable Atlas VPC peering (Plan 135). Requires non-flex cluster (M10+). Passed as TF_VAR_enable_vpc_peering."
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       api_launch_type:
         required: false
         type: string
@@ -406,7 +406,7 @@ jobs:
       needs.configuration.result == 'success' &&
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider
       == null) &&
-      inputs.enable_image_resize == true
+      inputs.enable_image_resize == true || inputs.enable_image_resize == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -486,7 +486,7 @@ jobs:
       terraform_version: ${{ inputs.terraform_version }}
       apply: ${{ inputs.apply }}
       destroy: ${{ inputs.destroy }}
-      build_sharp: ${{ inputs.enable_image_resize == true && inputs.stack == 'network' }}
+      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -641,7 +641,7 @@ jobs:
   post_provision:
     name: ⚙️ Post-Provision Configuration
     needs: [configuration, provision]
-    if: inputs.stack == 'third-party-mongodb' && inputs.apply == true && needs.provision.result == 'success'
+    if: inputs.stack == 'third-party-mongodb' && (inputs.apply == true || inputs.apply == 'true') && needs.provision.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: ${{ inputs.environment }}
@@ -727,7 +727,7 @@ jobs:
     if: >
       inputs.cloud_provider == 'azure' &&
       inputs.stack == 'app' &&
-      inputs.apply == true &&
+      (inputs.apply == true || inputs.apply == 'true') &&
       needs.provision.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -866,7 +866,7 @@ jobs:
           echo "| **Provider** | \`$PROVIDER\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Region** | \`$REGION\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Type** | ${{ inputs.apply == true && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Type** | ${{ (inputs.apply == true || inputs.apply == 'true') && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ inputs.apply }}" == "false" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY

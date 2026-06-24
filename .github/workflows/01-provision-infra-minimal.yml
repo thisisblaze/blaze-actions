@@ -5,12 +5,18 @@ on:
       environment:
         required: true
         type: string
+      project:
+        required: false
+        type: string
+        default: "thisisblaze"
       apply:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
     secrets:
       AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
         required: false
 
 jobs:

@@ -40,8 +40,8 @@ on:
       apply:
         description: "Whether to run terraform apply"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       tf_vars:
         description: "Map of Terraform variables (passed as environment variables)"
         required: false
@@ -53,13 +53,13 @@ on:
       destroy:
         description: "Whether to generate a destroy plan"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       detect_drift:
         description: "Fail if changes are detected (detailed-exitcode)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       build_sharp:
         description: "Whether to build the Sharp binaries for Lambda@Edge (Linux x64). Set to false to skip."
         required: false
@@ -78,8 +78,8 @@ on:
       enable_vpc_peering:
         description: "Enable Atlas VPC peering (Plan 135). Sets TF_VAR_enable_vpc_peering=true for MongoDB DB stacks. Requires non-flex cluster (M10+)."
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       split_apply:
         description: "Enable Split Apply (Targeted Apply -> Sleep -> Full Apply)"
         required: false
@@ -821,7 +821,7 @@ jobs:
         # Used by MongoDB DB stacks (thisisblaze-db, db-pod-alpha) to activate the
         # atlas_vpc_peering module (count = var.enable_vpc_peering ? 1 : 0).
         # TF_VAR_aws_account_id is already injected above — no duplication needed.
-        if: inputs.enable_vpc_peering == true
+        if: inputs.enable_vpc_peering == true || inputs.enable_vpc_peering == 'true'
         run: |
           echo "TF_VAR_enable_vpc_peering=true" >> "$GITHUB_ENV"
           echo "   🔗  Atlas VPC Peering ENABLED (TF_VAR_enable_vpc_peering=true)"
@@ -872,7 +872,7 @@ jobs:
           fi
 
       - name: Run VPC Integrity Check
-        if: ${{ inputs.destroy != true }}
+        if: ${{ inputs.destroy != true && inputs.destroy != 'true' }}
         working-directory: ${{ inputs.tf_dir }}
         env:
           AWS_REGION: ${{ inputs.aws_region }}
@@ -1185,7 +1185,7 @@ jobs:
 
       - name: Export Terraform Outputs
         id: tf_outputs
-        if: ${{ inputs.apply == true }}
+        if: ${{ inputs.apply == true || inputs.apply == 'true' }}
         run: |
           echo "📤 Exporting Terraform Outputs..."
           terraform output -json > tf_outputs.json
