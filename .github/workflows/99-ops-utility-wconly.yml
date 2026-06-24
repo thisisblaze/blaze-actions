@@ -1,10 +1,13 @@
-name: "99 Ops Utility (Empty Inputs Test)"
+name: "99 Ops Utility (Permissions Test)"
 
 on:
   workflow_call:
 
 jobs:
   dummy:
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - run: echo "dummy job"
