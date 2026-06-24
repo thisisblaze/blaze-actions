@@ -1,0 +1,217 @@
+name: "01 Provision Infra V4-no-if"
+# cache-bust: v2
+on:
+  workflow_call:
+    inputs:
+      cloud_provider:
+        required: false
+        type: string
+        default: "aws"
+      environment:
+        required: true
+        type: string
+      wif_audience:
+        required: false
+        type: string
+        default: ""
+      project:
+        required: false
+        type: string
+        default: "thisisblaze"
+      stack:
+        required: true
+        type: string
+      branch_name:
+        required: false
+        type: string
+      apply:
+        required: false
+        type: string
+        default: "false"
+      destroy:
+        required: false
+        type: string
+        default: "false"
+      force_destructive_reconcile:
+        required: false
+        type: string
+        default: "false"
+      cluster_tier:
+        required: false
+        type: string
+        default: "auto"
+      kibana_size:
+        required: false
+        type: string
+        default: "1g"
+      terraform_version:
+        required: false
+        type: string
+        default: "1.9.0"
+      enable_tunnel:
+        required: false
+        type: string
+        default: "false"
+      enable_image_resize:
+        required: false
+        type: string
+        default: "false"
+      enable_ec2:
+        required: false
+        type: string
+        default: "false"
+      enable_vpc_peering:
+        required: false
+        type: string
+        default: "false"
+      api_launch_type:
+        required: false
+        type: string
+        default: "EC2"
+      api_cpu_architecture:
+        required: false
+        type: string
+        default: "ARM64"
+      frontend_launch_type:
+        required: false
+        type: string
+        default: "EC2"
+      frontend_cpu_architecture:
+        required: false
+        type: string
+        default: "ARM64"
+      workers_json:
+        required: false
+        type: string
+        default: "[]"
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      BASIC_AUTH_CREDENTIALS:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
+
+jobs:
+  configuration:
+    name: "Configuration"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tf_dir: ${{ steps.config.outputs.tf_dir }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      bucket: ${{ steps.config.outputs.bucket }}
+      state_key: ${{ steps.config.outputs.state_key }}
+      lock_table: ${{ steps.config.outputs.lock_table }}
+      project_key: ${{ steps.config.outputs.project_key }}
+      stack_id: ${{ steps.config.outputs.stack_id }}
+    steps:
+      - name: Configure
+        id: config
+        run: |
+          echo "tf_dir=live/dev/network" >> $GITHUB_OUTPUT
+          echo "aws_region=us-east-1" >> $GITHUB_OUTPUT
+          echo "bucket=test-bucket" >> $GITHUB_OUTPUT
+          echo "state_key=test.tfstate" >> $GITHUB_OUTPUT
+          echo "lock_table=test-lock" >> $GITHUB_OUTPUT
+          echo "project_key=thisisblaze" >> $GITHUB_OUTPUT
+          echo "stack_id=test-stack" >> $GITHUB_OUTPUT
+
+  terraform:
+    needs: [configuration]
+    name: "Terraform"
+    permissions:
+      contents: read
+      id-token: write
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      cloud_provider: "aws"
+      tf_dir: ${{ needs.configuration.outputs.tf_dir }}
+      aws_region: ${{ needs.configuration.outputs.aws_region }}
+      bucket: ${{ needs.configuration.outputs.bucket }}
+      state_key: ${{ needs.configuration.outputs.state_key }}
+      lock_table: ${{ needs.configuration.outputs.lock_table }}
+      apply: ${{ inputs.apply }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  auto-cleanup-dns:
+    name: Auto Cleanup DNS (Failure)
+    needs: [configuration, terraform]
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    with:
+      action: cleanup-dns
+      environment: ${{ inputs.environment }}
+      cloud_provider: ${{ inputs.cloud_provider }}
+      stack: ${{ inputs.stack }}
+      branch_tag: ${{ inputs.branch_name }}
+      confirmation: "EXECUTE"
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
