@@ -340,7 +340,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.6
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -502,7 +502,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -535,7 +535,7 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -572,7 +572,7 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -602,7 +602,7 @@ jobs:
     name: Deploy API (Cloud Run)
     needs: [configuration, build-api, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@main
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -647,7 +647,7 @@ jobs:
     name: Deploy Frontend (Cloud Run)
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@main
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -687,7 +687,7 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY
     if: ${{ inputs.cloud_provider == 'gcp' && inputs.environment == 'DEV' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@main
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -727,7 +727,7 @@ jobs:
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.11.6
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@main
     with:
       site_key: ${{ matrix.site_key }}
       # Service name must match TF naming: the network module uses project_key="multi-site"
