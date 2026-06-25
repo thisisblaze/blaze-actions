@@ -9,7 +9,25 @@ concurrency:
   group: claude-wf-review-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  preflight:
+    name: Check for API key
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.k.outputs.has_key }}
+    steps:
+      - id: k
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No ANTHROPIC_API_KEY secret set — skipping Claude review."
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+          fi
   review:
+    needs: preflight
+    if: needs.preflight.outputs.has_key == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
