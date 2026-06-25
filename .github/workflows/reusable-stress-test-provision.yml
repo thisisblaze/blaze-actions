@@ -28,31 +28,42 @@ on:
       mode:
         description: "Execution Mode"
         required: false
-        default: "standard"
         type: string
+        default: "standard"
 
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
-        default: false
-        type: boolean
-        
+        default: "false"
+        type: string
+
       cloud_provider:
         required: false
         type: string
         default: aws
-        
+
+      app_stack:
+        description: "App stack type: tenant-app or multi-site-app"
+        required: false
+        default: "tenant-app"
+        type: string
+
+      network_stack:
+        description: "Network stack type: auto or multi-site-network"
+        required: false
+        default: "auto"
+        type: string
+
       wif_audience:
         required: false
         type: string
         default: ""
-        
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -120,10 +131,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-permissions:
-  contents: read
-  actions: write
-
+      SONAR_TOKEN:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -203,18 +212,18 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host'
+    if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.preserve_host != 'true' && inputs.target_type == 'host'
     needs: [config]
     name: "🏗️ Provision Network"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "network"
-      apply: true
-      enable_ec2: ${{ inputs.environment == 'dev-mini' }}
+      apply: "true"
+      enable_ec2: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -235,13 +244,13 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Tunnel"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "tunnel"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -262,13 +271,13 @@ jobs:
     needs: [config, provision-network]
     name: "🏗️ Provision Data Pod (V2)"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "db-pod-alpha"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -292,15 +301,15 @@ jobs:
     needs: [config, provision-network, provision-tunnel, provision-data-pod, provision-third-party-mongodb, provision-third-party-elastic]
     name: "🏗️ Provision App"
 
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "app"
-      apply: true
-      enable_tunnel: ${{ inputs.environment == 'dev-mini' }}
-      enable_ec2: ${{ contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage') }}
+      apply: "true"
+      enable_tunnel: ${{ inputs.environment == 'dev-mini' && 'true' || 'false' }}
+      enable_ec2: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'true' || 'false' }}
       api_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
       frontend_launch_type: ${{ (contains(inputs.environment, 'prod') || contains(inputs.environment, 'stage')) && 'EC2' || 'FARGATE' }}
     secrets:
@@ -322,13 +331,13 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision MongoDB"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "third-party-mongodb"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -349,13 +358,13 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.mode != 'quick-test' && inputs.include_third_party && inputs.target_type == 'host' && (needs.provision-data-pod.result == 'success' || needs.provision-data-pod.result == 'skipped')
     needs: [config, provision-data-pod]
     name: "🏛️ Provision Elastic"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}
       stack: "third-party-elastic"
-      apply: true
+      apply: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}

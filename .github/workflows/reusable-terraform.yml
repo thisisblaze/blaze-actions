@@ -40,8 +40,8 @@ on:
       apply:
         description: "Whether to run terraform apply"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       tf_vars:
         description: "Map of Terraform variables (passed as environment variables)"
         required: false
@@ -53,23 +53,23 @@ on:
       destroy:
         description: "Whether to generate a destroy plan"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       detect_drift:
         description: "Fail if changes are detected (detailed-exitcode)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       build_sharp:
         description: "Whether to build the Sharp binaries for Lambda@Edge (Linux x64). Set to false to skip."
         required: false
-        type: boolean
-        default: true
+        type: string
+        default: "true"
       orphan_lambda:
         description: "Skip Lambda@Edge destruction by removing from state (prevents 1h hang)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       orphan_lambda_namespace:
         description: "Namespace prefix for Lambda@Edge IAM resource names (e.g. 'blaze'). Used when orphan_lambda=true to re-import IAM roles/policies."
         required: false
@@ -78,13 +78,13 @@ on:
       enable_vpc_peering:
         description: "Enable Atlas VPC peering (Plan 135). Sets TF_VAR_enable_vpc_peering=true for MongoDB DB stacks. Requires non-flex cluster (M10+)."
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       split_apply:
         description: "Enable Split Apply (Targeted Apply -> Sleep -> Full Apply)"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
       split_targets:
         description: "Space-separated list of targets for the first apply step"
         required: false
@@ -175,6 +175,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
     outputs:
       mongodb_uri:
         description: "MongoDB Connection String"
@@ -234,9 +236,6 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-permissions:
-  contents: read
 
 jobs:
   terraform:
@@ -822,7 +821,7 @@ jobs:
         # Used by MongoDB DB stacks (thisisblaze-db, db-pod-alpha) to activate the
         # atlas_vpc_peering module (count = var.enable_vpc_peering ? 1 : 0).
         # TF_VAR_aws_account_id is already injected above — no duplication needed.
-        if: inputs.enable_vpc_peering == true
+        if: inputs.enable_vpc_peering == true || inputs.enable_vpc_peering == 'true'
         run: |
           echo "TF_VAR_enable_vpc_peering=true" >> "$GITHUB_ENV"
           echo "   🔗  Atlas VPC Peering ENABLED (TF_VAR_enable_vpc_peering=true)"
@@ -847,33 +846,33 @@ jobs:
         id: resolve-acm
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         run: |
-           if [[ -z "${{ secrets.ACM_CERTIFICATE_ARN }}" ]]; then
-              echo "🔍 ACM_CERTIFICATE_ARN secret is empty. Resolving dynamically..."
-              export DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT' "$GITHUB_WORKSPACE/vars/blaze-env.json")
-              if [[ -f "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json" ]]; then
-                 PROJ_DOMAIN=$(jq -r '.common.DOMAIN_ROOT // empty' "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json")
-                 if [[ -n "$PROJ_DOMAIN" ]]; then DOMAIN_ROOT=$PROJ_DOMAIN; fi
-              fi
-              echo "🎯 Target Domain Root: $DOMAIN_ROOT"
-              
-              if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
-                 echo "Searching certificates for $DOMAIN_ROOT in us-east-1 (CloudFront)..."
-                 ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='${DOMAIN_ROOT}'].CertificateArn" --output text | awk '{print $1}')
-                 
-                 if [[ -n "$ARN" && "$ARN" != "None" ]]; then
-                    echo "✅ Resolved ACM ARN: $ARN"
-                    echo "TF_VAR_cloudfront_acm_certificate_arn=$ARN" >> "$GITHUB_ENV"
-                 else
-                    echo "⚠️ No matching ACM certificate found in us-east-1 for *.$DOMAIN_ROOT"
-                 fi
-              fi
-           else
-              echo "✅ Using provided ACM_CERTIFICATE_ARN secret."
-              echo "TF_VAR_cloudfront_acm_certificate_arn=${{ secrets.ACM_CERTIFICATE_ARN }}" >> "$GITHUB_ENV"
-           fi
+          if [[ -z "${{ secrets.ACM_CERTIFICATE_ARN }}" ]]; then
+             echo "🔍 ACM_CERTIFICATE_ARN secret is empty. Resolving dynamically..."
+             export DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT' "$GITHUB_WORKSPACE/vars/blaze-env.json")
+             if [[ -f "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json" ]]; then
+                PROJ_DOMAIN=$(jq -r '.common.DOMAIN_ROOT // empty' "$GITHUB_WORKSPACE/vars/${{ env.TF_VAR_project_key }}/blaze-env.json")
+                if [[ -n "$PROJ_DOMAIN" ]]; then DOMAIN_ROOT=$PROJ_DOMAIN; fi
+             fi
+             echo "🎯 Target Domain Root: $DOMAIN_ROOT"
+             
+             if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
+                echo "Searching certificates for $DOMAIN_ROOT in us-east-1 (CloudFront)..."
+                ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='${DOMAIN_ROOT}'].CertificateArn" --output text | awk '{print $1}')
+                
+                if [[ -n "$ARN" && "$ARN" != "None" ]]; then
+                   echo "✅ Resolved ACM ARN: $ARN"
+                   echo "TF_VAR_cloudfront_acm_certificate_arn=$ARN" >> "$GITHUB_ENV"
+                else
+                   echo "⚠️ No matching ACM certificate found in us-east-1 for *.$DOMAIN_ROOT"
+                fi
+             fi
+          else
+             echo "✅ Using provided ACM_CERTIFICATE_ARN secret."
+             echo "TF_VAR_cloudfront_acm_certificate_arn=${{ secrets.ACM_CERTIFICATE_ARN }}" >> "$GITHUB_ENV"
+          fi
 
       - name: Run VPC Integrity Check
-        if: ${{ inputs.destroy != true }}
+        if: ${{ inputs.destroy != true && inputs.destroy != 'true' }}
         working-directory: ${{ inputs.tf_dir }}
         env:
           AWS_REGION: ${{ inputs.aws_region }}
@@ -1186,7 +1185,7 @@ jobs:
 
       - name: Export Terraform Outputs
         id: tf_outputs
-        if: ${{ inputs.apply == true }}
+        if: ${{ inputs.apply == true || inputs.apply == 'true' }}
         run: |
           echo "📤 Exporting Terraform Outputs..."
           terraform output -json > tf_outputs.json

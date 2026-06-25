@@ -28,21 +28,21 @@ on:
       mode:
         description: "Execution Mode"
         required: false
-        default: "standard"
         type: string
+        default: "standard"
 
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
-        default: false
-        type: boolean
-        
+        default: "false"
+        type: string
+
       cloud_provider:
         required: false
         type: string
@@ -59,12 +59,12 @@ on:
         required: false
         default: "auto"
         type: string
-        
+
       wif_audience:
         description: "OIDC Audience"
         required: false
         type: string
-        
+
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -132,10 +132,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-permissions:
-  contents: read
-  actions: write
-
+      SONAR_TOKEN:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -256,7 +254,7 @@ jobs:
           repository: thisisblaze/blaze-actions
           path: .blaze-actions
           ref: dev
-      
+
       - name: Check App State
         id: check-app
         uses: ./.blaze-actions/.github/actions/check-stack-exists
@@ -351,12 +349,12 @@ jobs:
       - config
       - prod-safety-check
       - check-states
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
     with:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
-      dry_run: false
+      dry_run: "false"
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
@@ -375,7 +373,7 @@ jobs:
     name: "🧨 Destroy App"
 
     needs: [config, cleanup-services, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
@@ -414,21 +412,21 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.config.outputs.aws_region || 'eu-west-1' }}
-      
+
       - name: Wait for ECS Services to transition to INACTIVE
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         run: |
           echo "⏳ Waiting 60 seconds to ensure AWS fully purges ECS Services from the control plane..."
           echo "   (This prevents 'Unable to Start a service that is still Draining' upon immediate reprovisioning)"
           sleep 60
-          
+
           REGION="${{ needs.config.outputs.aws_region || 'eu-west-1' }}"
           NAMESPACE="${{ needs.config.outputs.namespace || 'blaze' }}"
           CLIENT_KEY="${{ needs.config.outputs.client_key || 'b9' }}"
           PROJECT_KEY="${{ needs.config.outputs.project_key }}"
           STAGE_KEY="${{ needs.config.outputs.stage_key }}"
           RESOURCE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
-          
+
           # Poll clusters in our environment
           ECS_CLUSTERS=$(aws ecs list-clusters --region "$REGION" --query 'clusterArns[]' --output text 2>/dev/null || echo "")
           for CLUSTER_ARN in $ECS_CLUSTERS; do
@@ -452,7 +450,7 @@ jobs:
     name: "🧨 Destroy Data Pod"
 
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/${{ inputs.environment }}-db-pod-alpha"
@@ -481,7 +479,7 @@ jobs:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.mongodb_exists == 'true' }}
     name: "🧨 Destroy MongoDB"
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/mongodb"
@@ -510,7 +508,7 @@ jobs:
     if: ${{ inputs.include_third_party && inputs.target_type == 'host' && needs.check-states.outputs.elastic_exists == 'true' }}
     name: "🧨 Destroy Elastic"
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/elastic"
@@ -538,7 +536,7 @@ jobs:
     name: "🧨 Destroy Tunnel"
 
     needs: [config, destroy-app, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: "${{ needs.config.outputs.infra_prefix }}/third-party/cloudflare"
@@ -975,7 +973,7 @@ jobs:
     name: "🧨 Destroy Network"
 
     needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@main
     with:
       action: "destroy"
       tf_dir: ${{ inputs.network_stack == 'multi-site-network' && format('{0}/multi-site-network', needs.config.outputs.infra_prefix) || format('{0}/{1}-network', needs.config.outputs.infra_prefix, inputs.environment) }}

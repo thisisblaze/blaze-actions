@@ -132,7 +132,55 @@ on:
       dist_id:
         type: string
         required: false
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+      GH_PAT:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      EC_API_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
+  id-token: write
   contents: read
   actions: write
 
@@ -165,7 +213,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -281,7 +329,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -340,7 +388,7 @@ jobs:
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@main
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -397,7 +445,7 @@ jobs:
 
           # 2. Tag-based query (replacing brittle name pattern matching)
           echo "--------------------------------"
-          
+
           STACK_ID="${{ needs.configuration.outputs.stack_id }}"
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             echo "📡 Tag-based Lambda@Edge Check (us-east-1) for Blaze:StackID=${STACK_ID}..."
@@ -416,7 +464,7 @@ jobs:
               --query 'ResourceTagMappingList[*].ResourceARN' \
               --output text 2>/dev/null || echo "")
           fi
-          
+
           echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . > found_lambdas.txt || true
 
           if [ ! -s found_lambdas.txt ]; then
@@ -433,10 +481,10 @@ jobs:
           # Fetch all active Lambda@Edge bindings across all distributions in the AWS account to prevent false-positives
           ACTIVE_LAMBDAS_DEFAULT=$(aws cloudfront list-distributions --query "DistributionList.Items[*].DefaultCacheBehavior.LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
           ACTIVE_LAMBDAS_ADDITIONAL=$(aws cloudfront list-distributions --query "DistributionList.Items[*].CacheBehaviors.Items[*].LambdaFunctionAssociations.Items[*].LambdaFunctionARN" --output text 2>/dev/null | tr '\t' '\n' || true)
-          
+
           ACTIVE_LAMBDAS=$(echo -e "${ACTIVE_LAMBDAS_DEFAULT}\n${ACTIVE_LAMBDAS_ADDITIONAL}" | grep "arn:aws:lambda:" | sort -u || true)
           ACTIVE_COUNT=$(echo "$ACTIVE_LAMBDAS" | grep -v "^$" | wc -l | tr -d ' ' || echo "0")
-          
+
           echo "✅ Found $ACTIVE_COUNT Edge Lambdas currently bound to live CloudFront distributions."
           echo "--------------------------------"
 

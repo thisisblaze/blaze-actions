@@ -133,8 +133,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-permissions:
-  contents: read
+      SONAR_TOKEN:
+        required: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.site_key }}-${{ inputs.environment }}
   cancel-in-progress: false

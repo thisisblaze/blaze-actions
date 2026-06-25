@@ -169,7 +169,10 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
+  id-token: write
   contents: read
 concurrency:
   group: setup-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ github.ref }}
@@ -193,10 +196,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@main
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: network
@@ -234,7 +236,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -247,7 +249,7 @@ jobs:
 
       - name: Setup Blaze Infra
         if: inputs.cloud_provider == 'aws'
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}

@@ -213,7 +213,10 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
+  id-token: write
   contents: read
 concurrency:
   group: deploy-pages-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
@@ -252,8 +255,7 @@ jobs:
     timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'DEV' }}
-    if: always() && (needs.quality-check.result == 'success' || 
-      needs.quality-check.result == 'skipped')
+    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
@@ -311,8 +313,7 @@ jobs:
           echo "☁️ Provider: $ACTIVE_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -322,19 +323,18 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            {
-              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
-              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
-              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-            } >> "$GITHUB_ENV"
+          {
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          } >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
@@ -346,7 +346,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -369,8 +369,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -385,13 +384,10 @@ jobs:
           audience: ${{ inputs.wif_audience }}
 
       - name: Check AWS Infrastructure
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
-          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.client_key }}-web/${{ 
-            needs.configuration.outputs.project_key }}/api
+          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.client_key }}-web/${{ needs.configuration.outputs.project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -447,11 +443,11 @@ jobs:
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            {
-              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
-              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
-              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-            } >> "$GITHUB_ENV"
+          {
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          } >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
@@ -507,11 +503,7 @@ jobs:
     name: Build Admin (Shared)
     needs: [configuration, pre-flight-check]
     # Run for Host Environments (Prod, Stage, Dev Host)
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && 
-      (inputs.build_images == true || inputs.build_images == null || 
-      inputs.deploy_services == true || inputs.deploy_services == null) && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 
-      'admin' || inputs.target_services == null) }}
+    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.build_images == true || inputs.build_images == null || inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -522,7 +514,6 @@ jobs:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
           node-version: "20.x"
-          
       - name: Setup .npmrc
         run: |
           echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
@@ -552,18 +543,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
-          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && 
-            (inputs.environment == 'PROD' && 
-            format('https://api-azure.{0}/graphql', 
-            needs.configuration.outputs.domain_root) || 
-            format('https://api-azure-{0}.{1}/graphql', 
-            needs.configuration.outputs.stage_key, 
-            needs.configuration.outputs.domain_root)) || (inputs.environment == 
-            'PROD' && format('https://api.{0}/graphql', 
-            needs.configuration.outputs.domain_root) || 
-            format('https://api-{0}.{1}/graphql', 
-            needs.configuration.outputs.stage_key, 
-            needs.configuration.outputs.domain_root)) }}
+          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'PROD' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'PROD' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
 
       - name: Create Cloudflare _redirects
         run: |
@@ -582,11 +562,7 @@ jobs:
 
     # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' &&
-      inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' ||
-      inputs.branch_name == null) && (inputs.deploy_services == true ||
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
-      || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -640,16 +616,7 @@ jobs:
           wranglerVersion: "3"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: "pages deploy packages/admin/dist --project-name=${{ inputs.cloud_provider
-            == 'azure' && format('{0}-{1}-{2}-azure-{3}-admin', needs.configuration.outputs.namespace,
-            needs.configuration.outputs.client_key, needs.configuration.outputs.project_key,
-            needs.configuration.outputs.stage_key) || inputs.cloud_provider == 'gcp'
-            && format('{0}-{1}-{2}-gcp-{3}-admin', needs.configuration.outputs.namespace,
-            needs.configuration.outputs.client_key, needs.configuration.outputs.project_key,
-            needs.configuration.outputs.stage_key) || format('{0}-{1}-{2}-{3}-admin',
-            needs.configuration.outputs.namespace, needs.configuration.outputs.client_key,
-            needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key)
-            }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
+          command: "pages deploy packages/admin/dist --project-name=${{ inputs.cloud_provider == 'azure' && format('{0}-{1}-{2}-azure-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || inputs.cloud_provider == 'gcp' && format('{0}-{1}-{2}-gcp-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) || format('{0}-{1}-{2}-{3}-admin', needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key, needs.configuration.outputs.stage_key) }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true"
 
       - name: Purge Cloudflare Cache
         run: |
@@ -678,10 +645,7 @@ jobs:
     name: Deploy Admin (GCP — GCS + Cloud CDN)
     needs: [configuration, build-admin, pre-flight-check]
     # GCP has no Cloudflare Pages path — this is GCP's native admin static deploy.
-    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' ||
-      inputs.branch_name == null) && (inputs.deploy_services == true ||
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all'
-      || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -728,11 +692,7 @@ jobs:
     needs: [configuration, build-admin, pre-flight-check]
     # Opt-in native Azure static path (set static_admin_target=native); otherwise
     # Azure uses the Cloudflare Pages job above.
-    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' &&
-      (inputs.branch_name == '' || inputs.branch_name == null) &&
-      (inputs.deploy_services == true || inputs.deploy_services == null) &&
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' ||
-      inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

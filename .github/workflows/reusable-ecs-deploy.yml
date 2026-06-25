@@ -99,8 +99,7 @@ on:
         required: false
         type: string
         default: "false"
-        description: "Set to 'true' to skip ECS stabilisation wait (stress tests,
-          placeholder images)"
+        description: "Set to 'true' to skip ECS stabilisation wait (stress tests, placeholder images)"
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -169,16 +168,15 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 concurrency:
-  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref
-    }}-${{ inputs.environment }}
+  group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref }}-${{ inputs.environment }}
   cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions:
-  contents: read
 jobs:
   deploy:
     name: Deploy ${{ inputs.service_name }}
@@ -190,63 +188,62 @@ jobs:
     # We should default to the uppercase convention if input is mixed.
     environment: ${{ inputs.config_environment || inputs.environment }}
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-    - name: Setup Blaze (Credentials)
-      uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.7.9
-      with:
-        aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ inputs.aws_region }}
-        ecr: "true"
-        terraform: "false"
+      - name: Setup Blaze (Credentials)
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+          ecr: "true"
+          terraform: "false"
 
-    - name: Deploy Service
-      uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.7.9
-      with:
-        service_name: ${{ inputs.service_name }}
-        environment: ${{ inputs.environment }}
-        stage_key: ${{ inputs.stage_key }}
-        branch_name: ${{ inputs.branch_name }}
-        image_tag: ${{ inputs.image_tag }}
-        project_key: ${{ inputs.project_key }}
-        image_project_key: ${{ inputs.image_project_key || inputs.project_key }}
-        client_key: ${{ inputs.client_key }}
-        cloud_platform: ${{ inputs.cloud_platform }}
-        domain_root: ${{ inputs.domain_root }}
+      - name: Deploy Service
+        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@main
+        with:
+          service_name: ${{ inputs.service_name }}
+          environment: ${{ inputs.environment }}
+          stage_key: ${{ inputs.stage_key }}
+          branch_name: ${{ inputs.branch_name }}
+          image_tag: ${{ inputs.image_tag }}
+          project_key: ${{ inputs.project_key }}
+          image_project_key: ${{ inputs.image_project_key || inputs.project_key }}
+          client_key: ${{ inputs.client_key }}
+          cloud_platform: ${{ inputs.cloud_platform }}
+          domain_root: ${{ inputs.domain_root }}
 
           # Infra
-        efs_id: ${{ inputs.efs_id }}
-        api_ap_id: ${{ inputs.api_ap_id }}
-        mongo_ap_id: ${{ inputs.mongo_ap_id }}
-        es_ap_id: ${{ inputs.es_ap_id }}
-        ns_id: ${{ inputs.ns_id }}
-        namespace: ${{ inputs.namespace }}
-        registry: ${{ inputs.registry }}
+          efs_id: ${{ inputs.efs_id }}
+          api_ap_id: ${{ inputs.api_ap_id }}
+          mongo_ap_id: ${{ inputs.mongo_ap_id }}
+          es_ap_id: ${{ inputs.es_ap_id }}
+          ns_id: ${{ inputs.ns_id }}
+          namespace: ${{ inputs.namespace }}
+          registry: ${{ inputs.registry }}
 
           # Secrets
-        jwt_private_key: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
-        s3_bucket: ${{ inputs.s3_bucket }}
-        admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
-        admin_password: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
-        mongodb_uri: ${{ secrets.BLAZE_CONNECTION_STRING }}
-        elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || 
-          inputs.elasticsearch_endpoint }}
+          jwt_private_key: ${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+          s3_bucket: ${{ inputs.s3_bucket }}
+          admin_email: ${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+          admin_password: ${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+          mongodb_uri: ${{ secrets.BLAZE_CONNECTION_STRING }}
+          elasticsearch_endpoint: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || inputs.elasticsearch_endpoint }}
 
-        elasticsearch_username: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
-        elasticsearch_password: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+          elasticsearch_username: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+          elasticsearch_password: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
 
-        s3_access_key: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-        s3_secret_key: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
-        s3_public_url: ${{ inputs.s3_public_url }}
+          s3_access_key: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+          s3_secret_key: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+          s3_public_url: ${{ inputs.s3_public_url }}
 
-        graphql_cache_settings: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
-        blaze_client_header: ${{ secrets.BLAZE_CLIENT_HEADER }}
-        dfp_network_id: ${{ inputs.dfp_network_id }}
-        gtm_id: ${{ inputs.gtm_id }}
-        aws_region: ${{ inputs.aws_region }}
+          graphql_cache_settings: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+          blaze_client_header: ${{ secrets.BLAZE_CLIENT_HEADER }}
+          dfp_network_id: ${{ inputs.dfp_network_id }}
+          gtm_id: ${{ inputs.gtm_id }}
+          aws_region: ${{ inputs.aws_region }}
           # Hybrid ECS
-        launch_type: ${{ inputs.launch_type }}
-        cpu_architecture: ${{ inputs.cpu_architecture }}
-        deployment_timeout_minutes: "25"
-        skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}
+          launch_type: ${{ inputs.launch_type }}
+          cpu_architecture: ${{ inputs.cpu_architecture }}
+          deployment_timeout_minutes: "25"
+          skip_stability_wait: ${{ inputs.skip_stability_wait || 'false' }}

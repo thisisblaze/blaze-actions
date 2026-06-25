@@ -74,6 +74,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
     inputs:
       dist_id:
         description: "Distribution ID (or Domain Name) to strip aliases from"
@@ -81,6 +83,7 @@ on:
         type: string
 
 permissions:
+  id-token: write
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

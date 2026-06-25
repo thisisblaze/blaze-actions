@@ -114,6 +114,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
     outputs:
       cleanup_status:
         value: ${{ jobs.cleanup.outputs.status }}
@@ -122,8 +124,6 @@ on:
       tasks_deleted:
         value: ${{ jobs.cleanup.outputs.tasks_deleted }}
 
-permissions:
-  contents: read
 concurrency:
   group: cleanup-util-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}-${{ inputs.cloud_provider }}
   cancel-in-progress: false
@@ -221,7 +221,7 @@ jobs:
           CLUSTER="${{ inputs.cluster_name }}"
           REGION="${{ inputs.aws_region }}"
           echo "🛑 Checking ECS cluster: $CLUSTER for active services to drain..."
-          
+
           STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER" --region "$REGION" --query "clusters[0].status" --output text 2>/dev/null || echo "MISSING")
           if [[ "$STATUS" == "ACTIVE" ]]; then
              SERVICES=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" --query "serviceArns[]" --output text 2>/dev/null || echo "")
@@ -320,7 +320,7 @@ jobs:
 
           STACK_ID="${{ inputs.stack_id }}"
           echo "🔍 Scanning S3 buckets for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} via Tags"
-          
+
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
               --region "${{ inputs.aws_region }}" \
@@ -412,7 +412,7 @@ jobs:
 
           STACK_ID="${{ inputs.stack_id }}"
           echo "🧹 CloudWatch Log Cleanup via Tagging API..."
-          
+
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             echo "🔍 Scanning CloudWatch Logs for Blaze:StackID=${STACK_ID} via Tags"
             TAGGED_ARNS_REG=$(aws resourcegroupstaggingapi get-resources \
@@ -677,7 +677,7 @@ jobs:
 
           STACK_ID="${{ inputs.stack_id }}"
           echo "🧹 Cleanup ALB Target Groups for Project=${PROJECT_KEY}, Stage=${STAGE_KEY} in $REGION"
-          
+
           pip install boto3 >/dev/null 2>&1 || true
           cat << 'EOF' > tg_cleanup.py
           import boto3
@@ -694,7 +694,7 @@ jobs:
           elbv2 = boto3.client('elbv2', region_name=region)
 
           tgs = []
-          
+
           if stack_id and stack_id != "null":
               print(f"🔍 Scanning Target Groups for Blaze:StackID={stack_id}")
               for page in tagging.get_paginator('get_resources').paginate(
@@ -715,7 +715,7 @@ jobs:
                   ResourceTypeFilters=['elasticloadbalancing:targetgroup']
               ):
                   tgs.extend([m['ResourceARN'] for m in page['ResourceTagMappingList']])
-          
+
           tgs = list(set(tgs))
 
           if not tgs:
@@ -759,7 +759,7 @@ jobs:
           STAGE_KEY="${{ env.STAGE_KEY }}"
 
           echo "🧹 Cleanup CloudFront Distributions for Project=${PROJECT_KEY}, Stage=${STAGE_KEY}"
-          
+
           pip install boto3 >/dev/null 2>&1 || true
           cat << 'EOF' > cf_cleanup.py
           import boto3
@@ -775,7 +775,7 @@ jobs:
           cf = boto3.client('cloudfront', region_name='us-east-1')
 
           dists = []
-          
+
           if stack_id and stack_id != "null":
               print(f"🔍 Scanning CloudFront Distributions for Blaze:StackID={stack_id}")
               for page in tagging.get_paginator('get_resources').paginate(
@@ -987,10 +987,10 @@ jobs:
             --region "$REGION" \
             --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '${RESOURCE_PREFIX}-') && contains(AutoScalingGroupName, '-ecs-ec2-cp')].AutoScalingGroupName | [0]" \
             --output text 2>/dev/null || echo "None")
-          
+
           if [[ "$ASG_NAME" == "null" ]]; then ASG_NAME="None"; fi
           echo "   🔍 Evaluated ASG: $ASG_NAME"
-          
+
           ASG_EXISTS="$ASG_NAME"
 
           if [[ -n "$ASG_EXISTS" && "$ASG_EXISTS" != "None" ]]; then
@@ -1163,7 +1163,7 @@ jobs:
           fi
 
           STACK_ID="${{ inputs.stack_id }}"
-          
+
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             echo "🔍 Scanning for services targeting Blaze:StackID=${STACK_ID}"
             SERVICES=$(aws resourcegroupstaggingapi get-resources \
@@ -1317,7 +1317,7 @@ jobs:
 
           # Discover clusters by tag (governance-safe — no string-prefix regex)
           STACK_ID="${{ inputs.stack_id }}"
-          
+
           if [[ -n "$STACK_ID" && "$STACK_ID" != "null" ]]; then
             echo "🗄️ Scanning for DocumentDB clusters tagged Blaze:StackID=${STACK_ID}..."
             CLUSTER_ARNS=$(aws resourcegroupstaggingapi get-resources \
@@ -1389,12 +1389,12 @@ jobs:
              echo "   ✅ VPC not found. Skipping network cleanup."
              exit 0
           fi
-          
+
           echo "🧹 Cleaning up Network Dependencies (NACLs & ENIs) for VPC: $VPC_ID"
 
           # 1. Reset Custom Network ACLs to Default
           DEFAULT_NACL=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=true" --region "$REGION" --query "NetworkAcls[0].NetworkAclId" --output text 2>/dev/null || echo "None")
-          
+
           if [[ "$DEFAULT_NACL" != "None" ]]; then
              CUSTOM_NACLS=$(aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$VPC_ID" "Name=default,Values=false" --region "$REGION" --query "NetworkAcls[].NetworkAclId" --output text 2>/dev/null || echo "")
              
@@ -1430,7 +1430,7 @@ jobs:
                 fi
              done
           fi
-          
+
           # 3. Handle stuck 'in-use' ENIs (Detach then Delete)
           STUCK_ENIS=$(aws ec2 describe-network-interfaces --filters "Name=vpc-id,Values=$VPC_ID" --region "$REGION" --query "NetworkInterfaces[?Attachment!=null].[NetworkInterfaceId,Attachment.AttachmentId]" --output text 2>/dev/null || echo "")
           if [[ -n "$STUCK_ENIS" && "$STUCK_ENIS" != "None" ]]; then
@@ -1456,9 +1456,9 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
           echo "🧹 Cleaning up Azure resources for $PROJECT_KEY-$STAGE_KEY"
-          
+
           RG="blaze-$PROJECT_KEY-$STAGE_KEY-rg"
-          
+
           # 1. Front Door Endpoints (dangling endpoints block profile deletion)
           echo "🔍 Scanning for Front Door profiles in $RG..."
           PROFILES=$(az afd profile list -g "$RG" --query "[].name" -o tsv 2>/dev/null || echo "")
@@ -1473,7 +1473,7 @@ jobs:
                  fi
              done
           done
-          
+
           # 2. Empty Blob Containers
           ACCOUNTS=$(az storage account list -g "$RG" --query "[].name" -o tsv 2>/dev/null || echo "")
           for ACCT in $ACCOUNTS; do
@@ -1495,7 +1495,7 @@ jobs:
           PROJECT_KEY="${{ env.PROJECT_KEY }}"
           STAGE_KEY="${{ env.STAGE_KEY }}"
           echo "🧹 Emptying GCS Buckets for Project=$PROJECT_KEY Stage=$STAGE_KEY"
-          
+
           # Match buckets by name prefix or labels
           BUCKETS=$(gcloud storage ls --format="value(name)" --filter="labels.blaze-project=$PROJECT_KEY AND labels.blaze-environment=$STAGE_KEY" 2>/dev/null || echo "")
           for BUCKET in $BUCKETS; do
@@ -1514,7 +1514,7 @@ jobs:
           STAGE_KEY="${{ env.STAGE_KEY }}"
           REGION="${{ inputs.aws_region || 'us-central1' }}"
           echo "🧹 Cleaning up GCP Serverless NEGs for $PROJECT_KEY-$STAGE_KEY"
-          
+
           NEGS=$(gcloud compute network-endpoint-groups list --region="$REGION" --format="value(name)" --filter="name:$PROJECT_KEY-$STAGE_KEY" 2>/dev/null || echo "")
           for NEG in $NEGS; do
              echo "   🗑️ Deleting NEG $NEG"
@@ -1524,7 +1524,7 @@ jobs:
                 gcloud compute network-endpoint-groups delete "$NEG" --region="$REGION" --quiet || true
              fi
           done
-          
+
           echo "🧹 Cleaning up GCP Secrets for $PROJECT_KEY-$STAGE_KEY"
           SECRETS=$(gcloud secrets list --format="value(name)" --filter="name:$PROJECT_KEY-$STAGE_KEY" 2>/dev/null || echo "")
           for SECRET in $SECRETS; do

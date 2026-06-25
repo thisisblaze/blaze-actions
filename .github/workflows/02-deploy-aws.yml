@@ -204,7 +204,10 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
+      SONAR_TOKEN:
+        required: false
 permissions:
+  id-token: write
   contents: read
 concurrency:
   group: deploy-aws-${{ inputs.environment || 'dev' }}-${{ inputs.branch_name || 'host' }}
@@ -243,8 +246,7 @@ jobs:
     timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'dev' }}
-    if: always() && (needs.quality-check.result == 'success' || 
-      needs.quality-check.result == 'skipped')
+    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
     outputs:
       should_build: ${{ steps.config.outputs.should_build }}
       should_deploy_app: ${{ steps.config.outputs.should_deploy_app }}
@@ -308,8 +310,7 @@ jobs:
           echo "☁️ Provider: $ACTIVE_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -319,19 +320,18 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            {
-              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
-              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
-              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-            } >> "$GITHUB_ENV"
+          {
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          } >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
@@ -343,7 +343,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.7.9
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -366,8 +366,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -377,19 +376,15 @@ jobs:
         if: inputs.cloud_provider == 'gcp'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-            }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           audience: ${{ inputs.wif_audience }}
 
       - name: Check AWS Infrastructure
-        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-          inputs.cloud_provider == null
+        if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
         env:
           CLUSTER_NAME: ${{ needs.configuration.outputs.cluster_name }}
-          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ 
-            needs.configuration.outputs.image_project_key }}-web/${{ 
-            needs.configuration.outputs.image_project_key }}/api
+          REPO_NAME: ${{ needs.configuration.outputs.namespace }}-${{ needs.configuration.outputs.image_project_key }}-web/${{ needs.configuration.outputs.image_project_key }}/api
         run: |
           echo "🔍 Checking Critical AWS Infrastructure..."
           echo "Cluster: $CLUSTER_NAME"
@@ -460,11 +455,11 @@ jobs:
       - name: Set Azure Credentials (OIDC)
         if: inputs.cloud_provider == 'azure'
         run: |
-            {
-              echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
-              echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
-              echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-            } >> "$GITHUB_ENV"
+          {
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+            echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          } >> "$GITHUB_ENV"
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
@@ -523,29 +518,14 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && 
-        format('{0}-docker.pkg.dev/{1}/{2}/api', 
-        needs.configuration.outputs.cloud_region, 
-        needs.configuration.outputs.gcp_project_id, 
-        needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider 
-        == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/api', 
-        needs.configuration.outputs.azure_acr_name, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
-        needs.configuration.outputs.image_project_key) || 
-        format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', 
-        needs.configuration.outputs.aws_account_id, 
-        needs.configuration.outputs.aws_region, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.image_project_key,
-        needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -558,8 +538,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -571,32 +550,15 @@ jobs:
       id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
-    if: ${{ needs.configuration.outputs.should_build == 'true' && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 
-      'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
+    if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && 
-        format('{0}-docker.pkg.dev/{1}/{2}/frontend', 
-        needs.configuration.outputs.cloud_region, 
-        needs.configuration.outputs.gcp_project_id, 
-        needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider 
-        == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/frontend', 
-        needs.configuration.outputs.azure_acr_name, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
-        needs.configuration.outputs.image_project_key) || 
-        format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', 
-        needs.configuration.outputs.aws_account_id, 
-        needs.configuration.outputs.aws_region, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.image_project_key,
-        needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
@@ -611,8 +573,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -622,10 +583,7 @@ jobs:
     name: Build Admin (Shared)
     needs: [configuration, pre-flight-check]
     # Run for Host Environments (Prod, Stage, Dev Host)
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) &&
-      (needs.configuration.outputs.should_build == 'true' || needs.configuration.outputs.should_deploy_app == 'true') &&
-      (inputs.target_services == 'Blaze all' || inputs.target_services ==
-      'admin' || inputs.target_services == null) }}
+    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (needs.configuration.outputs.should_build == 'true' || needs.configuration.outputs.should_deploy_app == 'true') && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -666,22 +624,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           BLAZE_PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
-          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' &&
-            (inputs.environment == 'prod' &&
-            format('https://api-azure-{0}.{1}/graphql',
-            needs.configuration.outputs.client_key,
-            needs.configuration.outputs.domain_root) ||
-            format('https://api-azure-{0}-{1}.{2}/graphql',
-            needs.configuration.outputs.client_key,
-            needs.configuration.outputs.stage_key,
-            needs.configuration.outputs.domain_root)) || (inputs.environment ==
-            'prod' && format('https://api-{0}.{1}/graphql',
-            needs.configuration.outputs.client_key,
-            needs.configuration.outputs.domain_root) ||
-            format('https://api-{0}-{1}.{2}/graphql',
-            needs.configuration.outputs.client_key,
-            needs.configuration.outputs.stage_key,
-            needs.configuration.outputs.domain_root)) }}
+          BLAZE_GRAPHQL_URI: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-azure-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.domain_root) || format('https://api-{0}-{1}.{2}/graphql', needs.configuration.outputs.client_key, needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
 
       - name: Create Cloudflare _redirects
         run: |
@@ -700,45 +643,23 @@ jobs:
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
-    if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' &&
-      inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' ||
-      inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.7.9
+    if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && 
-        format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', 
-        needs.configuration.outputs.cloud_region, 
-        needs.configuration.outputs.gcp_project_id, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
-        needs.configuration.outputs.image_project_key) || (inputs.cloud_provider == 
-        'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', 
-        needs.configuration.outputs.azure_acr_name, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.client_key,
-        needs.configuration.outputs.image_project_key) || 
-        format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', 
-        needs.configuration.outputs.aws_account_id, 
-        needs.configuration.outputs.aws_region, 
-        needs.configuration.outputs.namespace, 
-        needs.configuration.outputs.image_project_key,
-        needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
-      platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 
-        'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 
-        'linux/amd64' || 'linux/amd64,linux/arm64' }}
+      platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
       wif_audience: ${{ inputs.wif_audience }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-        }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -753,12 +674,8 @@ jobs:
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-      inputs.cloud_provider == null) && (inputs.deploy_services == true || 
-      inputs.deploy_services == 'true' || inputs.deploy_services == null) && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' 
-      || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.9
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -774,8 +691,7 @@ jobs:
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
-      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region
-        }}.amazonaws.com"
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       s3_bucket: ${{ vars.BLAZE_FILES_S3_BUCKET }}
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
@@ -793,8 +709,7 @@ jobs:
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
-        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
@@ -804,13 +719,8 @@ jobs:
       id-token: write
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-      inputs.cloud_provider == null) && (needs.configuration.result == 
-      'success') && (needs.pre-flight-check.result == 'success') && 
-      (needs.build-frontend.result == 'success' || needs.build-frontend.result 
-      == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || 
-      inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.9
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -825,8 +735,7 @@ jobs:
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
-      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region
-        }}.amazonaws.com"
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       dfp_network_id: ${{ needs.configuration.outputs.dfp_network_id }}
       gtm_id: ${{ needs.configuration.outputs.gtm_id }}
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
@@ -844,8 +753,7 @@ jobs:
       BLAZE_ELASTICSEARCH_USERNAME: ${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
-        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
@@ -857,13 +765,8 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
 
     # Run for Feature Branches ONLY
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-      inputs.cloud_provider == null) && inputs.environment == 'dev' && 
-      inputs.branch_name != '' && inputs.branch_name != null && 
-      needs.configuration.outputs.should_deploy_app == 'true' && 
-      (inputs.target_services == 'Blaze all' || inputs.target_services == 
-      'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.7.9
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
@@ -878,8 +781,7 @@ jobs:
       cloud_platform: ${{ needs.configuration.outputs.platform }}
       domain_root: ${{ needs.configuration.outputs.domain_root }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
-      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region
-        }}.amazonaws.com"
+      registry: "${{ needs.configuration.outputs.aws_account_id }}.dkr.ecr.${{ needs.configuration.outputs.aws_region }}.amazonaws.com"
       elasticsearch_endpoint: ${{ vars.BLAZE_ELASTICSEARCH_ENDPOINT }}
       namespace: ${{ needs.configuration.outputs.namespace }}
     secrets:
@@ -892,8 +794,7 @@ jobs:
       BLAZE_ELASTICSEARCH_PASSWORD: ${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
       BLAZE_ELASTICSEARCH_ENDPOINT: ${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT }}
       BLAZE_FILES_S3_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ 
-        secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
       BLAZE_GRAPHQL_CACHE_SETTINGS: ${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
       BLAZE_CLIENT_HEADER: ${{ secrets.BLAZE_CLIENT_HEADER }}
 
@@ -904,12 +805,7 @@ jobs:
     name: Deploy Admin (AWS S3/CF)
     needs: [configuration, build-admin, pre-flight-check]
     # Run for Host Environments (Dev, Stage, Prod) on AWS
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || 
-      inputs.cloud_provider == null) && (inputs.branch_name == '' || 
-      inputs.branch_name == null) && (inputs.deploy_services == true || 
-      inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' 
-      || inputs.target_services == 'admin' || inputs.target_services == null) && 
-      (inputs.environment == 'dev' || inputs.environment == 'stage' || inputs.environment == 'prod' || inputs.environment == 'multi-site') }}
+    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && (inputs.environment == 'dev' || inputs.environment == 'stage' || inputs.environment == 'prod' || inputs.environment == 'multi-site') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -986,7 +882,7 @@ jobs:
           repository: thisisblaze/blaze-actions
           ref: ${{ github.action_ref || github.ref }}
           path: .blaze-actions
-      
+
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:

@@ -1,140 +1,140 @@
 name: "♻️ Reusable Azure Container App Deploy"
 
 on:
-    workflow_call:
-        inputs:
-            service_name:
-                required: true
-                type: string
-                description: "Service to deploy (e.g., api, frontend)"
-            environment:
-                required: true
-                type: string
-            stage_key:
-                required: true
-                type: string
-            branch_name:
-                required: false
-                type: string
-            image_tag:
-                required: true
-                type: string
-            project_key:
-                required: true
-                type: string
-            client_key:
-                required: true
-                type: string
-            domain_root:
-                required: true
-                type: string
-            azure_region:
-                required: true
-                type: string
-            namespace:
-                required: false
-                type: string
-                default: "blaze"
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: "Service to deploy (e.g., api, frontend)"
+      environment:
+        required: true
+        type: string
+      stage_key:
+        required: true
+        type: string
+      branch_name:
+        required: false
+        type: string
+      image_tag:
+        required: true
+        type: string
+      project_key:
+        required: true
+        type: string
+      client_key:
+        required: true
+        type: string
+      domain_root:
+        required: true
+        type: string
+      azure_region:
+        required: true
+        type: string
+      namespace:
+        required: false
+        type: string
+        default: "blaze"
             # Azure Container Registry input
-            azure_registry_server:
-                required: true
-                type: string
-                description: "ACR Login Server (e.g., blaze.azurecr.io)"
+      azure_registry_server:
+        required: true
+        type: string
+        description: "ACR Login Server (e.g., blaze.azurecr.io)"
             # Container App resources
-            cpu:
-                required: false
-                type: string
-                default: "1.0"
-            memory:
-                required: false
-                type: string
-                default: "2.0Gi"
-            min_replicas:
-                required: false
-                type: number
-                default: 1
-            max_replicas:
-                required: false
-                type: number
-                default: 10
-            target_port:
-                required: false
-                type: number
-                default: 3000
-            elasticsearch_endpoint:
-                required: false
-                type: string
+      cpu:
+        required: false
+        type: string
+        default: "1.0"
+      memory:
+        required: false
+        type: string
+        default: "2.0Gi"
+      min_replicas:
+        required: false
+        type: number
+        default: 1
+      max_replicas:
+        required: false
+        type: number
+        default: 10
+      target_port:
+        required: false
+        type: number
+        default: 3000
+      elasticsearch_endpoint:
+        required: false
+        type: string
 
 
-        secrets:
-          BLAZE_ELASTICSEARCH_USERNAME:
-            required: false
-          BLAZE_ELASTICSEARCH_PASSWORD:
-            required: false
-          BLAZE_ELASTICSEARCH_ENDPOINT:
-            required: false
-          AWS_ROLE_ARN:
-            required: false
-          GCP_WORKLOAD_IDENTITY_PROVIDER:
-            required: false
-          GCP_SERVICE_ACCOUNT:
-            required: false
-          AZURE_CLIENT_ID:
-            required: false
-          AZURE_TENANT_ID:
-            required: false
-          AZURE_SUBSCRIPTION_ID:
-            required: false
-          CLOUDFLARE_API_TOKEN:
-            required: false
-          CLOUDFLARE_ACCOUNT_ID:
-            required: false
-          CLOUDFLARE_ZONE_ID:
-            required: false
-          GH_PAT:
-            required: false
-          NPM_TOKEN:
-            required: false
-          INFRACOST_API_KEY:
-            required: false
-          BLAZE_CONNECTION_STRING:
-            required: false
-          BLAZE_AUTH_JWT_PRIVATE_KEY:
-            required: false
-          BLAZE_AUTH_ADMIN_EMAIL:
-            required: false
-          BLAZE_AUTH_ADMIN_PASSWORD:
-            required: false
-          BLAZE_FILES_S3_ACCESS_KEY:
-            required: false
-          BLAZE_FILES_S3_SECRET_ACCESS_KEY:
-            required: false
-          BLAZE_GRAPHQL_CACHE_SETTINGS:
-            required: false
-          BLAZE_CLIENT_HEADER:
-            required: false
-          EC_API_KEY:
-            required: false
-          MONGODB_ATLAS_PUBLIC_KEY:
-            required: false
-          MONGODB_ATLAS_PRIVATE_KEY:
-            required: false
-          MONGODB_ATLAS_ORG_ID:
-            required: false
-          MONGODB_ATLAS_PROJECT_ID:
-            required: false
-          ACM_CERTIFICATE_ARN:
-            required: false
-          BLAZE_SENTRY_AUTH_TOKEN:
-            required: false
-          BLAZE_SENTRY_DSN:
-            required: false
-          SLACK_WEBHOOK_URL:
-            required: false
-          DEPLOY_KEY:
-            required: false
-permissions:
-  contents: read
+    secrets:
+      BLAZE_ELASTICSEARCH_USERNAME:
+        required: false
+      BLAZE_ELASTICSEARCH_PASSWORD:
+        required: false
+      BLAZE_ELASTICSEARCH_ENDPOINT:
+        required: false
+      AWS_ROLE_ARN:
+        required: false
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      CLOUDFLARE_ZONE_ID:
+        required: false
+      GH_PAT:
+        required: false
+      NPM_TOKEN:
+        required: false
+      INFRACOST_API_KEY:
+        required: false
+      BLAZE_CONNECTION_STRING:
+        required: false
+      BLAZE_AUTH_JWT_PRIVATE_KEY:
+        required: false
+      BLAZE_AUTH_ADMIN_EMAIL:
+        required: false
+      BLAZE_AUTH_ADMIN_PASSWORD:
+        required: false
+      BLAZE_FILES_S3_ACCESS_KEY:
+        required: false
+      BLAZE_FILES_S3_SECRET_ACCESS_KEY:
+        required: false
+      BLAZE_GRAPHQL_CACHE_SETTINGS:
+        required: false
+      BLAZE_CLIENT_HEADER:
+        required: false
+      EC_API_KEY:
+        required: false
+      MONGODB_ATLAS_PUBLIC_KEY:
+        required: false
+      MONGODB_ATLAS_PRIVATE_KEY:
+        required: false
+      MONGODB_ATLAS_ORG_ID:
+        required: false
+      MONGODB_ATLAS_PROJECT_ID:
+        required: false
+      ACM_CERTIFICATE_ARN:
+        required: false
+      BLAZE_SENTRY_AUTH_TOKEN:
+        required: false
+      BLAZE_SENTRY_DSN:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+      DEPLOY_KEY:
+        required: false
+      SONAR_TOKEN:
+        required: false
 concurrency:
   group: ${{ github.workflow }}-deploy-${{ inputs.service_name }}-${{ github.ref }}-${{ inputs.environment }}
   cancel-in-progress: false
@@ -143,88 +143,88 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-    deploy:
-        name: Deploy ${{ inputs.service_name }} (Container App)
-        runs-on: ubuntu-latest
-        timeout-minutes: 15
-        environment: ${{ inputs.environment }}
-        steps:
-            - name: Checkout Code
-              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+  deploy:
+    name: Deploy ${{ inputs.service_name }} (Container App)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0       # v7.0.0
 
-            - name: Set Azure Credentials (OIDC)
-              run: |
-                  echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
-                  echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
-                  echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+      - name: Set Azure Credentials (OIDC)
+        run: |
+          echo "DECODED_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> "$GITHUB_ENV"
+          echo "DECODED_AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
-            - name: Authenticate to Azure
-              uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
-              with:
-                  client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
-                  tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
-                  subscription-id: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}
+      - name: Authenticate to Azure
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5       # v2
+        with:
+          client-id: ${{ env.DECODED_AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.DECODED_AZURE_TENANT_ID }}
+          subscription-id: ${{ env.DECODED_AZURE_SUBSCRIPTION_ID }}
 
-            - name: Compute Resource Names
-              id: names
-              run: |
-                  # Naming Convention: {namespace}-{client}-{project}-{stage}-{service}
-                  # Matches Terraform output
-                  BASE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}"
+      - name: Compute Resource Names
+        id: names
+        run: |
+          # Naming Convention: {namespace}-{client}-{project}-{stage}-{service}
+          # Matches Terraform output
+          BASE_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project_key }}-${{ inputs.stage_key }}"
 
-                  RESOURCE_GROUP="${BASE_NAME}-rg"
-                  CONTAINER_APP="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
+          RESOURCE_GROUP="${BASE_NAME}-rg"
+          CONTAINER_APP="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.stage_key }}-${{ inputs.service_name }}"
 
-                  # Handle feature branches if needed (though typically we deploy to dev/stage/prod stacks)
-                  if [[ -n "${{ inputs.branch_name }}" ]]; then
-                    echo "⚠️ Feature branch deployment to Azure Container Apps is sharing the 'dev' stack resources."
-                  fi
+          # Handle feature branches if needed (though typically we deploy to dev/stage/prod stacks)
+          if [[ -n "${{ inputs.branch_name }}" ]]; then
+            echo "⚠️ Feature branch deployment to Azure Container Apps is sharing the 'dev' stack resources."
+          fi
 
-                  echo "resource_group=$RESOURCE_GROUP" >> "$GITHUB_OUTPUT"
-                  echo "container_app=$CONTAINER_APP" >> "$GITHUB_OUTPUT"
-                  echo "📝 Target: RG=$RESOURCE_GROUP | App=$CONTAINER_APP"
+          echo "resource_group=$RESOURCE_GROUP" >> "$GITHUB_OUTPUT"
+          echo "container_app=$CONTAINER_APP" >> "$GITHUB_OUTPUT"
+          echo "📝 Target: RG=$RESOURCE_GROUP | App=$CONTAINER_APP"
 
-            - name: Get ACR Token
-              id: acr
-              run: |
-                  ACR_NAME=$(echo "${{ inputs.azure_registry_server }}" | cut -d'.' -f1)
-                  TOKEN=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
-                  echo "::add-mask::$TOKEN"
-                  echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
+      - name: Get ACR Token
+        id: acr
+        run: |
+          ACR_NAME=$(echo "${{ inputs.azure_registry_server }}" | cut -d'.' -f1)
+          TOKEN=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
+          echo "::add-mask::$TOKEN"
+          echo "password=$TOKEN" >> "$GITHUB_OUTPUT"
 
-            - name: Deploy Revision
-              uses: azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1 # v1
-              with:
-                  imageToDeploy: ${{ inputs.azure_registry_server }}/${{ inputs.namespace }}-${{ inputs.project_key }}-web/${{ inputs.project_key }}/${{ inputs.service_name }}:${{ inputs.image_tag }}
-                  resourceGroup: ${{ steps.names.outputs.resource_group }}
-                  containerAppName: ${{ steps.names.outputs.container_app }}
-                  targetPort: ${{ inputs.target_port }}
-                  registryUrl: ${{ inputs.azure_registry_server }}
-                  registryUsername: 00000000-0000-0000-0000-000000000000
-                  registryPassword: ${{ steps.acr.outputs.password }}
+      - name: Deploy Revision
+        uses: azure/container-apps-deploy-action@29ee19866ec987ededd70b8412d9ee241a9102d1       # v1
+        with:
+          imageToDeploy: ${{ inputs.azure_registry_server }}/${{ inputs.namespace }}-${{ inputs.project_key }}-web/${{ inputs.project_key }}/${{ inputs.service_name }}:${{ inputs.image_tag }}
+          resourceGroup: ${{ steps.names.outputs.resource_group }}
+          containerAppName: ${{ steps.names.outputs.container_app }}
+          targetPort: ${{ inputs.target_port }}
+          registryUrl: ${{ inputs.azure_registry_server }}
+          registryUsername: 00000000-0000-0000-0000-000000000000
+          registryPassword: ${{ steps.acr.outputs.password }}
 
                   # Environment Variables
-                  environmentVariables: |
-                      NODE_ENV=production
-                      PORT=${{ inputs.target_port }}
-                      BLAZE_PROJECT_KEY=${{ inputs.project_key }}
-                      BLAZE_STAGE=${{ inputs.stage_key }}
-                      BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
-                      BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
-                      BLAZE_AUTH_ADMIN_EMAIL=${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
-                      BLAZE_AUTH_ADMIN_PASSWORD=${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
-                      BLAZE_CONNECTION_STRING=${{ secrets.BLAZE_CONNECTION_STRING }}
-                      BLAZE_ELASTICSEARCH_USERNAME=${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
-                      BLAZE_ELASTICSEARCH_PASSWORD=${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
-                      BLAZE_ELASTICSEARCH_ENDPOINT=${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || inputs.elasticsearch_endpoint }}
-                      BLAZE_FILES_S3_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
-                      BLAZE_FILES_S3_SECRET_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
-                      BLAZE_GRAPHQL_CACHE_SETTINGS=${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
-                      BLAZE_CLIENT_HEADER=${{ secrets.BLAZE_CLIENT_HEADER }}
+          environmentVariables: |
+            NODE_ENV=production
+            PORT=${{ inputs.target_port }}
+            BLAZE_PROJECT_KEY=${{ inputs.project_key }}
+            BLAZE_STAGE=${{ inputs.stage_key }}
+            BLAZE_DOMAIN_ROOT=${{ inputs.domain_root }}
+            BLAZE_AUTH_JWT_PRIVATE_KEY=${{ secrets.BLAZE_AUTH_JWT_PRIVATE_KEY }}
+            BLAZE_AUTH_ADMIN_EMAIL=${{ secrets.BLAZE_AUTH_ADMIN_EMAIL }}
+            BLAZE_AUTH_ADMIN_PASSWORD=${{ secrets.BLAZE_AUTH_ADMIN_PASSWORD }}
+            BLAZE_CONNECTION_STRING=${{ secrets.BLAZE_CONNECTION_STRING }}
+            BLAZE_ELASTICSEARCH_USERNAME=${{ secrets.BLAZE_ELASTICSEARCH_USERNAME }}
+            BLAZE_ELASTICSEARCH_PASSWORD=${{ secrets.BLAZE_ELASTICSEARCH_PASSWORD }}
+            BLAZE_ELASTICSEARCH_ENDPOINT=${{ secrets.BLAZE_ELASTICSEARCH_ENDPOINT || inputs.elasticsearch_endpoint }}
+            BLAZE_FILES_S3_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_ACCESS_KEY }}
+            BLAZE_FILES_S3_SECRET_ACCESS_KEY=${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
+            BLAZE_GRAPHQL_CACHE_SETTINGS=${{ secrets.BLAZE_GRAPHQL_CACHE_SETTINGS }}
+            BLAZE_CLIENT_HEADER=${{ secrets.BLAZE_CLIENT_HEADER }}
 
-            - name: "📋 Deploy Summary"
-              run: |
-                  echo "### ✅ Azure Container App Deploy: ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **App**: \`${{ steps.names.outputs.container_app }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Tag**: \`${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **RG**: \`${{ steps.names.outputs.resource_group }}\`" >> $GITHUB_STEP_SUMMARY
+      - name: "📋 Deploy Summary"
+        run: |
+          echo "### ✅ Azure Container App Deploy: ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: \`${{ steps.names.outputs.container_app }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: \`${{ inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **RG**: \`${{ steps.names.outputs.resource_group }}\`" >> $GITHUB_STEP_SUMMARY

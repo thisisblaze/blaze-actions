@@ -117,10 +117,14 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-    
+
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      SONAR_TOKEN:
+        required: false
 jobs:
   handoff:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
@@ -176,7 +180,7 @@ jobs:
       - name: Render Markdown and JSON State
         run: |
           mkdir -p docs/dns-handoff/state
-          
+
           # Render Markdown
           MD_FILE="docs/dns-handoff/${{ inputs.environment }}.md"
           echo "## 🌐 DNS Handoff Required for ${{ inputs.environment }}" > "$MD_FILE"
@@ -185,14 +189,14 @@ jobs:
           echo "| Name | Type | Value | Host |" >> "$MD_FILE"
           echo "|------|------|-------|------|" >> "$MD_FILE"
           echo '${{ needs.handoff.outputs.dns_handoff_records_json }}' | jq -r '.[] | "| \(.name) | \(.type) | \(.value) | \(.host) |"' >> "$MD_FILE"
-          
+
           # Render JSON State (status + 14-day timeout window the poller honours)
           JSON_FILE="docs/dns-handoff/state/${{ inputs.environment }}.json"
           RECORDS_JSON='${{ needs.handoff.outputs.dns_handoff_records_json }}'
           TIMEOUT_AT=$(date -u -d "+14 days" +%Y-%m-%dT%H:%M:%SZ)
           jq -n --argjson recs "$RECORDS_JSON" --arg t "$TIMEOUT_AT" \
             '{status: "pending", timeout_at: $t, attempts: 0, records: $recs}' > "$JSON_FILE"
-          
+
           # Also append to step summary
           cat "$MD_FILE" >> $GITHUB_STEP_SUMMARY
 
@@ -215,10 +219,10 @@ jobs:
         run: |
           ISSUE_TITLE="DNS handoff: ${{ inputs.environment }}"
           MD_FILE="docs/dns-handoff/${{ inputs.environment }}.md"
-          
+
           # Check if issue exists
           ISSUE_NUMBER=$(gh issue list --search "in:title \"$ISSUE_TITLE\"" --state open --json number -q '.[0].number')
-          
+
           if [ -z "$ISSUE_NUMBER" ] || [ "$ISSUE_NUMBER" == "null" ]; then
             gh issue create --title "$ISSUE_TITLE" --body-file "$MD_FILE"
           else

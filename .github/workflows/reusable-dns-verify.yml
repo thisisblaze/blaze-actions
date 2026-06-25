@@ -117,7 +117,11 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-    
+
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      SONAR_TOKEN:
+        required: false
 jobs:
   check-dns:
     name: "Check DNS Resolution"
@@ -161,7 +165,7 @@ jobs:
           # We should parse the JSON and check each record using dig.
           # For simplicity, if jq and dig are available:
           RECORDS=$(jq -c '.records[]' "$STATE_FILE")
-          
+
           ALL_RESOLVED=true
           for row in $RECORDS; do
             NAME=$(echo "$row" | jq -r '.name')
@@ -178,7 +182,7 @@ jobs:
               ALL_RESOLVED=false
             fi
           done
-          
+
           if [ "$ALL_RESOLVED" = true ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
@@ -188,8 +192,8 @@ jobs:
   verify:
     needs: check-dns
     if: ${{ needs.check-dns.outputs.ready == 'true' }}
-    
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.7.9
+
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
@@ -205,7 +209,7 @@ jobs:
         echo "TF_VAR_cloudflare_api_token=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -cd 'a-zA-Z0-9_-')" >> $GITHUB_ENV
         echo "TF_VAR_cloudflare_account_id=$(echo -n "$CLOUDFLARE_ACCOUNT_ID" | tr -cd 'a-zA-Z0-9_-')" >> $GITHUB_ENV
       wif_audience: ${{ inputs.wif_audience }}
-      apply: true
+      apply: "true"
       # Phase C: Provision actual DNS records for the domain, and await final ACM validation
       tf_vars: |
         ${{ inputs.tf_vars }}
@@ -262,10 +266,10 @@ jobs:
               git push
             fi
           fi
-          
+
           ISSUE_TITLE="DNS handoff: ${{ inputs.environment }}"
           ISSUE_NUMBER=$(gh issue list --search "in:title \"$ISSUE_TITLE\"" --state open --json number -q '.[0].number')
-          
+
           if [ -n "$ISSUE_NUMBER" ] && [ "$ISSUE_NUMBER" != "null" ]; then
             gh issue comment "$ISSUE_NUMBER" --body "✅ DNS verification successful! Certificate validated and CDN updated. Closing handoff."
             gh issue close "$ISSUE_NUMBER"

@@ -3,6 +3,17 @@ name: "♻️ ✅ Phase 4: Verify"
 on:
   workflow_call:
     inputs:
+      app_stack:
+        description: "App stack type: tenant-app or multi-site-app"
+        required: false
+        default: "tenant-app"
+        type: string
+      network_stack:
+        description: "Network stack type: auto or multi-site-network"
+        required: false
+        default: "auto"
+        type: string
+
       environment:
         description: "Target Environment"
         required: true
@@ -28,31 +39,31 @@ on:
       mode:
         description: "Execution Mode"
         required: false
-        default: "standard"
         type: string
+        default: "standard"
 
       include_third_party:
         description: "Include third-party stacks (MongoDB, Elastic, Cloudflare)"
         required: false
-        default: false
-        type: boolean
+        default: "false"
+        type: string
 
       preserve_host:
         description: "Preserve host network"
         required: false
-        default: false
-        type: boolean
-        
+        default: "false"
+        type: string
+
       cloud_provider:
         required: false
         type: string
         default: aws
-        
+
       wif_audience:
         description: "OIDC Audience"
         required: false
         type: string
-        
+
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
         required: false
@@ -120,10 +131,8 @@ on:
         required: false
       DEPLOY_KEY:
         required: false
-permissions:
-  contents: read
-  actions: write
-
+      SONAR_TOKEN:
+        required: false
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -206,7 +215,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'aws'
     needs: [config]
     name: "✅ Verify Environment (AWS)"
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-aws.yml@main
     with:
       environment: ${{ inputs.environment }}
       cluster_name: ${{ needs.config.outputs.cluster_name }}
@@ -225,7 +234,7 @@ jobs:
     name: "✅ Verify Environment (GCP)"
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'gcp'
     needs: [config]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-gcp.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-gcp.yml@main
     with:
       environment: ${{ inputs.environment }}
       gcp_project_id: ${{ needs.config.outputs.gcp_project_id }}
@@ -245,7 +254,7 @@ jobs:
     name: "✅ Verify Environment (Azure)"
     if: always() && inputs.mode != 'destroy-only' && inputs.cloud_provider == 'azure'
     needs: [config]
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-azure.yml@v2.7.9
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-verify-azure.yml@main
     with:
       environment: ${{ inputs.environment }}
       cloud_region: ${{ needs.config.outputs.cloud_region }}
@@ -294,15 +303,15 @@ jobs:
           # The specific cloud verification job will run (others skipped)
           # We just need one of them to succeed, based on cloud_provider
           CLOUD="${{ inputs.cloud_provider }}"
-          
+
           AWS_RES="${{ needs.verify-aws.result }}"
           GCP_RES="${{ needs.verify-gcp.result }}"
           AZR_RES="${{ needs.verify-azure.result }}"
-          
+
           echo "AWS Result: $AWS_RES"
           echo "GCP Result: $GCP_RES"
           echo "Azure Result: $AZR_RES"
-          
+
           if [ "$CLOUD" == "aws" ] && [ "$AWS_RES" == "success" ]; then
             echo "✅ Verification Succeeded"
             exit 0
@@ -313,7 +322,7 @@ jobs:
             echo "✅ Verification Succeeded"
             exit 0
           fi
-          
+
           echo "❌ Verification Failed"
           exit 1
 
