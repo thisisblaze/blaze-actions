@@ -203,7 +203,7 @@ jobs:
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.tf_dir, 'multi-site') && 'multi-site' || needs.configuration.outputs.stage_key }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.network_tf_dir, 'multi-site') && 'multi-site' || needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: "1.9.0"
       apply: false
