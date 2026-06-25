@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "defaultMode": "plan",
+    "deny": [
+      "Bash(git push*--force*)",
+      "Bash(git tag -d*)",
+      "Bash(gh release delete*)",
+      "Bash(terraform destroy*)",
+      "Bash(aws *delete*)"
+    ],
+    "allow": [
+      "Bash(actionlint*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(gh pr view*)",
+      "Bash(gh workflow view*)"
+    ]
+  },
+  "enabledPlugins": {
+    "security-guidance@claude-plugins-official": true
+  }
+}
