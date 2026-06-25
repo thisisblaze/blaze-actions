@@ -502,12 +502,15 @@ runs:
             
         else
             # Auto-upgrade standard generic network/app/cdn stacks to Multi-Site V2
-            if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "dedicated-network" ]]; then
-               STACK="multi-site-network"
-            elif [[ "$STACK" == "app" || "$STACK" == "single-app" ]]; then
-               STACK="multi-site-app"
-            elif [[ "$STACK" == "cdn" ]]; then
-               STACK="multi-site-cdn"
+            # Do NOT upgrade dev-mini (single-tenant hybrid environment)
+            if [[ "$STAGE_KEY" != "dev-mini" ]]; then
+               if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "dedicated-network" ]]; then
+                  STACK="multi-site-network"
+               elif [[ "$STACK" == "app" || "$STACK" == "single-app" ]]; then
+                  STACK="multi-site-app"
+               elif [[ "$STACK" == "cdn" ]]; then
+                  STACK="multi-site-cdn"
+               fi
             fi
 
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
