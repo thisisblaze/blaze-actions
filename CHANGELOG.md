@@ -3,6 +3,8 @@
 All notable changes to the `blaze-actions` project will be documented in this file.
 
 ## [Unreleased]
+
+## v2.11.16 (2026-06-26)
 ### Added
 - feat(ci): `third-party/{mongodb,elastic}/pre_apply.sh` now emit a single greppable outcome line `PRE_APPLY_RESULT[<component>]=<TOKEN>` (+ GitHub `::notice::` + run-summary row) at every exit path — tokens `IMPORTED / NO_ORPHAN / ALREADY_IN_STATE / IMPORT_FAILED / SKIPPED_*`. Makes the Plan 176 import smoke test assertable from logs.
 - feat(ci): `cleanup-orphaned-data.sh` emits a greppable `CLEANUP_RESULT=<CLEAN|ORPHANS_DETECTED|ORPHANS_TERMINATED|ORPHANS_PARTIAL>` line (+ `::notice::` + run-summary Result row) for monitoring/alerting on the nightly sweep.
@@ -778,7 +780,6 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 - fix: pass Cloudflare secrets to pre-apply script
 
-## [Unreleased]
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23

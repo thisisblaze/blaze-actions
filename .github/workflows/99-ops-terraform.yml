@@ -21,7 +21,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -262,7 +262,6 @@ jobs:
   debug-context:
     name: 🕵️ Debug Context
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 5
     steps:
       - name: Check Secrets Presence
@@ -298,7 +297,6 @@ jobs:
     # Run for all actions except kill-workflows
     if: inputs.action != 'kill-workflows'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
@@ -450,6 +448,22 @@ jobs:
               --region "$REGION" \
               --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
             aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING AWS STATE: s3://$BUCKET/$KEY"
+            # Mandatory backup before wipe (plan 163 O1) — abort if the state exists but backup fails.
+            if aws s3 ls "s3://$BUCKET/$KEY" --region "$REGION" >/dev/null 2>&1; then
+              BACKUP_KEY="${KEY}.backup.$(date +%s)"
+              echo "💾 Backing up state to s3://$BUCKET/$BACKUP_KEY"
+              if ! aws s3 cp "s3://$BUCKET/$KEY" "s3://$BUCKET/$BACKUP_KEY" --region "$REGION"; then
+                echo "❌ ERROR: state backup failed — refusing to wipe state."
+                exit 1
+              fi
+              echo "::notice title=State backup::s3://$BUCKET/$BACKUP_KEY"
+            fi
+            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION" || echo "ℹ️ State file not found"
+            aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || echo "ℹ️ No lock file found"
+            aws dynamodb delete-item --table-name "$TABLE" --region "$REGION" --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" || true
+            echo "✅ State wiped."
           elif [[ "$ACTION" == "rm-state" ]]; then
             TARGET="${{ inputs.target_resource }}"
             if [[ -z "$TARGET" ]]; then
