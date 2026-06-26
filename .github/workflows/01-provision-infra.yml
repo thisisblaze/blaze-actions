@@ -696,6 +696,9 @@ jobs:
             echo "✅ Sample Dataset load triggered successfully."
           elif [[ "$RESPONSE_CODE" == "409" ]]; then
             echo "⚠️  Sample Dataset is already loaded or currently loading."
+          else
+            echo "❌ Failed to trigger Sample Dataset load. HTTP Status: $RESPONSE_CODE"
+          fi
 
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)

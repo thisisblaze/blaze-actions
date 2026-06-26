@@ -48,3 +48,20 @@ scratch/
 .env
 .secrets
 actionlint
+
+# --- audit/analysis scratch output (not for VCS) ---
+check.py
+check_inputs.py
+declared_secrets.txt
+declared_inputs.txt
+dns_secrets.txt
+dns_secret_names.txt
+tf_secrets.txt
+tf_secret_names.txt
+tf_inputs.txt
+used_secrets.txt
+used_inputs.txt
+inputs_secrets.txt
+sorted_dns.txt
+sorted_tf.txt
+jobs_first_half.txt

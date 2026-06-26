@@ -1,0 +1,12 @@
+patterns:
+  - rule_name: unpinned_action
+    regex: "uses:\\s+[^@\\n]+@(main|master|v\\d+)\\s*$"
+    paths: [".github/workflows/**"]
+    reminder: "Pin third-party actions to a full SHA, not a branch or floating major."
+  - rule_name: broad_pat_scope
+    substrings: ["permissions: write-all"]
+    reminder: "Use least-privilege permissions blocks, never write-all."
+  - rule_name: hardcoded_tenant
+    regex: "(thisisblaze|blazecms)\\b"
+    paths: ["**/*.yml", "**/*.yaml"]
+    reminder: "This is a shared repo — no hardcoded tenant names in reusable workflows."

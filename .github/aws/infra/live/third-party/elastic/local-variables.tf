@@ -41,3 +41,4 @@ variable "kibana_zone_count" {
   type        = number
   default     = 1
 }
+

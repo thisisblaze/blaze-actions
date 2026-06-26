@@ -136,3 +136,15 @@ variable "backup_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "stack_id" {
+  description = "Blaze stack UUID (TF_VAR_stack_id). Tagged as StackID for cost attribution."
+  type        = string
+  default     = ""
+}
+
+variable "blaze_run_id" {
+  description = "GitHub Actions run id (TF_VAR_blaze_run_id). Tagged as RunId for per-run attribution."
+  type        = string
+  default     = ""
+}
