@@ -3,6 +3,10 @@
 All notable changes to the `blaze-actions` project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- feat(ci): **Plan 177 Phase 1** — operationalized orphan reconciliation. `cleanup-orphaned-data.sh` hardened: Elastic now reconciles by **deployment ID** (names are not unique in Elastic Cloud — fixes detection of duplicate orphans), sweep is **stage-scoped** (state buckets are per-stage), and posts an optional Slack alert (`SLACK_WEBHOOK_URL`) when orphans are found. `99-ops-utility.yml` passes `STAGE` + `SLACK_WEBHOOK_URL` into the cleanup job.
+- feat(ci): **Plan 176** — orphan protection for third-party data stacks. Added `pre_apply.sh` to `third-party/mongodb` and `third-party/elastic` (AWS live stacks): on a non-destroy run they probe the Atlas/Elastic API for a name-matched cluster absent from state and `terraform import` it, preventing duplicate creation after a cancelled apply. Added `cleanup-orphaned-data` action to `99-ops-utility.yml` (+ `.github/scripts/cleanup-orphaned-data.sh`) which reconciles live Atlas clusters / EC deployments against S3 state and terminates in-scope orphans — scoped to the tenant `<namespace>-<client_key>-` prefix, dry-run by default, live deletes gated by a typed `DESTROY-<env>-<stack>` confirmation.
+
 ### Changed
 - feat: `calculate-config` now natively derives infrastructure routing (`DB_TIER`, `ELASTIC_TIER`, `DEDICATED_ALB`, etc.) from `PROJECT_TIER` and `POD` inputs, centralizing the environment capacity tier mapping (Plan 168).
 

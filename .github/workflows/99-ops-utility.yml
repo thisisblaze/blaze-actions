@@ -13,6 +13,7 @@ on:
         type: choice
         options:
           - kill-workflows
+          - cleanup-orphaned-data
         required: true
         default: kill-workflows
       dns_record_name:
@@ -278,6 +279,22 @@ jobs:
             fi
           fi
 
+          # Plan 176: cleanup-orphaned-data is non-destructive in dry-run (default).
+          # Only a LIVE run (dry_run=false) terminates clusters → require confirmation.
+          if [[ "$ACTION" == "cleanup-orphaned-data" && "${{ inputs.dry_run }}" == "false" ]]; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.stack }}"
+              if [[ "$CONF" != "$EXPECTED" ]]; then
+                echo "❌ ERROR: Live cleanup-orphaned-data must be confirmed with EXACTLY: $EXPECTED"
+                echo "   (you typed: '$CONF') — or set dry_run=true to preview safely."
+                exit 1
+              fi
+            elif [[ "$CONF" != "DESTROY" && "$CONF" != "EXECUTE" ]]; then
+              echo "❌ ERROR: Live cleanup-orphaned-data requires confirmation 'DESTROY' or 'EXECUTE'."
+              exit 1
+            fi
+          fi
+
   debug-context:
     name: 🕵️ Debug Context
     runs-on: ubuntu-latest
@@ -452,9 +469,58 @@ jobs:
           done
           echo "✅ Kill sweep complete"
 
+  # ── Plan 176: Terminate orphaned third-party data stacks ────────────────────
+  # Reconciles live MongoDB Atlas clusters + Elastic Cloud deployments against
+  # the S3 Terraform state. Clusters matching this tenant's <namespace>-<client>-
+  # prefix that are NOT in any third-party-*.tfstate are orphans (left by a
+  # cancelled provision) and are terminated. Defaults to dry-run (preview only).
+  cleanup-orphaned-data:
+    name: 🧹 Cleanup Orphaned Data Stacks
+    needs: [validate, configuration]
+    if: inputs.action == 'cleanup-orphaned-data' && needs.configuration.result == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'DEV' }}
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.configuration.outputs.aws_region }}
+
+      - name: Reconcile & Cleanup Orphans
+        env:
+          BUCKET: ${{ needs.configuration.outputs.bucket }}
+          PROJECT_KEY: ${{ needs.configuration.outputs.project_key }}
+          NAMESPACE: ${{ needs.configuration.outputs.namespace }}
+          CLIENT_KEY: ${{ needs.configuration.outputs.client_key }}
+          STAGE: ${{ needs.configuration.outputs.stage_key }}
+          AWS_REGION: ${{ needs.configuration.outputs.aws_region }}
+          MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
+          EC_API_KEY: ${{ secrets.EC_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          SCRIPT=".github/scripts/cleanup-orphaned-data.sh"
+          if [[ ! -f "$SCRIPT" ]]; then
+            echo "❌ $SCRIPT not found in repo."
+            exit 1
+          fi
+          chmod +x "$SCRIPT"
+          bash "$SCRIPT"
+
   summary:
     name: 📝 Ops Summary
-    needs: [configuration, kill-workflows]
+    needs: [configuration, kill-workflows, cleanup-orphaned-data]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -488,4 +554,8 @@ jobs:
 
           if [[ "${{ inputs.action }}" == "kill-workflows" ]]; then
              echo "| **Kill Workflows** | $(get_icon ${{ needs.kill-workflows.result }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ inputs.action }}" == "cleanup-orphaned-data" ]]; then
+             echo "| **Cleanup Orphaned Data** | $(get_icon ${{ needs.cleanup-orphaned-data.result }}) |" >> $GITHUB_STEP_SUMMARY
           fi
