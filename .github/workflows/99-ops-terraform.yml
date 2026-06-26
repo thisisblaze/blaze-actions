@@ -178,6 +178,8 @@ on:
         required: false
       BLAZE_GRAPHQL_CACHE_SETTINGS:
         required: false
+      EC_API_KEY:
+        required: false
       BLAZE_CLIENT_HEADER:
         required: false
       ACM_CERTIFICATE_ARN:
