@@ -21,11 +21,19 @@ provider "aws" {
   region = var.aws_region
 }
 
+locals {
+  # Only non-empty identity tags — keeps empty values out of provider tag APIs.
+  identity_tags = merge(
+    var.stack_id != "" ? { StackID = var.stack_id } : {},
+    var.blaze_run_id != "" ? { RunId = var.blaze_run_id } : {},
+  )
+}
+
 # ---------------------------------------------------------
 # MONGODB ATLAS CLUSTER MODULE
 # ---------------------------------------------------------
 module "mongodb_cluster" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.10.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.10.6"
 
   # Required variables
   namespace   = var.namespace
@@ -48,7 +56,7 @@ module "mongodb_cluster" {
   aws_ssm_prefix   = "/blaze/${var.client_key}/${var.platform}/${var.stage}/mongodb"
 
   # Tags
-  tags = {
+  tags = merge({
     Client    = var.client_key
     Namespace = var.namespace
     Project   = var.project_key
@@ -56,7 +64,7 @@ module "mongodb_cluster" {
     ManagedBy = var.tag_managed_by
     Support   = var.tag_support
     State     = var.tag_state
-  }
+  }, local.identity_tags)
 
   enable_prevent_destroy = var.stage == "prod"
 }
@@ -67,41 +75,6 @@ module "mongodb_cluster" {
 # ---------------------------------------------------------
 # OUTPUTS (maintaining compatibility with existing output names)
 # ---------------------------------------------------------
-output "mongodb_uri" {
-  description = "MongoDB connection URI for application user"
-  value       = module.mongodb_cluster.app_connection_uri
-  sensitive   = true
-}
-
-output "mongodb_admin_uri" {
-  description = "MongoDB connection URI for admin user"
-  value       = module.mongodb_cluster.admin_connection_uri
-  sensitive   = true
-}
-
-output "mongodb_username" {
-  description = "MongoDB application username"
-  value       = module.mongodb_cluster.app_username
-  sensitive   = true
-}
-
-output "mongodb_password" {
-  description = "MongoDB application password"
-  value       = module.mongodb_cluster.app_password
-  sensitive   = true
-}
-
-output "mongodb_admin_username" {
-  description = "MongoDB admin username"
-  value       = module.mongodb_cluster.admin_username
-  sensitive   = true
-}
-
-output "mongodb_admin_password" {
-  description = "MongoDB admin password"
-  value       = module.mongodb_cluster.admin_password
-  sensitive   = true
-}
 
 output "mongodb_host" {
   description = "MongoDB host (without mongodb+srv://)"

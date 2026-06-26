@@ -20,11 +20,19 @@ provider "aws" {
   region = var.aws_region
 }
 
+locals {
+  # Only non-empty identity tags — keeps empty values out of provider tag APIs.
+  identity_tags = merge(
+    var.stack_id != "" ? { StackID = var.stack_id } : {},
+    var.blaze_run_id != "" ? { RunId = var.blaze_run_id } : {},
+  )
+}
+
 # ---------------------------------------------------------
 # ELASTIC CLOUD DEPLOYMENT MODULE
 # ---------------------------------------------------------
 module "elastic_deployment" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.10.1"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.10.6"
 
   # Required variables
   namespace   = var.namespace
@@ -51,7 +59,7 @@ module "elastic_deployment" {
   aws_ssm_prefix   = "/blaze/${var.client_key}/${var.platform}/${var.stage}/elastic"
 
   # Tags
-  tags = {
+  tags = merge({
     Client    = var.client_key
     Namespace = var.namespace
     Project   = var.project_key
@@ -59,7 +67,7 @@ module "elastic_deployment" {
     ManagedBy = var.tag_managed_by
     Support   = var.tag_support
     State     = var.tag_state
-  }
+  }, local.identity_tags)
 }
 
 # TODO: Disaster Recovery Protection
