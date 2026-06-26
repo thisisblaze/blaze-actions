@@ -8,8 +8,8 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "dev-mini", "stage", "prod"]
-        default: "v2.1.74"
+        options: ["dev", "dev-mini", "stage", "prod"]
+        default: "dev"
         required: true
       cloud_provider:
         description: "Cloud Provider"
@@ -22,7 +22,7 @@ on:
     inputs:
       environment:
         type: string
-        default: "v2.1.74"
+        default: "dev"
         required: false
       cloud_provider:
         type: string
