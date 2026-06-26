@@ -190,14 +190,31 @@ rm -f "$TRACKED_NAMES" "$TRACKED_IDS"
 
 # ── 4. Summary ────────────────────────────────────────────────────────────────
 MODE=$([[ "$DRY_RUN" == "true" ]] && echo "DRY-RUN" || echo "LIVE")
+# Greppable outcome token (mirrors pre_apply.sh PRE_APPLY_RESULT convention):
+#   CLEAN              — no orphans in scope
+#   ORPHANS_DETECTED   — dry-run found orphans (nothing deleted)
+#   ORPHANS_TERMINATED — live run deleted at least one
+#   ORPHANS_PARTIAL    — live run found more than it could delete (some failed)
+if [[ $ORPHANS_FOUND -eq 0 ]]; then
+  CLEANUP_RESULT="CLEAN"
+elif [[ "$DRY_RUN" == "true" ]]; then
+  CLEANUP_RESULT="ORPHANS_DETECTED"
+elif [[ $ORPHANS_DELETED -ge $ORPHANS_FOUND ]]; then
+  CLEANUP_RESULT="ORPHANS_TERMINATED"
+else
+  CLEANUP_RESULT="ORPHANS_PARTIAL"
+fi
 echo "----------------------------------------------------------------"
 echo "📊 Orphans found: ${ORPHANS_FOUND} | Terminated: ${ORPHANS_DELETED} | Mode: ${MODE}"
+echo "CLEANUP_RESULT=${CLEANUP_RESULT} orphans=${ORPHANS_FOUND} terminated=${ORPHANS_DELETED} mode=${MODE} scope=${SCOPE_PREFIX}*${STAGE:+ stage=${STAGE}}"
+echo "::notice title=cleanup-orphaned-data::${CLEANUP_RESULT} — found ${ORPHANS_FOUND}, terminated ${ORPHANS_DELETED} (${MODE}, scope ${SCOPE_PREFIX}*${STAGE:+/-${STAGE}})"
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   {
     echo "## 🧹 Orphaned Data Stack Cleanup"
     echo "| Metric | Value |"
     echo "| :--- | :--- |"
-    echo "| **Scope** | \`${SCOPE_PREFIX}*\` |"
+    echo "| **Result** | \`${CLEANUP_RESULT}\` |"
+    echo "| **Scope** | \`${SCOPE_PREFIX}*\`${STAGE:+ (stage \`${STAGE}\`)} |"
     echo "| **Mode** | $([[ "$DRY_RUN" == "true" ]] && echo '🔵 Dry Run' || echo '🟢 Live') |"
     echo "| **Orphans found** | ${ORPHANS_FOUND} |"
     echo "| **Terminated** | ${ORPHANS_DELETED} |"

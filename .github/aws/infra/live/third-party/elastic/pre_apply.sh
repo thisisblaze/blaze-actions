@@ -15,11 +15,38 @@
 # Policy (Plan 176): import on exact NAME match regardless of deployment health.
 #
 # Idempotent + non-fatal: any failure is logged and swallowed.
+#
+# OBSERVABILITY: every exit path emits a single, greppable outcome line
+#   PRE_APPLY_RESULT[elastic]=<TOKEN>
+# plus a GitHub ::notice:: and a run-summary row, so the Plan 176 smoke test can
+# assert the outcome unambiguously. Tokens:
+#   SKIPPED_DESTROY | SKIPPED_NO_CONFIG | SKIPPED_NO_CREDS | ALREADY_IN_STATE
+#   SKIPPED_API_ERROR | NO_ORPHAN | IMPORTED | IMPORT_FAILED
 # ---------------------------------------------------------------------------
 set -uo pipefail
 
+COMPONENT="elastic"
+
+# emit_result <TOKEN> <human message> — single source of truth for the outcome.
+emit_result() {
+  local token="$1" msg="$2"
+  echo "────────────────────────────────────────────────────────────"
+  echo "PRE_APPLY_RESULT[${COMPONENT}]=${token}"
+  echo "🔖 [pre_apply ${COMPONENT}] ${msg}"
+  echo "::notice title=pre_apply ${COMPONENT}::${token} — ${msg}"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+      echo "### 🔌 Pre-Apply (third-party-${COMPONENT})"
+      echo "| Result | Detail |"
+      echo "| :--- | :--- |"
+      echo "| \`${token}\` | ${msg} |"
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+  echo "────────────────────────────────────────────────────────────"
+}
+
 if [[ "${TF_DESTROY:-false}" == "true" ]]; then
-  echo "🟦 [pre_apply elastic] Destroy run — skipping orphan import."
+  emit_result "SKIPPED_DESTROY" "Destroy run — orphan import not applicable."
   exit 0
 fi
 
@@ -34,19 +61,19 @@ EC_KEY="${EC_API_KEY:-}"
 DEPLOYMENT_NAME="${NAMESPACE}-${CLIENT_KEY}-${PLATFORM}-${STAGE}"
 TF_ADDR='module.elastic_deployment.ec_deployment.main'
 
-echo "🔎 [pre_apply elastic] Orphan check — deployment='${DEPLOYMENT_NAME}'"
+echo "🔎 [pre_apply ${COMPONENT}] Orphan check — deployment='${DEPLOYMENT_NAME}' addr='${TF_ADDR}'"
 
 if [[ -z "$CLIENT_KEY" || -z "$STAGE" ]]; then
-  echo "⚠️  [pre_apply elastic] Missing client_key/stage — cannot compute deployment name. Skipping."
+  emit_result "SKIPPED_NO_CONFIG" "Missing client_key/stage — cannot compute deployment name."
   exit 0
 fi
 if [[ -z "$EC_KEY" ]]; then
-  echo "⚠️  [pre_apply elastic] EC_API_KEY not present. Skipping import."
+  emit_result "SKIPPED_NO_CREDS" "EC_API_KEY not present — cannot probe Elastic Cloud."
   exit 0
 fi
 
 if terraform state list 2>/dev/null | grep -qF "$TF_ADDR"; then
-  echo "✅ [pre_apply elastic] Deployment already in Terraform state. No import needed."
+  emit_result "ALREADY_IN_STATE" "Deployment already tracked in Terraform state — no import needed."
   exit 0
 fi
 
@@ -70,21 +97,21 @@ if [[ "$HTTP" == "200" ]]; then
     'first(.deployments[]? | select(.name == $n) | .id) // (.deployments[0].id // empty)' \
     /tmp/ec_probe.json 2>/dev/null || echo "")
 else
-  echo "⚠️  [pre_apply elastic] Search API inconclusive (HTTP ${HTTP}). Cannot resolve id — skipping import."
+  emit_result "SKIPPED_API_ERROR" "Elastic _search inconclusive (HTTP ${HTTP}) — cannot resolve id."
   exit 0
 fi
 
 if [[ -z "$DEPLOYMENT_ID" || "$DEPLOYMENT_ID" == "null" ]]; then
-  echo "✅ [pre_apply elastic] No orphaned deployment in Elastic Cloud. Apply will create cleanly."
+  emit_result "NO_ORPHAN" "No orphaned deployment named '${DEPLOYMENT_NAME}' in Elastic Cloud — apply will create cleanly."
   exit 0
 fi
 
 # ── Import (id = Elastic Cloud deployment id) ────────────────────────────────
-echo "📥 [pre_apply elastic] Orphan detected — importing ${TF_ADDR} <- ${DEPLOYMENT_ID}"
+echo "📥 [pre_apply ${COMPONENT}] Orphan detected — importing ${TF_ADDR} <- ${DEPLOYMENT_ID}"
 if terraform import "$TF_ADDR" "$DEPLOYMENT_ID"; then
-  echo "✅ [pre_apply elastic] Imported orphaned deployment into state. Duplicate prevented."
+  emit_result "IMPORTED" "Adopted orphaned deployment '${DEPLOYMENT_NAME}' (id=${DEPLOYMENT_ID}) into state — duplicate prevented."
 else
-  echo "⚠️  [pre_apply elastic] Import failed (will not block apply). Inspect run logs."
+  emit_result "IMPORT_FAILED" "terraform import of '${DEPLOYMENT_NAME}' (id=${DEPLOYMENT_ID}) failed — apply not blocked; inspect logs."
 fi
 
 exit 0
