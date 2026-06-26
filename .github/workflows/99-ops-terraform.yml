@@ -262,7 +262,6 @@ jobs:
   debug-context:
     name: 🕵️ Debug Context
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 5
     steps:
       - name: Check Secrets Presence
@@ -298,7 +297,6 @@ jobs:
     # Run for all actions except kill-workflows
     if: inputs.action != 'kill-workflows'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
