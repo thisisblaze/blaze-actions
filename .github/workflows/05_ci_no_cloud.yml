@@ -57,8 +57,7 @@ jobs:
           echo "## 🧩 actionlint Results" >> "$GITHUB_STEP_SUMMARY"
           # -shellcheck '' disables shellcheck integration (style noise); actionlint still checks
           # all GitHub Actions-specific expression/type errors natively.
-          ISSUES=$(./actionlint -shellcheck '' \
-            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}{{"\n"}}{{end}}' \
+          ISSUES=$(./actionlint -shellcheck '' -oneline \
             .github/workflows/*.yml 2>&1)
           EXIT=$?
           if [ -z "$ISSUES" ] && [ $EXIT -eq 0 ]; then
