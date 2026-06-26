@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Run actionlint (all workflows)
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11
           echo "## 🧩 actionlint Results" >> "$GITHUB_STEP_SUMMARY"
           # -shellcheck '' disables shellcheck integration (style noise); actionlint still checks
           # all GitHub Actions-specific expression/type errors natively.
