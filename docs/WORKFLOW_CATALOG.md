@@ -210,6 +210,27 @@ cloud_provider, environment
 
 ### Operations & Utilities
 
+#### 95-cleanup-orphaned-data.yml
+
+**Purpose**: Sweep for orphaned third-party data clusters (Atlas/Elastic) created during cancelled provision runs.
+**Use Case**: Scheduled nightly safety net (cron) or manual invocation.
+
+**Inputs**:
+
+environment
+- `environment` (optional, default: dev)
+
+**What it does**:
+
+- Enumerates live deployments in Elastic Cloud and Atlas.
+- Compares against Terraform state in the environment's S3 bucket.
+- Terminates clusters that match the tenant prefix but are absent from state.
+- Emits a greppable `CLEANUP_RESULT=<TOKEN>` outcome and posts to Slack.
+
+**When to run**: Scheduled nightly or manual verify.
+
+---
+
 #### 99-ops-utility.yml
 
 **Purpose**: Multi-purpose operational tasks  
@@ -222,6 +243,7 @@ cloud_provider, environment
 - `check-health`: Service health check
 - `destroy-resources`: Safe destruction of infrastructure (defaulting to safe lambda cleanup)
 - `cleanup-orphaned-lambdas`: Post-destroy lambda cleanup
+- `cleanup-orphaned-data`: Reconcile and clean up orphaned third-party data clusters
 - `nuke-environment`: Full environment teardown (Stop Services -> Destroy Resources -> Cleanup DNS)
 - Manual interventions
 
@@ -706,7 +728,7 @@ dist_id
 
 ---
 #### 99-ops-utility.yml
-**Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
+**Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `cleanup-orphaned-data`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
 
 
 **Inputs**:
