@@ -16,12 +16,39 @@
 #
 # Idempotent + non-fatal: any failure is logged and swallowed so a transient
 # API hiccup can never block a legitimate apply.
+#
+# OBSERVABILITY: every exit path emits a single, greppable outcome line
+#   PRE_APPLY_RESULT[mongodb]=<TOKEN>
+# plus a GitHub ::notice:: and a run-summary row, so the Plan 176 smoke test can
+# assert the outcome unambiguously. Tokens:
+#   SKIPPED_DESTROY | SKIPPED_NO_CONFIG | SKIPPED_NO_PROJECT | SKIPPED_NO_CREDS
+#   ALREADY_IN_STATE | NO_ORPHAN | IMPORTED | IMPORT_FAILED
 # ---------------------------------------------------------------------------
 set -uo pipefail
 
+COMPONENT="mongodb"
+
+# emit_result <TOKEN> <human message> — single source of truth for the outcome.
+emit_result() {
+  local token="$1" msg="$2"
+  echo "────────────────────────────────────────────────────────────"
+  echo "PRE_APPLY_RESULT[${COMPONENT}]=${token}"
+  echo "🔖 [pre_apply ${COMPONENT}] ${msg}"
+  echo "::notice title=pre_apply ${COMPONENT}::${token} — ${msg}"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+      echo "### 🍃 Pre-Apply (third-party-${COMPONENT})"
+      echo "| Result | Detail |"
+      echo "| :--- | :--- |"
+      echo "| \`${token}\` | ${msg} |"
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+  echo "────────────────────────────────────────────────────────────"
+}
+
 # Destroy runs must never import — let teardown proceed untouched.
 if [[ "${TF_DESTROY:-false}" == "true" ]]; then
-  echo "🟦 [pre_apply mongodb] Destroy run — skipping orphan import."
+  emit_result "SKIPPED_DESTROY" "Destroy run — orphan import not applicable."
   exit 0
 fi
 
@@ -49,24 +76,24 @@ else
 fi
 shopt -u nocasematch
 
-echo "🔎 [pre_apply mongodb] Orphan check — cluster='${CLUSTER_NAME}' tier='${CLUSTER_TIER}' flex=${IS_FLEX}"
+echo "🔎 [pre_apply ${COMPONENT}] Orphan check — cluster='${CLUSTER_NAME}' tier='${CLUSTER_TIER}' flex=${IS_FLEX} addr='${TF_ADDR}'"
 
 if [[ -z "$CLIENT_KEY" || -z "$STAGE" ]]; then
-  echo "⚠️  [pre_apply mongodb] Missing client_key/stage — cannot compute cluster name. Skipping."
+  emit_result "SKIPPED_NO_CONFIG" "Missing client_key/stage — cannot compute cluster name."
   exit 0
 fi
 if [[ -z "$PROJECT_ID" ]]; then
-  echo "⚠️  [pre_apply mongodb] No Atlas project id (TF will create the project). Skipping import."
+  emit_result "SKIPPED_NO_PROJECT" "No Atlas project id — TF will create the project; nothing to import."
   exit 0
 fi
 if [[ -z "$PUB" || -z "$PRIV" ]]; then
-  echo "⚠️  [pre_apply mongodb] Atlas API keys not present. Skipping import."
+  emit_result "SKIPPED_NO_CREDS" "Atlas API keys not present — cannot probe Atlas."
   exit 0
 fi
 
 # Already tracked? Then there is nothing to recover.
 if terraform state list 2>/dev/null | grep -qF "$TF_ADDR"; then
-  echo "✅ [pre_apply mongodb] Cluster already in Terraform state. No import needed."
+  emit_result "ALREADY_IN_STATE" "Cluster already tracked in Terraform state — no import needed."
   exit 0
 fi
 
@@ -88,22 +115,22 @@ if [[ "$HTTP" == "200" ]]; then
 elif [[ "$HTTP" == "404" ]]; then
   EXISTS="false"
 else
-  echo "⚠️  [pre_apply mongodb] API probe inconclusive (HTTP ${HTTP}). Attempting import defensively."
+  echo "⚠️  [pre_apply ${COMPONENT}] API probe inconclusive (HTTP ${HTTP}). Attempting import defensively."
   EXISTS="true"  # fail-safe: prefer import attempt over risking a duplicate
 fi
 
 if [[ "$EXISTS" != "true" ]]; then
-  echo "✅ [pre_apply mongodb] No orphaned cluster in Atlas. Apply will create cleanly."
+  emit_result "NO_ORPHAN" "No orphaned cluster named '${CLUSTER_NAME}' in Atlas (HTTP ${HTTP}) — apply will create cleanly."
   exit 0
 fi
 
 # ── Import (id format: <project_id>-<cluster_name>) ──────────────────────────
 IMPORT_ID="${PROJECT_ID}-${CLUSTER_NAME}"
-echo "📥 [pre_apply mongodb] Orphan detected — importing ${TF_ADDR} <- ${IMPORT_ID}"
+echo "📥 [pre_apply ${COMPONENT}] Orphan detected (probe HTTP ${HTTP}) — importing ${TF_ADDR} <- ${IMPORT_ID}"
 if terraform import "$TF_ADDR" "$IMPORT_ID"; then
-  echo "✅ [pre_apply mongodb] Imported orphaned cluster into state. Duplicate prevented."
+  emit_result "IMPORTED" "Adopted orphaned cluster '${CLUSTER_NAME}' (id=${IMPORT_ID}) into state — duplicate prevented."
 else
-  echo "⚠️  [pre_apply mongodb] Import failed (will not block apply). Inspect run logs."
+  emit_result "IMPORT_FAILED" "terraform import of '${CLUSTER_NAME}' (id=${IMPORT_ID}) failed — apply not blocked; inspect logs."
 fi
 
 exit 0
