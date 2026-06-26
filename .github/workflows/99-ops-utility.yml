@@ -241,7 +241,7 @@ jobs:
           fi
 
       - name: Check Access
-        if: steps.load-access.outputs.allowed != '' && !(inputs.action == 'cleanup-orphaned-data' && inputs.dry_run == true)
+        if: steps.load-access.outputs.allowed != '' && !(inputs.action == 'cleanup-orphaned-data' && inputs.dry_run == 'true')
         uses: thisisblaze/blaze-actions/.github/actions/check-access@main
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
