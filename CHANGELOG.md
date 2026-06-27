@@ -2,6 +2,19 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.19 (2026-06-27)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
 ## [Unreleased]
 
 ## v2.11.16 (2026-06-26)
