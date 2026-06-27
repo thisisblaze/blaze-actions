@@ -528,15 +528,29 @@ runs:
           --output text 2>/dev/null)
           
         if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
-           echo "❌ Service not found via Tagging API mapping."
-           echo "   Queried Tags:"
-           echo "   - blaze:service = $SERVICE_NAME"
-           echo "   - blaze:project = $PROJECT_KEY"
-           echo "   - blaze:stage   = $STAGE_KEY"
-           echo ""
-           echo "👉 HINT: Has the Infrastructure been provisioned?"
-           echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
-           exit 1
+           echo "⚠️ Tagging API mapping not found. Falling back to direct cluster query..."
+           # The cluster name is conventionally blaze-<project>-<stage>
+           # But some services like discovery or conductor might be on different clusters.
+           # Let's try the default multi-site pattern.
+           CLUSTER_NAME="blaze-${PROJECT_KEY}-${STAGE_KEY}"
+           
+           # Check both possible service names (with and without project prefix)
+           SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "${PROJECT_KEY}-${SERVICE_NAME}" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           fi
+
+           if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              echo "❌ Service not found via Tagging API mapping OR direct fallback."
+              echo "   Queried Tags:"
+              echo "   - blaze:service = $SERVICE_NAME"
+              echo "   - blaze:project = $PROJECT_KEY"
+              echo "   - blaze:stage   = $STAGE_KEY"
+              echo ""
+              echo "👉 HINT: Has the Infrastructure been provisioned?"
+              echo "   If this is the first deployment, ensure you check 'Deploy Infra' (or 'Run Terraform') to create the ECS Service first."
+              exit 1
+           fi
         fi
         
         # Extract just the service name from the ARN for downstream CLI commands

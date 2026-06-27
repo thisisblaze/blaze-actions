@@ -1,0 +1,17 @@
+name: Debug ECS
+on: workflow_dispatch
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::930976658068:role/blaze-github-actions-role
+          aws-region: eu-west-1
+      - run: aws ecs list-clusters
+      - run: aws ecs list-services --cluster blaze-thisisblaze-dev
+      - run: aws resourcegroupstaggingapi get-resources --resource-type-filters ecs:service --tag-filters "Key=blaze:service,Values=api"
