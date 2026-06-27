@@ -485,9 +485,9 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ inputs.apply && 'true' || 'false' }}
-      destroy: ${{ inputs.destroy && 'true' || 'false' }}
-      build_sharp: ${{ inputs.enable_image_resize == 'true' && inputs.stack == 'network' && 'true' || 'false' }}
+      apply: ${{ (inputs.apply == true || inputs.apply == 'true') && 'true' || 'false' }}
+      destroy: ${{ (inputs.destroy == true || inputs.destroy == 'true') && 'true' || 'false' }}
+      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
