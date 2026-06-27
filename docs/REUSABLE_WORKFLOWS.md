@@ -57,7 +57,7 @@ uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
 **Stable (recommended for production)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.2.2
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.16
 ```
 
 **Specific commit (maximum stability)**:
@@ -128,13 +128,13 @@ with:
 @dev
 
 # Stable (production)
-@v2.5.7
+@v2.11.16
 
 # Specific commit (maximum pinning)
 @<sha>
 ```
 
-> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.2.2`).
+> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.11.16`).
 
 ### 4. Set Proper Permissions
 
@@ -201,7 +201,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.16
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -219,7 +219,7 @@ For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.16
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
@@ -442,7 +442,7 @@ permissions:
 
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.16
     with:
       environment: prod
       stack: app
@@ -451,7 +451,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.16
     with:
       environment: prod
       target_services: "Blaze all"
@@ -459,7 +459,7 @@ jobs:
 
   verify:
     needs: deploy
-    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.11.16
     with:
       environment: prod
     secrets: inherit
@@ -518,7 +518,7 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.2.2` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.11.16` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
