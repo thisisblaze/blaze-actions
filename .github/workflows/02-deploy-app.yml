@@ -222,7 +222,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@main
+    uses: ./.github/workflows/02-deploy-aws.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -275,7 +275,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider == 'gcp'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@main
+    uses: ./.github/workflows/02-deploy-gcp.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -323,7 +323,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider == 'azure'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-azure.yml@main
+    uses: ./.github/workflows/02-deploy-azure.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
@@ -371,7 +371,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && (inputs.branch_name == '' || inputs.branch_name == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE')
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@main
+    uses: ./.github/workflows/02-deploy-pages.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
