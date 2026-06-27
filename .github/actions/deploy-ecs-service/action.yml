@@ -382,6 +382,19 @@ runs:
         fi
         CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${_CONTAINER_EARLY}-task-role"
         echo "ℹ️ Checking task role: $CANDIDATE_TASK_ROLE"
+        # 🚑 Fallback: some Terraform module versions provision the task role with a
+        # redundant project prefix (e.g. blaze-b9-thisisblaze-dev-thisisblaze-api-task-role).
+        # If the expected role doesn't exist, probe the alternate naming before failing so
+        # deployments work regardless of which infra-core version provisioned the role.
+        if ! aws iam get-role --role-name "$CANDIDATE_TASK_ROLE" >/dev/null 2>&1; then
+           ALT_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-${_CONTAINER_EARLY}-task-role"
+           if aws iam get-role --role-name "$ALT_TASK_ROLE" >/dev/null 2>&1; then
+              echo "⚠️ Expected role not found; using redundant-prefix role: $ALT_TASK_ROLE"
+              CANDIDATE_TASK_ROLE="$ALT_TASK_ROLE"
+           else
+              echo "⚠️ Neither '$CANDIDATE_TASK_ROLE' nor '$ALT_TASK_ROLE' resolved; proceeding with default."
+           fi
+        fi
         TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
 
         # ---------------------------------------------------------
