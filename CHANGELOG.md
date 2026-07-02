@@ -4,6 +4,21 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## v2.11.20 (2026-07-02)
 
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: release v2.11.20
+- chore: update CHANGELOG for v2.11.19
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
+## v2.11.20 (2026-07-02)
+
 ### Changed
 - refactor: eliminated nested `@main` floating ref resolution in workflow files, pinning to deterministic tags
 - chore: removed redundant `ALT_TASK_ROLE` fallback logic in `deploy-ecs-service`
