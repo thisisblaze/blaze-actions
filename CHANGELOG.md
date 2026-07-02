@@ -2,6 +2,12 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.20 (2026-07-02)
+
+### Changed
+- refactor: eliminated nested `@main` floating ref resolution in workflow files, pinning to deterministic tags
+- chore: removed redundant `ALT_TASK_ROLE` fallback logic in `deploy-ecs-service`
+
 ## v2.11.19 (2026-06-27)
 
 ### Added
