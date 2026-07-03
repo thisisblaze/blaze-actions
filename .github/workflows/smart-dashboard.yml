@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read # Required for checkout
   pull-requests: write # Required for commenting
   checks: write # Required for test reporting

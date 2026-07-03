@@ -207,7 +207,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: deploy-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}

@@ -164,7 +164,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -601,6 +600,9 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
+    permissions:
+      contents: read
+      id-token: write
     uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.20
     with:
       action: cleanup-dns

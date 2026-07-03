@@ -21,7 +21,6 @@ on:
         default: "infra/example-project/third-party/cloudflare.tfstate"
 
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

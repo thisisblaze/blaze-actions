@@ -105,7 +105,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
