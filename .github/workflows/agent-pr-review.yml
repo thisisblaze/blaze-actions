@@ -58,7 +58,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
   pull-requests: write
 
