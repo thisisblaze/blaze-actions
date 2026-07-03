@@ -7,6 +7,7 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ### Fixed
 
 - fix(health): restore FREEZE-annotated drift-check pins in `90-daily-health-check.yml` to `@v2.1.74`. The v2.11.20 `@main` un-floating sweep incorrectly bumped these two intentional chaos-test pins to the current release tag, which triggers a GitHub Actions self-referencing loop (`startup_failure`). `checkengines` engine4 skips `FREEZE` lines, so this was not caught automatically.
+- fix(ci): fixed broken `elastic` stack variables and bumped third-party data stack infra-core refs to canonical `v2.11.4` (Plan 178 Phase 2)
 
 ## v2.11.20 (2026-07-02)
 
