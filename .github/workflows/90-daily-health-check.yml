@@ -197,7 +197,7 @@ jobs:
       id-token: write
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74  # ⚠️ FREEZE: see block header above
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.20  # ⚠️ FREEZE: see block header above
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
       aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -242,7 +242,7 @@ jobs:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74  # ⚠️ FREEZE: see above
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.20  # ⚠️ FREEZE: see above
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
       aws_region: ${{ needs.configuration.outputs.aws_region }}
