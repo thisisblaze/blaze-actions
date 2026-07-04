@@ -45,10 +45,6 @@ on:
         description: "Variables string to write to _github_vars.env"
         required: false
         type: string
-      wif_audience:
-        description: "WIF Audience (Optional)"
-        required: false
-        type: string
 
     secrets:
       BLAZE_ELASTICSEARCH_USERNAME:
@@ -139,7 +135,6 @@ jobs:
         echo "TF_VAR_cloudflare_zone_id=$(echo -n "$CLOUDFLARE_ZONE_ID" | tr -cd 'a-zA-Z0-9_-')" >> $GITHUB_ENV
         echo "TF_VAR_cloudflare_api_token=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -cd 'a-zA-Z0-9_-')" >> $GITHUB_ENV
         echo "TF_VAR_cloudflare_account_id=$(echo -n "$CLOUDFLARE_ACCOUNT_ID" | tr -cd 'a-zA-Z0-9_-')" >> $GITHUB_ENV
-      wif_audience: ${{ inputs.wif_audience }}
       apply: true
       # Phase A: Request cert, emit records, do NOT wait.
       tf_vars: |
