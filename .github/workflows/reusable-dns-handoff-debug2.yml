@@ -7,6 +7,9 @@ on:
         type: string
 jobs:
   debug:
+    permissions:
+      id-token: write
+      contents: read
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     with:
       tf_dir: ${{ inputs.tf_dir }}
