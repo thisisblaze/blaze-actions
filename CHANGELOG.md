@@ -2,6 +2,21 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.44 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.43
+- chore: update CHANGELOG for v2.11.43
+
+### Fixed
+
+- fix: STRICT dynamic ACM resolution requires BOTH apex and wildcard SANs
+
 ## v2.11.43 (2026-07-04)
 
 ### Added
