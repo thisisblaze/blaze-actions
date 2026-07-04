@@ -210,7 +210,6 @@ on:
         required: false
 permissions:
   id-token: write
-  id-token: write
   contents: read
   actions: write
 
