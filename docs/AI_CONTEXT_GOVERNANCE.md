@@ -1,4 +1,4 @@
-**Last Updated**: 2026-07-02
+**Last Updated**: 2026-07-04
 **Owner**: Infrastructure Team
 
 ---
@@ -28,7 +28,7 @@ In the Blaze ecosystem, "blaze" is just a default. Real-world deployments use dy
 The AI Agent is strictly forbidden from executing ANY autonomous command that deletes, removes, or destroys cloud infrastructure (e.g. AWS CLI deletions) or local repository files (e.g. rm commands).
 
 - ❌ **Bad Action**: Running a script or CLI statement with `SafeToAutoRun=true` that silently deletes AWS resources.
-- ✅ **Correct Action**: Output the proposed destruction/deletion command inside a markdown code block, halt execution entirely, and ask the human operator: *"Are you okay with me running this deletion command?"* Only proceed if explicitly approved.
+- ✅ **Correct Action**: Output the proposed destruction/deletion command inside a markdown code block, halt execution entirely, and require the human operator to **explicitly type the keyword `DESTROY` or `EXECUTE`** to authorize it. Only proceed after that typed confirmation. This is the single canonical destruction gate — it matches `.claude/rules/stack.md`, the `scripts/hooks/pretooluse-guard.mjs` PreToolUse hook, and the `99-ops-*` workflow confirmation prompts. A verbal "are you okay with this?" is **not** sufficient. *(Reconciled 2026-07-02, Plan 174 §B4.3 / Plan 180 Stage 2.)*
 
 ### 1.5. Public Repository Sanitization
 
@@ -268,3 +268,42 @@ Token Context is a finite, depletable resource. To prevent context window bloat 
 - **The Grep-First Rule**: For any reference document > 100 lines (e.g. `NETWORK_STACK_RESOURCES.md`), you MUST use `grep_search` before falling back to reading the entire file with `view_file`.
 - **Handoff Trigger Zone**: When approaching the remaining 5% Context Window Safety Buffer, you MUST proactively trigger `/slash-handoff` to securely freeze state rather than hitting the hard limit.
 - **Anti-Patterns**: Reading all three cloud topology graphs simultaneously, running recursive directory listings on the repo root, and loading the full Governance policy when only checking a single flag are strictly forbidden.
+
+---
+
+## 18. blaze-conductor MCP Governance (2026-05-27)
+
+**Status: MANDATORY**
+
+The Blaze platform includes a 4th repository - `blaze-conductor` - that provides AI orchestration via the Model Context Protocol (MCP). Agents working on CI/CD must respect these rules:
+
+### The Public/Private Boundary Rule
+
+> [!CAUTION]
+> `blaze-actions` is a **public** repository. The following must **never** appear in `blaze-actions`:
+> - `ANTHROPIC_API_KEY` or any LLM API key reference
+> - Checkout of `blaze-conductor`
+> - Any MCP server or orchestrator script
+
+All MCP code lives in `blaze-template-deploy` (private), running **before** calling `blaze-actions` reusable workflows.
+
+### The Three CI/CD Injection Points
+
+| Point | Workflow | Trigger | What it does |
+| :--- | :--- | :--- | :--- |
+| **A - PR Review** | `11-mcp-pr-review.yml` | PR touching `.github/{cloud}/infra/**/*.tf` | ADR compliance + drift analysis posted as PR comment |
+| **B - Pre-Apply** | `mcp-preflight` in `01a-provision-network.yml` | `apply=true` | Read-only state lock check before `terraform apply` |
+| **C - Post-Drift** | `mcp-healing-agent` in `90-daily-health-check.yml` | Drift check failure | Healing proposal via Claude - never auto-applies |
+
+### ADR-007 Hard Boundary
+
+- `blaze-conductor` has **zero** ability to trigger `destroy: true`
+- `destroy: false` is hardcoded statically in all `01a-01g` YAML callers
+- Healing proposals are text output only - they require human execution
+- PROD healing requires `ALLOW_PROD_HEALING=true` (not set by default)
+
+### Reference
+
+- [ADR-017](architecture/adr_017_conductor_mcp_integration.md) - full decision record
+- [Plan 152](plans/152_mcp_cicd_integration.md) - implementation record
+- [blaze-conductor](https://github.com/thisisblaze/blaze-conductor) - live repo

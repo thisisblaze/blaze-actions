@@ -2,6 +2,16 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.25 (2026-07-04)
+
+### Fixed
+- fix: removed strict `shellcheck` step from `01-provision-infra.yml` that was causing false-positive workflow failures during the Pre-Apply hook.
+
+## v2.11.24 (2026-07-04)
+
+### Fixed
+- fix: removed job-level `permissions:` blocks from the `auto-cleanup-dns` job in `01-provision-infra.yml` to prevent invisible `startup_failure` errors when invoking reusable workflows without matching permission specifications.
+
 ## v2.11.21 (2026-07-04)
 
 ### Added
