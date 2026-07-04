@@ -2,6 +2,21 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.21 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
 ## Unreleased
 
 ### Fixed
