@@ -195,7 +195,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: ./.github/workflows/reusable-terraform.yml
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
