@@ -279,6 +279,11 @@ jobs:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
 
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -recursive
+        working-directory: ${{ github.workspace }}
+
+
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0

@@ -493,6 +493,9 @@ jobs:
         if [[ -f "$SCRIPT" ]]; then
           echo "🔍 Syntax checking $SCRIPT..."
           bash -n "$SCRIPT" || exit 1
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck "$SCRIPT" || exit 1
+          fi
           export TF_DIR="$(pwd)"
           export STACK_NAME="${{ inputs.stack }}"
           export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
