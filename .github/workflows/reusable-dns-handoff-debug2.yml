@@ -1,0 +1,15 @@
+name: Reusable DNS Handoff Debug 2
+on:
+  workflow_call:
+    inputs:
+      tf_dir:
+        required: true
+        type: string
+jobs:
+  debug:
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    with:
+      tf_dir: ${{ inputs.tf_dir }}
+      aws_region: eu-west-1
+      bucket: blaze-thisisblaze-tfstate
+      state_key: prod/acm/terraform.tfstate
