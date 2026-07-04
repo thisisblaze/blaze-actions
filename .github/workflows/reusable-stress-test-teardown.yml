@@ -302,7 +302,7 @@ jobs:
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
-          state_key: ${{ inputs.network_stack == 'multi-site-network' && format('infra/{0}/multi-site/network.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) }}
+          state_key: ${{ inputs.network_stack == 'multi-site-network' && format('infra/{0}/multi-site/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) || format('infra/{0}/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) }}
           aws_region: ${{ needs.config.outputs.aws_region }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -978,7 +978,7 @@ jobs:
       action: "destroy"
       tf_dir: ${{ inputs.network_stack == 'multi-site-network' && format('{0}/multi-site-network', needs.config.outputs.infra_prefix) || format('{0}/{1}-network', needs.config.outputs.infra_prefix, inputs.environment) }}
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: ${{ inputs.network_stack == 'multi-site-network' && format('infra/{0}/multi-site/network.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) }}
+      state_key: ${{ inputs.network_stack == 'multi-site-network' && format('infra/{0}/multi-site/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) || format('infra/{0}/{1}/network.tfstate', needs.config.outputs.project_key, needs.config.outputs.stage_key) }}
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -1043,9 +1043,9 @@ jobs:
           # Non-multi-site uses infra/<project>/<stage>/<stack>.tfstate
           if [[ "$IS_MULTI_SITE" == "true" ]]; then
             STATE_KEYS=(
-              "infra/${PROJECT_KEY}/multi-site/network.tfstate"
-              "infra/${PROJECT_KEY}/multi-site/app.tfstate"
-              "infra/${PROJECT_KEY}/multi-site/db-pod-alpha.tfstate"
+              "infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/network.tfstate"
+              "infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/app.tfstate"
+              "infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/db-pod-alpha.tfstate"
             )
           else
             STATE_KEYS=(
