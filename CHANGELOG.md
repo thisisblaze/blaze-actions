@@ -2,6 +2,20 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.42 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.41
+
+### Fixed
+
+- fix: sort ACM certificates by CreatedAt to pick newest
+
 ## v2.11.41 (2026-07-04)
 
 ### Added
