@@ -1,0 +1,12 @@
+name: Reusable DNS Handoff Debug
+on:
+  workflow_call:
+    inputs:
+      tf_dir:
+        required: true
+        type: string
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Debug"
