@@ -866,7 +866,7 @@ jobs:
              
              if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
                 echo "Searching certificates for $DOMAIN_ROOT in us-east-1 (CloudFront)..."
-                ARN=$(aws acm list-certificates --region us-east-1 --certificate-statuses ISSUED --output json | jq -r --arg domain "$DOMAIN_ROOT" '.CertificateSummaryList | map(select(.DomainName == $domain and (.SubjectAlternativeNameSummaries | index("*." + $domain) != null))) | sort_by(.CreatedAt) | .[-1].CertificateArn // empty')
+                ARN=$(aws acm list-certificates --region us-east-1 --certificate-statuses ISSUED --output json | jq -r --arg domain "$DOMAIN_ROOT" '.CertificateSummaryList | map(select(.SubjectAlternativeNameSummaries != null and (.SubjectAlternativeNameSummaries | index("*." + $domain) != null) and (.SubjectAlternativeNameSummaries | index($domain) != null))) | sort_by(.CreatedAt) | .[-1].CertificateArn // empty')
                 
                 if [[ -n "$ARN" && "$ARN" != "None" ]]; then
                    echo "✅ Resolved ACM ARN: $ARN"
