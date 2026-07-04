@@ -216,7 +216,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: deploy-pages-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
@@ -346,7 +345,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.20
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}

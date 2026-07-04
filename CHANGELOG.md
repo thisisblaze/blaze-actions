@@ -2,6 +2,62 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.21 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## Unreleased
+
+### Fixed
+
+- fix(health): restore FREEZE-annotated drift-check pins in `90-daily-health-check.yml` to `@v2.1.74`. The v2.11.20 `@main` un-floating sweep incorrectly bumped these two intentional chaos-test pins to the current release tag, which triggers a GitHub Actions self-referencing loop (`startup_failure`). `checkengines` engine4 skips `FREEZE` lines, so this was not caught automatically.
+- fix(ci): fixed broken `elastic` stack variables and bumped third-party data stack infra-core refs to canonical `v2.11.4` (Plan 178 Phase 2)
+
+## v2.11.20 (2026-07-02)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: release v2.11.20
+- chore: update CHANGELOG for v2.11.19
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
+## v2.11.20 (2026-07-02)
+
+### Changed
+- refactor: eliminated nested `@main` floating ref resolution in workflow files, pinning to deterministic tags
+- chore: removed redundant `ALT_TASK_ROLE` fallback logic in `deploy-ecs-service`
+
+## v2.11.19 (2026-06-27)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
 ## [Unreleased]
 - fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
 - chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
