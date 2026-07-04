@@ -2,6 +2,21 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.43 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.42
+- chore: update CHANGELOG for v2.11.42
+
+### Fixed
+
+- fix: use jq for ACM certificate dynamic resolution
+
 ## v2.11.42 (2026-07-04)
 
 ### Added
