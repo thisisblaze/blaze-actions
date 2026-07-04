@@ -319,7 +319,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: ./.github/actions/check-access
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.40
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -381,7 +381,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: ./.github/actions/calculate-config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.40
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -439,7 +439,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: ./.github/actions/build-sharp-layer
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.40
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
