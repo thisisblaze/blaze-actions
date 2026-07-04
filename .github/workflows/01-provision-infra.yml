@@ -263,9 +263,12 @@ on:
         required: false
       SONAR_TOKEN:
         required: false
+
 permissions:
+  id-token: write
   contents: read
   actions: write
+
 
 concurrency:
   group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
