@@ -10,7 +10,7 @@ This skill ensures that all infrastructure changes are safe, consistent, and com
 ## 0. Context Loading (Mandatory)
 
 Before proceeding, you **MUST** read the governance context:
-`view_file .agents/context/GOVERNANCE.md`
+`view_file docs/AI_CONTEXT_GOVERNANCE.md`
 
 ## 1. Cross-Environment Consistency (The "Mirror Rule")
 

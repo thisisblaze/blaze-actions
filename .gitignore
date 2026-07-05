@@ -65,3 +65,6 @@ inputs_secrets.txt
 sorted_dns.txt
 sorted_tf.txt
 jobs_first_half.txt
+
+# Claude Code skills — generated locally by scripts/sync-skills.mjs from .agents/skills (Plan 191 B1; cross-platform, replaces tracked symlinks)
+.claude/skills/
