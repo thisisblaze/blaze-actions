@@ -2,6 +2,20 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.49 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
 ## v2.11.48 (2026-07-05)
 
 ### Added
