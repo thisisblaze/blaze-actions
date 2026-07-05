@@ -386,23 +386,16 @@ runs:
         # We compute CONTAINER_NAME here using the same stage-prefix-strip logic.
         TASK_ROLE_NAME="$ROLE_NAME"
         _ROLE_STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
-        _POSSIBLE_TARGET="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-${SERVICE_NAME}"
-        # Detect multi-site naming: if PROJECT_KEY != HOST_PROJ, then the service key is prefixed
-        if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
-           _CONTAINER_EARLY="${PROJECT_KEY}-${SERVICE_NAME}"
-        else
-           _CONTAINER_EARLY="${SERVICE_NAME}"
-        fi
-        CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${_CONTAINER_EARLY}-task-role"
+        CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}-task-role"
         echo "ℹ️ Checking task role: $CANDIDATE_TASK_ROLE"
         TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
 
         # ---------------------------------------------------------
-        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/mongo:latest"
-        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/elasticsearch:9.2.2"
-        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/kibana:9.2.2"
-        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/tunnel:latest"
-        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
+        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/mongo:latest"
+        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/elasticsearch:9.2.2"
+        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/kibana:9.2.2"
+        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/tunnel:latest"
+        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
         fi
 
         echo "📦 Image: $IMAGE_URI"
