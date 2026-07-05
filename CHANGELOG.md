@@ -2,6 +2,78 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.53 (2026-07-05)
+
+### Added
+
+- Merge pull request #182 from thisisblaze/feat/backlog-idtoken-scope
+- Merge pull request #181 from thisisblaze/feat/followup-161-pipefail
+- feat: implement wipe-state for aws
+- feat: configure dev-mini explicitly for CI parity (#72)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.52
+- chore: update CHANGELOG for v2.11.51
+- chore: update CHANGELOG for v2.11.50
+- chore: update CHANGELOG for v2.11.49
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+- chore: end-of-day governance sync — 2026-07-04
+- chore: use @main instead of @v2.11.20
+- chore: end-of-day governance sync — 2026-06-27
+- Merge pull request #169 from thisisblaze/dev
+- chore: bump third-party module pins to v2.11.2 (#165)
+- chore: bump third-party module pins to v2.11.2 (#164)
+- docs: add cleanup-orphaned-data to WORKFLOW_CATALOG (#163)
+- chore: release v2.11.16
+- chore: sync dev into main for v2.11.16
+- chore: sync dev into main for v2.11.15 (#155)
+- chore: sync dev into main (#153)
+- chore: minor comment update in provision-infra to ensure fresh validation (#118)
+- chore: revert workflows to v2.11.6 to undo ruamel formatting corruption
+- chore: end-of-day governance sync — 2026-06-23
+
+### Fixed
+
+- fix: remove invalid permissions block from uses job
+- fix: add missing secrets to dns handoff workflows
+- fix: remove shellcheck from pre-apply hook
+- fix: remove permissions from auto-cleanup-dns uses job
+- fix: restore global id-token permissions
+- fix: correct boolean coercion in reusable workflow inputs
+- fix: remove environment from debug and config
+- fix: remove duplicate EC_API_KEY
+- fix: add missing EC_API_KEY secret
+- fix: dev environment option in 99-ops-terraform
+- fix: pass EC_API_KEY to pre_apply script env on main (#152)
+- fix: replace secrets: inherit with explicit mapping to prevent cross-org startup failure (#140)
+- fix: resolve nested workflow startup failures in stress test suite (#139)
+- fix: resolve startup_failure by declaring missing input dns_record_name in 99-ops-utility (#136)
+- fix: actually point stress test to v8 (perfect shell) (#135)
+- fix: convert boolean inputs in 99-ops-utility to string + restore provision chain (#126)
+- fix: remove extra secrets from provision-minimal callee (not defined in provision-infra-minimal) (#117)
+- fix: remove extra cloud_provider from provision-minimal callee (#116)
+- fix: remove stack input from provision-minimal (provision-infra-minimal has no stack input) (#115)
+- fix: convert boolean literals and types to string in provision-minimal (#114)
+- fix: change literal boolean apply: true to string apply: 'true' in provision (#112)
+- fix: remove boolean literal comparisons (== true) from if conditions in provision-infra (#111)
+- fix: align workflow_dispatch and workflow_call input types in provision-infra (#109)
+- fix: explicit ternary for apply/destroy/vpc_peering to resolve WD vs WC type conflict (#108)
+- fix: convert boolean comparison expressions to string ternaries in provision-infra (#107)
+- fix: convert boolean expressions to string in stress-test-provision (#105)
+- fix: convert all boolean inputs to string in terraform chain to resolve startup_failure (#104)
+- fix: revert provision internal refs back to @main to use type:string fixes (#87)
+- fix: change expression-evaluated boolean inputs to string type to fix startup_failure (#86)
+- fix: revert internal refs in provision to @v2.11.6 (#84)
+- fix: remove duplicated type definition in mode inputs
+- fix: add missing type string to mode inputs in reusable workflows
+- fix: use @main for internal workflow references to resolve missing secrets
+- fix: add secrets directly to v2.11.6 workflows safely
+- fix: remove newline from github actions expressions broken by ruamel
+- fix: remove newline from uses directives broken by ruamel (#82)
+- fix: remove top-level permissions from reusable workflows
+
 ## v2.11.52 (2026-07-05)
 
 ### Added
