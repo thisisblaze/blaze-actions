@@ -133,6 +133,7 @@ module "image_resize" {
 # 1 distribution · all site domains as aliases · ALB as origin
 # ──────────────────────────────────────────────────────────────────────────────
 resource "aws_cloudfront_distribution" "multi_site" {
+  # trivy:ignore:AVD-AWS-0011 (WAF is not strictly required for low-traffic multi-site template and incurs significant cost)
   comment         = local.cf_comment
   enabled         = true
   is_ipv6_enabled = true
