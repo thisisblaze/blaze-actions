@@ -264,9 +264,6 @@ on:
       SONAR_TOKEN:
         required: false
 
-permissions:
-  contents: read
-  actions: write
 
 
 concurrency:
@@ -279,9 +276,6 @@ env:
 jobs:
   configuration:
     name: Configuration
-    permissions:
-      id-token: write
-      contents: read
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 15
@@ -399,9 +393,6 @@ jobs:
 
   build_sharp_layer:
     name: Build Sharp Lambda Layer
-    permissions:
-      id-token: write
-      contents: read
     needs: [configuration]
     if: >
       (inputs.stack == 'network' || inputs.stack == 'dedicated-network') &&
@@ -451,9 +442,6 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    permissions:
-      id-token: write
-      contents: read
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -722,9 +710,6 @@ jobs:
   # This job reads it from TF state and re-applies the network stack automatically.
   post_provision_azure_cdn:
     name: 🌐 Azure Front Door — Wire Origin (Auto)
-    permissions:
-      id-token: write
-      contents: read
     needs: [configuration, provision]
     if: >
       inputs.cloud_provider == 'azure' &&
