@@ -2,6 +2,14 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.11.52 (2026-07-05)
+
+### Fixed
+- fix(release): self-referential ref bump so the release is actually hermetic. v2.11.51 tag (commit 09ca2dc) predated the `@main`->pin sweep and the admin build fix, so the tenant pinned at v2.11.51 still floated 108 nested refs on `@main` (including `deploy-ecs-service@main`) and never received the admin fix. All internal `@v2.11.51` refs are now bumped to `@v2.11.52` so a tenant pinned at v2.11.52 gets fully pinned, coherent workflows. [Plan 188]
+- fix(workflows): install `packages/admin` dependencies (`npm install --prefix packages/admin`) to resolve `Cannot find module '@blaze-cms/webpack-build-tools'` in Build Admin (Shared); Lerna repo needs the nested install. Now delivered via the tag. [Plan 188]
+
+> NOTE: CHANGELOG entries for v2.11.26–v2.11.51 live on `dev` and were never merged to `main` (docs/CHANGELOG were updated on dev while code+tags advanced on main). Reconcile dev<->main separately.
+
 ## v2.11.25 (2026-07-04)
 
 ### Fixed
