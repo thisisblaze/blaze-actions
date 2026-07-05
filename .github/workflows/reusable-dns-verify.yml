@@ -167,8 +167,7 @@ jobs:
           RECORDS=$(jq -c '.records[]' "$STATE_FILE")
 
           ALL_RESOLVED=true
-          while read -r row; do
-            if [ -z "$row" ]; then continue; fi
+          for row in $RECORDS; do
             NAME=$(echo "$row" | jq -r '.name')
             TYPE=$(echo "$row" | jq -r '.type')
             EXPECTED_VALUE=$(echo "$row" | jq -r '.value')
@@ -182,7 +181,7 @@ jobs:
               echo "❌ $NAME resolves to '$RESOLVED_VALUE', expected '$EXPECTED_VALUE'"
               ALL_RESOLVED=false
             fi
-          done <<< "$RECORDS"
+          done
 
           if [ "$ALL_RESOLVED" = true ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -193,10 +192,8 @@ jobs:
   verify:
     needs: check-dns
     if: ${{ needs.check-dns.outputs.ready == 'true' }}
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/reusable-terraform.yml
+
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}

@@ -177,7 +177,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -210,7 +209,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.20
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.52
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -349,7 +348,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.20
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.52
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -416,7 +415,7 @@ jobs:
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
     if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.52
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -434,7 +433,7 @@ jobs:
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
     if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.52
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -606,7 +605,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -678,7 +677,7 @@ jobs:
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_tenant_app == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure
@@ -835,7 +834,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -882,7 +881,7 @@ jobs:
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-app-gate]
     if: inputs.action == 'nuke-environment'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
       cloud_provider: ${{ inputs.cloud_provider }}
@@ -943,7 +942,7 @@ jobs:
   #    name: 💾 Nuke 4a/5 - Mongo
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with elastic
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/mongodb"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -963,7 +962,7 @@ jobs:
   #    name: 💾 Nuke 4b/5 - Elastic
   #    needs: [configuration, nuke-destroy-tunnel] # Parallel with mongo
   #    if: inputs.action == 'nuke-environment'
-  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+  #    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
   #    with:
   #      tf_dir: ".github/aws/infra/live/third-party/elastic"
   #      aws_region: ${{ needs.configuration.outputs.aws_region }}
@@ -994,7 +993,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1056,7 +1055,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_cdn == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -1102,7 +1101,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1157,7 +1156,7 @@ jobs:
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_data == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1214,7 +1213,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1269,7 +1268,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -1324,7 +1323,7 @@ jobs:
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.configuration.outputs.has_network == 'true'
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.20
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.52
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure

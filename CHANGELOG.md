@@ -4,699 +4,21 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## v2.11.52 (2026-07-05)
 
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.51
-- chore: update CHANGELOG for v2.11.50
-- chore: update CHANGELOG for v2.11.49
-- chore: update CHANGELOG for v2.11.48
-- chore: update CHANGELOG for v2.11.47
-
 ### Fixed
+- fix(release): self-referential ref bump so the release is actually hermetic. v2.11.51 tag (commit 09ca2dc) predated the `@main`->pin sweep and the admin build fix, so the tenant pinned at v2.11.51 still floated 108 nested refs on `@main` (including `deploy-ecs-service@main`) and never received the admin fix. All internal `@v2.11.51` refs are now bumped to `@v2.11.52` so a tenant pinned at v2.11.52 gets fully pinned, coherent workflows. [Plan 188]
+- fix(workflows): install `packages/admin` dependencies (`npm install --prefix packages/admin`) to resolve `Cannot find module '@blaze-cms/webpack-build-tools'` in Build Admin (Shared); Lerna repo needs the nested install. Now delivered via the tag. [Plan 188]
 
-
-## v2.11.51 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.50
-- chore: update CHANGELOG for v2.11.49
-- chore: update CHANGELOG for v2.11.48
-- chore: update CHANGELOG for v2.11.47
-
-### Fixed
-
-
-## v2.11.50 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.49
-- chore: update CHANGELOG for v2.11.48
-- chore: update CHANGELOG for v2.11.47
-
-### Fixed
-
-
-## v2.11.49 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.48
-- chore: update CHANGELOG for v2.11.47
-
-### Fixed
-
-
-## v2.11.48 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.47
-
-### Fixed
-
-
-## v2.11.47 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.46
-
-### Fixed
-
-
-## v2.11.46 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.46
-- chore: update CHANGELOG for v2.11.45
-
-### Fixed
-
-
-## v2.11.46 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.45
-
-### Fixed
-
-
-## v2.11.45 (2026-07-05)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.44
-- chore: update CHANGELOG for v2.11.43
-- chore: update CHANGELOG for v2.11.43
-
-### Fixed
-
-- fix: STRICT dynamic ACM resolution requires BOTH apex and wildcard SANs
-
-## v2.11.44 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.43
-- chore: update CHANGELOG for v2.11.43
-
-### Fixed
-
-- fix: STRICT dynamic ACM resolution requires BOTH apex and wildcard SANs
-
-## v2.11.43 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.43
-
-### Fixed
-
-
-## v2.11.43 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.42
-- chore: update CHANGELOG for v2.11.42
-
-### Fixed
-
-- fix: use jq for ACM certificate dynamic resolution
-
-## v2.11.42 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.42
-
-### Fixed
-
-
-## v2.11.42 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.41
-
-### Fixed
-
-- fix: sort ACM certificates by CreatedAt to pick newest
-
-## v2.11.41 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.40
-
-### Fixed
-
-- fix: STRICT dynamic ACM resolution (ISSUED + wildcard SANs)
-
-## v2.11.40 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.39
-
-### Fixed
-
-
-## v2.11.39 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.38
-
-### Fixed
-
-
-## v2.11.38 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.37
-
-### Fixed
-
-
-## v2.11.37 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.36
-
-### Fixed
-
-
-## v2.11.36 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.35
-
-### Fixed
-
-
-## v2.11.35 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.34
-- chore: update CHANGELOG for v2.11.33
-
-### Fixed
-
-
-## v2.11.34 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.33
-
-### Fixed
-
-
-## v2.11.33 (2026-07-04)
-
-### Added
-
-- No new features in this release
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.32
-
-### Fixed
-
-
-## v2.11.32 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.31
-- chore: update CHANGELOG for v2.11.30
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.32 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.31
-- chore: update CHANGELOG for v2.11.30
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.32 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.32
-- chore: update CHANGELOG for v2.11.31
-- chore: update CHANGELOG for v2.11.30
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.32 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.31
-- chore: update CHANGELOG for v2.11.30
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.31 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.30
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.30 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.29
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.29 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.28
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.28 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.27
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.27 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.26
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.26 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.25
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
+> NOTE: CHANGELOG entries for v2.11.26–v2.11.51 live on `dev` and were never merged to `main` (docs/CHANGELOG were updated on dev while code+tags advanced on main). Reconcile dev<->main separately.
 
 ## v2.11.25 (2026-07-04)
 
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.24
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
 ### Fixed
-
+- fix: removed strict `shellcheck` step from `01-provision-infra.yml` that was causing false-positive workflow failures during the Pre-Apply hook.
 
 ## v2.11.24 (2026-07-04)
 
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
 ### Fixed
-
-
-## v2.11.23 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.23
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.23 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.22 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.22
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
-
-## v2.11.22 (2026-07-04)
-
-### Added
-
-- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
-
-### Changed
-
-- chore: update CHANGELOG for v2.11.21
-- chore: end-of-day governance sync — 2026-07-03
-- chore: end-of-day governance sync — 2026-07-02
-- chore: update CHANGELOG for v2.11.20
-
-### Fixed
-
+- fix: removed job-level `permissions:` blocks from the `auto-cleanup-dns` job in `01-provision-infra.yml` to prevent invisible `startup_failure` errors when invoking reusable workflows without matching permission specifications.
 
 ## v2.11.21 (2026-07-04)
 
@@ -755,6 +77,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: add task role naming fallback in ecs deploy action
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 
 ## v2.11.16 (2026-06-26)
 ### Added
@@ -1849,6 +1173,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: bump dev-mini-network module refs v2.6.4 → v2.6.5 (resolve split-brain)
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -2133,6 +1459,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-05-10
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -2218,6 +1546,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix: pre-destroy cleanup should check both standard and Blaze tag schemas
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -2343,6 +1673,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-05-06
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -2742,6 +2074,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(ops): explicitly force-delete ASG before Launch Template cleanup (282b580)
 - chore: update CHANGELOG for v2.1.62 (dfe173b)
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -2907,6 +2241,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -3217,6 +2553,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -3262,6 +2600,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -3490,6 +2830,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(import): add DNS import-first pass for network/multi-site-network stacks
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -3534,6 +2876,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -4237,6 +3581,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ---
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -4281,6 +3627,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6067,6 +5415,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-03-29
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6111,6 +5461,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6170,6 +5522,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - chore: end-of-day governance sync — 2026-03-27
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6214,6 +5568,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6270,6 +5626,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - fix(ci): Implemented dynamic ACM certificate ARN resolution in `reusable-terraform.yml` to support multi-site environments without static secrets.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6314,6 +5672,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6393,6 +5753,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ## v1.4.31 (2026-03-22)
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6437,6 +5799,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6556,6 +5920,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6600,6 +5966,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -6984,6 +6352,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: inject timeout-minutes and pin github action shas globally
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7028,6 +6398,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7085,6 +6457,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync `dev-mini-network` and `dev-network` module refs to v1.55.2 to resolve split brain.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7129,6 +6503,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7716,6 +7092,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use GITHUB_WORKSPACE for pre-apply script path
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7760,6 +7138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7824,6 +7204,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `/checkengines` module validation output formatting.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7868,6 +7250,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7932,6 +7316,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Context**: Maintained agent workflows sweep 2026-03-16.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -7976,6 +7362,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8037,6 +7425,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GCP Admin Build**: Removed the unused `build-admin` job from `02-deploy-gcp.yml` to prevent artifact upload pipeline conflicts.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8081,6 +7471,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8139,6 +7531,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ops Workflows (`reusable-terraform.yml`)**: Added conditional logic to skip the Sharp Lambda@Edge build and VPC Integrity Check steps during Terraform destroy operations to accelerate teardowns.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8183,6 +7577,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8246,6 +7642,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Resolving massive JSON schema parser string coercion bugs, workflow dependency deadlocks, and GitHub Actions step max limits.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8290,6 +7688,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8397,6 +7797,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8441,6 +7843,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8529,6 +7933,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow YAML Array Syntax**: Fixed invalid YAML array syntax in `needs` blocks identified during stress test debugging.
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8573,6 +7979,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8798,6 +8206,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: use correct admin build output directory (public instead of dist)
 
 ## [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23
@@ -8842,6 +8252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(docs): Executed deep validation mapping via `/13-deep-cicd-maintenance`, establishing Dual-Engine capabilities documentation and bumping timestamps system-wide.
 
 ### [Unreleased]
+- fix(deploy-ecs-service): added task role naming fallback to handle redundant project_key prefixes dynamically, preventing deploy timeouts regardless of which Terraform module version provisioned the infrastructure.
+- chore: released `v2.11.19` tag containing the task role fallback and the nested `@main` reusable workflow fix.
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23

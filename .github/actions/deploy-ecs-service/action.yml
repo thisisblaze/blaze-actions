@@ -380,23 +380,22 @@ runs:
         ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${ROLE_STAGE}-exec-role"
         echo "⏳ Expected IAM Role: $ROLE_NAME"
 
-        # Service-specific task role. The multi-site-app module creates it from the
-        # STRIPPED service name for host AND sub-projects, e.g.:
-        #   blaze-b9-support-prod-api-task-role   (NOT ...-support-api-... )
-        # Do NOT prepend PROJECT_KEY — that yields a doubled name that does not exist.
+        # Service-specific task role: for multi-site, Terraform creates:
+        #   blaze-b9-{project}-{stage}-{servicekey}-task-role
+        # where servicekey = CONTAINER_NAME (support-api, support-frontend, api, frontend, etc.)
+        # We compute CONTAINER_NAME here using the same stage-prefix-strip logic.
         TASK_ROLE_NAME="$ROLE_NAME"
+        _ROLE_STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
         CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}-task-role"
         echo "ℹ️ Checking task role: $CANDIDATE_TASK_ROLE"
         TASK_ROLE_NAME="$CANDIDATE_TASK_ROLE"
 
         # ---------------------------------------------------------
-        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/mongo:latest"
-        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/elasticsearch:9.2.2"
-        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/kibana:9.2.2"
-        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${IMAGE_PROJECT_KEY}/tunnel:latest"
-        # Registry namespace uses the shared HOST project; image path uses the sub-project.
-        # Repos live as blaze-<HOST_PROJ>-web/<PROJECT_KEY>/<service> (e.g. blaze-thisisblaze-web/support/api).
-        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${HOST_PROJ}-web/${PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
+        if [[ "$SERVICE_NAME" == "mongo" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/mongo:latest"
+        elif [[ "$SERVICE_NAME" == "elasticsearch" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/elasticsearch:9.2.2"
+        elif [[ "$SERVICE_NAME" == "kibana" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/kibana:9.2.2"
+        elif [[ "$SERVICE_NAME" == "tunnel" ]]; then IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/tunnel:latest"
+        else IMAGE_URI="$REGISTRY/${NAMESPACE}-${IMAGE_PROJECT_KEY}-web/${PROJECT_KEY}/$SERVICE_NAME:${IMAGE_TAG}"
         fi
 
         echo "📦 Image: $IMAGE_URI"
@@ -536,14 +535,19 @@ runs:
           
         if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
            echo "⚠️ Tagging API mapping not found. Falling back to direct cluster query..."
-           # The cluster name is conventionally blaze-<project>-<stage>
-           # But some services like discovery or conductor might be on different clusters.
-           # Let's try the default multi-site pattern.
-           CLUSTER_NAME="blaze-${PROJECT_KEY}-${STAGE_KEY}"
+           # The correct CLUSTER_NAME is already calculated at the top of this script
+           # Service name is canonically formatted as: {namespace}-{client}-{project}-{stage}-{service}
+           FULL_SERVICE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
            
-           # Check both possible service names (with and without project prefix)
-           SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "${PROJECT_KEY}-${SERVICE_NAME}" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           # Check the exact fully-qualified service name
+           SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$FULL_SERVICE_NAME" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           
            if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              # Check legacy format as fallback
+              SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "${PROJECT_KEY}-${SERVICE_NAME}" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           fi
+           if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              # Check bare service name as fallback
               SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
            fi
 

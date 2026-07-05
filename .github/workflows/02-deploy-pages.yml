@@ -345,7 +345,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.20
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.52
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -532,10 +532,10 @@ jobs:
       - name: Install Dependencies
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm install --legacy-peer-deps --ignore-scripts
-      - run: NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }} ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts
+          npm install --legacy-peer-deps --ignore-scripts --prefix packages/admin
+
       - name: Build Admin
         run: npm run build:admin
         working-directory: packages/admin
@@ -561,7 +561,7 @@ jobs:
 
     # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -644,7 +644,7 @@ jobs:
     name: Deploy Admin (GCP — GCS + Cloud CDN)
     needs: [configuration, build-admin, pre-flight-check]
     # GCP has no Cloudflare Pages path — this is GCP's native admin static deploy.
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -691,7 +691,7 @@ jobs:
     needs: [configuration, build-admin, pre-flight-check]
     # Opt-in native Azure static path (set static_admin_target=native); otherwise
     # Azure uses the Cloudflare Pages job above.
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
