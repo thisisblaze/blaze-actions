@@ -200,7 +200,7 @@ jobs:
           terraform: "false"
 
       - name: Deploy Service
-        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.11.20
+        uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.11.46
         with:
           service_name: ${{ inputs.service_name }}
           environment: ${{ inputs.environment }}
