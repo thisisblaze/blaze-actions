@@ -2,6 +2,10 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+
+- chore: end-of-day governance sync — 2026-07-05
+
 ## v2.11.53 (2026-07-05)
 
 ### Added
