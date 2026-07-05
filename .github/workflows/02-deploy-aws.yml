@@ -673,13 +673,8 @@ jobs:
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
-<<<<<<< ours
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
-=======
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.20
->>>>>>> theirs
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -723,13 +718,8 @@ jobs:
       id-token: write
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
-<<<<<<< ours
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
-=======
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.20
->>>>>>> theirs
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -774,13 +764,8 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
 
     # Run for Feature Branches ONLY
-<<<<<<< ours
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
-=======
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.20
->>>>>>> theirs
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.52
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"

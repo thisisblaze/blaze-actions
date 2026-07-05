@@ -328,7 +328,12 @@ runs:
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
         echo "shared_host_project=$SHARED_HOST_PROJECT" >> "$GITHUB_OUTPUT"
         
-        IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+        IMAGE_PROJECT_KEY_OVERRIDE=$(echo "$MERGED_CONFIG" | jq -r '.common.IMAGE_PROJECT_KEY_OVERRIDE // ""')
+        if [[ -n "$IMAGE_PROJECT_KEY_OVERRIDE" ]]; then
+           IMAGE_PROJECT_KEY="$IMAGE_PROJECT_KEY_OVERRIDE"
+        else
+           IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+        fi
         echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
         
         echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
