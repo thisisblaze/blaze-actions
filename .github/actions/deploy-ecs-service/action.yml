@@ -172,6 +172,13 @@ runs:
         LAUNCH_TYPE: ${{ inputs.launch_type }}
         CPU_ARCHITECTURE: ${{ inputs.cpu_architecture }}
       run: |
+        # Fail fast for the whole prep block (plan 161 S3).
+        # NOTE: GitHub runs `shell: bash` as `bash --noprofile --norc -e -o pipefail {0}`,
+        # so -e (errexit) and -o pipefail already applied here. What this line ADDS is
+        # -u (nounset) over lines that previously ran without it. The config-substitution
+        # loop in section 1 is bracketed with `set +u`/`set -u` because its values come from
+        # blaze-env.json and may embed ${VAR} refs meant to expand to empty.
+        set -euo pipefail
         # ---------------------------------------------------------
         # 0. SETUP & CALCULATIONS (Pre-Config)
         # ---------------------------------------------------------
@@ -236,6 +243,10 @@ runs:
         # 1. LOAD CONFIG AS CODE (GitOps)
         # ---------------------------------------------------------
         echo "📋 Loading project configuration..."
+        # Config values may embed ${VAR} refs (e.g. ${CLIENT_KEY}, ${PROJECT_KEY}) that are
+        # resolved by `eval echo` below; relax nounset here so intentionally-empty expansions
+        # stay tolerated rather than aborting under -u (plan 161 S3).
+        set +u
         GLOBAL_CONFIG="vars/blaze-env.json"
         PROJECT_CONFIG="vars/${PROJECT_KEY}/blaze-env.json"
 
@@ -275,6 +286,8 @@ runs:
            echo "⚠️  Configuration files not found, using defaults only"
            echo "   Expected: $GLOBAL_CONFIG and $PROJECT_CONFIG"
         fi
+
+        set -u  # restore nounset after config substitution (plan 161 S3)
 
         # ---------------------------------------------------------
         # 2. TUNNEL TOKEN LOGIC
@@ -529,14 +542,19 @@ runs:
           
         if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
            echo "⚠️ Tagging API mapping not found. Falling back to direct cluster query..."
-           # The cluster name is conventionally blaze-<project>-<stage>
-           # But some services like discovery or conductor might be on different clusters.
-           # Let's try the default multi-site pattern.
-           CLUSTER_NAME="blaze-${PROJECT_KEY}-${STAGE_KEY}"
+           # The correct CLUSTER_NAME is already calculated at the top of this script
+           # Service name is canonically formatted as: {namespace}-{client}-{project}-{stage}-{service}
+           FULL_SERVICE_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}"
            
-           # Check both possible service names (with and without project prefix)
-           SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "${PROJECT_KEY}-${SERVICE_NAME}" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           # Check the exact fully-qualified service name
+           SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$FULL_SERVICE_NAME" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           
            if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              # Check legacy format as fallback
+              SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "${PROJECT_KEY}-${SERVICE_NAME}" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
+           fi
+           if [[ "$SERVICE_ARN" == "None" ]] || [[ -z "$SERVICE_ARN" ]]; then
+              # Check bare service name as fallback
               SERVICE_ARN=$(aws ecs describe-services --cluster "$CLUSTER_NAME" --services "$SERVICE_NAME" --query 'services[0].serviceArn' --output text 2>/dev/null || echo "None")
            fi
 
@@ -573,7 +591,8 @@ runs:
         echo "🏷️  Container name resolved: $CONTAINER_NAME (service: $TARGET_SERVICE)"
 
         echo "📝 Rendering $TEMPLATE to task-def.json..."
-        set -euo pipefail
+        # set -euo pipefail now applied at the top of this prep block (plan 161 S3);
+        # kept here as a no-op reminder — the render below stays fully guarded.
         envsubst < "$TEMPLATE" > task-def.json
 
         # Validation — fail fast on malformed or under-populated task-defs (plan 161 S3).

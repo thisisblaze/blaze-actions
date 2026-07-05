@@ -317,20 +317,20 @@ runs:
             # Not environment-scoped — single stack covers the whole multi-site setup.
             # State lives under multi-site/ prefix, separate from per-env stacks.
             TF_DIR="${INFRA_PREFIX}/multi-site-network"
-            STATE_KEY="infra/${PROJECT_KEY}/multi-site/network.tfstate"
+            STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/network.tfstate"
             ;;
           "multi-site-app")
             # Multi-site ECS services, target groups, ALB listener rules (per-site for_each)
             # Reads multi-site-network remote state for cluster/ALB details.
             TF_DIR="${INFRA_PREFIX}/multi-site-app"
-            STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+            STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/app.tfstate"
             ;;
           "multi-site-cdn")
             # CloudFront + Lambda@Edge Sharp image resize (1 distribution, all sites)
             # Reads multi-site-network + multi-site-app remote state.
             # ACM cert created in us-east-1 via provider alias.
             TF_DIR="${INFRA_PREFIX}/multi-site-cdn"
-            STATE_KEY="infra/${PROJECT_KEY}/multi-site/cdn.tfstate"
+            STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/cdn.tfstate"
             ;;
           *)
             # Default: assume dev network (split stack)
