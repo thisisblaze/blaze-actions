@@ -342,7 +342,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.51
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -517,7 +517,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.51
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -550,7 +550,7 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.51
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -641,7 +641,7 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.51
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -672,7 +672,7 @@ jobs:
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.51
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -717,7 +717,7 @@ jobs:
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.51
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -763,7 +763,7 @@ jobs:
 
     # Run for Feature Branches ONLY
     if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.51
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
