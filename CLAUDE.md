@@ -17,3 +17,9 @@
 When executing AWS commands, you must either:
 1. Inspect the *active tenant repository's* `CLAUDE.md` file (e.g., `thebyte9/blaze-template-deploy/CLAUDE.md` or `thebyte9/shopware-km/CLAUDE.md`) to find the tenant's specific AWS profile mapping and use it.
 2. Or, if unavailable, STOP and prompt the user to provide the exact `AWS_PROFILE` before proceeding.
+
+## 7. Branch Policy & Releases
+- **Branch Flow**: All new work starts on `dev` and promotes `dev → stage → main`.
+- **Superset Rule**: `dev` must always be a superset of `main` (ahead, never behind).
+- **Releases**: Release tags are cut exclusively from `main`.
+- **Hotfixes**: Any hotfix applied directly to `main` must be back-merged to `dev` immediately.
