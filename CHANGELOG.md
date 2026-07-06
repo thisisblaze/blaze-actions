@@ -10,6 +10,22 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Changed
 
+- chore: governance sync and MCP orchestrator pin update
+- chore: update CHANGELOG for v2.11.55
+- chore: update CHANGELOG for v2.11.54
+
+### Fixed
+
+- fix: repin conductor to latest main SHA
+
+## v2.11.55 (2026-07-06)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: update CHANGELOG for v2.11.54
 
 ### Fixed
