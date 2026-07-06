@@ -1,4 +1,4 @@
-**Last Updated**: 2026-07-04
+**Last Updated**: 2026-07-06
 **Owner**: Infrastructure Team
 
 ---
@@ -180,7 +180,7 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **Network Security**               | **Zero-Trust Model** — RDS and Redis allow ingress ONLY from the ECS Task Security Group           |
 | **Background Workers**             | **ECS Sidecar containers** — `shopware-worker` and `shopware-scheduler` as essential=false sidecars in the same task definition |
 | **VPC CIDRs**                      | Managed via `vars/{environment}.env` (e.g., `vpc_cidr=10.98.0.0/16` for Dev, `10.3.0.0/16` for Prod) |
-| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.6.4**                                                          |
+| **Module Version**                 | `blaze-terraform-infra-core` @ **v2.11.10**                                                        |
 
 ## 12. CI/CD Gotchas & Known Failure Patterns (2026-04-01)
 
@@ -192,12 +192,12 @@ Terraform Destroy is **NOT** enough. You MUST use the `reusable-pre-destroy-clea
 | **GitHub env case-sensitivity** | `NPM_TOKEN` empty in Docker build jobs; `@blaze-cms` package install fails | Job-level `environment:` key passed uppercase (`STAGE`) — GitHub creates blank env with no secrets instead of resolving named `stage` env | Always use lowercase: `dev`, `stage`, `prod`, `dev-mini`, `shopware` in all `environment:` keys and `workflow_dispatch` options |
 | **Dependency graph race** | App stack provisions before DB pod is ready | `reusable-stress-test-provision.yml` did not declare explicit `needs:` on data pod jobs | Ensure `provision-app` job declares `needs: [provision-db-pod-alpha]` |
 
-## 13. Current Version Pins (2026-05-15)
+## 13. Current Version Pins (2026-07-06)
 
 | Component | Current Pin | Notes |
 | :-------- | :---------- | :---- |
-| `blaze-actions` | **v2.1.85** | Latest stable — nuke hardening: IGW CLI-delete (v2.1.84 P1), Atlas GROUP_NOT_FOUND guard (v2.1.84 P1), CF DNS catch-all state rm (v2.1.85 P2), VPC force-delete fallback (v2.1.85 P3). All 25 workflows at @v2.1.85. |
-| `blaze-terraform-infra-core` | **v2.6.4** | Plan 158: Blaze:StackID tag propagated to all resources via label module. All live stacks bumped 2026-05-14. |
+| `blaze-actions` | **v2.11.55** | Latest stable — hermetic release: all internal reusable-workflow/action refs are self-referenced to `@v2.11.55` (no floating `@main` refs). Deliberately frozen refs marked `# ⚠️ FREEZE` (e.g. `@v2.1.74`) are exempt and must not be bumped. |
+| `blaze-terraform-infra-core` | **v2.11.10** | Current canonical module pin. Do not bump without a dedicated plan. |
 | Terraform AWS Provider | **v6.0+** | Required for ECS Fargate ARM64 task definitions. |
 
 ## 14. Shopware Project Configuration (2026-05-12)

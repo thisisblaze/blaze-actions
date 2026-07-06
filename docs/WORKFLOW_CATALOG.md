@@ -1,4 +1,4 @@
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Owner**: Infrastructure Team
 
 ---
@@ -11,8 +11,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 31 main + 27 reusable = 58 total  
-**Version**: v2.5.7  
-**Last Updated: 2026-06-23
+**Version**: v2.11.55  
+**Last Updated: 2026-07-06
 
 ---
 
@@ -832,7 +832,10 @@ dist_id
 ### reusable-dns-verify.yml
 
 **Purpose**: Verify DNS Records  
-**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience
+**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience  
+**Required caller permissions**: `id-token: write`, `contents: write`, `issues: write`
+
+> **Note**: A caller job's `permissions` block is a **ceiling** for reusable workflows — the caller must grant the union of all permissions required by every job inside the callee, otherwise the callee fails (typically as `startup_failure`).
 
 ---
 
@@ -1340,6 +1343,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

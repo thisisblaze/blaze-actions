@@ -88,7 +88,7 @@
 
 ### CHAPTER 6: "Lessons from the Trenches" (3 min)
 
-- What's hard about shared CI/CD: the blast radius when you update a workflow and it breaks ALL tenant repos simultaneously. This is why version pinning (`@v2.2.2`) is critical — tenants opt into upgrades.
+- What's hard about shared CI/CD: the blast radius when you update a workflow and it breaks ALL tenant repos simultaneously. This is why version pinning (`@v2.11.55`) is critical — tenants opt into upgrades.
 
 - The known gotchas worth sharing:
   1. GitHub Actions environment case-sensitivity: always use `dev`, `stage`, `prod` in lowercase. `STAGE` silently creates an empty environment with no secrets.
