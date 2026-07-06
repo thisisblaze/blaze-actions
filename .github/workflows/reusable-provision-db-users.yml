@@ -222,25 +222,34 @@ jobs:
             ASSIGN_DB="$DB_NAME"
           else
             echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
-            # Find, Insert, Update, Remove
             PAYLOAD=$(jq -n \
               --arg role "$ROLE_NAME" \
               --arg db "$DB_NAME" \
               '{
-                "actions": [
-                  {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
+                "actions": [],
+                "inheritedRoles": [
+                  {"db": $db, "role": "readWrite"}
                 ],
                 "roleName": $role
               }')
             
-            curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-              -H "Content-Type: application/json" -X POST \
-              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles/roles" \
-              -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
-              
+            # Post to Atlas API
+            RES_ROLE=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" -X POST "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles" \
+              -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+              --digest \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            
+            echo "$RES_ROLE"
+            
+            if echo "$RES_ROLE" | grep -q 'HTTP_CODE:4[0-9][0-9]'; then
+              echo "POST role failed, trying PATCH..."
+              curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+                -H "Content-Type: application/json" -X PATCH \
+                "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles/$ROLE_NAME" \
+                -d "$PAYLOAD"
+            fi
+            
             # For Advanced clusters, custom roles live on the admin database
             ASSIGN_ROLE="$ROLE_NAME"
             ASSIGN_DB="admin"
