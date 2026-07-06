@@ -175,7 +175,9 @@ jobs:
             ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
           fi
 
-          echo "::add-mask::$ELASTIC_ADMIN_PASS"
+          if [[ -n "$ELASTIC_ADMIN_PASS" ]]; then
+            echo "::add-mask::$ELASTIC_ADMIN_PASS"
+          fi
           echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
