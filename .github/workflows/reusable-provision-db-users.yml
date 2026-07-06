@@ -247,7 +247,8 @@ jobs:
           fi
             
           echo ""
-          echo "2. Creating Database User: $APP_USER"
+          echo "1. Creating Database User: $APP_USER"
+          echo "AUTH_SOURCE=$ASSIGN_DB" >> $GITHUB_ENV
           USER_PAYLOAD=$(jq -n \
             --arg user "$APP_USER" \
             --arg pass "$MONGO_PASS" \
@@ -322,7 +323,11 @@ jobs:
 
           if [[ -n "$MONGO_HOST" ]]; then
             # Construct standard connection string pattern
-            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
+            if [[ -n "$AUTH_SOURCE" ]]; then
+              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE"
+            else
+              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
+            fi
             aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
             # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
             aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite
