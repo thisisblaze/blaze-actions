@@ -225,7 +225,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-        with: {node-version: "20"}
+        with: {node-version: "24"}
       - name: Setup .npmrc
         run: |
           echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
@@ -342,7 +342,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.54
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -517,7 +517,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -550,7 +550,7 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -592,7 +592,7 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
-          node-version: "20.x"
+          node-version: "24.x"
 
       - name: Setup .npmrc
         run: |
@@ -649,7 +649,7 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -680,7 +680,7 @@ jobs:
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -725,7 +725,7 @@ jobs:
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -771,7 +771,7 @@ jobs:
 
     # Run for Feature Branches ONLY
     if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
@@ -891,7 +891,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Run Smoke Test
         env:

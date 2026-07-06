@@ -212,7 +212,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.54
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.55
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -328,7 +328,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.54
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -387,7 +387,7 @@ jobs:
     name: Manage Env
     needs: [configuration]
     if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.54
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.11.55
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
