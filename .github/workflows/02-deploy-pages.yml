@@ -345,7 +345,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.53
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.54
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -535,6 +535,12 @@ jobs:
         run: |
           npm install --legacy-peer-deps --ignore-scripts
           npm install --legacy-peer-deps --ignore-scripts --prefix packages/admin
+
+      # Plan 193: --ignore-scripts skips node-sass postinstall (native binding
+      # download) → ENOENT node-sass/vendor at webpack time. Rebuild only
+      # node-sass; the rest of the tree keeps the ignore-scripts posture.
+      - name: Rebuild node-sass (Native Binding)
+        run: npm rebuild node-sass --prefix packages/admin
 
       - name: Build Admin
         run: npm run build:admin

@@ -130,7 +130,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.53
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.54
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: ${{ inputs.stack }}
