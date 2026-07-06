@@ -128,6 +128,9 @@ jobs:
           APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
           echo "APP_USER=$APP_USER" >> $GITHUB_ENV
 
+          DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
+          echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
+
           # PROJECT_UPPER: e.g. "THISISBLAZE" or "SUPPORT" — used for namespaced GitHub secret names
           PROJECT_UPPER=$(echo "${{ inputs.project }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
           echo "PROJECT_UPPER=$PROJECT_UPPER" >> $GITHUB_ENV
@@ -319,7 +322,7 @@ jobs:
 
           if [[ -n "$MONGO_HOST" ]]; then
             # Construct standard connection string pattern
-            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
+            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
             aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
             # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
             aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite
