@@ -187,7 +187,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.1
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.2
     with:
       environment: ${{ inputs.environment }}
       cloud_provider: "aws"

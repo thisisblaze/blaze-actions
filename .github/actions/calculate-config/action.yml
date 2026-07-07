@@ -175,20 +175,13 @@ runs:
       id: config
       shell: bash
       run: |
-        # 0. Load Config from Files
         GLOBAL_CONFIG="vars/blaze-env.json"
 
-        # Determine Project
         INPUT_PROJECT="${{ inputs.project }}"
         if [[ -z "$INPUT_PROJECT" ]]; then
            INPUT_PROJECT="thisisblaze"
         fi
 
-        # ── SOURCE RESOLUTION (Plan 199) ──
-        # GLOBAL_CONFIG (tenant identity) always comes from the console repo.
-        # kind: external → per-site config + project overlay come from the checked-out
-        # family repo at $EXTERNAL_SRC, and build_root points there so Docker builds use
-        # the family repo's packages/. Empty EXTERNAL_SRC = local (byte-identical old path).
         EXTERNAL_SRC="${{ inputs.external_src }}"
         CONFIG_PATH="${{ inputs.config_path }}"
         if [[ -n "$EXTERNAL_SRC" ]]; then
@@ -223,7 +216,6 @@ runs:
            
            echo ""
            echo "🌟 Available Projects (detected in vars/):"
-           # List subdirectories in vars/ that contain blaze-env.json
            for d in vars/*/; do
              if [[ -f "${d}blaze-env.json" ]]; then
                 echo "   - $(basename "$d")"
@@ -237,11 +229,8 @@ runs:
               echo "    Infrastructure overrides in $PROJECTS_DIR/$INPUT_PROJECT will not be loaded."
         fi
 
-        # Merge Configs: Project (Args 2) overrides Global (Arg 1)
-        # We output to a temporary JSON for querying
         MERGED_CONFIG=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG")
 
-        # Determine Env first to get stage-specific overrides
         if [[ "${{ inputs.event_name }}" == "repository_dispatch" ]]; then
           ENV_VAL="${{ inputs.environment }}"
           IS_DISPATCH="true"
@@ -252,10 +241,8 @@ runs:
         STAGE_KEY=$(echo "$ENV_VAL" | tr '[:upper:]' '[:lower:]')
         CONFIG_ENV=$(echo "$ENV_VAL" | tr '[:lower:]' '[:upper:]')
 
-        # Read keys from MERGED config
         CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY // "b9"')
         PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY // "blaze-actions-test"')
-        # SHARED_HOST_PROJECT retired (Plan 199 clean slate) — no longer read.
         NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE // "blaze"')
         PLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')
         AWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')
@@ -267,7 +254,6 @@ runs:
         CLOUDFLARE_ZONE_ID_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUDFLARE_ZONE_ID_KEY // "CLOUDFLARE_ZONE_ID"')
         STACK_ID=$(echo "$MERGED_CONFIG" | jq -r '.common.STACK_ID // ""')
 
-        # ── TIER CONSOLIDATION LOGIC (Plan 168) ──
         PROJECT_TIER=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_TIER // "T1"')
         POD=$(echo "$MERGED_CONFIG" | jq -r '.common.POD // "alpha"')
 
@@ -284,7 +270,6 @@ runs:
            DEDICATED_WAF="false"
            ECS_COMPUTE_TIER="premium"
         else
-           # Default T1
            DB_TIER="shared"
            ELASTIC_TIER="shared"
            DEDICATED_ALB="false"
@@ -292,15 +277,12 @@ runs:
            ECS_COMPUTE_TIER="standard"
         fi
         
-        # Resolve templated variables in DB_SSM_PATH
         DB_SSM_PATH="${DB_SSM_PATH//\${CLIENT_KEY\}/$CLIENT_KEY}"
         DB_SSM_PATH="${DB_SSM_PATH//\${PROJECT_KEY\}/$PROJECT_KEY}"
         DB_SSM_PATH="${DB_SSM_PATH//\${stage\}/$STAGE_KEY}"
 
-        # ── MULTI-CLOUD: Read CLOUD_PROVIDER and provider-specific config ──
         CONFIG_CLOUD_PROVIDER=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PROVIDER // "aws"')
         INPUT_CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
-        # Input overrides config when explicitly set
         if [[ -n "$INPUT_CLOUD_PROVIDER" && "$INPUT_CLOUD_PROVIDER" != "" ]]; then
           CLOUD_PROVIDER="$INPUT_CLOUD_PROVIDER"
         else
@@ -311,12 +293,10 @@ runs:
         GCP_STATE_BUCKET=$(echo "$MERGED_CONFIG" | jq -r '.common.GCP_STATE_BUCKET // ""')
         AZURE_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AZURE_REGION // "westeurope"')
 
-        # Compute provider-specific region, infra prefix, and state bucket
         case "$CLOUD_PROVIDER" in
           gcp)
             CLOUD_REGION="$GCP_REGION"
             INFRA_PREFIX=".github/gcp/infra/live"
-            # Override bucket for GCS backend if configured
             if [[ -n "$GCP_STATE_BUCKET" && "$GCP_STATE_BUCKET" != "" ]]; then
               BUCKET="$GCP_STATE_BUCKET"
             fi
@@ -324,8 +304,6 @@ runs:
           azure)
             CLOUD_REGION="$AZURE_REGION"
             INFRA_PREFIX=".github/azure/infra/live"
-            # Azure Backend Format: resource_group/storage_account/container
-            # Must match Terraform module naming: ${namespace}-${client_key}-tfstate-rg / ${namespace}${client_key}tfstate
             if [[ "$CLOUD_PROVIDER" == "azure" ]]; then
               BUCKET="${NAMESPACE}-${CLIENT_KEY}-tfstate-rg/${NAMESPACE}${CLIENT_KEY}tfstate/tfstate"
             else
@@ -342,20 +320,15 @@ runs:
 
         echo "☁️  Cloud Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION | Infra: $INFRA_PREFIX"
 
-        # Read Beta Flag (Env specific)
         IS_BETA=$(echo "$MERGED_CONFIG" | jq -r ".environments?[\"${STAGE_KEY}\"]?.BETA // \"false\"")
 
-        # Verify
         if [[ "$CLIENT_KEY" == "null" || -z "$CLIENT_KEY" ]]; then
            echo "❌ ERROR: CLIENT_KEY not found in Merged Config (Global: $GLOBAL_CONFIG, Project: $PROJECT_CONFIG)"
            exit 1
         fi
 
-        # Export to Outputs
         echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
-        # CLEAN SLATE (Plan 199): SHARED_HOST_PROJECT + IMAGE_PROJECT_KEY_OVERRIDE retired.
-        # Every project/subproject owns its ECR namespace → image_project_key = PROJECT_KEY.
         IMAGE_PROJECT_KEY="$PROJECT_KEY"
         echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
         
@@ -386,7 +359,6 @@ runs:
         WORKERS_JSON=$(echo "$MERGED_CONFIG" | jq -c '.common.WORKERS // {}')
         echo "workers_json=$WORKERS_JSON" >> $GITHUB_OUTPUT
 
-        # Resolve MongoDB Tier
         CLUSTER_TIER="${{ inputs.cluster_tier }}"
         if [[ "$CLUSTER_TIER" == "auto" ]]; then
            if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
@@ -397,18 +369,13 @@ runs:
         fi
         echo "cluster_tier=$CLUSTER_TIER" >> $GITHUB_OUTPUT
 
-        # Calculate Bucket & Lock using loaded vars
-        # New naming: {client}-{stage}-{namespace}-tfstate
         if [[ -z "$BUCKET" ]]; then
            BUCKET="${CLIENT_KEY}-${STAGE_KEY}-${NAMESPACE}-tfstate"
            LOCK_TABLE="${BUCKET}-lock"
         fi
 
-        # 2. Dynamic Directory & State Key Selection
-        # Strip descriptive suffixes from Stack selection (e.g., "tenant-app (High-Traffic Website)" -> "tenant-app")
         INPUT_STACK=$(echo "${{ inputs.terraform_stack }}" | awk '{print $1}')
 
-        # Map Descriptive Dropdown -> Internal Logic Code
         case "$INPUT_STACK" in
           "network")
             STACK="network"
@@ -471,14 +438,12 @@ runs:
             STACK="account-settings"
             ;;
           *)
-            # Default
             STACK="multi-site-app"
             ;;
         esac
 
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
-        # 3. SAFETY CHECK: Prevent No-Op Runs
         if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "pod-shared-01" || "$STACK" == "pod-dedicated-01" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
@@ -488,7 +453,6 @@ runs:
            fi
         fi
 
-        # --- BUILD & DEPLOY LOGIC ---
         SHOULD_BUILD="false"
         SHOULD_DEPLOY_APP="false"
 
@@ -503,14 +467,12 @@ runs:
            fi
         fi
 
-        # Unified Deploy Logic for App and Tunnel
         if [[ "$STACK" == "app" || "$STACK" == "third-party-cloudflare" ]]; then
             if [[ "${{ inputs.deploy_services }}" == "true" || "$IS_DISPATCH" == "true" ]]; then
                SHOULD_DEPLOY_APP="true"
             fi
         fi
 
-        # ── MULTI-CLOUD: Use $INFRA_PREFIX instead of hardcoded .github/aws/infra/live ──
         if [[ "$STACK" == "account-settings" ]]; then
             TF_DIR="${INFRA_PREFIX}/account-settings"
             STATE_KEY="infra/${PROJECT_KEY}/account-settings.tfstate"
@@ -532,8 +494,6 @@ runs:
             STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/third-party-elastic.tfstate"
             
         else
-            # Auto-upgrade standard generic network/app/cdn stacks to Multi-Site V2
-            # Do NOT upgrade dev-mini (single-tenant hybrid environment)
             if [[ "$STAGE_KEY" != "dev-mini" ]]; then
                if [[ "$STACK" == "network" || "$STACK" == "single-network" || "$STACK" == "dedicated-network" ]]; then
                   STACK="multi-site-network"
@@ -544,18 +504,14 @@ runs:
                fi
             fi
 
-            # DB Pods (Plan 196 naming: pod-shared-01 / pod-dedicated-01) — env-level,
-            # pod-scoped state key (independent of project token, e.g. project=shared).
             if [[ "$STACK" == "pod-shared-01" || "$STACK" == "pod-dedicated-01" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/pods/${STACK}/${STAGE_KEY}/db.tfstate"
 
-            # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
             elif [[ "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
                
-            # Tenant Multi-Site Applications (e.g., client-001)
             elif [[ "$STACK" == "tenant-app" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
                if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
@@ -564,7 +520,6 @@ runs:
                   STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}.tfstate"
                fi
 
-            # Dedicated DB Stack (per-project DB like thisisblaze-db)
             elif [[ "$STACK" == "dedicated-db" ]]; then
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${INPUT_PROJECT}-db"
@@ -573,21 +528,10 @@ runs:
                fi
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${INPUT_PROJECT}-db.tfstate"
 
-
-
-            # V2 Multi-Site App
             elif [[ "$STACK" == "multi-site-app" || "$STACK" == "multi-site-network" || "$STACK" == "multi-site-cdn" ]]; then
-               # ── Per-project state split (April 2026) ──────────────────────────────
-               # multi-site-app is now split per project: each project has its own
-               # isolated TF stack directory and S3 state key.
-               # Primary project (thisisblaze) uses the canonical "multi-site-app" dir.
-               # Sub-projects (support, thisisblaze2, …) use "multi-site-app-{project}" dir.
-               # Network + CDN stacks remain shared (no per-project split needed).
 
-               # Resolve the project-scoped dir suffix for app stack only
                if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
                   STACK_DIR="multi-site-app-${INPUT_PROJECT}"
-                  # State key uses the project_key to isolate state per project
                   STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/app.tfstate"
                else
                   STACK_DIR="$STACK"
@@ -598,14 +542,11 @@ runs:
                   fi
                fi
 
-               # dev and multi-site use the unprefixed stack name. dev-mini uses explicitly dev-mini prefixed stacks.
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "multi-site" ]]; then
                   TF_DIR="${INFRA_PREFIX}/${STACK_DIR}"
                elif [[ "$STAGE_KEY" == "dev-mini" ]]; then
-                  # Remove "multi-site-" if present to map to "dev-mini-network" and "dev-mini-app"
                   TF_DIR="${INFRA_PREFIX}/dev-mini-${STACK_DIR#multi-site-}"
                else
-                  # For stage/prod, prefix the env: stage-multi-site-app or stage-multi-site-app-support
                   if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
                      TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-multi-site-app-${INPUT_PROJECT}"
                   else
@@ -613,10 +554,8 @@ runs:
                   fi
                fi
 
-            # Legacy Single-Site Fallback
             else
                if [[ "$STAGE_KEY" == "dev" || "$STAGE_KEY" == "stage" ]]; then
-                  # We should no longer auto-upgrade here since it happens above, but keep for safety of other unknown stacks
                   TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-tenant-app"
                   if [[ -n "${{ inputs.branch_name }}" && ("$STAGE_KEY" == "dev" || "$STAGE_KEY" == "dev-mini") ]]; then
                      STATE_KEY="infra/${PROJECT_KEY}/features/${{ inputs.branch_name }}-tenant.tfstate"
@@ -634,13 +573,8 @@ runs:
             fi
         fi
 
-        # Sanitize STATE_KEY to remove double slashes (e.g. if project_key is empty)
         STATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')
 
-        # Calculate Cluster Name (SHARED_HOST_PROJECT retired — Plan 199 clean slate).
-        # NOTE: the shared multi-site cluster is resolved from SSM at deploy time
-        # (deploy-ecs-service); this composed name is retained for the ~20 non-deploy
-        # consumers of the cluster_name output (99-ops, stress-test, provisioning, azure).
         CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
         echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
         echo "build_root=$BUILD_ROOT" >> $GITHUB_OUTPUT
@@ -650,7 +584,6 @@ runs:
         echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
         echo "lock_table=$LOCK_TABLE" >> $GITHUB_OUTPUT
 
-        # Get Account ID (Optional)
         if command -v aws >/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
         else
@@ -663,10 +596,6 @@ runs:
         echo "should_deploy_app=$SHOULD_DEPLOY_APP" >> $GITHUB_OUTPUT
         echo "config_env=$CONFIG_ENV" >> $GITHUB_OUTPUT
 
-        # ── GCP Docker Repository Name ──
-        # The multi-site network module hardcodes project_key="multi-site" for resource naming,
-        # so the Artifact Registry repo is named differently from the CI/CD project_key (thisisblaze).
-        # All other envs follow: {namespace}-{client_key}-{project_key}-{stage_key}-docker
         if [[ "$STAGE_KEY" == "multi-site" && "$CLOUD_PROVIDER" == "gcp" ]]; then
           GCP_DOCKER_REPO="${NAMESPACE}-${CLIENT_KEY}-multi-site-multi-site-docker"
         else
@@ -675,7 +604,6 @@ runs:
         echo "gcp_docker_repo=$GCP_DOCKER_REPO" >> $GITHUB_OUTPUT
         echo "🐳 GCP Docker Repo: $GCP_DOCKER_REPO"
 
-        # ── Azure Container Registry Name ──
         if [[ "$CLOUD_PROVIDER" == "azure" ]]; then
           RAW_ACR="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}"
           AZURE_ACR_NAME=$(echo "$RAW_ACR" | tr -d '-' | cut -c 1-24)
@@ -684,17 +612,12 @@ runs:
         fi
         ADMIN_BUCKET=$(echo "$MERGED_CONFIG" | jq -r ".[\"${STAGE_KEY}\"]?.ADMIN_BUCKET // .common.ADMIN_BUCKET // \"\"")
         if [[ -z "$ADMIN_BUCKET" ]]; then
-           # Multi-site-app module naming (April 2026):
-           # Bucket = {namespace}-{client}-{project_key}-{stage}-{admin_key}-static
-           # admin_key matches PROJECT_KEY (the admins={} map key in tfvars).
-           # Legacy: {namespace}-{client}-{platform}-{project}-{stage}-admin-origin  ← OLD
            ADMIN_BUCKET="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${PROJECT_KEY}-static"
         fi
         echo "admin_bucket=$ADMIN_BUCKET" >> $GITHUB_OUTPUT
         echo "azure_acr_name=$AZURE_ACR_NAME" >> $GITHUB_OUTPUT
         echo "🐳 Azure ACR Name: $AZURE_ACR_NAME"
 
-        # ── Project Slug (multi-tenant subdomain suffix) ──
         PROJECT_SLUG=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_SLUG // ""')
         echo "project_slug=$PROJECT_SLUG" >> $GITHUB_OUTPUT
         echo "🏷️  Project Slug: '${PROJECT_SLUG:-<primary>}'"
