@@ -10,6 +10,26 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Changed
 
+- chore: update CHANGELOG for v2.12.0
+- chore: end-of-day governance sync — 2026-07-06
+- chore: update CHANGELOG for v2.11.55
+- chore: add sync-skills.mjs for cross platform portability
+- chore: implement cross-platform portability plan for macOS and Windows
+
+### Fixed
+
+- fix: conditionally add-mask for ELASTIC_ADMIN_PASS to avoid empty string warning
+- fix: update custom db role to inherit readWrite and patch on conflict
+- fix: correct Atlas customDBRoles API endpoint
+
+## v2.12.0 (2026-07-07)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
 - chore: end-of-day governance sync — 2026-07-06
 - chore: update CHANGELOG for v2.11.55
 - chore: add sync-skills.mjs for cross platform portability
