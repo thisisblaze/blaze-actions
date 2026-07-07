@@ -506,7 +506,7 @@ runs:
 
             if [[ "$STACK" == "pod-shared-01" || "$STACK" == "pod-dedicated-01" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
-               STATE_KEY="infra/pods/${STACK}/${STAGE_KEY}/db.tfstate"
+               STATE_KEY="infra/shared/${STAGE_KEY}/${STACK}.tfstate"
 
             elif [[ "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"

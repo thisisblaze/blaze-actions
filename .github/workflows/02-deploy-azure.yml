@@ -339,7 +339,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.3
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.4
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -499,7 +499,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.4
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'dev' }}
@@ -532,7 +532,7 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.4
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'dev' }}
@@ -568,7 +568,7 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.4
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -598,7 +598,7 @@ jobs:
     name: Deploy API (Container App)
     needs: [configuration, build-api, pre-flight-check]
     if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.4
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'dev' }}
@@ -637,7 +637,7 @@ jobs:
     name: Deploy Frontend (Container App)
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'azure' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.4
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'dev' }}
@@ -674,7 +674,7 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY
     if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'azure' && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.3
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-container-app-deploy.yml@v2.12.4
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'dev' }}
