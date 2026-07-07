@@ -241,7 +241,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != '' && !(inputs.action == 'cleanup-orphaned-data' && inputs.dry_run == 'true')
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.1
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.2
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -379,7 +379,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.1
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.2
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}

@@ -119,7 +119,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.1
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.2
         with:
           terraform: "true"
           skip-aws-setup: "false" # Needed for Live Checks
@@ -173,7 +173,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.1
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.2
         with:
           environment: "${{ inputs.environment || 'DEV' }}" # Default to DEV for cron
           terraform_stack: "app" # We just need general config
