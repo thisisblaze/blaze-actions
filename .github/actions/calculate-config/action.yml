@@ -434,6 +434,9 @@ runs:
           "db-pod-premium")
             STACK="db-pod-premium"
             ;;
+          "pod-shared-01"|"pod-dedicated-01")
+            STACK="$INPUT_STACK"
+            ;;
           "dedicated-db")
             STACK="dedicated-db"
             ;;
@@ -476,7 +479,7 @@ runs:
         echo "🔍 Selected Stack: $STACK (from input: '$INPUT_STACK')"
 
         # 3. SAFETY CHECK: Prevent No-Op Runs
-        if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" ]]; then
+        if [[ "$STACK" == "network" || "$STACK" == "dedicated-network" || "$STACK" == "data" || "$STACK" == "cdn" || "$STACK" == "third-party-acm" || "$STACK" == "third-party-cloudflare" || "$STACK" == "account-settings" || "$STACK" == "single-network" || "$STACK" == "single-app" || "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "pod-shared-01" || "$STACK" == "pod-dedicated-01" ]]; then
            if [[ "${{ inputs.deploy_infra }}" != "true" ]]; then
               echo "❌ CONFIG ERROR: You selected an Infrastructure Stack ('$STACK') but 'Run Terraform' is UNCHECKED."
               echo "   This would result in a no-op (doing nothing)."
@@ -541,8 +544,14 @@ runs:
                fi
             fi
 
+            # DB Pods (Plan 196 naming: pod-shared-01 / pod-dedicated-01) — env-level,
+            # pod-scoped state key (independent of project token, e.g. project=shared).
+            if [[ "$STACK" == "pod-shared-01" || "$STACK" == "pod-dedicated-01" ]]; then
+               TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
+               STATE_KEY="infra/pods/${STACK}/${STAGE_KEY}/db.tfstate"
+
             # Standard Stacks: Shared Foundation, Day 1 DB Pods, and Single-Tenant Core Modules
-            if [[ "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "data" ]]; then
+            elif [[ "$STACK" == "db-pod-alpha" || "$STACK" == "db-pod-premium" || "$STACK" == "data" ]]; then
                TF_DIR="${INFRA_PREFIX}/${STAGE_KEY}-${STACK}"
                STATE_KEY="infra/${PROJECT_KEY}/${STAGE_KEY}/${STACK}.tfstate"
                
