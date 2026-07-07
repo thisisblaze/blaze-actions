@@ -271,8 +271,46 @@ jobs:
       project_slug: ${{ steps.config.outputs.project_slug }}
       stack_id: ${{ steps.config.outputs.stack_id }}
       image_project_key: ${{ steps.config.outputs.image_project_key }}
+      source_repo: ${{ steps.src.outputs.kind == 'external' && steps.src.outputs.repo || '' }}
+      source_ref: ${{ steps.src.outputs.kind == 'external' && steps.src.outputs.ref || '' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve project source (Plan 199 registry)
+        id: src
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          REG="vars/projects.json"
+          KIND="local"; REPO=""; REF=""; CONFIG_PATH=""
+          if [[ -f "$REG" ]]; then
+            KIND=$(jq -r --arg p "$PROJECT" '.projects[$p].source.kind // "local"' "$REG")
+            REPO=$(jq -r --arg p "$PROJECT" '.projects[$p].source.repo // ""' "$REG")
+            REF=$(jq -r --arg p "$PROJECT" '.projects[$p].source.ref // ""' "$REG")
+            CONFIG_PATH=$(jq -r --arg p "$PROJECT" '.projects[$p].source.config_path // ""' "$REG")
+          fi
+          if [[ "$KIND" == "external" ]]; then
+            if [[ -z "$REPO" || -z "$REF" || -z "$CONFIG_PATH" ]]; then
+              echo "❌ ERROR: external source for '$PROJECT' missing repo/ref/config_path in $REG"; exit 1
+            fi
+            echo "external_src=.external-src" >> "$GITHUB_OUTPUT"
+          else
+            echo "external_src=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "kind=$KIND" >> "$GITHUB_OUTPUT"
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "config_path=$CONFIG_PATH" >> "$GITHUB_OUTPUT"
+          echo "🔎 Source for $PROJECT: kind=$KIND repo=${REPO:-<none>} ref=${REF:-<none>}"
+
+      - name: Checkout external project source (Plan 199)
+        if: steps.src.outputs.kind == 'external'
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ steps.src.outputs.repo }}
+          ref: ${{ steps.src.outputs.ref }}
+          token: ${{ secrets.GH_PAT }}
+          path: .external-src
 
       - name: Debug Inputs
         run: |
@@ -353,6 +391,8 @@ jobs:
           deploy_services: ${{ inputs.deploy_services == false && 'false' || 'true' }}
           event_name: ${{ github.event_name }}
           cloud_provider: ${{ inputs.cloud_provider }}
+          external_src: ${{ steps.src.outputs.external_src }}
+          config_path: ${{ steps.src.outputs.config_path }}
 
   pre-flight-check:
     permissions:
@@ -524,6 +564,8 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
       context: .
+      source_repo: ${{ needs.configuration.outputs.source_repo }}
+      source_ref: ${{ needs.configuration.outputs.source_ref }}
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
@@ -537,6 +579,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -557,6 +600,8 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
+      source_repo: ${{ needs.configuration.outputs.source_repo }}
+      source_ref: ${{ needs.configuration.outputs.source_ref }}
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
@@ -572,6 +617,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -587,6 +633,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Plan 199: build admin from the family repo when kind: external; else caller repo.
+          repository: ${{ needs.configuration.outputs.source_repo != '' && needs.configuration.outputs.source_repo || github.repository }}
+          ref: ${{ needs.configuration.outputs.source_repo != '' && needs.configuration.outputs.source_ref || github.sha }}
+          token: ${{ needs.configuration.outputs.source_repo != '' && secrets.GH_PAT || github.token }}
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         env:
@@ -656,6 +707,8 @@ jobs:
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
+      source_repo: ${{ needs.configuration.outputs.source_repo }}
+      source_ref: ${{ needs.configuration.outputs.source_ref }}
       image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
@@ -664,6 +717,7 @@ jobs:
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

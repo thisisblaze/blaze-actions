@@ -34,6 +34,14 @@ inputs:
     description: "Cloud Provider override (aws/gcp/azure). If set, overrides CLOUD_PROVIDER from config."
     required: false
     default: ""
+  external_src:
+    description: "Path to a checked-out external family-repo source (kind: external, Plan 199). Empty = local (config in this repo)."
+    required: false
+    default: ""
+  config_path:
+    description: "Path to the per-site blaze-env.json within external_src (relative). Required when external_src is set."
+    required: false
+    default: ""
 
 outputs:
   env_val:
@@ -66,11 +74,8 @@ outputs:
   project_key:
     description: "Project Key"
     value: ${{ steps.config.outputs.project_key }}
-  shared_host_project:
-    description: "Shared Host Project"
-    value: ${{ steps.config.outputs.shared_host_project }}
   image_project_key:
-    description: "Project Key used for Images (Shared Host or Project)"
+    description: "Project Key used for Images (clean slate, Plan 199: always PROJECT_KEY)"
     value: ${{ steps.config.outputs.image_project_key }}
   namespace:
     description: "Namespace"
@@ -159,6 +164,9 @@ outputs:
   pod:
     description: "Infrastructure Placement Pod"
     value: ${{ steps.config.outputs.pod }}
+  build_root:
+    description: "Docker/npm build root (Plan 199): external_src for kind: external, else '.'"
+    value: ${{ steps.config.outputs.build_root }}
 
 runs:
   using: "composite"
@@ -176,7 +184,27 @@ runs:
            INPUT_PROJECT="thisisblaze"
         fi
 
-        PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
+        # ── SOURCE RESOLUTION (Plan 199) ──
+        # GLOBAL_CONFIG (tenant identity) always comes from the console repo.
+        # kind: external → per-site config + project overlay come from the checked-out
+        # family repo at $EXTERNAL_SRC, and build_root points there so Docker builds use
+        # the family repo's packages/. Empty EXTERNAL_SRC = local (byte-identical old path).
+        EXTERNAL_SRC="${{ inputs.external_src }}"
+        CONFIG_PATH="${{ inputs.config_path }}"
+        if [[ -n "$EXTERNAL_SRC" ]]; then
+           if [[ -z "$CONFIG_PATH" ]]; then
+              echo "❌ ERROR: external_src set but config_path empty (required for kind: external)."
+              exit 1
+           fi
+           PROJECT_CONFIG="$EXTERNAL_SRC/$CONFIG_PATH"
+           PROJECTS_DIR="$EXTERNAL_SRC/projects"
+           BUILD_ROOT="$EXTERNAL_SRC"
+           echo "📦 External source: $EXTERNAL_SRC (config: $CONFIG_PATH)"
+        else
+           PROJECT_CONFIG="vars/$INPUT_PROJECT/blaze-env.json"
+           PROJECTS_DIR="projects"
+           BUILD_ROOT="."
+        fi
 
         if ! test -f "$GLOBAL_CONFIG"; then
           echo "❌ ERROR: Global config $GLOBAL_CONFIG not found"
@@ -187,7 +215,7 @@ runs:
         PROJECTS_EXISTS=false
 
         if test -f "$PROJECT_CONFIG"; then VARS_EXISTS=true; fi
-        if test -d "projects/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi
+        if test -d "$PROJECTS_DIR/$INPUT_PROJECT"; then PROJECTS_EXISTS=true; fi
 
         if [[ "$VARS_EXISTS" == "false" ]]; then
            echo "❌ ERROR: Project '$INPUT_PROJECT' is invalid or incomplete."
@@ -205,8 +233,8 @@ runs:
         fi
 
         if [[ "$PROJECTS_EXISTS" == "false" ]]; then
-              echo "⚠️  WARNING: Directory projects/$INPUT_PROJECT not found."
-              echo "    Infrastructure overrides in projects/$INPUT_PROJECT will not be loaded."
+              echo "⚠️  WARNING: Directory $PROJECTS_DIR/$INPUT_PROJECT not found."
+              echo "    Infrastructure overrides in $PROJECTS_DIR/$INPUT_PROJECT will not be loaded."
         fi
 
         # Merge Configs: Project (Args 2) overrides Global (Arg 1)
@@ -227,7 +255,7 @@ runs:
         # Read keys from MERGED config
         CLIENT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.CLIENT_KEY // "b9"')
         PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.PROJECT_KEY // "blaze-actions-test"')
-        SHARED_HOST_PROJECT=$(echo "$MERGED_CONFIG" | jq -r '.common.SHARED_HOST_PROJECT // ""')
+        # SHARED_HOST_PROJECT retired (Plan 199 clean slate) — no longer read.
         NAMESPACE=$(echo "$MERGED_CONFIG" | jq -r '.common.NAMESPACE // "blaze"')
         PLATFORM=$(echo "$MERGED_CONFIG" | jq -r '.common.CLOUD_PLATFORM')
         AWS_REGION=$(echo "$MERGED_CONFIG" | jq -r '.common.AWS_REGION')
@@ -326,14 +354,9 @@ runs:
         # Export to Outputs
         echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
-        echo "shared_host_project=$SHARED_HOST_PROJECT" >> "$GITHUB_OUTPUT"
-        
-        IMAGE_PROJECT_KEY_OVERRIDE=$(echo "$MERGED_CONFIG" | jq -r '.common.IMAGE_PROJECT_KEY_OVERRIDE // ""')
-        if [[ -n "$IMAGE_PROJECT_KEY_OVERRIDE" ]]; then
-           IMAGE_PROJECT_KEY="$IMAGE_PROJECT_KEY_OVERRIDE"
-        else
-           IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
-        fi
+        # CLEAN SLATE (Plan 199): SHARED_HOST_PROJECT + IMAGE_PROJECT_KEY_OVERRIDE retired.
+        # Every project/subproject owns its ECR namespace → image_project_key = PROJECT_KEY.
+        IMAGE_PROJECT_KEY="$PROJECT_KEY"
         echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
         
         echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
@@ -605,9 +628,13 @@ runs:
         # Sanitize STATE_KEY to remove double slashes (e.g. if project_key is empty)
         STATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')
 
-        # Calculate Cluster Name
-        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${SHARED_HOST_PROJECT:-$PROJECT_KEY}-${STAGE_KEY}-cluster"
+        # Calculate Cluster Name (SHARED_HOST_PROJECT retired — Plan 199 clean slate).
+        # NOTE: the shared multi-site cluster is resolved from SSM at deploy time
+        # (deploy-ecs-service); this composed name is retained for the ~20 non-deploy
+        # consumers of the cluster_name output (99-ops, stress-test, provisioning, azure).
+        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
         echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+        echo "build_root=$BUILD_ROOT" >> $GITHUB_OUTPUT
 
         echo "env_val=$ENV_VAL" >> $GITHUB_OUTPUT
         echo "tf_dir=$TF_DIR" >> $GITHUB_OUTPUT

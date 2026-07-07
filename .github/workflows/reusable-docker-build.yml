@@ -69,6 +69,16 @@ on:
         required: false
         type: string
         default: ""
+      source_repo:
+        description: "Family repo to build from (Plan 199, kind: external), e.g. thebyte9/dummy-thisisblaze. Empty = build the caller repo (local)."
+        required: false
+        type: string
+        default: ""
+      source_ref:
+        description: "Ref (tag/branch/sha) of source_repo to check out. Required when source_repo is set."
+        required: false
+        type: string
+        default: ""
 
 
     secrets:
@@ -178,6 +188,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Plan 199: when source_repo is set, build from the family repo at source_ref;
+          # otherwise build the caller repo (byte-identical to the previous behaviour).
+          repository: ${{ inputs.source_repo != '' && inputs.source_repo || github.repository }}
+          ref: ${{ inputs.source_repo != '' && inputs.source_ref || github.sha }}
+          token: ${{ inputs.source_repo != '' && secrets.GH_PAT || github.token }}
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
@@ -301,6 +317,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Plan 199: when source_repo is set, build from the family repo at source_ref;
+          # otherwise build the caller repo (byte-identical to the previous behaviour).
+          repository: ${{ inputs.source_repo != '' && inputs.source_repo || github.repository }}
+          ref: ${{ inputs.source_repo != '' && inputs.source_ref || github.sha }}
+          token: ${{ inputs.source_repo != '' && secrets.GH_PAT || github.token }}
 
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''

@@ -213,17 +213,16 @@ runs:
           ROLE_STAGE="dev"
         fi
 
-        # Resolve SHARED_HOST_PROJECT early to calculate the correct cluster
-        GLOBAL_CONFIG="vars/blaze-env.json"
-        PROJECT_CONFIG="vars/${PROJECT_KEY}/blaze-env.json"
-        SHARED_HOST_PROJECT=""
-        if [[ -f "$GLOBAL_CONFIG" && -f "$PROJECT_CONFIG" ]]; then
-           SHARED_HOST_PROJECT=$(jq -s '.[0] * .[1]' "$GLOBAL_CONFIG" "$PROJECT_CONFIG" | jq -r '.common.SHARED_HOST_PROJECT // ""')
+        # CLEAN SLATE (Plan 199): SHARED_HOST_PROJECT retired. All services run on the
+        # shared multi-site cluster; resolve its name from the SSM key that
+        # multi-site-network publishes and multi-site-tenant-app consumes.
+        CLUSTER_SSM="/blaze/multi-site/v2/${CLUSTER_STAGE}/network/cluster_name"
+        CLUSTER_NAME=$(aws ssm get-parameter --name "$CLUSTER_SSM" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+        if [[ -z "$CLUSTER_NAME" || "$CLUSTER_NAME" == "None" ]]; then
+           echo "❌ 🛑 ERROR: shared multi-site cluster not found in SSM ($CLUSTER_SSM)."
+           echo "   👉 Provision multi-site-network first (01a)."
+           exit 1
         fi
-        HOST_PROJ="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
-
-        # Cluster Name (shared for DEV features)
-        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${CLUSTER_STAGE}-cluster"
 
         AWS_ACCOUNT_ID=$(echo "$REGISTRY" | cut -d'.' -f1)
 
@@ -374,17 +373,22 @@ runs:
            exit 1
         fi
 
-        # Exec role: tied to the HOST cluster owner (SHARED_HOST_PROJECT), not the sub-project
-        # thisisblaze-sub-projects (support, etc.) share the host exec-role:
-        #   blaze-b9-thisisblaze-dev-exec-role
-        ROLE_NAME="${NAMESPACE}-${CLIENT_KEY}-${HOST_PROJ}-${ROLE_STAGE}-exec-role"
-        echo "⏳ Expected IAM Role: $ROLE_NAME"
+        # CLEAN SLATE (Plan 199): execution role comes from the shared multi-site network,
+        # resolved from SSM (published by multi-site-network) — not a per-project name.
+        EXEC_ROLE_SSM="/blaze/multi-site/v2/${ROLE_STAGE}/network/execution_role_arn"
+        SHARED_EXEC_ROLE_ARN=$(aws ssm get-parameter --name "$EXEC_ROLE_SSM" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+        if [[ -z "$SHARED_EXEC_ROLE_ARN" || "$SHARED_EXEC_ROLE_ARN" == "None" ]]; then
+           echo "❌ 🛑 ERROR: execution role not found in SSM ($EXEC_ROLE_SSM)."
+           echo "   👉 Provision multi-site-network first (01a)."
+           exit 1
+        fi
+        echo "⏳ Execution Role (from SSM): $SHARED_EXEC_ROLE_ARN"
 
         # Service-specific task role: for multi-site, Terraform creates:
         #   blaze-b9-{project}-{stage}-{servicekey}-task-role
         # where servicekey = CONTAINER_NAME (support-api, support-frontend, api, frontend, etc.)
         # We compute CONTAINER_NAME here using the same stage-prefix-strip logic.
-        TASK_ROLE_NAME="$ROLE_NAME"
+        TASK_ROLE_NAME=""  # initial; overwritten below (ROLE_NAME retired, Plan 199)
         _ROLE_STAGE_PREFIX="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-"
         CANDIDATE_TASK_ROLE="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-${SERVICE_NAME}-task-role"
         echo "ℹ️ Checking task role: $CANDIDATE_TASK_ROLE"
@@ -403,7 +407,7 @@ runs:
         # ---------------------------------------------------------
         # 5. RENDER TASK DEFINITION
         # ---------------------------------------------------------
-        export EXECUTION_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
+        export EXECUTION_ROLE_ARN="$SHARED_EXEC_ROLE_ARN"
         export TASK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${TASK_ROLE_NAME}"
         # Service discovery namespace is tied to the shared cluster stage (dev/stage/prod),
         # not the feature tag.
@@ -417,9 +421,11 @@ runs:
           # For sub-projects sharing the host Atlas cluster, fetch their own project-scoped
           # Atlas connection string from: /{namespace}/{client}/{project}/{stage}/BLAZE_CONNECTION_STRING
           # This mirrors the convention used for the host project (e.g. /blaze/b9/thisisblaze/dev/...).
-          if [[ "$PROJECT_KEY" != "$HOST_PROJ" ]]; then
+          # CLEAN SLATE (Plan 199): every project owns its DB (pod-sharded). Always read
+          # the project-scoped Atlas URI from SSM; fall back to the provided URI if absent.
+          if true; then
             SUB_SSM="/${NAMESPACE}/${CLIENT_KEY}/${PROJECT_KEY}/${BASE_STAGE}/BLAZE_CONNECTION_STRING"
-            echo "ℹ️  Sub-project: reading Atlas URI from SSM: $SUB_SSM"
+            echo "ℹ️  Reading project-scoped Atlas URI from SSM: $SUB_SSM"
             SUB_MONGODB_URI=$(aws ssm get-parameter \
               --name "$SUB_SSM" \
               --with-decryption \
