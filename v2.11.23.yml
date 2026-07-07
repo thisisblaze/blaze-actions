@@ -5,6 +5,106 @@ name: "01 - Provision Infrastructure"
 # Deployments must be executed from the 'blaze-template-deploy' repository (or your derived project repo),
 # which contains the necessary secrets and environment configurations.
 on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: "Cloud Provider"
+        type: choice
+        options: ["aws", "gcp", "azure"]
+        default: "aws"
+      wif_audience:
+        description: "WIF Audience (Optional)"
+        required: false
+        type: string
+        default: ""
+      environment:
+        description: "Target Environment"
+        type: choice
+        options: ["DEV", "DEV-MINI", "STAGE", "PROD", "MULTI-SITE"]
+        required: true
+      project:
+        description: "Project (App Identity) - e.g. thisisblaze, shopware-km"
+        type: string
+        required: true
+        default: "thisisblaze"
+      stack:
+        description: "Infrastructure Layer"
+        type: choice
+        options:
+          - "network"
+          - "dedicated-network"
+          - "db-pod-alpha"
+          - "tenant-app"
+          - "single-network"
+          - "single-app"
+          - "app"
+          - "acm"
+          - "third-party-mongodb"
+          - "third-party-elastic"
+        required: true
+      branch_name:
+        description: "Feature Tag (e.g. jira-123). Leave empty for main."
+        required: false
+        type: string
+      apply:
+        description: "APPLY ( vs DRY RUN )"
+        type: string
+        default: "false"
+      destroy:
+        description: "DESTROY (Teardown Stack)"
+        type: string
+        default: "false"
+      force_destructive_reconcile:
+        description: "Force Destructive Reconciliation (CPs/Lambda)"
+        type: string
+        default: "false"
+
+      terraform_version:
+        description: "Terraform Version"
+        type: string
+        default: "1.9.0"
+
+      # Third-Party Options
+      cluster_tier:
+        description: "MongoDB Tier (Auto: Dev=Flex, Stage/Prod=M10)"
+        type: choice
+        options: ["auto", "flex", "M0", "M10", "M20", "M30"]
+        default: "auto"
+      kibana_size:
+        description: "Kibana RAM Size (Elastic only)"
+        type: choice
+        options: ["1g", "2g"]
+        default: "1g"
+      enable_image_resize:
+        description: "Enable CloudFront for Image Resizing"
+        type: string
+        default: "false"
+      enable_ec2:
+        description: "Enable EC2 Capacity Provider (Hybrid ECS)"
+        type: string
+        default: "false"
+      # Hybrid ECS Inputs
+      api_launch_type:
+        description: "API Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
+        type: choice
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
+      api_cpu_architecture:
+        description: "API CPU Architecture (ARM64 = default / X86_64 = fallback)"
+        type: choice
+        options: ["ARM64", "X86_64"]
+        default: "ARM64"
+      frontend_launch_type:
+        description: "Frontend Launch Type (EC2 = shared ASG binpacking / FARGATE = serverless)"
+        type: choice
+        options: ["EC2", "FARGATE"]
+        default: "EC2"
+      frontend_cpu_architecture:
+        description: "Frontend CPU Architecture (ARM64 = default / X86_64 = fallback)"
+        type: choice
+        options: ["ARM64", "X86_64"]
+        default: "ARM64"
+
   # Enable usage by other workflows (Stress Test)
   workflow_call:
     inputs:
@@ -163,10 +263,12 @@ on:
         required: false
       SONAR_TOKEN:
         required: false
+
 permissions:
   id-token: write
   contents: read
   actions: write
+
 
 concurrency:
   group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
@@ -219,7 +321,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.55
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -281,7 +383,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -339,7 +441,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.55
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@main
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -350,7 +452,10 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.55
+    permissions:
+      id-token: write
+      contents: read
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -382,15 +487,18 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ inputs.apply && 'true' || 'false' }}
-      destroy: ${{ inputs.destroy && 'true' || 'false' }}
-      build_sharp: ${{ inputs.enable_image_resize == 'true' && inputs.stack == 'network' && 'true' || 'false' }}
+      apply: ${{ (inputs.apply == true || inputs.apply == 'true') && 'true' || 'false' }}
+      destroy: ${{ (inputs.destroy == true || inputs.destroy == 'true') && 'true' || 'false' }}
+      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
         if [[ -f "$SCRIPT" ]]; then
           echo "🔍 Syntax checking $SCRIPT..."
           bash -n "$SCRIPT" || exit 1
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck "$SCRIPT" || exit 1
+          fi
           export TF_DIR="$(pwd)"
           export STACK_NAME="${{ inputs.stack }}"
           export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
@@ -595,25 +703,26 @@ jobs:
             echo "✅ Sample Dataset load triggered successfully."
           elif [[ "$RESPONSE_CODE" == "409" ]]; then
             echo "⚠️  Sample Dataset is already loaded or currently loading."
+          else
+            echo "❌ Failed to trigger Sample Dataset load. HTTP Status: $RESPONSE_CODE"
+          fi
 
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.55
+    permissions:
+      contents: read
+      id-token: write
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@main
     with:
-      action: cleanup-dns
       environment: ${{ inputs.environment }}
-      cloud_provider: ${{ inputs.cloud_provider }}
-      stack: ${{ inputs.stack }}
-      # Required for constructing targets
-      branch_tag: ${{ inputs.branch_name }}
-      confirmation: "EXECUTE"
+      action: "remove_cname"
+      dns_record_name: "cae-${{ needs.configuration.outputs.project_key }}-${{ needs.configuration.outputs.stage_key }}-${{ inputs.stack }}"
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
   # ── Azure: Re-apply network with CAE hostname after app provision ──────────
   # After the Azure app stack is provisioned, the Container App Environment
   # gets a static FQDN (default_domain). Front Door needs this as its app origin.

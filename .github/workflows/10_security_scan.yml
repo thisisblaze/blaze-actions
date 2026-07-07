@@ -21,7 +21,6 @@ on:
 # Least-privilege default for ALL jobs; elevated scopes are granted per-job below
 # (id-token only on the Scorecard job, pull-requests only on the reporting job).
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
@@ -45,13 +44,13 @@ jobs:
         with:
           fetch-depth: 1 # Scan current state only (faster)
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-          GITLEAKS_ENABLE_SUMMARY: true
-          GITLEAKS_EXIT_CODE: 1 # Fail on secrets found
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@v3.82.0
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
 
       - name: Upload Gitleaks Results
         if: always()
@@ -330,6 +329,9 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     needs: [sast, dependencies, iac-security, integrity]
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
       - name: Download Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:

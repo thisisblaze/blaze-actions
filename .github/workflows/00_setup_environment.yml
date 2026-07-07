@@ -12,7 +12,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: true
       task:
         description: "Setup Task"
@@ -172,7 +172,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: setup-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ github.ref }}
@@ -198,7 +197,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.11.55
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: network
@@ -236,7 +235,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.55
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -249,7 +248,7 @@ jobs:
 
       - name: Setup Blaze Infra
         if: inputs.cloud_provider == 'aws'
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.55
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
@@ -266,7 +265,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

@@ -10,7 +10,7 @@ This skill allows any agent to run the appropriate analysis and testing for the 
 ## 0. Context Loading (Mandatory)
 
 Before proceeding, you **MUST** read the governance context to ensure compliance with cost and safety rules:
-`view_file .antigravity/context/GOVERNANCE.md`
+`view_file docs/AI_CONTEXT_GOVERNANCE.md`
 
 ## 1. Detection
 

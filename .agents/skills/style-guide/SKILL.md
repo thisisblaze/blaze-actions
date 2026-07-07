@@ -10,7 +10,7 @@ This skill enforces coding standards and consistency across all repositories.
 ## 0. Context Loading (Mandatory)
 
 Before proceeding, you **MUST** read the governance context:
-`view_file .antigravity/context/GOVERNANCE.md`
+`view_file docs/AI_CONTEXT_GOVERNANCE.md`
 
 ## 1. Code Formatting & Linting
 

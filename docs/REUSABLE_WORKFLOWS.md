@@ -1,4 +1,4 @@
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 
 ---
 
@@ -39,7 +39,7 @@ on:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: ${{ inputs.environment }}
       target_services: "Blaze all"
@@ -48,16 +48,16 @@ jobs:
 
 ### Version Pinning
 
-**Latest (recommended for development)**:
+**Latest (recommended for development only)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
+uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@dev
 ```
 
 **Stable (recommended for production)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.2.2
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
 ```
 
 **Specific commit (maximum stability)**:
@@ -89,7 +89,7 @@ permissions:
 jobs:
   execute:
     name: "Execute Provision"
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
     secrets: inherit
 ```
 
@@ -109,7 +109,7 @@ jobs:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     secrets: inherit # Pass all secrets to remote workflow
 ```
 
@@ -128,13 +128,13 @@ with:
 @dev
 
 # Stable (production)
-@v2.5.7
+@v2.11.55
 
 # Specific commit (maximum pinning)
 @<sha>
 ```
 
-> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.2.2`).
+> **Governance Rule**: Never use shifting tags like `@main` or `@dev` in production caller workflows. Always pin to a stable semantic release tag (e.g. `@v2.11.55`).
 
 ### 4. Set Proper Permissions
 
@@ -143,6 +143,8 @@ permissions:
   id-token: write # For AWS OIDC
   contents: read # For checkout
 ```
+
+> **Caller-permissions ceiling rule**: When calling a reusable workflow, the caller job's `permissions` block acts as a **ceiling** — the callee can never exceed it. The caller MUST grant the union of all permissions required by all jobs inside the callee, or the callee jobs fail (typically as `startup_failure`). Example: `reusable-dns-verify.yml` requires the caller to grant `id-token: write`, `contents: write`, and `issues: write`.
 
 ---
 
@@ -155,7 +157,7 @@ The `01-provision-infra` workflow supports deploying to AWS, GCP, and Azure.
 ```yaml
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
     with:
       environment: dev
       stack: network
@@ -174,7 +176,7 @@ The `02-deploy-app` workflow supports mixed compute strategies on AWS.
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
       # Deployment Strategy:
@@ -201,7 +203,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -219,7 +221,7 @@ For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
@@ -239,7 +241,7 @@ Terraform cannot destroy non-empty S3 buckets, attached Capacity Providers, or o
 ```yaml
 jobs:
   cleanup:
-    uses: thebyte9/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.55
     with:
       environment: dev
       dry_run: false
@@ -248,7 +250,7 @@ jobs:
 
   destroy:
     needs: cleanup
-    uses: thebyte9/blaze-actions/.github/workflows/99-ops-nuke.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/99-ops-nuke.yml@v2.11.55
     with:
       action: destroy
     secrets: inherit
@@ -272,7 +274,7 @@ permissions:
 
 jobs:
   call-remote:
-    uses: thebyte9/blaze-actions/.github/workflows/workflow-name.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/workflow-name.yml@v2.11.55
     secrets: inherit
 ```
 
@@ -281,7 +283,7 @@ jobs:
 ```yaml
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
     with:
       environment: dev
       stack: network
@@ -289,7 +291,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: dev
     secrets: inherit
@@ -301,12 +303,12 @@ jobs:
 jobs:
   test:
     if: github.event_name == 'pull_request'
-    uses: thebyte9/blaze-actions/.github/workflows/05_ci_no_cloud.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/05_ci_no_cloud.yml@v2.11.55
     secrets: inherit
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
     secrets: inherit
@@ -324,8 +326,8 @@ jobs:
 
 ```yaml
 # Correct path format:
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@main
-#     └─ org/repo ─┘  └──────── path ────────────┘ └─ ref ─┘
+uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@v2.11.55
+#     └─ org/repo ─┘  └──────── path ────────────┘ └── ref ──┘
 ```
 
 **Solution**: Use proper permissions or public repositories.
@@ -351,7 +353,7 @@ with:
 ```yaml
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     secrets: inherit # Add this line
 ```
 
@@ -442,7 +444,7 @@ permissions:
 
 jobs:
   provision:
-    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
     with:
       environment: prod
       stack: app
@@ -451,7 +453,7 @@ jobs:
 
   deploy:
     needs: provision
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
       target_services: "Blaze all"
@@ -459,7 +461,7 @@ jobs:
 
   verify:
     needs: deploy
-    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.5.7
+    uses: thebyte9/blaze-actions/.github/workflows/90-daily-health-check.yml@v2.11.55
     with:
       environment: prod
     secrets: inherit
@@ -480,7 +482,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@main
+    uses: thebyte9/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: dev
       target_services: "api frontend"
@@ -496,7 +498,7 @@ For legacy EB environments, use `reusable-elastic-beanstalk-deploy.yml` to packa
 ```yaml
 jobs:
   deploy-eb:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.1.80
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.11.55
     with:
       environment: prod                          # GitHub environment (for OIDC)
       application_name: my-app                   # EB Application name
@@ -518,7 +520,7 @@ jobs:
 A: Only with GitHub Enterprise.
 
 **Q: What's the best ref to use?**  
-A: `@dev` for development, `@v2.2.2` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
+A: `@dev` for development, `@v2.11.55` (or current stable tag) for production. **Never use `@main` in production** — it is a shifting ref and breaks governance pinning.
 
 **Q: How do I update all client projects?**  
 A: Bump the stable tag in all caller workflows. Governance rule: all caller workflows in `blaze-template-deploy` must pin to the same `@vX.Y.Z` tag.
@@ -557,7 +559,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: dev
           terraform_stack: app
@@ -609,6 +611,6 @@ Set in `vars/{project}/blaze-env.json` (e.g., `vars/thisisblaze/blaze-env.json`)
 
 ---
 
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

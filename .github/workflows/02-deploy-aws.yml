@@ -207,7 +207,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: deploy-aws-${{ inputs.environment || 'dev' }}-${{ inputs.branch_name || 'host' }}
@@ -226,7 +225,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-        with: {node-version: "20"}
+        with: {node-version: "24"}
       - name: Setup .npmrc
         run: |
           echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
@@ -335,7 +334,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -343,7 +342,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -463,7 +462,7 @@ jobs:
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -518,14 +517,14 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -551,14 +550,14 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
@@ -593,7 +592,7 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
-          node-version: "20.x"
+          node-version: "24.x"
 
       - name: Setup .npmrc
         run: |
@@ -614,10 +613,16 @@ jobs:
       - name: Install Dependencies
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm install --legacy-peer-deps --ignore-scripts
-      - run: NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }} ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts
+          npm install --legacy-peer-deps --ignore-scripts --prefix packages/admin
+
+      # Plan 193: --ignore-scripts skips node-sass postinstall (native binding
+      # download) → ENOENT node-sass/vendor at webpack time. Rebuild only
+      # node-sass; the rest of the tree keeps the ignore-scripts posture.
+      - name: Rebuild node-sass (Native Binding)
+        run: npm rebuild node-sass --prefix packages/admin
+
       - name: Build Admin
         run: npm run build:admin
         working-directory: packages/admin
@@ -644,14 +649,14 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.11.55
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{4}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{3}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.client_key, needs.configuration.outputs.project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{4}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key, needs.configuration.outputs.project_key) }}
       image_tag: ${{ (inputs.build_images == false && inputs.override_image_tag != '' && inputs.override_image_tag != 'latest') && inputs.override_image_tag || github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
@@ -674,8 +679,8 @@ jobs:
     name: Deploy API
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -719,8 +724,8 @@ jobs:
       id-token: write
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (needs.configuration.result == 'success') && (needs.pre-flight-check.result == 'success') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -765,8 +770,8 @@ jobs:
     needs: [configuration, package-admin-docker, pre-flight-check]
 
     # Run for Feature Branches ONLY
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@main
+    if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.11.55
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
@@ -805,7 +810,7 @@ jobs:
     name: Deploy Admin (AWS S3/CF)
     needs: [configuration, build-admin, pre-flight-check]
     # Run for Host Environments (Dev, Stage, Prod) on AWS
-    if: ${{ (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && (inputs.environment == 'dev' || inputs.environment == 'stage' || inputs.environment == 'prod' || inputs.environment == 'multi-site') }}
+    if: ${{ !failure() && !cancelled() && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) && (inputs.environment == 'dev' || inputs.environment == 'stage' || inputs.environment == 'prod' || inputs.environment == 'multi-site') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -886,7 +891,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Run Smoke Test
         env:

@@ -65,3 +65,5 @@ inputs_secrets.txt
 sorted_dns.txt
 sorted_tf.txt
 jobs_first_half.txt
+
+.claude/skills/

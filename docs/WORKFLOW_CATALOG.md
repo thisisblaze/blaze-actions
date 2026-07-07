@@ -1,4 +1,4 @@
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Owner**: Infrastructure Team
 
 ---
@@ -11,8 +11,8 @@
 
 **Repository**: blaze-actions  
 **Total Workflows**: 31 main + 27 reusable = 58 total  
-**Version**: v2.5.7  
-**Last Updated: 2026-06-23
+**Version**: v2.11.55  
+**Last Updated: 2026-07-06
 
 ---
 
@@ -210,6 +210,27 @@ cloud_provider, environment
 
 ### Operations & Utilities
 
+#### 95-cleanup-orphaned-data.yml
+
+**Purpose**: Sweep for orphaned third-party data clusters (Atlas/Elastic) created during cancelled provision runs.
+**Use Case**: Scheduled nightly safety net (cron) or manual invocation.
+
+**Inputs**:
+
+environment
+- `environment` (optional, default: dev)
+
+**What it does**:
+
+- Enumerates live deployments in Elastic Cloud and Atlas.
+- Compares against Terraform state in the environment's S3 bucket.
+- Terminates clusters that match the tenant prefix but are absent from state.
+- Emits a greppable `CLEANUP_RESULT=<TOKEN>` outcome and posts to Slack.
+
+**When to run**: Scheduled nightly or manual verify.
+
+---
+
 #### 99-ops-utility.yml
 
 **Purpose**: Multi-purpose operational tasks  
@@ -222,6 +243,7 @@ cloud_provider, environment
 - `check-health`: Service health check
 - `destroy-resources`: Safe destruction of infrastructure (defaulting to safe lambda cleanup)
 - `cleanup-orphaned-lambdas`: Post-destroy lambda cleanup
+- `cleanup-orphaned-data`: Reconcile and clean up orphaned third-party data clusters
 - `nuke-environment`: Full environment teardown (Stop Services -> Destroy Resources -> Cleanup DNS)
 - Manual interventions
 
@@ -706,7 +728,7 @@ dist_id
 
 ---
 #### 99-ops-utility.yml
-**Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
+**Purpose**: Unified operational utility dispatcher. Routes to `99-ops-aws`, `99-ops-gcp`, `99-ops-azure`, `99-ops-nuke`, `99-ops-terraform`, `99-ops-cloudflare`, or `99-ops-utility` based on `action` input. Supports: `manage-environment`, `destroy-resources`, `cleanup-orphaned-lambdas`, `cleanup-orphaned-buckets`, `cleanup-orphaned-data`, `nuke-environment`, `nuke-cloudfront`, `destroy-cloudflare-pages`, `destroy-cloudflare-pages-bulk`, `destroy-cloudflare-tunnel`, `sync-cloudflare-config`, `unlock-state`, `wipe-state`, `cleanup-dns`, `kill-workflows`.
 
 
 **Inputs**:
@@ -810,7 +832,10 @@ dist_id
 ### reusable-dns-verify.yml
 
 **Purpose**: Verify DNS Records  
-**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience
+**Inputs**: aws_region, bucket, cloud_provider, environment, lock_table, pre_apply_script, state_key, terraform_version, tf_dir, tf_vars, wif_audience  
+**Required caller permissions**: `id-token: write`, `contents: write`, `issues: write`
+
+> **Note**: A caller job's `permissions` block is a **ceiling** for reusable workflows — the caller must grant the union of all permissions required by every job inside the callee, otherwise the callee fails (typically as `startup_failure`).
 
 ---
 
@@ -1318,6 +1343,6 @@ These are called by main workflows, not directly by users.
 
 ---
 
-**Last Updated: 2026-06-23
+**Last Updated: 2026-07-06
 **Maintainer**: thisisblaze/blaze-actions  
 **License**: Apache 2.0

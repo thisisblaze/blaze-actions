@@ -34,7 +34,7 @@ They generate educational content for colleagues who want to understand how the 
 ```
 THIS REPO (blaze-actions) — PUBLIC — CI/CD Hub
   ↑ called by all tenant repos via:
-  uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.2.2
+  uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.11.55
 
 Callers (Spokes — private tenant repos):
   thebyte9/blaze-template-deploy

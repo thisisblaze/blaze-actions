@@ -139,7 +139,7 @@ jobs:
     if: always() && inputs.mode != 'destroy-only'
     needs: [setup]
     name: "🏗️ Provision Network"
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@v2.11.55
     with:
       environment: ${{ inputs.environment }}
       project: ${{ inputs.project }}

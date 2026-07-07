@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
@@ -53,12 +52,11 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Run actionlint (all workflows)
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11
           echo "## 🧩 actionlint Results" >> "$GITHUB_STEP_SUMMARY"
           # -shellcheck '' disables shellcheck integration (style noise); actionlint still checks
           # all GitHub Actions-specific expression/type errors natively.
-          ISSUES=$(./actionlint -shellcheck '' \
-            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}{{"\n"}}{{end}}' \
+          ISSUES=$(./actionlint -shellcheck '' -oneline \
             .github/workflows/*.yml 2>&1)
           EXIT=$?
           if [ -z "$ISSUES" ] && [ $EXIT -eq 0 ]; then

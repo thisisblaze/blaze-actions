@@ -8,8 +8,8 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "dev-mini", "stage", "prod"]
-        default: "v2.1.74"
+        options: ["dev", "dev-mini", "stage", "prod"]
+        default: "dev"
         required: true
       cloud_provider:
         description: "Cloud Provider"
@@ -22,7 +22,7 @@ on:
     inputs:
       environment:
         type: string
-        default: "v2.1.74"
+        default: "dev"
         required: false
       cloud_provider:
         type: string
@@ -98,7 +98,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -120,7 +119,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Blaze
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@main
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.55
         with:
           terraform: "true"
           skip-aws-setup: "false" # Needed for Live Checks
@@ -174,7 +173,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: "${{ inputs.environment || 'DEV' }}" # Default to DEV for cron
           terraform_stack: "app" # We just need general config
@@ -197,13 +196,13 @@ jobs:
       id-token: write
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} Network)
     needs: [configuration]
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74  # ⚠️ FREEZE: see block header above
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }}/../${{ needs.configuration.outputs.stage_key }}-network
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       environment: ${{ inputs.environment || 'DEV' }}
       bucket: ${{ needs.configuration.outputs.bucket }}
-      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.network_tf_dir, 'multi-site') && 'multi-site' || needs.configuration.outputs.stage_key }}/network.tfstate"
+      state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ contains(needs.configuration.outputs.tf_dir, 'multi-site') && format('multi-site/{0}', needs.configuration.outputs.stage_key) || needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: "1.9.0"
       apply: false
@@ -242,7 +241,7 @@ jobs:
     name: 🔍 Drift Check (${{ inputs.environment || 'DEV' }} App)
     needs: [configuration, drift-check-network] # Sequential better for log reading
     if: always() # Run even if network fails
-    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@main  # ⚠️ FREEZE: see above
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.1.74  # ⚠️ FREEZE: see above
     with:
       tf_dir: ${{ needs.configuration.outputs.tf_dir }} # Config already resolves correct App dir and Stage key
       aws_region: ${{ needs.configuration.outputs.aws_region }}

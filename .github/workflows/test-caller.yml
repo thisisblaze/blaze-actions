@@ -1,0 +1,9 @@
+name: Test Caller
+on: push
+jobs:
+  call:
+    uses: ./.github/workflows/01-provision-infra.yml
+    with:
+      environment: DEV
+      project: thisisblaze
+      stack: app

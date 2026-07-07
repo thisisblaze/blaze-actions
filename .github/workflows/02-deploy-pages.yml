@@ -216,7 +216,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
 concurrency:
   group: deploy-pages-${{ inputs.environment || 'DEV' }}-${{ inputs.branch_name || 'host' }}
@@ -235,7 +234,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-        with: {node-version: "20"}
+        with: {node-version: "24"}
       - name: Setup .npmrc
         run: |
           echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
@@ -338,7 +337,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -346,7 +345,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}
@@ -451,7 +450,7 @@ jobs:
 
       - name: Authenticate to Azure (Pre-Flight)
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -513,7 +512,7 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
-          node-version: "20.x"
+          node-version: "24.x"
       - name: Setup .npmrc
         run: |
           echo "@blaze-cms:registry=https://registry.npmjs.org/" > ~/.npmrc
@@ -533,10 +532,16 @@ jobs:
       - name: Install Dependencies
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm install --legacy-peer-deps --ignore-scripts
-      - run: NODE_AUTH_TOKEN=${{ secrets.NPM_TOKEN }} ./node_modules/.bin/lerna bootstrap --scope blaze-thisisblaze-admin --include-dependencies -- --legacy-peer-deps
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts
+          npm install --legacy-peer-deps --ignore-scripts --prefix packages/admin
+
+      # Plan 193: --ignore-scripts skips node-sass postinstall (native binding
+      # download) → ENOENT node-sass/vendor at webpack time. Rebuild only
+      # node-sass; the rest of the tree keeps the ignore-scripts posture.
+      - name: Rebuild node-sass (Native Binding)
+        run: npm rebuild node-sass --prefix packages/admin
+
       - name: Build Admin
         run: npm run build:admin
         working-directory: packages/admin
@@ -562,7 +567,7 @@ jobs:
 
     # Run for Host Environments (Prod, Stage, Dev Host), skipping GCP where Admin Pages are not deployed
     # Also skip on AWS since AWS now uses S3/CloudFront as primary and we should not deploy to both simultaneously.
-    if: ${{ inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider != 'aws' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.static_admin_target != 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ inputs.environment }}
@@ -645,7 +650,7 @@ jobs:
     name: Deploy Admin (GCP — GCS + Cloud CDN)
     needs: [configuration, build-admin, pre-flight-check]
     # GCP has no Cloudflare Pages path — this is GCP's native admin static deploy.
-    if: ${{ inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -692,7 +697,7 @@ jobs:
     needs: [configuration, build-admin, pre-flight-check]
     # Opt-in native Azure static path (set static_admin_target=native); otherwise
     # Azure uses the Cloudflare Pages job above.
-    if: ${{ inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'azure' && inputs.static_admin_target == 'native' && (inputs.branch_name == '' || inputs.branch_name == null) && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -705,7 +710,7 @@ jobs:
           name: admin-build-assets-${{ inputs.cloud_provider || 'aws' }}-${{ inputs.environment }}
           path: packages/admin/dist
       - name: Authenticate to Azure (OIDC)
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

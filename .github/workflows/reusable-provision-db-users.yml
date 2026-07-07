@@ -128,6 +128,9 @@ jobs:
           APP_USER="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}-user"
           echo "APP_USER=$APP_USER" >> $GITHUB_ENV
 
+          DB_NAME="${{ inputs.namespace }}-${{ inputs.client_key }}-${{ inputs.project }}-${{ inputs.stage_key }}"
+          echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
+
           # PROJECT_UPPER: e.g. "THISISBLAZE" or "SUPPORT" — used for namespaced GitHub secret names
           PROJECT_UPPER=$(echo "${{ inputs.project }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
           echo "PROJECT_UPPER=$PROJECT_UPPER" >> $GITHUB_ENV
@@ -172,7 +175,9 @@ jobs:
             ATLAS_PROJECT_SSM=$(aws ssm get-parameter --name "$SSM_BASE_PATH/mongodb/project_id" --with-decryption --query "Parameter.Value" --output text 2>/dev/null || echo "")
           fi
 
-          echo "::add-mask::$ELASTIC_ADMIN_PASS"
+          if [[ -n "$ELASTIC_ADMIN_PASS" ]]; then
+            echo "::add-mask::$ELASTIC_ADMIN_PASS"
+          fi
           echo "ELASTIC_ENDPOINT=$ELASTIC_ENDPOINT" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_USER=$ELASTIC_ADMIN_USER" >> $GITHUB_ENV
           echo "ELASTIC_ADMIN_PASS=$ELASTIC_ADMIN_PASS" >> $GITHUB_ENV
@@ -219,32 +224,42 @@ jobs:
             ASSIGN_DB="$DB_NAME"
           else
             echo "1. Creating Custom Role: $ROLE_NAME for database $DB_NAME"
-            # Find, Insert, Update, Remove
             PAYLOAD=$(jq -n \
               --arg role "$ROLE_NAME" \
               --arg db "$DB_NAME" \
               '{
-                "actions": [
-                  {"action": "FIND", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "INSERT", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "UPDATE", "resources": [{"db": $db, "collection": ""}]},
-                  {"action": "REMOVE", "resources": [{"db": $db, "collection": ""}]}
+                "actions": [],
+                "inheritedRoles": [
+                  {"db": $db, "role": "readWrite"}
                 ],
                 "roleName": $role
               }')
             
-            curl --silent --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
-              -H "Content-Type: application/json" -X POST \
-              "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles" \
-              -d "$PAYLOAD" || echo "Role may already exist or error occurred (ignored for idempotency)"
-              
+            # Post to Atlas API
+            RES_ROLE=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" -X POST "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles" \
+              -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+              --digest \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            
+            echo "$RES_ROLE"
+            
+            if echo "$RES_ROLE" | grep -q 'HTTP_CODE:4[0-9][0-9]'; then
+              echo "POST role failed, trying PATCH..."
+              curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
+                -H "Content-Type: application/json" -X PATCH \
+                "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles/$ROLE_NAME" \
+                -d "$PAYLOAD"
+            fi
+            
             # For Advanced clusters, custom roles live on the admin database
             ASSIGN_ROLE="$ROLE_NAME"
             ASSIGN_DB="admin"
           fi
             
           echo ""
-          echo "2. Creating Database User: $APP_USER"
+          echo "1. Creating Database User: $APP_USER"
+          echo "AUTH_SOURCE=$ASSIGN_DB" >> $GITHUB_ENV
           USER_PAYLOAD=$(jq -n \
             --arg user "$APP_USER" \
             --arg pass "$MONGO_PASS" \
@@ -319,7 +334,11 @@ jobs:
 
           if [[ -n "$MONGO_HOST" ]]; then
             # Construct standard connection string pattern
-            MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/?retryWrites=true&w=majority"
+            if [[ -n "$AUTH_SOURCE" ]]; then
+              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE"
+            else
+              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
+            fi
             aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
             # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
             aws ssm put-parameter --name "$TARGET/mongodb/uri" --value "$MONGO_URI" --type "SecureString" --overwrite

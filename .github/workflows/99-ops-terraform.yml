@@ -21,7 +21,7 @@ on:
       environment:
         description: "Target Environment"
         type: choice
-        options: ["v2.1.74", "dev-mini", "stage", "prod", "MULTI-SITE"]
+        options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
       stack:
         description: "Terraform Stack (for state/destroy)"
@@ -187,7 +187,6 @@ on:
       SONAR_TOKEN:
         required: false
 permissions:
-  id-token: write
   contents: read
   actions: write
 
@@ -220,7 +219,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.55
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -262,7 +261,6 @@ jobs:
   debug-context:
     name: 🕵️ Debug Context
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 5
     steps:
       - name: Check Secrets Presence
@@ -298,7 +296,6 @@ jobs:
     # Run for all actions except kill-workflows
     if: inputs.action != 'kill-workflows'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
@@ -347,7 +344,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -450,6 +447,22 @@ jobs:
               --region "$REGION" \
               --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}"
             aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || true
+          elif [[ "$ACTION" == "wipe-state" ]]; then
+            echo "☢️ WIPING AWS STATE: s3://$BUCKET/$KEY"
+            # Mandatory backup before wipe (plan 163 O1) — abort if the state exists but backup fails.
+            if aws s3 ls "s3://$BUCKET/$KEY" --region "$REGION" >/dev/null 2>&1; then
+              BACKUP_KEY="${KEY}.backup.$(date +%s)"
+              echo "💾 Backing up state to s3://$BUCKET/$BACKUP_KEY"
+              if ! aws s3 cp "s3://$BUCKET/$KEY" "s3://$BUCKET/$BACKUP_KEY" --region "$REGION"; then
+                echo "❌ ERROR: state backup failed — refusing to wipe state."
+                exit 1
+              fi
+              echo "::notice title=State backup::s3://$BUCKET/$BACKUP_KEY"
+            fi
+            aws s3 rm "s3://$BUCKET/$KEY" --region "$REGION" || echo "ℹ️ State file not found"
+            aws s3 rm "s3://$BUCKET/$KEY.tflock" --region "$REGION" || echo "ℹ️ No lock file found"
+            aws dynamodb delete-item --table-name "$TABLE" --region "$REGION" --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" || true
+            echo "✅ State wiped."
           elif [[ "$ACTION" == "rm-state" ]]; then
             TARGET="${{ inputs.target_resource }}"
             if [[ -z "$TARGET" ]]; then
@@ -519,7 +532,7 @@ jobs:
     name: Pre-Cleanup
     needs: [configuration]
     if: inputs.action == 'destroy-resources' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && contains(fromJson('["app", "cdn", "network"]'), inputs.stack)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.11.55
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -545,7 +558,7 @@ jobs:
       inputs.action == 'destroy-resources' &&
       needs.configuration.result == 'success' &&
       (needs.pre-cleanup.result == 'success' || needs.pre-cleanup.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.55
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       # Azure

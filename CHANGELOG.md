@@ -2,8 +2,714 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
-## [Unreleased]
+## v2.11.55 (2026-07-06)
+
 ### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: governance sync and MCP orchestrator pin update
+- chore: update CHANGELOG for v2.11.55
+- chore: update CHANGELOG for v2.11.54
+
+### Fixed
+
+- fix: repin conductor to latest main SHA
+
+## v2.11.55 (2026-07-06)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.54
+
+### Fixed
+
+
+## v2.11.54 (2026-07-06)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync
+- chore: update CHANGELOG for v2.11.53
+
+### Fixed
+
+
+## [Unreleased]
+
+- chore: end-of-day governance sync — 2026-07-05
+
+## v2.11.53 (2026-07-05)
+
+### Added
+
+- Merge pull request #182 from thisisblaze/feat/backlog-idtoken-scope
+- Merge pull request #181 from thisisblaze/feat/followup-161-pipefail
+- feat: implement wipe-state for aws
+- feat: configure dev-mini explicitly for CI parity (#72)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.52
+- chore: update CHANGELOG for v2.11.51
+- chore: update CHANGELOG for v2.11.50
+- chore: update CHANGELOG for v2.11.49
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+- chore: end-of-day governance sync — 2026-07-04
+- chore: use @main instead of @v2.11.20
+- chore: end-of-day governance sync — 2026-06-27
+- Merge pull request #169 from thisisblaze/dev
+- chore: bump third-party module pins to v2.11.2 (#165)
+- chore: bump third-party module pins to v2.11.2 (#164)
+- docs: add cleanup-orphaned-data to WORKFLOW_CATALOG (#163)
+- chore: release v2.11.16
+- chore: sync dev into main for v2.11.16
+- chore: sync dev into main for v2.11.15 (#155)
+- chore: sync dev into main (#153)
+- chore: minor comment update in provision-infra to ensure fresh validation (#118)
+- chore: revert workflows to v2.11.6 to undo ruamel formatting corruption
+- chore: end-of-day governance sync — 2026-06-23
+
+### Fixed
+
+- fix: remove invalid permissions block from uses job
+- fix: add missing secrets to dns handoff workflows
+- fix: remove shellcheck from pre-apply hook
+- fix: remove permissions from auto-cleanup-dns uses job
+- fix: restore global id-token permissions
+- fix: correct boolean coercion in reusable workflow inputs
+- fix: remove environment from debug and config
+- fix: remove duplicate EC_API_KEY
+- fix: add missing EC_API_KEY secret
+- fix: dev environment option in 99-ops-terraform
+- fix: pass EC_API_KEY to pre_apply script env on main (#152)
+- fix: replace secrets: inherit with explicit mapping to prevent cross-org startup failure (#140)
+- fix: resolve nested workflow startup failures in stress test suite (#139)
+- fix: resolve startup_failure by declaring missing input dns_record_name in 99-ops-utility (#136)
+- fix: actually point stress test to v8 (perfect shell) (#135)
+- fix: convert boolean inputs in 99-ops-utility to string + restore provision chain (#126)
+- fix: remove extra secrets from provision-minimal callee (not defined in provision-infra-minimal) (#117)
+- fix: remove extra cloud_provider from provision-minimal callee (#116)
+- fix: remove stack input from provision-minimal (provision-infra-minimal has no stack input) (#115)
+- fix: convert boolean literals and types to string in provision-minimal (#114)
+- fix: change literal boolean apply: true to string apply: 'true' in provision (#112)
+- fix: remove boolean literal comparisons (== true) from if conditions in provision-infra (#111)
+- fix: align workflow_dispatch and workflow_call input types in provision-infra (#109)
+- fix: explicit ternary for apply/destroy/vpc_peering to resolve WD vs WC type conflict (#108)
+- fix: convert boolean comparison expressions to string ternaries in provision-infra (#107)
+- fix: convert boolean expressions to string in stress-test-provision (#105)
+- fix: convert all boolean inputs to string in terraform chain to resolve startup_failure (#104)
+- fix: revert provision internal refs back to @main to use type:string fixes (#87)
+- fix: change expression-evaluated boolean inputs to string type to fix startup_failure (#86)
+- fix: revert internal refs in provision to @v2.11.6 (#84)
+- fix: remove duplicated type definition in mode inputs
+- fix: add missing type string to mode inputs in reusable workflows
+- fix: use @main for internal workflow references to resolve missing secrets
+- fix: add secrets directly to v2.11.6 workflows safely
+- fix: remove newline from github actions expressions broken by ruamel
+- fix: remove newline from uses directives broken by ruamel (#82)
+- fix: remove top-level permissions from reusable workflows
+
+## v2.11.52 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.51
+- chore: update CHANGELOG for v2.11.50
+- chore: update CHANGELOG for v2.11.49
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
+## v2.11.51 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.50
+- chore: update CHANGELOG for v2.11.49
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
+## v2.11.50 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.49
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
+## v2.11.49 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.48
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
+## v2.11.48 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.47
+
+### Fixed
+
+
+## v2.11.47 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.46
+
+### Fixed
+
+
+## v2.11.46 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.46
+- chore: update CHANGELOG for v2.11.45
+
+### Fixed
+
+
+## v2.11.45 (2026-07-05)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.44
+- chore: update CHANGELOG for v2.11.43
+- chore: update CHANGELOG for v2.11.43
+
+### Fixed
+
+- fix: STRICT dynamic ACM resolution requires BOTH apex and wildcard SANs
+
+## v2.11.44 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.43
+- chore: update CHANGELOG for v2.11.43
+
+### Fixed
+
+- fix: STRICT dynamic ACM resolution requires BOTH apex and wildcard SANs
+
+## v2.11.43 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.43
+
+### Fixed
+
+
+## v2.11.42 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.42
+
+### Fixed
+
+
+## v2.11.41 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.40
+
+### Fixed
+
+- fix: STRICT dynamic ACM resolution (ISSUED + wildcard SANs)
+
+## v2.11.40 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.39
+
+### Fixed
+
+
+## v2.11.39 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.38
+
+### Fixed
+
+
+## v2.11.38 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.37
+
+### Fixed
+
+
+## v2.11.37 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.36
+
+### Fixed
+
+
+## v2.11.36 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.35
+
+### Fixed
+
+
+## v2.11.35 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.34
+- chore: update CHANGELOG for v2.11.33
+
+### Fixed
+
+
+## v2.11.34 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.33
+
+### Fixed
+
+
+## v2.11.33 (2026-07-04)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.32
+
+### Fixed
+
+
+## v2.11.32 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.32
+- chore: update CHANGELOG for v2.11.32
+- chore: update CHANGELOG for v2.11.32
+- chore: update CHANGELOG for v2.11.31
+- chore: update CHANGELOG for v2.11.30
+- chore: update CHANGELOG for v2.11.29
+- chore: update CHANGELOG for v2.11.28
+- chore: update CHANGELOG for v2.11.27
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.31 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.30
+- chore: update CHANGELOG for v2.11.29
+- chore: update CHANGELOG for v2.11.28
+- chore: update CHANGELOG for v2.11.27
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.30 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.29
+- chore: update CHANGELOG for v2.11.28
+- chore: update CHANGELOG for v2.11.27
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.29 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.28
+- chore: update CHANGELOG for v2.11.27
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.28 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.27
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.27 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.26
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.26 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.25
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.25 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.24
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.24 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.23 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.23
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.22 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: update CHANGELOG for v2.11.22
+- chore: update CHANGELOG for v2.11.21
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## v2.11.21 (2026-07-04)
+
+### Added
+
+- feat: implement Plan 189 CI/CD hardening guards 1, 3, 4 (#180)
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-07-03
+- chore: end-of-day governance sync — 2026-07-02
+- chore: update CHANGELOG for v2.11.20
+
+### Fixed
+
+
+## Unreleased
+
+### Fixed
+
+- fix(health): restore FREEZE-annotated drift-check pins in `90-daily-health-check.yml` to `@v2.1.74`. The v2.11.20 `@main` un-floating sweep incorrectly bumped these two intentional chaos-test pins to the current release tag, which triggers a GitHub Actions self-referencing loop (`startup_failure`). `checkengines` engine4 skips `FREEZE` lines, so this was not caught automatically.
+- fix(ci): fixed broken `elastic` stack variables and bumped third-party data stack infra-core refs to canonical `v2.11.4` (Plan 178 Phase 2)
+
+## v2.11.20 (2026-07-02)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: release v2.11.20
+- chore: update CHANGELOG for v2.11.19
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
+## v2.11.19 (2026-06-27)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+
+### Fixed
+
+- fix: add task role naming fallback in ecs deploy action
+
+## [Unreleased]
+
+## v2.11.16 (2026-06-26)
+### Added
+- feat(ci): `third-party/{mongodb,elastic}/pre_apply.sh` now emit a single greppable outcome line `PRE_APPLY_RESULT[<component>]=<TOKEN>` (+ GitHub `::notice::` + run-summary row) at every exit path — tokens `IMPORTED / NO_ORPHAN / ALREADY_IN_STATE / IMPORT_FAILED / SKIPPED_*`. Makes the Plan 176 import smoke test assertable from logs.
+- feat(ci): `cleanup-orphaned-data.sh` emits a greppable `CLEANUP_RESULT=<CLEAN|ORPHANS_DETECTED|ORPHANS_TERMINATED|ORPHANS_PARTIAL>` line (+ `::notice::` + run-summary Result row) for monitoring/alerting on the nightly sweep.
 - feat(ci): **Plan 177 Phase 1** — operationalized orphan reconciliation. `cleanup-orphaned-data.sh` hardened: Elastic now reconciles by **deployment ID** (names are not unique in Elastic Cloud — fixes detection of duplicate orphans), sweep is **stage-scoped** (state buckets are per-stage), and posts an optional Slack alert (`SLACK_WEBHOOK_URL`) when orphans are found. `99-ops-utility.yml` passes `STAGE` + `SLACK_WEBHOOK_URL` into the cleanup job.
 - feat(ci): **Plan 176** — orphan protection for third-party data stacks. Added `pre_apply.sh` to `third-party/mongodb` and `third-party/elastic` (AWS live stacks): on a non-destroy run they probe the Atlas/Elastic API for a name-matched cluster absent from state and `terraform import` it, preventing duplicate creation after a cancelled apply. Added `cleanup-orphaned-data` action to `99-ops-utility.yml` (+ `.github/scripts/cleanup-orphaned-data.sh`) which reconciles live Atlas clusters / EC deployments against S3 state and terminates in-scope orphans — scoped to the tenant `<namespace>-<client_key>-` prefix, dry-run by default, live deletes gated by a typed `DESTROY-<env>-<stack>` confirmation.
 
@@ -776,7 +1482,6 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 - fix: pass Cloudflare secrets to pre-apply script
 
-## [Unreleased]
 - chore: deep CI/CD maintenance sync across 4 repositories (2026-06-23)
 - feat: add multi-project support to calculate-env-config and pass project parameter through reusable stress test workflows
 - chore: end-of-day governance sync — 2026-06-23

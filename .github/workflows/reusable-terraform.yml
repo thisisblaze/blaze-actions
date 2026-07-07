@@ -279,6 +279,11 @@ jobs:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
 
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -recursive
+        working-directory: ${{ github.workspace }}
+
+
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
@@ -304,7 +309,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure' || contains(inputs.tf_dir, 'db-pod-premium')
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -857,7 +862,7 @@ jobs:
              
              if [[ -n "$DOMAIN_ROOT" && "$DOMAIN_ROOT" != "null" ]]; then
                 echo "Searching certificates for $DOMAIN_ROOT in us-east-1 (CloudFront)..."
-                ARN=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='${DOMAIN_ROOT}'].CertificateArn" --output text | awk '{print $1}')
+                ARN=$(aws acm list-certificates --region us-east-1 --certificate-statuses ISSUED --output json | jq -r --arg domain "$DOMAIN_ROOT" '.CertificateSummaryList | map(select(.SubjectAlternativeNameSummaries != null and (.SubjectAlternativeNameSummaries | index("*." + $domain) != null) and (.SubjectAlternativeNameSummaries | index($domain) != null))) | sort_by(.CreatedAt) | .[-1].CertificateArn // empty')
                 
                 if [[ -n "$ARN" && "$ARN" != "None" ]]; then
                    echo "✅ Resolved ACM ARN: $ARN"

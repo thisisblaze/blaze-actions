@@ -67,7 +67,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "${var.client_key}-${var.stage}-${var.namespace}-tfstate"
-    key    = "infra/${var.project_key}/multi-site/network.tfstate"
+    key    = "infra/${var.project_key}/multi-site/${var.stage}/network.tfstate"
     region = var.aws_region
   }
 }
@@ -133,6 +133,7 @@ module "image_resize" {
 # 1 distribution · all site domains as aliases · ALB as origin
 # ──────────────────────────────────────────────────────────────────────────────
 resource "aws_cloudfront_distribution" "multi_site" {
+  # trivy:ignore:AVD-AWS-0011 (exp:2026-12-31 | WAF omitted for low-traffic sites per cost policy; to be reviewed end-of-year)
   comment         = local.cf_comment
   enabled         = true
   is_ipv6_enabled = true

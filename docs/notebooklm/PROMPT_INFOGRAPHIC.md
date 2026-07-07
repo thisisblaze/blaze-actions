@@ -33,7 +33,7 @@
 │                                            │
 │  54 workflows │ 24 reusable │ 3 clouds     │
 └──────────────────┬─────────────────────────┘
-     calls via     │  uses: @v2.2.2
+     calls via     │  uses: @v2.11.55
                    │
         ┌──────────┼──────────┐
         ▼          ▼          ▼
@@ -52,7 +52,7 @@
 jobs:
   deploy:
     uses: thisisblaze/blaze-actions/
-      .github/workflows/02-deploy-app.yml@v2.2.2
+      .github/workflows/02-deploy-app.yml@v2.11.55
     with:
       environment: prod
       cloud_provider: aws

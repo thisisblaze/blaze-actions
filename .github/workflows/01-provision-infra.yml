@@ -263,10 +263,8 @@ on:
         required: false
       SONAR_TOKEN:
         required: false
-permissions:
-  id-token: write
-  contents: read
-  actions: write
+
+
 
 concurrency:
   group: infra-${{ inputs.project || 'thisisblaze' }}-${{ inputs.environment }}-${{ inputs.stack }}-${{ inputs.branch_name || 'host' }}
@@ -278,9 +276,6 @@ env:
 jobs:
   configuration:
     name: Configuration
-    permissions:
-      id-token: write
-      contents: read
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 15
@@ -319,7 +314,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@main
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.11.55
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -373,7 +368,7 @@ jobs:
 
       - name: Authenticate to Azure
         if: inputs.cloud_provider == 'azure'
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -381,7 +376,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@main
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -398,9 +393,6 @@ jobs:
 
   build_sharp_layer:
     name: Build Sharp Lambda Layer
-    permissions:
-      id-token: write
-      contents: read
     needs: [configuration]
     if: >
       (inputs.stack == 'network' || inputs.stack == 'dedicated-network') &&
@@ -439,7 +431,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@main
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.11.55
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -450,10 +442,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    permissions:
-      id-token: write
-      contents: read
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.11.55
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -485,13 +474,15 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ inputs.apply && 'true' || 'false' }}
-      destroy: ${{ inputs.destroy && 'true' || 'false' }}
-      build_sharp: ${{ inputs.enable_image_resize == 'true' && inputs.stack == 'network' && 'true' || 'false' }}
+      apply: ${{ (inputs.apply == true || inputs.apply == 'true') && 'true' || 'false' }}
+      destroy: ${{ (inputs.destroy == true || inputs.destroy == 'true') && 'true' || 'false' }}
+      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
         if [[ -f "$SCRIPT" ]]; then
+          echo "🔍 Syntax checking $SCRIPT..."
+          bash -n "$SCRIPT" || exit 1
           export TF_DIR="$(pwd)"
           export STACK_NAME="${{ inputs.stack }}"
           export CLOUD_PROVIDER="${{ inputs.cloud_provider }}"
@@ -704,7 +695,7 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@main
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.11.55
     with:
       environment: ${{ inputs.environment }}
       action: "remove_cname"
@@ -719,9 +710,6 @@ jobs:
   # This job reads it from TF state and re-applies the network stack automatically.
   post_provision_azure_cdn:
     name: 🌐 Azure Front Door — Wire Origin (Auto)
-    permissions:
-      id-token: write
-      contents: read
     needs: [configuration, provision]
     if: >
       inputs.cloud_provider == 'azure' &&
@@ -744,7 +732,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Azure Login
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

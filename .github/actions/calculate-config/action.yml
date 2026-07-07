@@ -328,7 +328,12 @@ runs:
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
         echo "shared_host_project=$SHARED_HOST_PROJECT" >> "$GITHUB_OUTPUT"
         
-        IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+        IMAGE_PROJECT_KEY_OVERRIDE=$(echo "$MERGED_CONFIG" | jq -r '.common.IMAGE_PROJECT_KEY_OVERRIDE // ""')
+        if [[ -n "$IMAGE_PROJECT_KEY_OVERRIDE" ]]; then
+           IMAGE_PROJECT_KEY="$IMAGE_PROJECT_KEY_OVERRIDE"
+        else
+           IMAGE_PROJECT_KEY="${SHARED_HOST_PROJECT:-$PROJECT_KEY}"
+        fi
         echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
         
         echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
@@ -551,13 +556,13 @@ runs:
                if [[ "$STACK" == "multi-site-app" && "$INPUT_PROJECT" != "thisisblaze" && "$INPUT_PROJECT" != "" ]]; then
                   STACK_DIR="multi-site-app-${INPUT_PROJECT}"
                   # State key uses the project_key to isolate state per project
-                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/app.tfstate"
+                  STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/app.tfstate"
                else
                   STACK_DIR="$STACK"
                   if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
-                     STATE_KEY="gcp/multi-site/${STACK}"
+                     STATE_KEY="gcp/multi-site/${STAGE_KEY}/${STACK}"
                   else
-                     STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STACK#multi-site-}.tfstate"
+                     STATE_KEY="infra/${PROJECT_KEY}/multi-site/${STAGE_KEY}/${STACK#multi-site-}.tfstate"
                   fi
                fi
 
