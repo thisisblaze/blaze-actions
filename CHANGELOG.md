@@ -2,6 +2,20 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.4 (2026-07-07)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.3
+- chore: update CHANGELOG for v2.12.3
+
+### Fixed
+
+
 ## v2.12.3 (2026-07-07)
 
 ### Added
