@@ -187,7 +187,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.2
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.3
     with:
       environment: ${{ inputs.environment }}
       cloud_provider: "aws"
@@ -204,7 +204,7 @@ jobs:
     name: Auto Cleanup DNS (Failure)
     needs: [configuration, terraform]
     if: failure() && needs.configuration.result == 'success' && inputs.stack == 'app'
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.2
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.3
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
