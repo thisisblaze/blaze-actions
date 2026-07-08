@@ -6,7 +6,7 @@
 > **Status: SCALED (Multi-Tenant V2)**. Repository execution instructions are strictly mapped to Phase 1 Foundation / Phase 2 Tenant orchestrator layers.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v2.11.55-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
+[![Version](https://img.shields.io/badge/version-v2.12.6-blue.svg)](https://github.com/thisisblaze/blaze-actions/releases)
 
 > [!CAUTION]
 > ### 🚨 THIS REPO IS A WORKFLOW LIBRARY — NOT FOR DIRECT RUNS 🚨

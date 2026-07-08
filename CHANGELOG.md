@@ -2,6 +2,11 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.6 (2026-07-08)
+
+### Fixed
+- fix(reusable-provision-db-users): downgrade customDBRoles API endpoint from v2 to v1.0, bypassing 406 Accept Header validation rejections from MongoDB Atlas.
+
 ## v2.12.5 (2026-07-08)
 
 ### Added
