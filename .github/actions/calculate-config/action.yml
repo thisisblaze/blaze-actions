@@ -329,7 +329,8 @@ runs:
 
         echo "client_key=$CLIENT_KEY" >> "$GITHUB_OUTPUT"
         echo "project_key=$PROJECT_KEY" >> "$GITHUB_OUTPUT"
-        IMAGE_PROJECT_KEY="$PROJECT_KEY"
+        IMAGE_PROJECT_KEY=$(echo "$MERGED_CONFIG" | jq -r '.common.SHARED_HOST_PROJECT // ""')
+        [ -z "$IMAGE_PROJECT_KEY" ] && IMAGE_PROJECT_KEY="$PROJECT_KEY"
         echo "image_project_key=$IMAGE_PROJECT_KEY" >> "$GITHUB_OUTPUT"
         
         echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
@@ -575,7 +576,7 @@ runs:
 
         STATE_KEY=$(echo "$STATE_KEY" | sed 's|//|/|g')
 
-        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${PROJECT_KEY}-${STAGE_KEY}-cluster"
+        CLUSTER_NAME="${NAMESPACE}-${CLIENT_KEY}-${IMAGE_PROJECT_KEY}-${STAGE_KEY}-cluster"
         echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
         echo "build_root=$BUILD_ROOT" >> $GITHUB_OUTPUT
 

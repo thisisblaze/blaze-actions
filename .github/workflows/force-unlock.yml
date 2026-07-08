@@ -157,14 +157,14 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.4
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.5
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.4
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.5
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: ${{ inputs.stack }}

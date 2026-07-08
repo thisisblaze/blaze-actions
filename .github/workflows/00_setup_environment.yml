@@ -197,7 +197,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Calculate Configuration
         id: calc
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.12.4
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-env-config@v2.12.5
         with:
           environment: ${{ inputs.environment }}
           terraform_stack: network
@@ -235,7 +235,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.4
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.5
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -248,7 +248,7 @@ jobs:
 
       - name: Setup Blaze Infra
         if: inputs.cloud_provider == 'aws'
-        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.4
+        uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.5
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ needs.calculate-config.outputs.aws_region }}
