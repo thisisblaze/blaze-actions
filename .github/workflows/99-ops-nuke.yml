@@ -1773,7 +1773,7 @@ jobs:
     if: inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'DEV' }}
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -2436,7 +2436,7 @@ jobs:
     if: inputs.nuke_mode == 'project'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'DEV' }}
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -2655,7 +2655,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: "thisisblaze"
       stack: "multi-site-app"
       apply: true
@@ -2684,7 +2684,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: "support"
       stack: "multi-site-app"
       apply: true
@@ -2714,7 +2714,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: "blazecms"
       stack: "multi-site-app"
       apply: true
@@ -2748,7 +2748,7 @@ jobs:
         uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.6
         with:
           project: ${{ inputs.project }}
-          environment: ${{ inputs.environment }}
+          environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: "multi-site-app"
           deploy_infra: "false"
           build_images: "false"
@@ -2768,7 +2768,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "multi-site-app"
       apply: true
@@ -2799,7 +2799,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "dedicated-network"
       apply: true
@@ -2835,7 +2835,7 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
     with:
       cloud_provider: "aws"
-      environment: ${{ inputs.environment }}
+      environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "multi-site-network"
       apply: true
@@ -3024,7 +3024,7 @@ jobs:
       (needs.nuke-cleanup-dns-env.result == 'success' || needs.nuke-cleanup-dns-env.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'DEV' }}
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
