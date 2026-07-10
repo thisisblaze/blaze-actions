@@ -22,12 +22,7 @@ on:
         required: false
       nuke_mode:
         description: "Nuke mode: project | all-projects | total (for nuke-environment action only)"
-        type: choice
-        options:
-          - ""
-          - "project"
-          - "all-projects"
-          - "total"
+        type: string
         required: false
         default: ""
       project:
