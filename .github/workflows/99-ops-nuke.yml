@@ -2781,7 +2781,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
       BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ZONE_ID: ${{ secrets[needs.nuke-project-config.outputs.cloudflare_zone_id_key] }}
+      CLOUDFLARE_ZONE_ID: ${{ inputs.project == 'blazecms' && secrets.CLOUDFLARE_ZONE_ID_BLAZECMS_IO || secrets.CLOUDFLARE_ZONE_ID }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
       MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
