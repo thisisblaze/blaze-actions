@@ -3029,7 +3029,7 @@ jobs:
       (needs.destroy-app-blazecms.result == 'success' || needs.destroy-app-blazecms.result == 'skipped') &&
       (needs.destroy-dedicated-network.result == 'success' || needs.destroy-dedicated-network.result == 'skipped') &&
       (needs.destroy-multi-site-network.result == 'success' || needs.destroy-multi-site-network.result == 'skipped') &&
-      (needs.nuke-cleanup-dns-env.result == 'success' || needs.nuke-cleanup-dns.result == 'skipped')
+      (needs.nuke-cleanup-dns-env.result == 'success' || needs.nuke-cleanup-dns-env.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: ${{ inputs.environment }}
