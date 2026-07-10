@@ -696,8 +696,8 @@ jobs:
       # We must reconstruct the key for each stack.
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/app.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -769,8 +769,8 @@ jobs:
       # We must reconstruct the key for each stack.
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/${{ needs.configuration.outputs.project_key }}.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -922,8 +922,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -952,8 +952,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/cloudflare.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       # Tunnel stack needs specific vars?
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
@@ -1011,8 +1011,8 @@ jobs:
   #      bucket: ${{ needs.configuration.outputs.bucket }}
   #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/mongodb.tfstate"
   #      lock_table: ${{ needs.configuration.outputs.lock_table }}
-  #      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-  #      destroy: true
+  #      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+  #      destroy: "true"
   #      tf_vars: |
   #        project_key=${{ needs.configuration.outputs.project_key }}
   #        client_key=${{ needs.configuration.outputs.client_key }}
@@ -1031,8 +1031,8 @@ jobs:
   #      bucket: ${{ needs.configuration.outputs.bucket }}
   #      state_key: "infra/${{ needs.configuration.outputs.project_key }}/third-party/elastic.tfstate"
   #      lock_table: ${{ needs.configuration.outputs.lock_table }}
-  #      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-  #      destroy: true
+  #      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+  #      destroy: "true"
   #      tf_vars: |
   #        project_key=${{ needs.configuration.outputs.project_key }}
   #        client_key=${{ needs.configuration.outputs.client_key }}
@@ -1082,8 +1082,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       pre_apply_script: |
         echo "🔪 Removing deletion protection from Cloud SQL..."
         terraform state list 2>/dev/null | grep 'google_sql_database_instance' | while read RESOURCE; do
@@ -1135,8 +1135,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/cdn.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -1192,8 +1192,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -1248,8 +1248,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/data.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -1300,8 +1300,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: false # We partially destroy by disabling CDN, then full network destroy follows
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "false" # We partially destroy by disabling CDN, then full network destroy follows
       build_sharp: false # Skip building Sharp binaries to save 2+ mins on this run
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
@@ -1362,8 +1362,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -1420,8 +1420,8 @@ jobs:
       bucket: ${{ needs.configuration.outputs.bucket }}
       state_key: "infra/${{ needs.configuration.outputs.project_key }}/${{ needs.configuration.outputs.stage_key }}/network.tfstate"
       lock_table: ${{ needs.configuration.outputs.lock_table }}
-      apply: ${{ inputs.dry_run != true && inputs.dry_run != 'true' }}
-      destroy: true
+      apply: "${{ inputs.dry_run != true && inputs.dry_run != 'true' }}"
+      destroy: "true"
       tf_vars: |
         project_key=${{ needs.configuration.outputs.project_key }}
         client_key=${{ needs.configuration.outputs.client_key }}
@@ -2658,8 +2658,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: "thisisblaze"
       stack: "multi-site-app"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2687,8 +2687,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: "support"
       stack: "multi-site-app"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2717,8 +2717,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: "blazecms"
       stack: "multi-site-app"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2771,8 +2771,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "multi-site-app"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -2802,8 +2802,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "dedicated-network"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
       enable_image_resize: false
       enable_ec2: true
     secrets:
@@ -2838,8 +2838,8 @@ jobs:
       environment: ${{ inputs.environment || 'DEV' }}
       project: ${{ inputs.project }}
       stack: "multi-site-network"
-      apply: true
-      destroy: true
+      apply: "true"
+      destroy: "true"
       enable_image_resize: false
       enable_ec2: true
     secrets:
