@@ -2,6 +2,20 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.7 (2026-07-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: end-of-day governance sync — 2026-07-10
+- chore: update CHANGELOG for v2.12.6
+
+### Fixed
+
+
 ## v2.12.6 (2026-07-08)
 
 ### Added
