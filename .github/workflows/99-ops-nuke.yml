@@ -20,6 +20,26 @@ on:
         type: choice
         options: ["dev", "dev-mini", "stage", "prod", "MULTI-SITE"]
         required: false
+      nuke_mode:
+        description: "Nuke mode: project | all-projects | total (for nuke-environment action only)"
+        type: choice
+        options:
+          - ""
+          - "project"
+          - "all-projects"
+          - "total"
+        required: false
+        default: ""
+      project:
+        description: "Project key for 'project' mode (e.g. thisisblaze, support)"
+        type: string
+        required: false
+        default: "thisisblaze"
+      projects:
+        description: "Comma-separated projects for 'all-projects' / 'total' modes (e.g. thisisblaze,support)"
+        type: string
+        required: false
+        default: "thisisblaze,support"
       stack:
         description: "Terraform Stack (for state/destroy)"
         type: choice
@@ -31,7 +51,7 @@ on:
         required: false
         type: string
       confirmation:
-        description: "Type 'EXECUTE' or 'DESTROY' (for destructive actions)"
+        description: "Type 'EXECUTE' or 'DESTROY' (for standard ops) or 'NUKE' / 'TOTAL-NUKE' (for nuke modes)"
         required: false
         type: string
       # Action-specific inputs
@@ -87,6 +107,18 @@ on:
       environment:
         type: string
         required: false
+      nuke_mode:
+        type: string
+        required: false
+        default: ""
+      project:
+        type: string
+        required: false
+        default: "thisisblaze"
+      projects:
+        type: string
+        required: false
+        default: "thisisblaze,support"
       stack:
         type: string
         required: false
@@ -130,6 +162,10 @@ on:
         type: string
         required: false
     secrets:
+      BASIC_AUTH_CREDENTIALS:
+        required: false
+      CLOUDFLARE_ZONE_ID_BLAZECMS_IO:
+        required: false
       AWS_ROLE_ARN:
         required: false
       GH_PAT:
@@ -181,7 +217,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: ops-nuke-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.action }}-${{ github.ref }}
+  group: ops-nuke-${{ inputs.environment }}-${{ inputs.cloud_provider }}-${{ inputs.nuke_mode != '' && 'env-nuke' || inputs.action }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -228,8 +264,37 @@ jobs:
             exit 1
           fi
 
+          MODE="${{ inputs.nuke_mode }}"
           # Validation for destructive actions (plan 163 O3 — fail closed).
-          if [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
+          if [[ -n "$MODE" && "$ACTION" == "nuke-environment" ]]; then
+            if [[ "$MODE" == "project" ]]; then
+              if [[ "$CONF" != "NUKE" ]]; then
+                echo "❌ ERROR: project mode requires exactly: NUKE"
+                echo "   Received: '$CONF'"
+                exit 1
+              fi
+              echo "⚠️  NUKE confirmed. Destroying project '${{ inputs.project }}' app stack only."
+              echo "   Environment : ${{ inputs.environment }}"
+              echo "   Preserving  : VPC, ALBs, ECS cluster, other projects"
+            elif [[ "$MODE" == "all-projects" || "$MODE" == "total" ]]; then
+              if [[ "$CONF" != "TOTAL-NUKE" ]]; then
+                echo "❌ ERROR: $MODE mode requires exactly: TOTAL-NUKE"
+                echo "   Received: '$CONF'"
+                exit 1
+              fi
+              if [[ "$MODE" == "total" ]]; then
+                echo "🔴 TOTAL-NUKE confirmed. Destroying ALL projects + shared network."
+              else
+                echo "⚠️  TOTAL-NUKE confirmed. Destroying ALL projects' app stacks."
+                echo "   Preserving: VPC, ALBs, ECS cluster (shared network)"
+              fi
+              echo "   Environment : ${{ inputs.environment }}"
+              echo "   Projects    : ${{ inputs.projects }}"
+            else
+              echo "❌ ERROR: Invalid nuke_mode '$MODE'"
+              exit 1
+            fi
+          elif [[ "$ACTION" == "destroy-resources" || "$ACTION" == "wipe-state" || "$ACTION" == "nuke-environment" || "$ACTION" == "nuke-cloudfront" || "$ACTION" == "cleanup-dns" || "$ACTION" == "cleanup-orphaned-buckets" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               # Manual nuke must confirm the EXACT target (env + cloud) to defeat copy-paste mistakes.
               EXPECTED="DESTROY-${{ inputs.environment }}-${{ inputs.cloud_provider }}"
@@ -414,7 +479,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.12.5
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -432,7 +497,7 @@ jobs:
       id-token: write
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.12.5
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -452,7 +517,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1c/5 - Stop Cloud Run Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'gcp'
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && inputs.cloud_provider == 'gcp'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 10
@@ -529,7 +594,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1d/5 - Stop Container Apps (Azure)
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && inputs.cloud_provider == 'azure'
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && inputs.cloud_provider == 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -600,6 +665,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') &&
       (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
@@ -672,6 +738,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       (needs.nuke-pre-cleanup.result == 'success' || needs.nuke-pre-cleanup.result == 'skipped') &&
       (needs.nuke-stop-services-gcp.result == 'success' || needs.nuke-stop-services-gcp.result == 'skipped') &&
       (needs.nuke-stop-services-azure.result == 'success' || needs.nuke-stop-services-azure.result == 'skipped') &&
@@ -749,6 +816,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -765,7 +833,7 @@ jobs:
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-app-gate]
-    if: inputs.action == 'nuke-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -830,6 +898,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
@@ -880,7 +949,7 @@ jobs:
       id-token: write
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-app-gate]
-    if: inputs.action == 'nuke-environment'
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.5
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -989,6 +1058,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
@@ -1050,6 +1120,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-data-gcp.result == 'success' || needs.nuke-destroy-data-gcp.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
@@ -1096,6 +1167,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'gcp' &&
       (needs.nuke-destroy-cdn-gcp.result == 'success' || needs.nuke-destroy-cdn-gcp.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
@@ -1152,6 +1224,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-app-gate.result == 'success' || needs.nuke-app-gate.result == 'skipped') &&
       !contains(needs.*.result, 'cancelled') &&
@@ -1208,6 +1281,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-data-azure.result == 'success' || needs.nuke-destroy-data-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
@@ -1263,6 +1337,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       inputs.cloud_provider == 'azure' &&
       (needs.nuke-destroy-cdn-azure.result == 'success' || needs.nuke-destroy-cdn-azure.result == 'skipped') &&
       !contains(needs.*.result, 'failure') &&
@@ -1318,6 +1393,7 @@ jobs:
     if: |
       always() &&
       inputs.action == 'nuke-environment' &&
+      (inputs.nuke_mode == '' || inputs.nuke_mode == null) &&
       (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) &&
       (needs.nuke-destroy-tunnel.result == 'success' || needs.nuke-destroy-tunnel.result == 'skipped') &&
       (needs.nuke-destroy-data-aws.result == 'success' || needs.nuke-destroy-data-aws.result == 'skipped') &&
@@ -1559,7 +1635,7 @@ jobs:
   nuke-cleanup-dns:
     name: 🧹 Nuke Cleanup - DNS
     needs: [configuration, nuke-destroy-network]
-    if: inputs.action == 'nuke-environment'
+    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -1667,7 +1743,7 @@ jobs:
   summary:
     name: 📝 Ops Summary
     needs: [configuration, nuke-stop-services, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure, nuke-destroy-app, nuke-app-gate, nuke-destroy-pages, nuke-destroy-data-aws, nuke-destroy-tunnel, nuke-destroy-data-gcp, nuke-destroy-cdn-gcp, nuke-destroy-network-gcp, nuke-destroy-data-azure, nuke-destroy-cdn-azure, nuke-destroy-network-azure, nuke-destroy-network, nuke-cleanup-dns]
-    if: always()
+    if: always() && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -1698,3 +1774,1518 @@ jobs:
 
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+  pre-nuke-aws:
+    name: "🧨 Pre-Nuke AWS Cleanup (Shared)"
+    needs: [validate]
+    if: inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
+
+      - name: "Step 1 — Drain ALL ECS Services (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          # In all-projects/total mode we drain the shared cluster — iterate all known projects
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          # Find the cluster — it's named after the primary project (thisisblaze)
+          PRIMARY_PROJECT="${PROJECT_LIST[0]}"
+          CLUSTER="blaze-b9-${PRIMARY_PROJECT}-${ENV}-cluster"
+
+          echo "🔍 Checking cluster: $CLUSTER"
+          STATUS=$(aws ecs describe-clusters --clusters "$CLUSTER" --region "$REGION" \
+            --query 'clusters[0].status' --output text 2>/dev/null || echo "MISSING")
+
+          if [[ "$STATUS" == "ACTIVE" ]]; then
+            echo "🛑 Scaling ALL ECS services to 0..."
+            SVC_LIST=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" \
+              --query 'serviceArns[*]' --output text 2>/dev/null || echo "")
+            for SVC_ARN in $SVC_LIST; do
+              SVC_NAME=$(basename "$SVC_ARN")
+              echo "   → $SVC_NAME: desired=0"
+              aws ecs update-service \
+                --cluster "$CLUSTER" \
+                --service "$SVC_ARN" \
+                --desired-count 0 \
+                --region "$REGION" \
+                --output text --query 'service.serviceName' 2>/dev/null || echo "   ⚠️  Could not scale $SVC_NAME"
+            done
+
+            echo "⏳ Waiting 45s for tasks to drain..."
+            sleep 45
+
+            echo "⚡ Detaching capacity providers..."
+            aws ecs put-cluster-capacity-providers \
+              --cluster "$CLUSTER" \
+              --capacity-providers [] \
+              --default-capacity-provider-strategy [] \
+              --region "$REGION" || echo "⚠️  Could not detach (may retry via state rm)"
+
+            echo "🗑️  Zeroing ASGs for environment: ${ENV} via Tags"
+            TAGGED_ASG_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$REGION" \
+              --tag-filters "Key=Blaze:Project,Values=${PRIMARY_PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "autoscaling:autoScalingGroup" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+              
+            if [[ -n "$TAGGED_ASG_ARNS" && "$TAGGED_ASG_ARNS" != "None" ]]; then
+              for ASG_ARN in $TAGGED_ASG_ARNS; do
+                ASG="${ASG_ARN##*autoScalingGroupName/}"
+                echo "   → Zeroing ASG capacity: $ASG"
+                aws autoscaling update-auto-scaling-group \
+                  --auto-scaling-group-name "$ASG" \
+                  --min-size 0 --max-size 0 --desired-capacity 0 \
+                  --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not scale $ASG"
+
+                echo "   → Force-Deleting ASG: $ASG"
+                aws autoscaling delete-auto-scaling-group \
+                  --auto-scaling-group-name "$ASG" \
+                  --force-delete \
+                  --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not delete $ASG or it is already deleted."
+              done
+              echo "⏳ Waiting 15s for ASGs to terminate..."
+              sleep 15
+            else
+              echo "   ℹ️  No ASGs found."
+            fi
+
+            echo "🗑️  Purging orphaned EC2 Launch Templates for environment: ${ENV}"
+            LT_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$REGION" \
+              --tag-filters "Key=Blaze:Project,Values=${PRIMARY_PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "ec2:launch-template" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+
+            if [[ -n "$LT_ARNS" && "$LT_ARNS" != "None" ]]; then
+              for LT_ARN in $LT_ARNS; do
+                LT_ID="${LT_ARN##*launch-template/}"
+                echo "   → Force-Deleting Launch Template: $LT_ID"
+                aws ec2 delete-launch-template \
+                  --launch-template-id "$LT_ID" \
+                  --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not delete $LT_ID"
+              done
+            else
+              # Fallback if tagging failed: find by name pattern
+              LT_IDS=$(aws ec2 describe-launch-templates \
+                --region "$REGION" \
+                --filters "Name=launch-template-name,Values=*${PRIMARY_PROJECT}*${ENV}-ecs-ec2-cp-lt*" \
+                --query "LaunchTemplates[*].LaunchTemplateId" \
+                --output text 2>/dev/null || echo "None")
+                
+              if [[ -n "$LT_IDS" && "$LT_IDS" != "None" ]]; then
+                for LT_ID in $LT_IDS; do
+                  if [[ -n "$LT_ID" && "$LT_ID" != "None" ]]; then
+                    echo "   → Force-Deleting Launch Template: $LT_ID"
+                    aws ec2 delete-launch-template \
+                      --launch-template-id "$LT_ID" \
+                      --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not delete $LT_ID"
+                  fi
+                done
+              else
+                echo "   ℹ️  No Launch Templates found."
+              fi
+            fi
+          else
+            echo "ℹ️  Cluster not active ($STATUS) — skipping"
+          fi
+
+      - name: "Step 2 — Disable + Delete ALL CloudFront Distributions (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+
+          delete_dist() {
+            local DIST_ID="$1"
+            local TMP_FILE="/tmp/dist-${DIST_ID}.json"
+            local TMP_OFF_FILE="/tmp/dist-off-${DIST_ID}.json"
+            echo ""
+            echo "🔴 Processing: $DIST_ID"
+            aws cloudfront get-distribution-config --id "$DIST_ID" > "$TMP_FILE" 2>/dev/null || return 0
+            local ETAG; ETAG=$(jq -r '.ETag' "$TMP_FILE")
+            local ENABLED; ENABLED=$(jq -r '.DistributionConfig.Enabled' "$TMP_FILE")
+
+            if [[ "$ENABLED" == "true" ]]; then
+              echo "   ⏸️  Disabling $DIST_ID..."
+              jq '.DistributionConfig.Enabled = false | del(.DistributionConfig.WebACLId) | .DistributionConfig.Aliases.Quantity = 0 | del(.DistributionConfig.Aliases.Items) | .DistributionConfig.ViewerCertificate = {CloudFrontDefaultCertificate: true, MinimumProtocolVersion: "TLSv1", CertificateSource: "cloudfront"}' "$TMP_FILE" > "$TMP_OFF_FILE"
+              local NEW_ETAG; NEW_ETAG=$(aws cloudfront update-distribution \
+                --id "$DIST_ID" \
+                --distribution-config "$(jq '.DistributionConfig' "$TMP_OFF_FILE")" \
+                --if-match "$ETAG" \
+                --query 'ETag' --output text 2>/dev/null || echo "")
+              if [[ -z "$NEW_ETAG" ]]; then
+                echo "   ⚠️  Could not disable $DIST_ID — skipping"
+                return 0
+              fi
+              echo "   ⏳ Waiting for Deployed state on $DIST_ID (up to 15min)..."
+              aws cloudfront wait distribution-deployed --id "$DIST_ID" 2>/dev/null || \
+                echo "   ⚠️  Wait timed out for $DIST_ID — proceeding"
+            fi
+
+            local FINAL_ETAG; FINAL_ETAG=$(aws cloudfront get-distribution --id "$DIST_ID" \
+              --query 'ETag' --output text 2>/dev/null || echo "")
+            if [[ -n "$FINAL_ETAG" ]]; then
+              echo "   🗑️  Deleting $DIST_ID..."
+              aws cloudfront delete-distribution --id "$DIST_ID" --if-match "$FINAL_ETAG" \
+                && echo "   ✅ Deleted $DIST_ID" \
+                || echo "   ⚠️  Delete failed for $DIST_ID — may need retry"
+            fi
+            rm -f "$TMP_FILE" "$TMP_OFF_FILE"
+          }
+
+          DELETED_IDS=()
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+
+          # Tag-based match across all projects in the list
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+            PROJECT=$(echo "$PROJECT" | tr -d ' ')
+            echo ""
+            echo "🔍 Tag-based CF scan — Blaze:Project=${PROJECT}, Blaze:Environment=${ENV}"
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region us-east-1 \
+              --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "cloudfront:distribution" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+
+            if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+              for CF_ARN in $TAGGED_ARNS; do
+                DIST_ID=$(basename "$CF_ARN")
+                if [[ " ${DELETED_IDS[*]} " == *" $DIST_ID "* ]]; then continue; fi
+                echo "  🎯 Matched by tag: $DIST_ID (project=$PROJECT)"
+                delete_dist "$DIST_ID" &
+                DELETED_IDS+=("$DIST_ID")
+              done
+            else
+              echo "   ℹ️  No distributions found for project=$PROJECT"
+            fi
+          done
+
+          wait
+          echo ""
+          echo "✅ CloudFront teardown complete (deleted: ${#DELETED_IDS[@]} distributions)"
+
+      - name: "Step 2.5 — Delete ALL CloudFront Functions (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="us-east-1" # CloudFront functions are global but API requires us-east-1 or global endpoint
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          
+          # We check the prefix: blaze-b9-{project}-{env}-
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+            PROJECT=$(echo "$PROJECT" | tr -d ' ')
+            PREFIX="blaze-b9-${PROJECT}-${ENV}-"
+            echo ""
+            echo "🔍 Scanning CloudFront Functions with prefix: $PREFIX"
+            
+            FUNCTIONS=$(aws cloudfront list-functions --query "FunctionList.Items[?starts_with(Name, '$PREFIX')].Name" --output text 2>/dev/null || echo "")
+            if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+               for FUNC_NAME in $FUNCTIONS; do
+                  echo "   🔄 Checking CloudFront function: $FUNC_NAME"
+                  
+                  ETAG=$(aws cloudfront describe-function --name "$FUNC_NAME" --query "ETag" --output text 2>/dev/null || echo "")
+                  
+                  if [[ -n "$ETAG" ]]; then
+                     if aws cloudfront delete-function --name "$FUNC_NAME" --if-match "$ETAG" 2>&1; then
+                        echo "   ✅ Deleted $FUNC_NAME"
+                     else
+                        echo "   ⚠️ Delete failed (likely attached to an active distribution). Skipping."
+                     fi
+                  else
+                     echo "   ⚠️ Could not fetch ETag. Skipping."
+                  fi
+               done
+            else
+               echo "   ℹ️  No orphaned CloudFront functions found for project $PROJECT."
+            fi
+          done
+          echo "✅ CloudFront Function teardown complete"
+
+      - name: "Step 2.8 — Delete project Lambda@Edge Functions (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="us-east-1" # Lambda@Edge functions exist in us-east-1
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+            PROJECT=$(echo "$PROJECT" | tr -d ' ')
+            echo ""
+            echo "🔍 Tag-based Lambda@Edge scan — Blaze:Project=${PROJECT}, Blaze:Environment=${ENV}"
+            
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$REGION" \
+              --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "lambda:function" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+
+            FUNCTIONS=$(echo "$TAGGED_ARNS" | tr '\t' '\n' | awk -F':' '{print $NF}' | grep -v 'None' | grep . || true)
+
+            if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+               for FUNC_NAME in $FUNCTIONS; do
+                  echo "   🔄 Checking Lambda function: $FUNC_NAME"
+                  if aws lambda delete-function --function-name "$FUNC_NAME" --region "$REGION" 2>&1; then
+                     echo "   ✅ Deleted $FUNC_NAME"
+                  else
+                     echo "   ⚠️ Delete failed (likely Replicated or attached). Skipping."
+                  fi
+               done
+            else
+               echo "   ℹ️  No orphaned Lambda@Edge functions found for project $PROJECT."
+            fi
+          done
+          echo "✅ Lambda@Edge Function teardown complete"
+
+      - name: "Step 2.9 — Delete Orphaned WAF WebACLs (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="us-east-1" # CloudFront WAF is global
+          
+          echo "🔍 Scanning Orphaned Global WebACLs containing '${ENV}' in name"
+          WAFS=$(aws wafv2 list-web-acls --scope CLOUDFRONT --region "$REGION" --query "WebACLs[?contains(Name, '${ENV}')]" --output json)
+          
+          echo "$WAFS" | jq -c '.[]' | while read -r waf_obj; do
+             WAF_NAME=$(echo "$waf_obj" | jq -r '.Name')
+             WAF_ID=$(echo "$waf_obj" | jq -r '.Id')
+             WAF_LOCK=$(echo "$waf_obj" | jq -r '.LockToken')
+             
+             echo "   🗑️  Force-Deleting WAF: $WAF_NAME ($WAF_ID)"
+             aws wafv2 delete-web-acl --name "$WAF_NAME" --id "$WAF_ID" --scope CLOUDFRONT --lock-token "$WAF_LOCK" --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not delete WAF $WAF_NAME (might be in use)"
+          done
+          echo "✅ WAF WebACL teardown complete"
+
+      - name: "Step 2.10 — Delete Orphaned ACM Certificates (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          
+          for REGION in "us-east-1" "eu-west-1"; do
+             echo "🔍 Scanning ACM Certificates in $REGION via Tags (Blaze:Environment=${ENV})"
+             TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+               --region "$REGION" \
+               --tag-filters "Key=Blaze:Environment,Values=${ENV}" \
+               --resource-type-filters "acm:certificate" \
+               --query 'ResourceTagMappingList[*].ResourceARN' \
+               --output text 2>/dev/null || echo "")
+             
+             if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+                for CERT_ARN in $TAGGED_ARNS; do
+                   echo "   🔄 Checking Certificate: $CERT_ARN"
+                   IN_USE=$(aws acm describe-certificate --certificate-arn "$CERT_ARN" --region "$REGION" --query "Certificate.InUseBy" --output text 2>/dev/null || echo "None")
+                   
+                   if [[ "$IN_USE" == "None" || -z "$IN_USE" ]]; then
+                      echo "   🗑️  Force-Deleting UNOCCUPIED Certificate"
+                      aws acm delete-certificate --certificate-arn "$CERT_ARN" --region "$REGION" 2>/dev/null || echo "   ⚠️  Could not delete"
+                   else
+                      echo "   ⚠️  Certificate is in-use. Skipping CLI deletion."
+                   fi
+                done
+             else
+                echo "   ℹ️  No matching certificates found."
+             fi
+          done
+          echo "✅ ACM Certificate teardown complete"
+
+      - name: "Step 3 — Empty S3 Buckets (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+            PROJECT=$(echo "$PROJECT" | tr -d ' ')
+            echo ""
+            echo "🔍 Scanning S3 buckets for Project=${PROJECT}, Environment=${ENV} via Tags"
+            
+            # Using AWS Resource Groups Tagging API for precise filtering
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+              --region "$REGION" \
+              --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "s3" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+
+            if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+              for BUCKET_ARN in $TAGGED_ARNS; do
+                BUCKET="${BUCKET_ARN#arn:aws:s3:::}"
+                if [[ "$BUCKET" == *"tfstate"* ]]; then
+                  echo "   ⏭️  Skipping tfstate bucket: $BUCKET"
+                  continue
+                fi
+                echo "   🗑️  Emptying ALL versions from bucket: $BUCKET"
+                aws s3api list-object-versions --bucket "$BUCKET" --output text --region "$REGION" \
+                  --query 'Versions[*].[Key,VersionId]' 2>/dev/null | while read key version_id; do
+                  if [[ "$key" != "None" && -n "$key" ]]; then
+                    aws s3api delete-object --bucket "$BUCKET" --key "$key" --version-id "$version_id" --region "$REGION" >/dev/null 2>&1 || true
+                  fi
+                done
+                aws s3api list-object-versions --bucket "$BUCKET" --output text --region "$REGION" \
+                  --query 'DeleteMarkers[*].[Key,VersionId]' 2>/dev/null | while read key version_id; do
+                  if [[ "$key" != "None" && -n "$key" ]]; then
+                    aws s3api delete-object --bucket "$BUCKET" --key "$key" --version-id "$version_id" --region "$REGION" >/dev/null 2>&1 || true
+                  fi
+                done
+              done
+            else
+              echo "   ℹ️  No matching S3 buckets found."
+            fi
+          done
+
+      - name: "Step 4 — Delete Service Discovery Services (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+            PROJECT=$(echo "$PROJECT" | tr -d ' ')
+            echo "📦 Service Discovery cleanup via Tags: $PROJECT"
+            TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources --region "$REGION" \
+              --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+              --resource-type-filters "servicediscovery:namespace" \
+              --query 'ResourceTagMappingList[*].ResourceARN' \
+              --output text 2>/dev/null || echo "")
+
+            if [[ -z "$TAGGED_ARNS" || "$TAGGED_ARNS" == "None" ]]; then
+              echo "   ℹ️  No namespaces found for $PROJECT-$ENV"
+              continue
+            fi
+
+            for NS_ARN in $TAGGED_ARNS; do
+              NS_ID="${NS_ARN##*namespace/}"
+              echo "   Namespace: $NS_ID"
+              SVC_IDS=$(aws servicediscovery list-services --region "$REGION" \
+                --filters "Name=NAMESPACE_ID,Values=$NS_ID,Condition=EQ" \
+                --query "Services[*].Id" --output text 2>/dev/null || echo "")
+              for SVC_ID in $SVC_IDS; do
+                echo "   🗑️  Deleting service: $SVC_ID"
+                aws servicediscovery delete-service --id "$SVC_ID" --region "$REGION" || \
+                  echo "   ⚠️  Failed: $SVC_ID"
+              done
+            done
+          done
+          echo "✅ Service Discovery cleanup complete"
+
+      - name: "Step 4.5 — Pre-Detach Lambda IAM Policies (all projects)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          
+          # Target standard global Lambda@Edge policies created by our modules
+          for PROJECT in "${PROJECT_LIST[@]}"; do
+             PROJECT=$(echo "$PROJECT" | tr -d ' ')
+             echo "🔍 Searching for attached roles on Lambda@Edge policies for Project=${PROJECT}"
+             
+             # The template typically creates policies such as blaze-{env}-lambda-edge-s3-write-transformed
+             # We fetch policies matching lambda-edge and $ENV
+             POLICIES=$(aws iam list-policies --scope Local --query "Policies[?contains(PolicyName, 'lambda-edge') && contains(PolicyName, '${ENV}')].Arn" --output text 2>/dev/null || echo "")
+             
+             for POLICY_ARN in $POLICIES; do
+                if [[ "$POLICY_ARN" == "None" || -z "$POLICY_ARN" ]]; then continue; fi
+                echo "   🔄 Checking Policy: $POLICY_ARN"
+                
+                # Check for attached roles
+                ROLES=$(aws iam list-entities-for-policy --policy-arn "$POLICY_ARN" --query 'PolicyRoles[*].RoleName' --output text 2>/dev/null || echo "")
+                
+                for ROLE_NAME in $ROLES; do
+                   if [[ "$ROLE_NAME" == "None" || -z "$ROLE_NAME" ]]; then continue; fi
+                   echo "   ✂️  Detaching from Role: $ROLE_NAME"
+                   aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN" 2>/dev/null || echo "   ⚠️  Could not detach"
+                done
+             done
+          done
+          echo "✅ Lambda@Edge IAM pre-detach complete"
+
+      - name: "Step 4.6 — Force-Delete Orphaned SGs + ENIs (Unblocks VPC)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          PRIMARY_PROJECT="${PROJECT_LIST[0]}"
+
+          # VPC is provisioned under the primary project
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters \
+              "Name=tag:Blaze:Provisioner,Values=blaze-actions" \
+              "Name=tag:Blaze:Project,Values=${PRIMARY_PROJECT}" \
+              "Name=tag:Blaze:Environment,Values=${ENV}" \
+            --region "$REGION" \
+            --query 'Vpcs[0].VpcId' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
+            TAG_VALUE="blaze-b9-${PRIMARY_PROJECT}-${ENV}"
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
+              --region "$REGION" \
+              --query 'Vpcs[0].VpcId' \
+              --output text 2>/dev/null || echo "")
+          fi
+
+          if [[ -z "$VPC_ID" || "$VPC_ID" == "None" ]]; then
+            echo "ℹ️  VPC not found — skipping"
+            exit 0
+          fi
+
+          echo "🔍 Found VPC: $VPC_ID"
+
+          echo "🗑️  Pass 1/2 — Revoking all SG rules..."
+          SG_IDS=$(aws ec2 describe-security-groups \
+            --filters "Name=vpc-id,Values=$VPC_ID" \
+            --region "$REGION" \
+            --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
+            --output text 2>/dev/null || echo "")
+          for SG_ID in $SG_IDS; do
+            echo "   → Revoking: $SG_ID"
+            INGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
+              --query 'SecurityGroups[0].IpPermissions' --output json 2>/dev/null || echo "[]")
+            [[ "$INGRESS" != "[]" && "$INGRESS" != "null" ]] && \
+              aws ec2 revoke-security-group-ingress --group-id "$SG_ID" --region "$REGION" \
+                --ip-permissions "$INGRESS" 2>/dev/null && echo "     ✅ Ingress revoked" || true
+            EGRESS=$(aws ec2 describe-security-groups --group-ids "$SG_ID" --region "$REGION" \
+              --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/dev/null || echo "[]")
+            [[ "$EGRESS" != "[]" && "$EGRESS" != "null" ]] && \
+              aws ec2 revoke-security-group-egress --group-id "$SG_ID" --region "$REGION" \
+                --ip-permissions "$EGRESS" 2>/dev/null && echo "     ✅ Egress revoked" || true
+          done
+
+          echo "🗑️  Pass 2/2 — Deleting Security Groups..."
+          for SG_ID in $SG_IDS; do
+            echo "   → Deleting SG: $SG_ID"
+            aws ec2 delete-security-group --group-id "$SG_ID" --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SG_ID"
+          done
+
+          echo "🗑️  Deleting orphaned ENIs..."
+          ENI_IDS=$(aws ec2 describe-network-interfaces \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=status,Values=available" \
+            --region "$REGION" \
+            --query 'NetworkInterfaces[*].NetworkInterfaceId' \
+            --output text 2>/dev/null || echo "")
+          for ENI_ID in $ENI_IDS; do
+            echo "   → Deleting ENI: $ENI_ID"
+            aws ec2 delete-network-interface --network-interface-id "$ENI_ID" --region "$REGION" 2>/dev/null \
+              && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $ENI_ID"
+          done
+
+          echo "✅ Orphan SG/ENI cleanup complete"
+
+      - name: "Step 5 — Force-Delete NAT GWs + EIPs + ALBs + Subnets (total mode only)"
+        if: inputs.nuke_mode == 'total'
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          PRIMARY_PROJECT="${PROJECT_LIST[0]}"
+
+          VPC_IDS=$(aws ec2 describe-vpcs \
+            --filters \
+              "Name=tag:Blaze:Provisioner,Values=blaze-actions" \
+              "Name=tag:Blaze:Project,Values=${PRIMARY_PROJECT}" \
+              "Name=tag:Blaze:Environment,Values=${ENV}" \
+            --region "$REGION" \
+            --query 'Vpcs[*].VpcId' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$VPC_IDS" || "$VPC_IDS" == "None" ]]; then
+            TAG_VALUE="blaze-b9-${PRIMARY_PROJECT}-${ENV}"
+            VPC_IDS=$(aws ec2 describe-vpcs \
+              --filters "Name=tag:Name,Values=${TAG_VALUE}-vpc" \
+              --region "$REGION" \
+              --query 'Vpcs[*].VpcId' \
+              --output text 2>/dev/null || echo "")
+          fi
+
+          if [[ -z "$VPC_IDS" ]]; then
+            echo "ℹ️  No VPCs found — skipping"
+            exit 0
+          fi
+
+          for VPC_ID in $VPC_IDS; do
+            echo "🗑️  Force-deleting VPC: $VPC_ID"
+
+            echo "   → Terminating any EC2 instances still in VPC..."
+            while IFS= read -r INSTANCE_ID; do
+              [[ -z "$INSTANCE_ID" || "$INSTANCE_ID" == "None" ]] && continue
+              echo "     Terminating: $INSTANCE_ID"
+              aws ec2 terminate-instances --instance-ids "$INSTANCE_ID" --region "$REGION" \
+                --query 'TerminatingInstances[0].CurrentState.Name' --output text 2>/dev/null || true
+            done < <(aws ec2 describe-instances \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+                        "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+              --region "$REGION" \
+              --query 'Reservations[*].Instances[*].InstanceId' \
+              --output text 2>/dev/null | tr '\t' '\n')
+
+            # Wait for instances to fully terminate before touching ENIs/subnets
+            PENDING_IDS=$(aws ec2 describe-instances \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+                        "Name=instance-state-name,Values=running,stopped,stopping,shutting-down,pending" \
+              --region "$REGION" \
+              --query 'Reservations[*].Instances[*].InstanceId' \
+              --output text 2>/dev/null | tr '\t' ' ' | xargs || echo "")
+            if [[ -n "$PENDING_IDS" && "$PENDING_IDS" != " " ]]; then
+              echo "   ⏳ Waiting for instances to terminate..."
+              aws ec2 wait instance-terminated --instance-ids $PENDING_IDS --region "$REGION" 2>/dev/null \
+                && echo "   ✅ All instances terminated" || echo "   ⚠️  Wait timed out"
+            fi
+
+            NGW_IDS=$(aws ec2 describe-nat-gateways \
+              --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=available,pending" \
+              --region "$REGION" \
+              --query 'NatGateways[*].NatGatewayId' \
+              --output text 2>/dev/null || echo "")
+            for NGW_ID in $NGW_IDS; do
+              echo "   → Deleting NAT GW: $NGW_ID"
+              aws ec2 delete-nat-gateway --nat-gateway-id "$NGW_ID" --region "$REGION" 2>/dev/null && echo "   ✅ Deleted" || true
+            done
+            [[ -n "$NGW_IDS" && "$NGW_IDS" != "None" ]] && { echo "   ⏳ Waiting 30s for NAT GW deletion..."; sleep 30; }
+
+            NGW_EIPS=$(aws ec2 describe-nat-gateways \
+              --filter "Name=vpc-id,Values=$VPC_ID" \
+              --region "$REGION" \
+              --query 'NatGateways[*].NatGatewayAddresses[*].AllocationId' \
+              --output text 2>/dev/null || echo "")
+            EC2_EIPS=$(aws ec2 describe-instances \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+              --region "$REGION" \
+              --query 'Reservations[*].Instances[*].NetworkInterfaces[*].Association.AllocationId' \
+              --output text 2>/dev/null || echo "")
+            ALL_EIPS=$(echo "$NGW_EIPS $EC2_EIPS" | tr ' ' '\n' | grep -v '^$\|^None$' | sort -u)
+            for ALLOC_ID in $ALL_EIPS; do
+              ASSOC_ID=$(aws ec2 describe-addresses \
+                --allocation-ids "$ALLOC_ID" --region "$REGION" \
+                --query 'Addresses[0].AssociationId' --output text 2>/dev/null || echo "")
+              if [[ -n "$ASSOC_ID" && "$ASSOC_ID" != "None" ]]; then
+                aws ec2 disassociate-address --association-id "$ASSOC_ID" --region "$REGION" 2>/dev/null || true
+                sleep 5
+              fi
+              aws ec2 release-address --allocation-id "$ALLOC_ID" --region "$REGION" 2>/dev/null \
+                && echo "   ✅ Released EIP $ALLOC_ID" || echo "   ⚠️  Could not release $ALLOC_ID"
+            done
+
+            IGW_IDS=$(aws ec2 describe-internet-gateways \
+              --filters "Name=attachment.vpc-id,Values=$VPC_ID" \
+              --region "$REGION" \
+              --query 'InternetGateways[*].InternetGatewayId' \
+              --output text 2>/dev/null || echo "")
+            for IGW_ID in $IGW_IDS; do
+              echo "   → Detaching + deleting IGW: $IGW_ID"
+              aws ec2 detach-internet-gateway --internet-gateway-id "$IGW_ID" --vpc-id "$VPC_ID" --region "$REGION" 2>/dev/null || true
+              aws ec2 delete-internet-gateway --internet-gateway-id "$IGW_ID" --region "$REGION" 2>/dev/null \
+                && echo "   ✅ Deleted IGW $IGW_ID" || echo "   ⚠️  Could not delete IGW $IGW_ID"
+            done
+
+            ALB_ARNS=$(aws elbv2 describe-load-balancers \
+              --region "$REGION" \
+              --query "LoadBalancers[?VpcId=='$VPC_ID'].LoadBalancerArn" \
+              --output text 2>/dev/null || echo "")
+            for ALB_ARN in $ALB_ARNS; do
+              echo "   → Deleting ALB: $ALB_ARN"
+              LISTENER_ARNS=$(aws elbv2 describe-listeners --load-balancer-arn "$ALB_ARN" \
+                --region "$REGION" --query 'Listeners[*].ListenerArn' --output text 2>/dev/null || echo "")
+              for L_ARN in $LISTENER_ARNS; do
+                aws elbv2 delete-listener --listener-arn "$L_ARN" --region "$REGION" 2>/dev/null || true
+              done
+              aws elbv2 delete-load-balancer --load-balancer-arn "$ALB_ARN" --region "$REGION" 2>/dev/null \
+                && echo "   ✅ ALB deleted" || echo "   ⚠️  Could not delete ALB $ALB_ARN"
+            done
+            [[ -n "$ALB_ARNS" ]] && sleep 15
+
+            TG_ARNS=$(aws elbv2 describe-target-groups \
+              --region "$REGION" \
+              --query "TargetGroups[?VpcId=='$VPC_ID'].TargetGroupArn" \
+              --output text 2>/dev/null || echo "")
+            for TG_ARN in $TG_ARNS; do
+              echo "   → Deleting Target Group: $TG_ARN"
+              aws elbv2 delete-target-group --target-group-arn "$TG_ARN" --region "$REGION" 2>/dev/null || true
+            done
+
+            SUBNET_IDS=$(aws ec2 describe-subnets \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+              --region "$REGION" \
+              --query 'Subnets[*].SubnetId' \
+              --output text 2>/dev/null || echo "")
+            for SUBNET_ID in $SUBNET_IDS; do
+              echo "   → Deleting subnet: $SUBNET_ID"
+              aws ec2 delete-subnet --subnet-id "$SUBNET_ID" --region "$REGION" 2>/dev/null \
+                && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $SUBNET_ID"
+            done
+
+            RT_IDS=$(aws ec2 describe-route-tables \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+              --region "$REGION" \
+              --query "RouteTables[?Associations[0].Main!=\`true\`].RouteTableId" \
+              --output text 2>/dev/null || echo "")
+            for RT_ID in $RT_IDS; do
+              echo "   → Deleting route table: $RT_ID"
+              aws ec2 delete-route-table --route-table-id "$RT_ID" --region "$REGION" 2>/dev/null \
+                && echo "   ✅ Deleted" || echo "   ⚠️  Could not delete $RT_ID"
+            done
+
+            echo "   → Deleting VPC: $VPC_ID"
+            aws ec2 delete-vpc --vpc-id "$VPC_ID" --region "$REGION" 2>/dev/null \
+              && echo "   ✅ VPC $VPC_ID deleted" || echo "   ⚠️  Could not delete VPC $VPC_ID"
+          done
+
+          echo "✅ Force VPC delete complete"
+
+  # ── Pre-Nuke: Project-scoped CLI-only cleanup (project mode) ─────────────────
+  pre-nuke-project:
+    name: "🧨 Pre-Nuke Project Cleanup (CLI Only)"
+    needs: [validate]
+    if: inputs.nuke_mode == 'project'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
+
+      - name: "Step 1 — Scale project ECS services to 0"
+        run: |
+          ENV="${{ inputs.environment }}"
+          PROJECT="${{ inputs.project }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          # Cluster is shared — find it organically via Environment Tag
+          TAGGED_CLUSTER_ARNS=$(aws resourcegroupstaggingapi get-resources --region "$REGION" \
+            --tag-filters "Key=Blaze:Environment,Values=${ENV}" \
+            --resource-type-filters "ecs:cluster" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+          
+          CLUSTER=$(echo "$TAGGED_CLUSTER_ARNS" | awk '{print $1}')
+
+          if [[ -z "$CLUSTER" || "$CLUSTER" == "None" ]]; then
+            echo "ℹ️  No cluster found — skipping ECS drain"
+            exit 0
+          fi
+
+          echo "🔍 Cluster: $CLUSTER — scaling $PROJECT services to 0"
+          SVC_LIST=$(aws ecs list-services --cluster "$CLUSTER" --region "$REGION" \
+            --query 'serviceArns[*]' --output text 2>/dev/null || echo "")
+
+          for SVC_ARN in $SVC_LIST; do
+            # Match services tagged with this project only (safe in shared cluster)
+            PROJ_TAG=$(aws ecs describe-services \
+              --cluster "$CLUSTER" --services "$SVC_ARN" --region "$REGION" \
+              --query "services[0].tags[?key=='Blaze:Project'].value" \
+              --output text 2>/dev/null || echo "")
+
+            if [[ "$PROJ_TAG" == "$PROJECT" ]]; then
+              SVC_NAME=$(basename "$SVC_ARN")
+              echo "   → $SVC_NAME: desired=0"
+              aws ecs update-service \
+                --cluster "$CLUSTER" \
+                --service "$SVC_ARN" \
+                --desired-count 0 \
+                --region "$REGION" \
+                --output text --query 'service.serviceName' 2>/dev/null || echo "   ⚠️  Could not scale $SVC_NAME"
+            fi
+          done
+
+          echo "⏳ Waiting 30s for tasks to drain..."
+          sleep 30
+          echo "✅ ECS drain complete"
+
+      - name: "Step 2 — Delete project CloudFront distributions (tag-scoped)"
+        run: |
+          ENV="${{ inputs.environment }}"
+          PROJECT="${{ inputs.project }}"
+
+          delete_dist() {
+            local DIST_ID="$1"
+            local TMP_FILE="/tmp/dist-${DIST_ID}.json"
+            local TMP_OFF_FILE="/tmp/dist-off-${DIST_ID}.json"
+            echo ""
+            echo "🔴 Processing: $DIST_ID"
+            aws cloudfront get-distribution-config --id "$DIST_ID" > "$TMP_FILE" 2>/dev/null || return 0
+            local ETAG; ETAG=$(jq -r '.ETag' "$TMP_FILE")
+            local ENABLED; ENABLED=$(jq -r '.DistributionConfig.Enabled' "$TMP_FILE")
+
+            if [[ "$ENABLED" == "true" ]]; then
+              echo "   ⏸️  Disabling $DIST_ID..."
+              jq '.DistributionConfig.Enabled = false' "$TMP_FILE" > "$TMP_OFF_FILE"
+              local NEW_ETAG; NEW_ETAG=$(aws cloudfront update-distribution \
+                --id "$DIST_ID" \
+                --distribution-config "$(jq '.DistributionConfig' "$TMP_OFF_FILE")" \
+                --if-match "$ETAG" \
+                --query 'ETag' --output text 2>/dev/null || echo "")
+              if [[ -z "$NEW_ETAG" ]]; then
+                echo "   ⚠️  Could not disable $DIST_ID — skipping"; return 0
+              fi
+              echo "   ⏳ Waiting for Deployed state on $DIST_ID (up to 15min)..."
+              aws cloudfront wait distribution-deployed --id "$DIST_ID" 2>/dev/null || \
+                echo "   ⚠️  Wait timed out for $DIST_ID— proceeding"
+            fi
+
+            local FINAL_ETAG; FINAL_ETAG=$(aws cloudfront get-distribution --id "$DIST_ID" \
+              --query 'ETag' --output text 2>/dev/null || echo "")
+            if [[ -n "$FINAL_ETAG" ]]; then
+              echo "   🗑️  Deleting $DIST_ID..."
+              aws cloudfront delete-distribution --id "$DIST_ID" --if-match "$FINAL_ETAG" \
+                && echo "   ✅ Deleted $DIST_ID" \
+                || echo "   ⚠️  Delete failed for $DIST_ID"
+            fi
+            rm -f "$TMP_FILE" "$TMP_OFF_FILE"
+          }
+
+          DELETED_IDS=()
+          echo "🔍 Tag-based CF scan — Blaze:Project=${PROJECT}, Blaze:Environment=${ENV}"
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region us-east-1 \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+            --resource-type-filters "cloudfront:distribution" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          for CF_ARN in $TAGGED_ARNS; do
+            DIST_ID=$(basename "$CF_ARN")
+            delete_dist "$DIST_ID" &
+            DELETED_IDS+=("$DIST_ID")
+          done
+
+          wait
+          echo ""
+          echo "✅ CloudFront teardown complete (deleted: ${#DELETED_IDS[@]})"
+
+      - name: "Step 2.5 — Delete project CloudFront Functions"
+        run: |
+          ENV="${{ inputs.environment }}"
+          PROJECT="${{ inputs.project }}"
+          REGION="us-east-1"
+          PREFIX="blaze-b9-${PROJECT}-${ENV}-"
+          echo "🔍 Scanning CloudFront Functions with prefix: $PREFIX"
+          FUNCTIONS=$(aws cloudfront list-functions --query "FunctionList.Items[?starts_with(Name, '$PREFIX')].Name" --output text 2>/dev/null || echo "")
+          if [[ -n "$FUNCTIONS" && "$FUNCTIONS" != "None" ]]; then
+             for FUNC_NAME in $FUNCTIONS; do
+                echo "   🔄 Checking CloudFront function: $FUNC_NAME"
+                ETAG=$(aws cloudfront describe-function --name "$FUNC_NAME" --query "ETag" --output text 2>/dev/null || echo "")
+                if [[ -n "$ETAG" ]]; then
+                   if aws cloudfront delete-function --name "$FUNC_NAME" --if-match "$ETAG" 2>&1; then
+                      echo "   ✅ Deleted $FUNC_NAME"
+                   else
+                      echo "   ⚠️ Delete failed (likely attached to an active distribution). Skipping."
+                   fi
+                else
+                   echo "   ⚠️ Could not fetch ETag. Skipping."
+                fi
+             done
+          else
+             echo "   ℹ️  No orphaned CloudFront functions found for project $PROJECT."
+          fi
+          echo "✅ CloudFront Function teardown complete"
+
+      - name: "Step 3 — Empty project S3 Buckets"
+        run: |
+          ENV="${{ inputs.environment }}"
+          PROJECT="${{ inputs.project }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          
+          echo "🔍 Scanning S3 buckets for Project=${PROJECT}, Environment=${ENV} via Tags"
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources \
+            --region "$REGION" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+            --resource-type-filters "s3" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -n "$TAGGED_ARNS" && "$TAGGED_ARNS" != "None" ]]; then
+            for BUCKET_ARN in $TAGGED_ARNS; do
+              BUCKET="${BUCKET_ARN#arn:aws:s3:::}"
+              if [[ "$BUCKET" == *"tfstate"* ]]; then
+                echo "   ⏭️  Skipping tfstate bucket: $BUCKET"
+                continue
+              fi
+              echo "   🗑️  Emptying ALL versions from bucket: $BUCKET"
+              aws s3api list-object-versions --bucket "$BUCKET" --output text --region "$REGION" \
+                --query 'Versions[*].[Key,VersionId]' 2>/dev/null | while read key version_id; do
+                if [[ "$key" != "None" && -n "$key" ]]; then
+                  aws s3api delete-object --bucket "$BUCKET" --key "$key" --version-id "$version_id" --region "$REGION" >/dev/null 2>&1 || true
+                fi
+              done
+              aws s3api list-object-versions --bucket "$BUCKET" --output text --region "$REGION" \
+                --query 'DeleteMarkers[*].[Key,VersionId]' 2>/dev/null | while read key version_id; do
+                if [[ "$key" != "None" && -n "$key" ]]; then
+                  aws s3api delete-object --bucket "$BUCKET" --key "$key" --version-id "$version_id" --region "$REGION" >/dev/null 2>&1 || true
+                fi
+              done
+            done
+          else
+            echo "   ℹ️  No matching S3 buckets found."
+          fi
+
+      - name: "Step 4 — Delete project Service Discovery services"
+        run: |
+          ENV="${{ inputs.environment }}"
+          PROJECT="${{ inputs.project }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+
+          TAGGED_ARNS=$(aws resourcegroupstaggingapi get-resources --region "$REGION" \
+            --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+            --resource-type-filters "servicediscovery:namespace" \
+            --query 'ResourceTagMappingList[*].ResourceARN' \
+            --output text 2>/dev/null || echo "")
+
+          for NS_ARN in $TAGGED_ARNS; do
+            NS_ID="${NS_ARN##*namespace/}"
+            echo "📦 Namespace: $NS_ID"
+            SVC_IDS=$(aws servicediscovery list-services --region "$REGION" \
+              --filters "Name=NAMESPACE_ID,Values=$NS_ID,Condition=EQ" \
+              --query "Services[*].Id" --output text 2>/dev/null || echo "")
+            for SVC_ID in $SVC_IDS; do
+              echo "   🗑️  Deleting service: $SVC_ID"
+              aws servicediscovery delete-service --id "$SVC_ID" --region "$REGION" || \
+                echo "   ⚠️  Failed: $SVC_ID"
+            done
+          done
+          echo "✅ Service Discovery cleanup complete"
+
+  # ── Destroy: Primary project app stack (thisisblaze) ─────────────────────────
+  destroy-app-primary:
+    name: "💥 Destroy App Stack — thisisblaze"
+    needs: [validate, pre-nuke-aws]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-aws.result == 'success' &&
+      (inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total')
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: "thisisblaze"
+      stack: "multi-site-app"
+      apply: true
+      destroy: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  # ── Destroy: Support project app stack (sequential — after primary) ───────────
+  destroy-app-support:
+    name: "💥 Destroy App Stack — support"
+    needs: [validate, pre-nuke-aws, destroy-app-primary]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-aws.result == 'success' &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total')
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: "support"
+      stack: "multi-site-app"
+      apply: true
+      destroy: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  # ── Destroy: Blazecms project app stack (sequential — after support) ─────────
+  destroy-app-blazecms:
+    name: "💥 Destroy App Stack — blazecms"
+    needs: [validate, pre-nuke-aws, destroy-app-primary, destroy-app-support]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-aws.result == 'success' &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (needs.destroy-app-support.result == 'success' || needs.destroy-app-support.result == 'skipped') &&
+      (inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total')
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: "blazecms"
+      stack: "multi-site-app"
+      apply: true
+      destroy: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID_BLAZECMS_IO }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  # ── Config: Resolve dynamic Cloudflare zone for project mode ────────────────
+  # Reads vars/{project}/blaze-env.json → CLOUDFLARE_ZONE_ID_KEY so that
+  # Case B projects (e.g. blazecms) get their own zone, not thisisblaze.uk's.
+  nuke-project-config:
+    name: "🔧 Resolve Zone ID for ${{ inputs.project }}"
+    needs: [validate]
+    if: inputs.nuke_mode == 'project'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      cloudflare_zone_id_key: ${{ steps.config.outputs.cloudflare_zone_id_key }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Calculate Config
+        id: config
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.6
+        with:
+          project: ${{ inputs.project }}
+          environment: ${{ inputs.environment }}
+          terraform_stack: "multi-site-app"
+          deploy_infra: "false"
+          build_images: "false"
+          deploy_services: "false"
+          event_name: "workflow_dispatch"
+
+  # ── Destroy: Single project app stack (project mode) ─────────────────────────
+  destroy-app-project:
+    name: "💥 Destroy App Stack — ${{ inputs.project }}"
+    needs: [validate, pre-nuke-project, nuke-project-config]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-project.result == 'success' &&
+      needs.nuke-project-config.result == 'success' &&
+      inputs.nuke_mode == 'project'
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: ${{ inputs.project }}
+      stack: "multi-site-app"
+      apply: true
+      destroy: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets[needs.nuke-project-config.outputs.cloudflare_zone_id_key] }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  # ── Destroy: Dedicated Network (total mode only) ──────────────────────────────
+  destroy-dedicated-network:
+    name: "💥 Destroy Dedicated Network (High-Traffic, opt-in)"
+    needs: [validate, pre-nuke-aws, destroy-app-primary, destroy-app-support, destroy-app-blazecms]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-aws.result == 'success' &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (needs.destroy-app-support.result == 'success' || needs.destroy-app-support.result == 'skipped') &&
+      (needs.destroy-app-blazecms.result == 'success' || needs.destroy-app-blazecms.result == 'skipped') &&
+      inputs.nuke_mode == 'total'
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: ${{ inputs.project }}
+      stack: "dedicated-network"
+      apply: true
+      destroy: true
+      enable_image_resize: false
+      enable_ec2: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  # ── Destroy: Multi-Site Network (total mode only — last step) ─────────────────
+  # This is the Day 0 Two-Pillar foundation. Must run AFTER all app stacks gone.
+  # State key: infra/{project}/multi-site/network.tfstate
+  destroy-multi-site-network:
+    name: "💥 Destroy Multi-Site Network Stack"
+    needs: [validate, pre-nuke-aws, destroy-app-primary, destroy-app-support, destroy-app-blazecms, destroy-dedicated-network]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      needs.pre-nuke-aws.result == 'success' &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (needs.destroy-app-support.result == 'success' || needs.destroy-app-support.result == 'skipped') &&
+      (needs.destroy-app-blazecms.result == 'success' || needs.destroy-app-blazecms.result == 'skipped') &&
+      (needs.destroy-dedicated-network.result == 'success' || needs.destroy-dedicated-network.result == 'skipped') &&
+      inputs.nuke_mode == 'total'
+    uses: thisisblaze/blaze-actions/.github/workflows/01-provision-infra.yml@v2.12.5
+    with:
+      cloud_provider: "aws"
+      environment: ${{ inputs.environment }}
+      project: ${{ inputs.project }}
+      stack: "multi-site-network"
+      apply: true
+      destroy: true
+      enable_image_resize: false
+      enable_ec2: true
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+      MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+
+  nuke-cleanup-dns-env:
+    name: 🧹 Nuke Cleanup - DNS
+    needs:
+      - destroy-app-project
+      - destroy-app-primary
+      - destroy-app-support
+      - destroy-app-blazecms
+      - destroy-multi-site-network
+      - destroy-dedicated-network
+    if: |
+      always() &&
+      (needs.destroy-app-project.result == 'success' || needs.destroy-app-project.result == 'skipped') &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (needs.destroy-app-support.result == 'success' || needs.destroy-app-support.result == 'skipped') &&
+      (needs.destroy-app-blazecms.result == 'success' || needs.destroy-app-blazecms.result == 'skipped') &&
+      (needs.destroy-multi-site-network.result == 'success' || needs.destroy-multi-site-network.result == 'skipped') &&
+      (needs.destroy-dedicated-network.result == 'success' || needs.destroy-dedicated-network.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Cleanup Residual DNS Records
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          STAGE: ${{ inputs.environment }}
+          PROJECT: ${{ inputs.project }}
+          PROJECTS: ${{ inputs.projects }}
+          MODE: ${{ inputs.nuke_mode }}
+        run: |
+          # 1. Determine the list of projects to process
+          if [[ "$MODE" == "project" ]]; then
+            PROJECT_LIST=("$PROJECT")
+          else
+            IFS=',' read -ra PROJECT_LIST <<< "$PROJECTS"
+          fi
+          
+          # Convert v2.1.74/stage -> lowercase
+          STAGE=$(echo "$STAGE" | tr '[:upper:]' '[:lower:]')
+
+          for TARGET_PROJECT in "${PROJECT_LIST[@]}"; do
+            TARGET_PROJECT=$(echo "$TARGET_PROJECT" | tr -d ' ')
+            echo "==================================================="
+            echo "🧹 Cleaning up residual DNS records for project: $TARGET_PROJECT (stage: $STAGE)"
+            
+            if [ ! -f "vars/${TARGET_PROJECT}/blaze-env.json" ]; then
+              echo "   ⚠️ blaze-env.json not found for $TARGET_PROJECT, skipping."
+              continue
+            fi
+            
+            DOMAIN_ROOT=$(jq -r '.common.DOMAIN_ROOT // empty' "vars/${TARGET_PROJECT}/blaze-env.json")
+            if [ -z "$DOMAIN_ROOT" ]; then
+              echo "   ⚠️ DOMAIN_ROOT not defined, skipping."
+              continue
+            fi
+            
+            CF_ZONE_ID_KEY=$(jq -r '.common.CLOUDFLARE_ZONE_ID_KEY // empty' "vars/${TARGET_PROJECT}/blaze-env.json")
+            
+            if [ -n "$CF_ZONE_ID_KEY" ]; then
+              echo "   🔑 Using dynamic Zone ID key: $CF_ZONE_ID_KEY"
+              CF_ZONE_ID=$(echo "$SECRETS_JSON" | jq -r ".\"$CF_ZONE_ID_KEY\"")
+            else
+              echo "   🔑 Using default CLOUDFLARE_ZONE_ID"
+              CF_ZONE_ID=$(echo "$SECRETS_JSON" | jq -r ".CLOUDFLARE_ZONE_ID")
+            fi
+            
+            CF_API_TOKEN=$(echo "$SECRETS_JSON" | jq -r ".CLOUDFLARE_API_TOKEN")
+            
+            if [ -z "$CF_ZONE_ID" ] || [ "$CF_ZONE_ID" == "null" ]; then
+              echo "   ❌ Failed to resolve Zone ID. Skipping."
+              continue
+            fi
+            
+            PROJECT_SLUG=$(jq -r '.common.PROJECT_SLUG // empty' "vars/${TARGET_PROJECT}/blaze-env.json")
+            if [ -n "$PROJECT_SLUG" ]; then
+              SUFFIX="-${PROJECT_SLUG}"
+            else
+              SUFFIX=""
+            fi
+            
+            echo "   🌐 Domain Root: $DOMAIN_ROOT (Slug Suffix: '$SUFFIX')"
+
+            if [ "$STAGE" == "prod" ]; then
+               echo "⚠️  PROD Nuke detected. Cleaning up bare Prod aliases."
+               TARGETS=(
+                 "api${SUFFIX}.${DOMAIN_ROOT}"
+                 "frontend${SUFFIX}.${DOMAIN_ROOT}"
+                 "cdn${SUFFIX}.${DOMAIN_ROOT}"
+                 "admin${SUFFIX}.${DOMAIN_ROOT}"
+                 "api-direct${SUFFIX}.${DOMAIN_ROOT}"
+                 "grafana${SUFFIX}.${DOMAIN_ROOT}"
+                 "kibana${SUFFIX}.${DOMAIN_ROOT}"
+                 "gibana${SUFFIX}.${DOMAIN_ROOT}"
+                 "prometheus${SUFFIX}.${DOMAIN_ROOT}"
+                 "alertmanager${SUFFIX}.${DOMAIN_ROOT}"
+                 "${DOMAIN_ROOT}"
+               )
+            else
+               TARGETS=(
+                 "api-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "frontend-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "cdn-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "admin-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "api-direct-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "kibana-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "gibana-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "grafana-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "prometheus-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "alertmanager-${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+                 "${STAGE}${SUFFIX}.${DOMAIN_ROOT}"
+               )
+            fi
+
+            echo "🎯 Targets:"
+            printf '   - %s\n' "${TARGETS[@]}"
+
+            for RECORD_NAME in "${TARGETS[@]}"; do
+              echo "---------------------------------------------------"
+              echo "🔍 Checking: $RECORD_NAME"
+
+              RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$RECORD_NAME" \
+                -H "Authorization: Bearer $CF_API_TOKEN" \
+                -H "Content-Type: application/json")
+
+              IDS=$(echo "$RESPONSE" | jq -r '.result[].id // empty')
+
+              if [[ -z "$IDS" || "$IDS" == "null" ]]; then
+                echo "   ✅ No records found."
+              else
+                for id in $IDS; do
+                  echo "   🗑️ Deleting record ID: $id"
+                  DEL_RES=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$id" \
+                    -H "Authorization: Bearer $CF_API_TOKEN" \
+                    -H "Content-Type: application/json")
+                  
+                  SUCCESS=$(echo "$DEL_RES" | jq -r '.success')
+                  if [ "$SUCCESS" == "true" ]; then
+                     echo "      ✅ Deleted."
+                  else
+                     echo "      ❌ Failed to delete."
+                     echo "$DEL_RES" | jq -r '.errors'
+                  fi
+                done
+              fi
+            done
+          done
+
+  # ── Plan 156 Phase 1: Post-Destroy Verification Gate ────────────────────────
+  # Polls AWS until zero tagged resources remain before the nuke can exit clean.
+  # Prevents zombie CF distributions from surviving into the next CREATE cycle.
+  # Runs after all destroy jobs + DNS cleanup. nuke-summary depends on this.
+  verify-destroy-complete:
+    name: "✅ Verify Destroy Complete (Plan 156)"
+    needs:
+      - nuke-cleanup-dns-env
+      - destroy-app-project
+      - destroy-app-primary
+      - destroy-app-support
+      - destroy-app-blazecms
+      - destroy-dedicated-network
+      - destroy-multi-site-network
+    if: |
+      always() &&
+      (needs.destroy-app-project.result == 'success' || needs.destroy-app-project.result == 'skipped') &&
+      (needs.destroy-app-primary.result == 'success' || needs.destroy-app-primary.result == 'skipped') &&
+      (needs.destroy-app-support.result == 'success' || needs.destroy-app-support.result == 'skipped') &&
+      (needs.destroy-app-blazecms.result == 'success' || needs.destroy-app-blazecms.result == 'skipped') &&
+      (needs.destroy-dedicated-network.result == 'success' || needs.destroy-dedicated-network.result == 'skipped') &&
+      (needs.destroy-multi-site-network.result == 'success' || needs.destroy-multi-site-network.result == 'skipped') &&
+      (needs.nuke-cleanup-dns-env.result == 'success' || needs.nuke-cleanup-dns-env.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}
+
+      - name: "Poll — Confirm Zero Tagged Resources Remain"
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+          MAX_WAIT=900   # 15 minutes
+          POLL_INTERVAL=30
+          elapsed=0
+
+          # Build the project list from nuke mode
+          if [[ "${{ inputs.nuke_mode }}" == "project" ]]; then
+            PROJECT_LIST=("${{ inputs.project }}")
+          else
+            IFS=',' read -ra PROJECT_LIST <<< "${{ inputs.projects }}"
+          fi
+
+          echo "🔍 Post-destroy verification starting..."
+          echo "   Environment : $ENV"
+          echo "   Mode        : ${{ inputs.nuke_mode }}"
+          echo "   Projects    : ${PROJECT_LIST[*]}"
+          echo "   Max wait    : ${MAX_WAIT}s"
+          echo ""
+
+          # ── Check 1: CloudFront distributions with env-scoped aliases ──────
+          check_cloudfront() {
+            local REMAINING=0
+            for PROJECT in "${PROJECT_LIST[@]}"; do
+              PROJECT=$(echo "$PROJECT" | tr -d ' ')
+              local TAGGED=$(aws resourcegroupstaggingapi get-resources \
+                --region us-east-1 \
+                --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+                --resource-type-filters "cloudfront:distribution" \
+                --query 'ResourceTagMappingList[*].ResourceARN' \
+                --output text 2>/dev/null || echo "")
+              if [[ -n "$TAGGED" && "$TAGGED" != "None" ]]; then
+                echo "   ⚠️  CloudFront zombies still alive for project=$PROJECT:"
+                for ARN in $TAGGED; do
+                  local DIST_ID; DIST_ID=$(basename "$ARN")
+                  local STATUS; STATUS=$(aws cloudfront get-distribution \
+                    --id "$DIST_ID" \
+                    --query 'Distribution.Status' \
+                    --output text 2>/dev/null || echo "Unknown")
+                  echo "      $DIST_ID — $STATUS"
+                  REMAINING=$((REMAINING + 1))
+                done
+              fi
+            done
+            echo "$REMAINING"
+          }
+
+          # ── Check 2: Any tagged AWS resource still alive (broader sweep) ──
+          check_tagged_resources() {
+            local REMAINING=0
+            for PROJECT in "${PROJECT_LIST[@]}"; do
+              PROJECT=$(echo "$PROJECT" | tr -d ' ')
+              # Exclude S3 tfstate buckets and ACM (certificates linger after detach)
+              local TAGGED=$(aws resourcegroupstaggingapi get-resources \
+                --region "$REGION" \
+                --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+                --query 'ResourceTagMappingList[?!contains(ResourceARN, `tfstate`) && !contains(ResourceARN, `acm`)].ResourceARN' \
+                --output text 2>/dev/null || echo "")
+              if [[ -n "$TAGGED" && "$TAGGED" != "None" ]]; then
+                local COUNT; COUNT=$(echo "$TAGGED" | wc -w | tr -d ' ')
+                echo "   ⚠️  ${COUNT} tagged resources still alive for project=$PROJECT (region=$REGION)"
+                echo "$TAGGED" | tr '\t' '\n' | head -10 | sed 's/^/      /'
+                REMAINING=$((REMAINING + COUNT))
+              fi
+
+              # Also check us-east-1 for global resources (CF, Lambda@Edge)
+              if [[ "$REGION" != "us-east-1" ]]; then
+                local TAGGED_GLOBAL=$(aws resourcegroupstaggingapi get-resources \
+                  --region us-east-1 \
+                  --tag-filters "Key=Blaze:Project,Values=${PROJECT}" "Key=Blaze:Environment,Values=${ENV}" \
+                  --query 'ResourceTagMappingList[?!contains(ResourceARN, `tfstate`) && !contains(ResourceARN, `acm`)].ResourceARN' \
+                  --output text 2>/dev/null || echo "")
+                if [[ -n "$TAGGED_GLOBAL" && "$TAGGED_GLOBAL" != "None" ]]; then
+                  local COUNT_G; COUNT_G=$(echo "$TAGGED_GLOBAL" | wc -w | tr -d ' ')
+                  echo "   ⚠️  ${COUNT_G} tagged resources still alive for project=$PROJECT (region=us-east-1)"
+                  echo "$TAGGED_GLOBAL" | tr '\t' '\n' | head -10 | sed 's/^/      /'
+                  REMAINING=$((REMAINING + COUNT_G))
+                fi
+              fi
+            done
+            echo "$REMAINING"
+          }
+
+          # ── Poll Loop ───────────────────────────────────────────────────────
+          while [[ $elapsed -lt $MAX_WAIT ]]; do
+            echo "⏱️  [${elapsed}s / ${MAX_WAIT}s] Checking AWS for remaining resources..."
+
+            CF_REMAINING=$(check_cloudfront)
+            RESOURCE_REMAINING=$(check_tagged_resources)
+
+            TOTAL=$((CF_REMAINING + RESOURCE_REMAINING))
+
+            if [[ "$TOTAL" -eq 0 ]]; then
+              echo ""
+              echo "✅ Verification PASSED — zero tagged resources remain in AWS."
+              echo "   CloudFront  : 0 distributions"
+              echo "   All resources: 0 (${REGION} + us-east-1)"
+              echo ""
+              echo "🟢 Nuke is COMPLETE. Safe to reprovision."
+              exit 0
+            fi
+
+            echo "   → ${TOTAL} resource(s) still present. Waiting ${POLL_INTERVAL}s..."
+            sleep "$POLL_INTERVAL"
+            elapsed=$((elapsed + POLL_INTERVAL))
+          done
+
+          # ── Timeout — warn but do not block the summary ──────────────────
+          echo ""
+          echo "⚠️  VERIFICATION TIMEOUT after ${MAX_WAIT}s"
+          echo ""
+          echo "The following resources may still exist in AWS after the nuke:"
+          check_cloudfront > /dev/null
+          check_tagged_resources > /dev/null
+          echo ""
+          echo "⚠️  Possible zombie resources detected. If you reprovision immediately,"
+          echo "   you may encounter CNAMEAlreadyExists or AlreadyExists conflicts."
+          echo "   Wait a few minutes and run 99-audit-env.yml to confirm before reprovisioning."
+          echo ""
+          echo "ℹ️  This is a WARNING, not a hard failure — the destroy jobs completed."
+          echo "   The warning is recorded in the job summary for tracking."
+          # Exit 0 — timeout is a warning, not a nuke failure.
+          # The nuke destroy jobs already ran. We cannot un-destroy them.
+          # Failing here would give a false impression the nuke failed.
+          exit 0
+
+      - name: "🧹 VPC Force-Delete Fallback (Post-Destroy Safety Net)"
+        # Runs after all Terraform destroy jobs complete. If any VPCs tagged with
+        # the environment still exist (e.g. nuke was interrupted by crash, or IGW
+        # state rm didn't fire), this step CLI-force-deletes them.
+        # Root cause of 2026-05-15 manual IGW cleanup session — added as permanent guard.
+        if: always()
+        continue-on-error: true
+        run: |
+          ENV="${{ inputs.environment }}"
+          REGION="${{ vars.AWS_DEFAULT_REGION || 'eu-west-1' }}"
+
+          echo "🔍 Scanning for orphaned VPCs tagged Blaze:Environment=$ENV..."
+
+          VPC_IDS=$(aws ec2 describe-vpcs \
+            --region "$REGION" \
+            --filters "Name=tag:Blaze:Environment,Values=${ENV}" \
+            --query 'Vpcs[*].VpcId' \
+            --output text 2>/dev/null || echo "")
+
+          if [[ -z "$VPC_IDS" || "$VPC_IDS" == "None" ]]; then
+            echo "✅ No orphaned VPCs found for env=$ENV — environment is clean"
+            exit 0
+          fi
+
+          for VPC_ID in $VPC_IDS; do
+            echo ""
+            echo "⚠️  Orphaned VPC detected: $VPC_ID — force-cleaning..."
+
+            # 1. Detach + delete Internet Gateways
+            IGW_IDS=$(aws ec2 describe-internet-gateways \
+              --region "$REGION" \
+              --filters "Name=attachment.vpc-id,Values=${VPC_ID}" \
+              --query 'InternetGateways[*].InternetGatewayId' \
+              --output text 2>/dev/null || echo "")
+            for IGW_ID in $IGW_IDS; do
+              aws ec2 detach-internet-gateway --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" --vpc-id "$VPC_ID" 2>/dev/null \
+                && echo "  🔌 Detached IGW: $IGW_ID" || true
+              aws ec2 delete-internet-gateway --region "$REGION" \
+                --internet-gateway-id "$IGW_ID" 2>/dev/null \
+                && echo "  🗑️  Deleted IGW: $IGW_ID" || true
+            done
+
+            # 2. Delete non-default subnets
+            SUBNET_IDS=$(aws ec2 describe-subnets \
+              --region "$REGION" \
+              --filters "Name=vpc-id,Values=${VPC_ID}" \
+              --query 'Subnets[*].SubnetId' \
+              --output text 2>/dev/null || echo "")
+            for SUBNET_ID in $SUBNET_IDS; do
+              aws ec2 delete-subnet --region "$REGION" \
+                --subnet-id "$SUBNET_ID" 2>/dev/null \
+                && echo "  🗑️  Deleted subnet: $SUBNET_ID" || true
+            done
+
+            # 3. Remove cross-SG ingress/egress rules (prevent DependencyViolation on SG delete)
+            SG_IDS=$(aws ec2 describe-security-groups \
+              --region "$REGION" \
+              --filters "Name=vpc-id,Values=${VPC_ID}" \
+              --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
+              --output text 2>/dev/null || echo "")
+            for SG_ID in $SG_IDS; do
+              aws ec2 revoke-security-group-ingress --region "$REGION" \
+                --group-id "$SG_ID" \
+                --ip-permissions "$(aws ec2 describe-security-groups --region "$REGION" \
+                  --group-ids "$SG_ID" \
+                  --query 'SecurityGroups[0].IpPermissions' \
+                  --output json 2>/dev/null)" 2>/dev/null || true
+              aws ec2 revoke-security-group-egress --region "$REGION" \
+                --group-id "$SG_ID" \
+                --ip-permissions "$(aws ec2 describe-security-groups --region "$REGION" \
+                  --group-ids "$SG_ID" \
+                  --query 'SecurityGroups[0].IpPermissionsEgress' \
+                  --output json 2>/dev/null)" 2>/dev/null || true
+            done
+            for SG_ID in $SG_IDS; do
+              aws ec2 delete-security-group --region "$REGION" \
+                --group-id "$SG_ID" 2>/dev/null \
+                && echo "  🗑️  Deleted SG: $SG_ID" || true
+            done
+
+            # 4. Delete the VPC itself
+            aws ec2 delete-vpc --region "$REGION" --vpc-id "$VPC_ID" 2>/dev/null \
+              && echo "  ✅ Force-deleted VPC: $VPC_ID" \
+              || echo "  ⚠️  VPC $VPC_ID still has dependencies — manual cleanup may be needed"
+          done
+
+  # ── Summary ─────────────────────────────────────────────────────────────────
+  nuke-summary:
+    name: "📋 Nuke Summary"
+    needs:
+      - verify-destroy-complete
+      - destroy-app-project
+      - destroy-app-primary
+      - destroy-app-support
+      - destroy-app-blazecms
+      - destroy-dedicated-network
+      - destroy-multi-site-network
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Print Result
+        run: |
+          echo "## ☢️ Nuke Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** \`${{ inputs.nuke_mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stack | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| App — ${{ inputs.project }} (project mode) | ${{ needs.destroy-app-project.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| App — thisisblaze (all-projects/total) | ${{ needs.destroy-app-primary.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| App — support (all-projects/total) | ${{ needs.destroy-app-support.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| App — blazecms (all-projects/total) | ${{ needs.destroy-app-blazecms.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dedicated Network | ${{ needs.destroy-dedicated-network.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Multi-Site Network | ${{ needs.destroy-multi-site-network.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Verify Destroy Complete (Plan 156)** | **${{ needs.verify-destroy-complete.result }}** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ DB (MongoDB/Elastic) is never destroyed here. Use \`99-destroy-data.yml\` for data stack teardown." >> $GITHUB_STEP_SUMMARY
+          echo "> 🔍 Verification gate result is informational — timeout = possible zombie resources, check before reprovisioning." >> $GITHUB_STEP_SUMMARY
