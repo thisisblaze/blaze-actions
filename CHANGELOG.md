@@ -5,16 +5,17 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 ## v2.12.7 (2026-07-10)
 
 ### Added
-
-- No new features in this release
+- feat(nuke): consolidate multi-mode AWS nuke logic from local `99-nuke-env.yml` into master `99-ops-nuke.yml`.
 
 ### Changed
-
+- chore(nuke): support custom inputs `nuke_mode`, `project`, and `projects` with optional secrets in master nuke workflow.
+- chore(nuke): update concurrency configuration to support mutual exclusion across different nuke modes.
+- chore(nuke): add safety guards (`inputs.nuke_mode == ''`) to standard jobs to preserve persistent state (databases/data stores).
 - chore: end-of-day governance sync — 2026-07-10
 - chore: update CHANGELOG for v2.12.6
 
 ### Fixed
-
+- fix(nuke): fix typo in verify-destroy-complete needs checks referencing the old nuke-cleanup-dns job.
 
 ## v2.12.6 (2026-07-08)
 
