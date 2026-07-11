@@ -38,20 +38,22 @@ def run(repos):
     deploy_hc = os.path.join(repos.get('deploy', ''), ".github", "workflows", template)
     actions_hc = os.path.join(repos.get('actions', ''), ".github", "workflows", template)
     infra_hc = os.path.join(repos.get('infra', ''), ".github", "workflows", template)
+    conductor_hc = os.path.join(repos.get('conductor', ''), ".github", "workflows", template)
 
     hashes = {}
     if os.path.exists(deploy_hc): hashes['deploy'] = get_hash(deploy_hc)
     if os.path.exists(actions_hc): hashes['actions'] = get_hash(actions_hc)
     if os.path.exists(infra_hc): hashes['infra'] = get_hash(infra_hc)
+    if os.path.exists(conductor_hc): hashes['conductor'] = get_hash(conductor_hc)
 
     unique_hashes = set(h for h in hashes.values() if h)
 
     if len(unique_hashes) > 1:
         print(f"🔴 [Engine 8] Workflow parity failed. '{template}' differs structurally across repositories.")
         issues += 1
-    elif len(hashes) == 3 and len(unique_hashes) == 1:
-        print(f"✅  [Engine 8] Core workflows ('{template}') are perfectly identical across all 3 repos.")
+    elif len(hashes) == 4 and len(unique_hashes) == 1:
+        print(f"✅  [Engine 8] Core workflows ('{template}') are perfectly identical across all 4 repos.")
     else:
-        print(f"⚠️  [Engine 8] Could not find '{template}' in all 3 repos to verify parity.")
+        print(f"⚠️  [Engine 8] Could not find '{template}' in all 4 repos to verify parity.")
 
     return issues

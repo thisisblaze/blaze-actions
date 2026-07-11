@@ -2,6 +2,126 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- fix(nuke): quote raw boolean `apply` and `destroy` inputs to matching string types in reusable GHA calls to prevent GHA compiler-time validation errors.
+- docs: convert absolute links to relative paths in agent workflows to prevent broken file links across workspaces.
+- docs: execute weekly visual graph verification sweep, refreshing outdated mermaid diagrams and updating MAINTENANCE_STATE.md.
+
+## v2.12.11 (2026-07-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.10
+
+### Fixed
+
+
+## v2.12.10 (2026-07-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.9
+
+### Fixed
+
+
+## v2.12.9 (2026-07-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.8
+
+### Fixed
+
+
+## v2.12.8 (2026-07-10)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.7
+
+### Fixed
+
+
+## v2.12.7 (2026-07-10)
+
+### Added
+- feat(nuke): consolidate multi-mode AWS nuke logic from local `99-nuke-env.yml` into master `99-ops-nuke.yml`.
+
+### Changed
+- chore(nuke): support custom inputs `nuke_mode`, `project`, and `projects` with optional secrets in master nuke workflow.
+- chore(nuke): update concurrency configuration to support mutual exclusion across different nuke modes.
+- chore(nuke): add safety guards (`inputs.nuke_mode == ''`) to standard jobs to preserve persistent state (databases/data stores).
+- chore: end-of-day governance sync — 2026-07-10
+- chore: update CHANGELOG for v2.12.6
+
+### Fixed
+- fix(nuke): fix typo in verify-destroy-complete needs checks referencing the old nuke-cleanup-dns job.
+
+## v2.12.6 (2026-07-08)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.5
+- chore: update CHANGELOG for v2.12.4
+
+### Fixed
+
+
+## v2.12.6 (2026-07-08)
+
+### Fixed
+- fix(reusable-provision-db-users): downgrade customDBRoles API endpoint from v2 to v1.0, bypassing 406 Accept Header validation rejections from MongoDB Atlas.
+
+## v2.12.5 (2026-07-08)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.4
+
+### Fixed
+
+
+## v2.12.4 (2026-07-07)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.3
+- chore: update CHANGELOG for v2.12.3
+
+### Fixed
+
+
 ## v2.12.3 (2026-07-07)
 
 ### Added

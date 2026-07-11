@@ -236,7 +236,7 @@ jobs:
               }')
             
             # Post to Atlas API
-            RES_ROLE=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" -X POST "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles" \
+            RES_ROLE=$(curl -s --write-out "\nHTTP_CODE:%{http_code}\n" -X POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles/roles" \
               -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
               --digest \
               -H "Content-Type: application/json" \
@@ -248,7 +248,7 @@ jobs:
               echo "POST role failed, trying PATCH..."
               curl -s --show-error --digest -u "$ATLAS_PUBLIC:$ATLAS_PRIVATE" \
                 -H "Content-Type: application/json" -X PATCH \
-                "https://cloud.mongodb.com/api/atlas/v2/groups/$ATLAS_PROJECT/customDBRoles/roles/$ROLE_NAME" \
+                "https://cloud.mongodb.com/api/atlas/v1.0/groups/$ATLAS_PROJECT/customDBRoles/roles/$ROLE_NAME" \
                 -d "$PAYLOAD"
             fi
             

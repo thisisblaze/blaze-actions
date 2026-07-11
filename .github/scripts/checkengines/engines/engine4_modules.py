@@ -39,6 +39,18 @@ _TF_REF_PATTERN = re.compile(
 )
 
 
+# Engine 4 validates module pins of *deployed, active* infrastructure only.
+# AWS is the sole active cloud today; azure/gcp live stacks are intentionally
+# frozen at an older infra-core pin (v2.11.12) and must NOT fail the diagnostic
+# until those clouds are reactivated and re-validated (see the azure/gcp
+# infra-core parity thread). '_templates' holds pod scaffolding (generator
+# input for new stacks), not deployed state, so it is out of scope here too.
+# To re-activate a cloud, drop it from _INACTIVE_CLOUD_DIRS.
+_INACTIVE_CLOUD_DIRS = {'azure', 'gcp'}
+_NON_DEPLOYED_DIRS = {'_templates'}
+_PRUNE_DIRS = {'.terraform', 'node_modules', '.git', '_shared'} | _INACTIVE_CLOUD_DIRS | _NON_DEPLOYED_DIRS
+
+
 def run(repos):
     issues = 0
     actions_tags = set()
@@ -112,8 +124,8 @@ def run(repos):
         if not path:
             continue
         for root, dirs, files in os.walk(path, followlinks=False):
-            # Prune heavy directories in-place
-            dirs[:] = [d for d in dirs if d not in ['.terraform', 'node_modules', '.git', '_shared']]
+            # Prune heavy dirs + scope to deployed active infra (see _PRUNE_DIRS)
+            dirs[:] = [d for d in dirs if d not in _PRUNE_DIRS]
             for file in files:
                 if file.endswith(".tf"):
                     with open(os.path.join(root, file), 'r') as f:

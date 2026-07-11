@@ -46,7 +46,7 @@ If any file is missing, create it following the patterns from the other repos.
 
 ### 2. Governance Content Sync
 
-Check the 3 `docs/AI_CONTEXT_GOVERNANCE.md` files:
+Check the 4 `docs/AI_CONTEXT_GOVERNANCE.md` files:
 
 - **Shared sections** (Prime Directive, Golden Rule, Data Retention, Cost Control, Zero Trace, Cleanup Protocol, Cross-Repo Architecture) must be **identical** across all 4. If content was updated in one, propagate to the others.
 - **Repo-specific sections** (Protocol/Bootstrap, Workflows, Key References) must reference only files that **exist in that repo**. Verify all referenced workflow paths actually exist.
@@ -68,7 +68,7 @@ For each repo, use a search tool:
 
 ### 4. .gitignore Consistency Check
 
-Verify these patterns exist in ALL 3 `.gitignore` files using a search tool:
+Verify these patterns exist in ALL 4 `.gitignore` files using a search tool:
 > 💡 **Antigravity 2.0**: Use the native `grep_search` tool.
 > 💡 **Claude Code**: Use standard bash `grep -rnw`.
 :
@@ -141,6 +141,7 @@ Output a final table:
 | deploy | 14/14 | ✅ | ✅ | ✅ |
 | actions | 14/14 | ✅ | ✅ | ✅ |
 | infra-core | 14/14 | ✅ | ✅ | ✅ |
+| conductor | 14/14 | ✅ | ✅ | ✅ |
 ```
 
 "I have been, and always shall be, your friend." - Spock 🖖
