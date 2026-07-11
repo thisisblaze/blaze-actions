@@ -7,7 +7,7 @@ role: 🔧 Engineer
 ---
 
 
-**Last Updated**: 2026-06-17
+**Last Updated**: 2026-07-11
 
 # Deep CI/CD Maintenance Sync
 
@@ -99,8 +99,7 @@ The platform now supports multiple projects on the shared ECS cluster. When perf
    - `deploy-ecs-service`: URL construction logic — verify `FRONTEND_URL` resolves correctly for `support` project (same `DOMAIN_ROOT`, different slug)
 
 2. **Check reusable workflows** for hardcoded `thisisblaze` references:
-   - `reusable-stress-test-deploy.yml`
-   - `reusable-stress-test-provision.yml`
+   - `reusable-stress-test-provision-minimal.yml`
 
 3. **Active projects**: `thisisblaze` (primary), `support` (Phase 3 active)
 
