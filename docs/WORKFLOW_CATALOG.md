@@ -1,4 +1,4 @@
-**Last Updated: 2026-07-06
+**Last Updated: 2026-07-11
 **Owner**: Infrastructure Team
 
 ---
@@ -12,7 +12,7 @@
 **Repository**: blaze-actions  
 **Total Workflows**: 31 main + 27 reusable = 58 total  
 **Version**: v2.11.55  
-**Last Updated: 2026-07-06
+**Last Updated: 2026-07-11
 
 ---
 
@@ -209,27 +209,6 @@ cloud_provider, environment
 
 
 ### Operations & Utilities
-
-#### 95-cleanup-orphaned-data.yml
-
-**Purpose**: Sweep for orphaned third-party data clusters (Atlas/Elastic) created during cancelled provision runs.
-**Use Case**: Scheduled nightly safety net (cron) or manual invocation.
-
-**Inputs**:
-
-environment
-- `environment` (optional, default: dev)
-
-**What it does**:
-
-- Enumerates live deployments in Elastic Cloud and Atlas.
-- Compares against Terraform state in the environment's S3 bucket.
-- Terminates clusters that match the tenant prefix but are absent from state.
-- Emits a greppable `CLEANUP_RESULT=<TOKEN>` outcome and posts to Slack.
-
-**When to run**: Scheduled nightly or manual verify.
-
----
 
 #### 99-ops-utility.yml
 

@@ -91,7 +91,7 @@ In `blaze-template-deploy`:
 
 1. Check if any stress test workflow ran today:
    ```bash
-   gh run list --workflow=stress-test.yml --limit=5 --json createdAt,status,conclusion --repo <tenant-repo>
+    gh run list --workflow=08-stress-test-suite.yml --limit=5 --json createdAt,status,conclusion --repo <tenant-repo>
    ```
 2. If a run completed today, check if a corresponding report exists in `docs/reports/stress-tests/runs/` with today's date.
 3. If a run completed but **no report exists**, flag it:

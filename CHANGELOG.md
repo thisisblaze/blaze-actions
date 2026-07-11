@@ -4,6 +4,10 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ## [Unreleased]
 
+### Changed
+- docs: updated `WORKFLOW_CATALOG.md` and `REUSABLE_WORKFLOWS.md` to remove legacy `95-cleanup-orphaned-data.yml` and correct outdated stress-test documentation. (2026-07-11)
+- chore: updated `.agents/workflows/13-deep-cicd-maintenance.md` and `allstop.md` to reference modern `reusable-stress-test-provision-minimal.yml` and `08-stress-test-suite.yml`, and updated modified file timestamps to `2026-07-11`. (2026-07-11)
+
 ### Fixed
 - fix(nuke): quote raw boolean `apply` and `destroy` inputs to matching string types in reusable GHA calls to prevent GHA compiler-time validation errors.
 - docs: convert absolute links to relative paths in agent workflows to prevent broken file links across workspaces.

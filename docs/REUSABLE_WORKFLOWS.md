@@ -1,4 +1,4 @@
-**Last Updated: 2026-07-06
+**Last Updated: 2026-07-11
 **Owner**: Infrastructure Team
 
 ---
@@ -11,7 +11,7 @@
 
 **Repository**: blaze-actions  
 **Pattern**: Hub & Spoke  
-**Last Updated: 2026-07-06
+**Last Updated: 2026-07-11
 
 ---
 
@@ -51,7 +51,7 @@ jobs:
 **Latest (recommended for development only)**:
 
 ```yaml
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@dev
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@dev
 ```
 
 **Stable (recommended for production)**:
@@ -326,7 +326,7 @@ jobs:
 
 ```yaml
 # Correct path format:
-uses: thebyte9/blaze-actions/.github/workflows/stress-test.yml@v2.11.55
+uses: thebyte9/blaze-actions/.github/workflows/01-provision-infra-minimal.yml@v2.11.55
 #     └─ org/repo ─┘  └──────── path ────────────┘ └── ref ──┘
 ```
 
@@ -403,12 +403,12 @@ permissions:
 
 jobs:
   execute:
-    uses: thebyte9/blaze-actions/.github/workflows/reusable-stress-test-provision.yml@dev
+    uses: thebyte9/blaze-actions/.github/workflows/reusable-stress-test-provision-minimal.yml@dev
     secrets: inherit
 ```
 
 > **Note**: `stress-test.yml` as a monolithic file no longer exists. Use the composable reusable phases:
-> `reusable-stress-test-provision.yml` → `reusable-stress-test-deploy.yml` → `reusable-stress-test-verify.yml` → `reusable-stress-test-teardown.yml`.
+> `reusable-stress-test-provision-minimal.yml` ➔ `reusable-stress-test-verify.yml` ➔ `reusable-stress-test-teardown.yml`. (Deploy is handled natively as part of provision or standard release pipelines).
 
 ---
 
