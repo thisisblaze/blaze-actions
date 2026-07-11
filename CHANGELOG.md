@@ -2,6 +2,11 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- fix(nuke): quote raw boolean `apply` and `destroy` inputs to matching string types in reusable GHA calls to prevent GHA compiler-time validation errors.
+
 ## v2.12.11 (2026-07-10)
 
 ### Added
