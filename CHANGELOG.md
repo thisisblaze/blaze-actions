@@ -6,6 +6,8 @@ All notable changes to the `blaze-actions` project will be documented in this fi
 
 ### Fixed
 - fix(nuke): quote raw boolean `apply` and `destroy` inputs to matching string types in reusable GHA calls to prevent GHA compiler-time validation errors.
+- docs: convert absolute links to relative paths in agent workflows to prevent broken file links across workspaces.
+- docs: execute weekly visual graph verification sweep, refreshing outdated mermaid diagrams and updating MAINTENANCE_STATE.md.
 
 ## v2.12.11 (2026-07-10)
 
