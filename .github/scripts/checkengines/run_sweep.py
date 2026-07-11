@@ -20,7 +20,8 @@ if is_ci:
     REPOS = {
         "deploy": os.path.join(base_dir, "blaze-template-deploy"),
         "actions": os.path.join(base_dir, "blaze-actions"),
-        "infra": os.path.join(base_dir, "blaze-terraform-infra-core")
+        "infra": os.path.join(base_dir, "blaze-terraform-infra-core"),
+        "conductor": os.path.join(base_dir, "blaze-conductor")
     }
 else:
     # Running locally — auto-discover from script location
@@ -30,7 +31,8 @@ else:
     REPOS = {
         "deploy": _repos.get("deploy", ""),
         "actions": _repos.get("actions", ""),
-        "infra": _repos.get("infra", "")
+        "infra": _repos.get("infra", ""),
+        "conductor": _repos.get("conductor", "")
     }
 
 print("🔧 CHECKENGINES REPORT — RUNNING FULL DIAGNOSTIC SWEEP...")

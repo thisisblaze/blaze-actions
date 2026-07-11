@@ -24,6 +24,7 @@ _REPO_NAMES = {
     "deploy": "blaze-template-deploy",
     "actions": "blaze-actions",
     "infra": "blaze-terraform-infra-core",
+    "conductor": "blaze-conductor",
 }
 
 def _find_git_root(start_path):
@@ -131,7 +132,7 @@ def get_repos(caller_file=None):
 
 def get_repo_dirs(caller_file=None):
     """
-    Convenience: return (deploy_dir, actions_dir, infra_dir) tuple.
+    Convenience: return (deploy_dir, actions_dir, infra_dir, conductor_dir) tuple.
     Raises if any repo is not found.
     """
     repos = get_repos(caller_file)
@@ -139,9 +140,9 @@ def get_repo_dirs(caller_file=None):
     if missing:
         raise FileNotFoundError(
             f"Could not auto-discover repos: {missing}. "
-            f"Set BLAZE_DEPLOY_DIR, BLAZE_ACTIONS_DIR, or BLAZE_INFRA_DIR env vars."
+            f"Set BLAZE_DEPLOY_DIR, BLAZE_ACTIONS_DIR, BLAZE_INFRA_DIR, or BLAZE_CONDUCTOR_DIR env vars."
         )
-    return repos["deploy"], repos["actions"], repos["infra"]
+    return repos["deploy"], repos["actions"], repos["infra"], repos["conductor"]
 
 
 def get_all_repo_list(caller_file=None):
