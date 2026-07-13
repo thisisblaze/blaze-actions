@@ -628,7 +628,7 @@ jobs:
     name: Build Admin (Shared)
     needs: [configuration, pre-flight-check]
     # Run for Host Environments (Prod, Stage, Dev Host)
-    if: ${{ (inputs.branch_name == '' || inputs.branch_name == null) && (needs.configuration.outputs.should_build == 'true' || needs.configuration.outputs.should_deploy_app == 'true') && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
+    if: ${{ contains(fromJSON('["", null]'), inputs.branch_name) && needs.configuration.outputs.should_build == 'true' && contains(fromJSON('["Blaze all", "admin", null]'), inputs.target_services) || contains(fromJSON('["", null]'), inputs.branch_name) && needs.configuration.outputs.should_deploy_app == 'true' && contains(fromJSON('["Blaze all", "admin", null]'), inputs.target_services) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
