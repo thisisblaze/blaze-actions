@@ -386,7 +386,7 @@ jobs:
       id-token: write
     name: Manage Env
     needs: [configuration]
-    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'manage-environment' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.12.12
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
@@ -404,7 +404,7 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-lambdas' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -516,7 +516,7 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Buckets
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-buckets' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15

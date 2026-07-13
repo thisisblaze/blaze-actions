@@ -412,7 +412,7 @@ jobs:
       id-token: write
     name: Mirror Images (${{ inputs.environment }})
     # Run if Task is "Bootstrap All" OR "Mirror Images" — Skip for Azure (ACR managed by Terraform)
-    if: (contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Mirror')) && inputs.cloud_provider != 'azure'
+    if: contains(inputs.task, 'Bootstrap') && inputs.cloud_provider != 'azure' || contains(inputs.task, 'Mirror') && inputs.cloud_provider != 'azure'
     needs: [calculate-config] # Removed init-backend dependency
     runs-on: ubuntu-latest
     timeout-minutes: 20

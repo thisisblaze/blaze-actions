@@ -471,7 +471,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1/5 - Stop Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == '' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.12.12
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -489,7 +489,7 @@ jobs:
       id-token: write
     name: 🧹 Nuke 1b/5 - Pre-Cleanup (S3/ECS)
     needs: [configuration, nuke-stop-services]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == '' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-pre-destroy-cleanup.yml@v2.12.12
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -509,7 +509,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1c/5 - Stop Cloud Run Services
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && inputs.cloud_provider == 'gcp'
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == '' && inputs.cloud_provider == 'gcp'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 10
@@ -586,7 +586,7 @@ jobs:
       id-token: write
     name: 🛑 Nuke 1d/5 - Stop Container Apps (Azure)
     needs: [configuration]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && inputs.cloud_provider == 'azure'
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == '' && inputs.cloud_provider == 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -825,7 +825,7 @@ jobs:
   nuke-destroy-pages:
     name: 🗑️ Nuke 2b/5 - Pages Projects
     needs: [configuration, nuke-app-gate]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null) && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == '' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -941,7 +941,7 @@ jobs:
       id-token: write
     name: 🚇 Nuke 3/5 - Tunnel
     needs: [configuration, nuke-app-gate]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == ''
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.12
     with:
       wif_audience: ${{ vars.WIF_AUDIENCE }}
@@ -1627,7 +1627,7 @@ jobs:
   nuke-cleanup-dns:
     name: 🧹 Nuke Cleanup - DNS
     needs: [configuration, nuke-destroy-network]
-    if: inputs.action == 'nuke-environment' && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
+    if: inputs.action == 'nuke-environment' && inputs.nuke_mode == ''
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -1735,7 +1735,7 @@ jobs:
   summary:
     name: 📝 Ops Summary
     needs: [configuration, nuke-stop-services, nuke-pre-cleanup, nuke-stop-services-gcp, nuke-stop-services-azure, nuke-destroy-app, nuke-app-gate, nuke-destroy-pages, nuke-destroy-data-aws, nuke-destroy-tunnel, nuke-destroy-data-gcp, nuke-destroy-cdn-gcp, nuke-destroy-network-gcp, nuke-destroy-data-azure, nuke-destroy-cdn-azure, nuke-destroy-network-azure, nuke-destroy-network, nuke-cleanup-dns]
-    if: always() && (inputs.nuke_mode == '' || inputs.nuke_mode == null)
+    if: always() && inputs.nuke_mode == ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
