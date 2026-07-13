@@ -261,7 +261,7 @@ jobs:
         with:
           cloud_provider: ${{ inputs.cloud_provider }}
           bucket: ${{ needs.config.outputs.bucket }}
-          state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
+          state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, contains(fromJSON('["dev", "stage"]'), inputs.environment) && 'tenant-app.tfstate' || 'app.tfstate') }}
           aws_region: ${{ needs.config.outputs.aws_region }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -344,7 +344,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && (needs.prod-safety-check.result == 'success' || inputs.environment != 'prod') }}
+    if: ${{ always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && needs.prod-safety-check.result == 'success' || always() && inputs.mode != 'quick-test' && needs.config.result == 'success' && inputs.environment != 'prod' }}
     needs:
       - config
       - prod-safety-check
@@ -376,9 +376,9 @@ jobs:
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform-operations.yml@v2.12.12
     with:
       action: "destroy"
-      tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app' || 'app') }}
+      tf_dir: ${{ inputs.app_stack == 'multi-site-app' && format('{0}/multi-site-app', needs.config.outputs.infra_prefix) || format('{0}/{1}-{2}', needs.config.outputs.infra_prefix, inputs.environment, contains(fromJSON('["dev", "stage"]'), inputs.environment) && 'tenant-app' || 'app') }}
       bucket: ${{ needs.config.outputs.bucket }}
-      state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, (inputs.environment == 'dev' || inputs.environment == 'stage') && 'tenant-app.tfstate' || 'app.tfstate') }}
+      state_key: ${{ inputs.app_stack == 'multi-site-app' && format('infra/{0}/multi-site/app.tfstate', needs.config.outputs.project_key) || format('infra/{0}/{1}/{2}', needs.config.outputs.project_key, needs.config.outputs.stage_key, contains(fromJSON('["dev", "stage"]'), inputs.environment) && 'tenant-app.tfstate' || 'app.tfstate') }}
       stage_key: ${{ needs.config.outputs.stage_key }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       client_key: ${{ needs.config.outputs.client_key }}
@@ -969,7 +969,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped') }}
+    if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'success' || always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'skipped' }}
     name: "🧨 Destroy Network"
 
     needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
