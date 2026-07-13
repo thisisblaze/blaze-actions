@@ -557,7 +557,7 @@ jobs:
     name: Build API
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && contains(fromJSON('["Blaze all", "api"]'), inputs.target_services) || needs.configuration.outputs.should_build == 'true' && inputs.target_services == null }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -593,7 +593,7 @@ jobs:
     name: Build Frontend
     needs: [configuration, pre-flight-check]
     if: ${{ needs.configuration.outputs.should_build == 'true' && contains(fromJSON('["Blaze all", "frontend"]'), inputs.target_services) || needs.configuration.outputs.should_build == 'true' && inputs.target_services == null }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'DEV' }}
@@ -700,7 +700,7 @@ jobs:
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
     if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && contains(fromJSON('["Blaze all", "admin"]'), inputs.target_services) || inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_build == 'true' && inputs.target_services == null }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -734,7 +734,7 @@ jobs:
     needs: [configuration, build-api, pre-flight-check]
     # Deploy if: explicit deploy OR auto-deploy (push)
     if: ${{ !failure() && !cancelled() && contains(fromJSON('["aws", "", null]'), inputs.cloud_provider) && contains(fromJSON('[true, "true", null]'), inputs.deploy_services) && contains(fromJSON('["Blaze all", "api", null]'), inputs.target_services) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@dev
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "api"
@@ -779,7 +779,7 @@ jobs:
     name: Deploy Frontend
     needs: [configuration, build-frontend, pre-flight-check]
     if: ${{ !failure() && !cancelled() && contains(fromJSON('["aws", "", null]'), inputs.cloud_provider) && needs.configuration.result == 'success' && needs.pre-flight-check.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.build-frontend.result) && needs.configuration.outputs.should_deploy_app == 'true' && contains(fromJSON('["Blaze all", "frontend", null]'), inputs.target_services) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@dev
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "frontend"
@@ -825,7 +825,7 @@ jobs:
 
     # Run for Feature Branches ONLY
     if: ${{ !failure() && !cancelled() && contains(fromJSON('["aws", "", null]'), inputs.cloud_provider) && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && contains(fromJSON('["Blaze all", "admin", null]'), inputs.target_services) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-deploy.yml@dev
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       service_name: "admin"
