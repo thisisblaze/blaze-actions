@@ -392,7 +392,7 @@ jobs:
             echo "MONGODB_ATLAS_PRIVATE_KEY=$MONGODB_ATLAS_PRIVATE_KEY"
             echo "MONGODB_ATLAS_PROJECT_ID=$MONGODB_ATLAS_PROJECT_ID"
             echo "TF_VAR_ec_api_key=$EC_API_KEY"
-            echo "ARM_USE_OIDC=${{ (inputs.cloud_provider == 'azure' || contains(inputs.tf_dir, 'db-pod-premium')) && 'true' || 'false' }}"
+            echo "ARM_USE_OIDC=${{ contains(fromJSON('["azure"]'), inputs.cloud_provider) && 'true' || contains(inputs.tf_dir, 'db-pod-premium') && 'true' || 'false' }}"
             echo "ARM_CLIENT_ID=$ARM_CLIENT_ID"
             echo "ARM_TENANT_ID=$ARM_TENANT_ID"
             echo "ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID"
@@ -905,7 +905,7 @@ jobs:
           ${{ inputs.pre_apply_script }}
 
       - name: Orphan Lambda Resources (Prevent Hang)
-        if: ${{ inputs.orphan_lambda == true && (inputs.destroy == true || inputs.destroy == 'true') }}
+        if: ${{ inputs.orphan_lambda == true && contains(fromJSON('[true, "true"]'), inputs.destroy) }}
         continue-on-error: true
         working-directory: ${{ inputs.tf_dir }}
         run: |
@@ -957,7 +957,7 @@ jobs:
       # Prevents ListenerNotFound / Cloudflare-404 errors when pre-nuke cleanup
       # already deleted ALBs/DNS records before Terraform destroy runs.
       - name: Purge Stale Network Resources (Prevent ALB/DNS 404 on Destroy)
-        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '') }}
+        if: ${{ contains(fromJSON('["true", true]'), inputs.destroy) && contains(fromJSON('["aws", ""]'), inputs.cloud_provider) }}
         continue-on-error: true
         working-directory: ${{ inputs.tf_dir }}
         run: |
@@ -1044,7 +1044,7 @@ jobs:
 
       # ── Pre-Destroy Hook — runs BEFORE plan so state changes don't stale the plan ──
       - name: Run Pre-Destroy Hook
-        if: ${{ (inputs.destroy == true || inputs.destroy == 'true') && (inputs.apply == true || inputs.apply == 'true') }}
+        if: ${{ contains(fromJSON('[true, "true"]'), inputs.destroy) && contains(fromJSON('[true, "true"]'), inputs.apply) }}
         working-directory: ${{ inputs.tf_dir }}
         env:
           MONGODB_ATLAS_PROJECT_ID: ${{ secrets.MONGODB_ATLAS_PROJECT_ID }}
