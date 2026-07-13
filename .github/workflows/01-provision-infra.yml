@@ -348,7 +348,7 @@ jobs:
           echo "☁️ Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.stack == 'network' || inputs.stack == 'acm')
+        if: inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure' && contains(fromJson('["network", "acm"]'), inputs.stack)
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -441,7 +441,7 @@ jobs:
   provision:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
-    if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
+    if: always() && needs.configuration.result == 'success' && contains(fromJson('["success", "skipped"]'), needs.build_sharp_layer.result)
     uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -694,7 +694,7 @@ jobs:
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
-    if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
+    if: failure() && needs.configuration.outputs.stage_key != 'prod' && contains(fromJson('["tunnel", "app"]'), inputs.stack)
     uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@dev
     with:
       environment: ${{ inputs.environment }}

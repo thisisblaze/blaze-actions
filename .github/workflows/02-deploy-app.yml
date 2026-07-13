@@ -369,7 +369,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && (inputs.branch_name == '' || inputs.branch_name == null) && !(inputs.cloud_provider == 'gcp' && inputs.environment == 'MULTI-SITE')
+    if: inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.branch_name == '' && inputs.cloud_provider != 'gcp' || inputs.cloud_provider != 'aws' && inputs.cloud_provider != '' && inputs.cloud_provider != null && inputs.branch_name == '' && inputs.environment != 'MULTI-SITE'
     uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-pages.yml@v2.12.12
     with:
       cloud_provider: ${{ inputs.cloud_provider }}

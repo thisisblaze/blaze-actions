@@ -245,7 +245,7 @@ jobs:
     timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'dev' }}
-    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
+    if: always() && contains(fromJson('["success", "skipped"]'), needs.quality-check.result)
     outputs:
       should_build: ${{ steps.config.outputs.should_build }}
       should_deploy_app: ${{ steps.config.outputs.should_deploy_app }}
