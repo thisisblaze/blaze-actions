@@ -354,11 +354,11 @@ jobs:
       cluster_name: ${{ needs.config.outputs.cluster_name }}
       aws_region: ${{ needs.config.outputs.aws_region }}
       force_delete: true
-      dry_run: "false"
+      dry_run: false
       environment: ${{ inputs.environment }}
       cloud_provider: ${{ inputs.cloud_provider }}
       wif_audience: ${{ inputs.wif_audience || vars.WIF_AUDIENCE }}
-      target_stack: ${{ inputs.preserve_host == true && 'app' || 'all' }}
+      target_stack: ${{ inputs.preserve_host == 'true' && 'app' || 'all' }}
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -567,7 +567,7 @@ jobs:
       always() &&
       inputs.mode != 'quick-test' &&
       inputs.cloud_provider == 'aws' &&
-      inputs.preserve_host != true &&
+      inputs.preserve_host != 'true' &&
       inputs.target_type == 'host' &&
       needs.check-states.outputs.network_exists == 'true' &&
       (needs.destroy-app.result == 'success' || needs.destroy-app.result == 'skipped')
@@ -969,7 +969,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'success' || always() && inputs.mode != 'quick-test' && inputs.preserve_host != true && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'skipped' }}
+    if: ${{ always() && inputs.mode != 'quick-test' && inputs.preserve_host != 'true' && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'success' || always() && inputs.mode != 'quick-test' && inputs.preserve_host != 'true' && inputs.target_type == 'host' && needs.check-states.outputs.network_exists == 'true' && needs.destroy-app.result == 'skipped' }}
     name: "🧨 Destroy Network"
 
     needs: [config, destroy-app, cleanup-vpc-orphans, destroy-tunnel, destroy-data-pod, check-states]
@@ -1160,4 +1160,3 @@ jobs:
           done
 
           echo "✅ Post-destroy state fix complete"
-
