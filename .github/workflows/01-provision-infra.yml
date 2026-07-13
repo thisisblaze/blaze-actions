@@ -474,9 +474,9 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ (inputs.apply == true || inputs.apply == 'true') && 'true' || 'false' }}
-      destroy: ${{ (inputs.destroy == true || inputs.destroy == 'true') && 'true' || 'false' }}
-      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
+      apply: ${{ contains(fromJSON('[true, "true"]'), inputs.apply) && 'true' || 'false' }}
+      destroy: ${{ contains(fromJSON('[true, "true"]'), inputs.destroy) && 'true' || 'false' }}
+      build_sharp: ${{ contains(fromJSON('[true, "true"]'), inputs.enable_image_resize) && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -623,7 +623,7 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
         workers='${{ inputs.workers_json }}'
-      orphan_lambda: ${{ (inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network') && 'true' || 'false' }}
+      orphan_lambda: ${{ contains(fromJSON('["network", "dedicated-network", "multi-site-network"]'), inputs.stack) && 'true' || 'false' }}
       split_apply: ${{ inputs.stack == 'tunnel' && 'true' || 'false' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering && 'true' || 'false' }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
@@ -853,7 +853,7 @@ jobs:
           echo "| **Provider** | \`$PROVIDER\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Region** | \`$REGION\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Type** | ${{ (inputs.apply == true || inputs.apply == 'true') && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Type** | ${{ contains(fromJSON('[true, "true"]'), inputs.apply) && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ inputs.apply }}" == "false" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY
