@@ -54,7 +54,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.12
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
