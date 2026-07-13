@@ -2,6 +2,24 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.12 (2026-07-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: align checkengines diagnostic checks to support 4-repo setup (including blaze-conductor) (#204)
+- docs: deep cicd maintenance sync - 4-repos structure & changelog update
+- docs: run /11-maintain-prompts-ai sweep and fix absolute persona links
+- docs: run /09-maintain-docs sweep and archive loose reports
+- docs: add Unreleased section for GHA boolean quoting fix
+- chore: update CHANGELOG for v2.12.11
+
+### Fixed
+
+
 ## [Unreleased]
 
 ### Changed
