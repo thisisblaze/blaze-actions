@@ -219,7 +219,11 @@ jobs:
 
           if [[ "$CLUSTER_TIER" == "flex" ]]; then
             echo "1. Flex cluster detected. Skipping Custom DB Role creation (forbidden on serverless)."
-            # For flex, we use built-in roles assigned to the target database
+            # For flex, we use built-in roles assigned directly to the target database.
+            # NOTE: this only affects which db the *role* is scoped to. The Atlas user's
+            # own auth database (top-level "databaseName" in the API payload below) is
+            # unconditionally "admin" — see the hardcoded value further down — so
+            # AUTH_SOURCE must NOT be derived from ASSIGN_DB. It must always be "admin".
             ASSIGN_ROLE="readWrite"
             ASSIGN_DB="$DB_NAME"
           else
@@ -259,7 +263,15 @@ jobs:
             
           echo ""
           echo "1. Creating Database User: $APP_USER"
-          echo "AUTH_SOURCE=$ASSIGN_DB" >> $GITHUB_ENV
+          # Atlas SCRAM users are always authenticated against the "admin" database —
+          # that's the top-level "databaseName" in the databaseUsers payload below,
+          # which is hardcoded to "admin" regardless of cluster tier. ASSIGN_DB only
+          # controls which db the *role* grants access to (target db for flex/built-in
+          # roles, "admin" for custom roles on Standard/M10+). Do not conflate the two:
+          # a connection string's authSource must match the auth database, not the
+          # role's target database, or the driver will fail to find the user and every
+          # connection attempt will error with "MongoDB connection failed".
+          echo "AUTH_SOURCE=admin" >> $GITHUB_ENV
           USER_PAYLOAD=$(jq -n \
             --arg user "$APP_USER" \
             --arg pass "$MONGO_PASS" \
