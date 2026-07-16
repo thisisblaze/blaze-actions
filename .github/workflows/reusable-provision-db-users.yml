@@ -356,16 +356,26 @@ jobs:
             # of assuming +srv always applies -- getting this wrong throws an immediate
             # MongoParseError at driver-connect time (surfaces to the app as a generic
             # "MongoDB connection failed", indistinguishable from an auth failure).
+            #
+            # A second, independent gotcha lives on the same fork: mongodb+srv://
+            # defaults tls=true in the driver, but the plain mongodb:// scheme
+            # defaults tls=false. Atlas enforces TLS on every connection with no way
+            # to disable it, so a plaintext mongodb:// handshake gets rejected almost
+            # instantly -- surfacing as the exact same generic "MongoDB connection
+            # failed" as the authSource/scheme bugs, but caused by neither. Flex-tier
+            # (mongodb://) connections MUST explicitly set tls=true.
             if [[ "$MONGO_HOST" == *","* || "$MONGO_HOST" == *":"* ]]; then
               MONGO_SCHEME="mongodb"
+              TLS_PARAM="&tls=true"
             else
               MONGO_SCHEME="mongodb+srv"
+              TLS_PARAM=""
             fi
             # Construct standard connection string pattern
             if [[ -n "$AUTH_SOURCE" ]]; then
-              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE"
+              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE${TLS_PARAM}"
             else
-              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
+              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority${TLS_PARAM}"
             fi
             aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
             # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
