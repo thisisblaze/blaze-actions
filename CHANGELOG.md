@@ -2,6 +2,23 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.14 (2026-07-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.13
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
 ## v2.12.13 (2026-07-16)
 
 ### Added
