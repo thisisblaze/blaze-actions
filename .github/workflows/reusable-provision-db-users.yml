@@ -345,11 +345,27 @@ jobs:
           aws ssm put-parameter --name "$TARGET/mongodb/app_password" --value "$MONGO_PASS" --type "SecureString" --overwrite
 
           if [[ -n "$MONGO_HOST" ]]; then
+            # Cluster tier determines the connection-string shape Atlas hands back
+            # (see modules/mongodbatlas/cluster/outputs.tf in infra-core):
+            #   - flex tier   -> connection_strings.standard   -> flattened seed list
+            #                    "host1:port,host2:port,host3:port" (no SRV record)
+            #   - advanced/M10+ -> connection_strings[0].standard_srv -> single apex
+            #                    hostname, no port, SRV-resolvable
+            # mongodb+srv:// forbids explicit ports and multiple hosts, so it can ONLY
+            # be used with the second shape. Detect which shape we actually got instead
+            # of assuming +srv always applies -- getting this wrong throws an immediate
+            # MongoParseError at driver-connect time (surfaces to the app as a generic
+            # "MongoDB connection failed", indistinguishable from an auth failure).
+            if [[ "$MONGO_HOST" == *","* || "$MONGO_HOST" == *":"* ]]; then
+              MONGO_SCHEME="mongodb"
+            else
+              MONGO_SCHEME="mongodb+srv"
+            fi
             # Construct standard connection string pattern
             if [[ -n "$AUTH_SOURCE" ]]; then
-              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE"
+              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority&authSource=$AUTH_SOURCE"
             else
-              MONGO_URI="mongodb+srv://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
+              MONGO_URI="${MONGO_SCHEME}://$APP_USER:$MONGO_PASS@$MONGO_HOST/$DB_NAME?retryWrites=true&w=majority"
             fi
             aws ssm put-parameter --name "$TARGET/mongodb/app_connection_string" --value "$MONGO_URI" --type "SecureString" --overwrite
             # V2 multi-site-tenant-app reads from {tenant_path}/mongodb/uri
