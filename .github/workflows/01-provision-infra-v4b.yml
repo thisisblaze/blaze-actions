@@ -203,7 +203,7 @@ jobs:
   auto-cleanup-dns:
     name: Auto Cleanup DNS (Failure)
     needs: [configuration, terraform]
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.15
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}

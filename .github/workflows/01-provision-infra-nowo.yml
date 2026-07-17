@@ -600,7 +600,7 @@ jobs:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
     if: failure() && needs.configuration.outputs.stage_key != 'prod' && contains(fromJson('["tunnel", "app"]'), inputs.stack)
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.15
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
