@@ -204,7 +204,7 @@ jobs:
     name: Auto Cleanup DNS (Failure)
     needs: [configuration, terraform]
     if: failure() && needs.configuration.result == 'success' && inputs.stack == 'app'
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.15
     with:
       action: cleanup-dns
       environment: ${{ inputs.environment }}
