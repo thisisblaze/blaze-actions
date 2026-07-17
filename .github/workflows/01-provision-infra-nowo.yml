@@ -350,7 +350,7 @@ jobs:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
     if: always() && needs.configuration.result == 'success' && contains(fromJson('["success", "skipped"]'), needs.build_sharp_layer.result)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.15
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
