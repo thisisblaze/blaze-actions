@@ -274,7 +274,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider == 'gcp'
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.12.12
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-gcp.yml@v2.12.15
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
