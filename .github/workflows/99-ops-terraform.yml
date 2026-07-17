@@ -227,7 +227,7 @@ jobs:
       - name: Validate Input
         run: |
           ACTION="${{ inputs.action }}"
-          CONF="${{ inputs.confirmation }}"
+          CONF="$(printf '%s' "${{ inputs.confirmation }}" | xargs)"  # v3 learning 2026-07-16 (trailing-space gate): whitespace-normalize before the strict compare
 
           echo "🔍 Selected Action: $ACTION"
 
