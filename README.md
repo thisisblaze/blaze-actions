@@ -288,9 +288,9 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 **04-deploy-multi-site.yml** - Application Phase 2
 - Docker build, tag pushing, isolated Tenant ECS allocation and routing
 
-**stress-test.yml** - Full environment testing
+**scripts/full-cycle.sh** (tenant repo) - Full environment testing
 
-- Complete lifecycle: provision → deploy → verify → cleanup
+- Complete lifecycle: provision → deploy → verify → cleanup. Replaces the retired `08-stress-test-suite.yml` workflow (Plan 205, blaze-actions `v2.12.12`, 2026-07-15).
 
 ### Operations Workflows
 
