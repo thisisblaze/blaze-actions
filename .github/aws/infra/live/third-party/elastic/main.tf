@@ -32,7 +32,7 @@ locals {
 # ELASTIC CLOUD DEPLOYMENT MODULE
 # ---------------------------------------------------------
 module "elastic_deployment" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.11.4"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/third-party/elastic-deployment?ref=v2.11.13"
 
   # Required variables
   namespace   = var.namespace

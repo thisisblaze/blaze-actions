@@ -1,4 +1,4 @@
-%% Blaze Multi-Cloud Topology — Updated 2026-04-16
+%% Blaze Multi-Cloud Topology — Updated 2026-07-20
 %% Status: SCALED (Multi-Tenant V2) — Enforcing Pillar 1 Foundation and Pillar 2 Tenant layers.
 %% DEV-MINI: Cloudflare Tunnel only (Admin on Cloudflare Pages)
 %% DEV / STAGE / PROD: Full AWS stack (CloudFront + ALB + ECS, Admin on CloudFront+S3)
@@ -26,7 +26,7 @@ graph TB
         AWS_ALB["ALB\n(host routing)"]
         AWS_FARGATE["ECS Fargate ARM64\n(DEV/STAGE)"]
         AWS_EC2["ECS EC2 Graviton\n(PROD)"]
-        AWS_REDIS["ElastiCache Redis"]
+        AWS_REDIS["ElastiCache Redis<br/>(enable_redis, default false)"]
         AWS_S3_ASSETS["S3 Assets"]
         AWS_S3_ADMIN["S3 admin-spa"]
 
@@ -37,24 +37,26 @@ graph TB
         AWS_ALB -->|"API — Native ECS B/G"| AWS_FARGATE
         AWS_ALB -->|"API — Native ECS B/G"| AWS_EC2
         AWS_ALB -->|"Frontend — Rolling"| AWS_FARGATE
+        AWS_ALB -->|"Frontend — Rolling"| AWS_EC2
         AWS_ADMIN_CF --> AWS_S3_ADMIN
-        AWS_FARGATE --> AWS_REDIS
+        AWS_FARGATE -.-> AWS_REDIS
+        AWS_EC2 -.-> AWS_REDIS
     end
 
     subgraph GCP["GCP"]
         GCP_RUN["Cloud Run v2"]
         GCP_CDN["Cloud CDN"]
-        GCP_MEM["Memorystore Redis"]
+        GCP_MEM["Memorystore Redis<br/>(enable_redis, default false)"]
         GCP_CDN --> GCP_RUN
-        GCP_RUN --> GCP_MEM
+        GCP_RUN -.-> GCP_MEM
     end
 
     subgraph Azure["Azure"]
         AZ_ACA["Container Apps"]
         AZ_CDN["Azure Front Door / CDN"]
-        AZ_REDIS["Azure Cache Redis"]
+        AZ_REDIS["Azure Cache Redis<br/>(enable_redis, default false)"]
         AZ_CDN --> AZ_ACA
-        AZ_ACA --> AZ_REDIS
+        AZ_ACA -.-> AZ_REDIS
     end
 
     subgraph SaaS["Shared SaaS"]
@@ -74,6 +76,12 @@ graph TB
     ECS_MINI --> MONGO
     AWS_FARGATE --> MONGO
     AWS_FARGATE --> ELASTIC
+    AWS_EC2 --> MONGO
+    AWS_EC2 --> ELASTIC
+    GCP_RUN --> MONGO
+    GCP_RUN --> ELASTIC
+    AZ_ACA --> MONGO
+    AZ_ACA --> ELASTIC
 
     classDef aws fill:#FF9900,stroke:#232F3E,color:#000;
     classDef gcp fill:#4285F4,stroke:#333,color:#fff;
