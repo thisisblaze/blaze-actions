@@ -2,6 +2,22 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.16 (2026-07-23)
+
+### Added
+
+- **feat(deploy): minimum `desired_count` floor (1) in `deploy-ecs-service`** (`.github/actions/deploy-ecs-service/action.yml`, Plan 324 Phase 3). Added an automatic pre-deployment check that queries live service `desiredCount`. If a service is scaled down or sleeping (`desiredCount` == 0), the action automatically raises `desiredCount` to 1 prior to task registration, ensuring active deployments do not remain parked at 0 tasks.
+- **feat(ci): hermetic `pin-guard` linter in `validate-workflows.yml`** (`.github/workflows/validate-workflows.yml`, Plan 324 Phase 2). Added a dedicated `pin-guard` job that scans all workflows in `.github/workflows/` and fails pull requests if any internal workflow calls reference floating `@main` tags.
+
+### Changed
+
+- **perf(build): native arm64 runner & GHA layer caching** (`.github/workflows/reusable-docker-build.yml`, Plan 324 Phase 1). Verified `ubuntu-24.04-arm` native runners and `type=gha,mode=max` layer caching for Graviton container builds, bypassing QEMU emulation overhead and reducing build durations to under 5 minutes.
+- **docs(plan-324): V2 CI/CD Modernization & V3 Feature Adoption** (`docs/plans/324_cicd_v2_modernization_and_v3_adoption_plan.md` & `docs/reports/2026-07-23_cicd_v2_vs_v3_comparison_report.md`). Backported battle-tested V3 (Forge) build performance, deployment resilience, ADR-007 destruction safety, and ADR-017 read-only AI agent triage into the V2 pipeline ecosystem.
+
+### Fixed
+
+- **fix(deploy): prevent sleeping/scaled-to-zero ECS deployments from reporting false completion** (`.github/actions/deploy-ecs-service/action.yml`). Enforces a minimum task floor before triggering ECS task definition stability waits.
+
 ## v2.12.15 (2026-07-16)
 
 ### Added

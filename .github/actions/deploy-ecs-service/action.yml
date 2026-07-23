@@ -733,6 +733,32 @@ runs:
       run: |
         echo "::warning title=Health gate enforced::skip_stability_wait=true is IGNORED on '${{ inputs.stage_key }}'. Waiting for ECS service stability is mandatory on STAGE/PROD."
 
+    - name: Ensure Minimum desired_count Floor (1)
+      shell: bash
+      env:
+        CLUSTER_NAME: ${{ steps.prep.outputs.cluster_name }}
+        TARGET_SERVICE: ${{ steps.prep.outputs.service_name }}
+        AWS_REGION: ${{ inputs.aws_region }}
+      run: |
+        echo "🔍 Checking desired_count floor for $TARGET_SERVICE in $CLUSTER_NAME..."
+        LIVE_DESIRED=$(aws ecs describe-services \
+          --cluster "$CLUSTER_NAME" \
+          --services "$TARGET_SERVICE" \
+          --query 'services[0].desiredCount' \
+          --output text 2>/dev/null || echo "0")
+        
+        if [[ "$LIVE_DESIRED" == "0" || "$LIVE_DESIRED" == "None" ]]; then
+          echo "⚠️  Service $TARGET_SERVICE has desired_count=0 (sleeping or scaled down)."
+          echo "🚀 Raising desired_count to 1 floor for active deployment..."
+          aws ecs update-service \
+            --cluster "$CLUSTER_NAME" \
+            --service "$TARGET_SERVICE" \
+            --desired-count 1 \
+            --region "$AWS_REGION" || echo "⚠️ Could not update desired_count prior to deploy (service may be created during deploy)"
+        else
+          echo "✅ Service desired_count is $LIVE_DESIRED (>= 1 floor)"
+        fi
+
     - name: Deploy to Amazon ECS
       uses: aws-actions/amazon-ecs-deploy-task-definition@cbf54ec46642b86ff78c2f5793da6746954cf8ff # v2.6.0
       env:
