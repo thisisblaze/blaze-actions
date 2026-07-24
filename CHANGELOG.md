@@ -2,6 +2,9 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## [Unreleased]
+- feat(v2-audit): **Plan 207** — Removed 5.8MB actionlint binary, relocated 17 root maintenance scripts to `scripts/maintenance/`, enforced `timeout-minutes: 30` across 29 jobs in 8 workflows, and aligned branch parity with `dev` and `main`. (2026-07-24)
+
 ## v2.12.17 (2026-07-23)
 
 ### Added
