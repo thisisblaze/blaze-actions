@@ -74,10 +74,29 @@ jobs:
                     echo "✅ Timeout protection check passed"
                   fi
 
+    pin-guard:
+        name: "📌 Hermetic Pin Guard"
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+            - name: Check for Unpinned @main References
+              run: |
+                  echo "🔍 Checking for unpinned @main workflow references in .github/workflows..."
+                  UNPINNED=$(grep -rn "uses: thebyte9/blaze-actions/\.github/workflows/.*@main" .github/workflows/ || true)
+                  if [ -n "$UNPINNED" ]; then
+                    echo "❌ ERROR: Found unpinned @main workflow references:"
+                    echo "$UNPINNED"
+                    exit 1
+                  fi
+                  echo "✅ Zero @main references found in .github/workflows"
+
     summary:
         name: "📊 Validation Summary"
         runs-on: ubuntu-latest
-        needs: [yaml-syntax, timeout-check]
+        needs: [yaml-syntax, timeout-check, pin-guard]
         if: always()
         timeout-minutes: 5
         steps:
@@ -85,4 +104,9 @@ jobs:
               run: |
                   echo "YAML Syntax: ${{ needs.yaml-syntax.result }}"
                   echo "Timeout Check: ${{ needs.timeout-check.result }}"
-                  echo "✅ Validation checks completed"
+                  echo "Pin Guard: ${{ needs.pin-guard.result }}"
+                  if [ "${{ needs.pin-guard.result }}" != "success" ]; then
+                    echo "❌ Pin Guard failed"
+                    exit 1
+                  fi
+                  echo "✅ All validation checks completed"

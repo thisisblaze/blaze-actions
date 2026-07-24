@@ -245,7 +245,7 @@ jobs:
     timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'dev' }}
-    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
+    if: always() && contains(fromJson('["success", "skipped"]'), needs.quality-check.result)
     outputs:
       should_build: ${{ steps.config.outputs.should_build }}
       should_deploy_app: ${{ steps.config.outputs.should_deploy_app }}
@@ -339,7 +339,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
         with:
           environment: ${{ inputs.environment || 'dev' }}
           project: ${{ inputs.project }}
@@ -500,15 +500,15 @@ jobs:
       id-token: write
     name: Build API
     needs: [configuration, pre-flight-check]
-    if: ${{ needs.configuration.outputs.should_build == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.5
+    if: ${{ needs.configuration.outputs.should_build == 'true' && contains(fromJSON('["Blaze all", "api"]'), inputs.target_services) || needs.configuration.outputs.should_build == 'true' && inputs.target_services == null }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "API"
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/api/Dockerfile.api
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{2}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ inputs.cloud_provider == 'gcp' && format('{0}-docker.pkg.dev/{1}/{2}/api', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || inputs.cloud_provider == 'azure' && format('{0}.azurecr.io/{1}-{2}-web/{2}/api', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/api', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ github.sha }}
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
@@ -533,21 +533,21 @@ jobs:
       id-token: write
     name: Build Frontend
     needs: [configuration, pre-flight-check]
-    if: ${{ (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.5
+    if: ${{ contains(fromJSON('[true, null]'), inputs.build_images) && contains(fromJSON('["Blaze all", "frontend", null]'), inputs.target_services) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "Frontend"
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/frontend/Dockerfile.frontend
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{2}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ inputs.cloud_provider == 'gcp' && format('{0}-docker.pkg.dev/{1}/{2}/frontend', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.gcp_docker_repo) || inputs.cloud_provider == 'azure' && format('{0}.azurecr.io/{1}-{2}-web/{2}/frontend', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/frontend', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ github.sha }}
       # platforms: "linux/amd64" # REMOVED: Frontend now supports multi-arch via native runners
       build_args: |
         BLAZE_PROJECT_KEY=${{ needs.configuration.outputs.project_key }}
         BLAZE_PROJECT_NAME=${{ needs.configuration.outputs.project_key }}
-        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+        BLAZE_GRAPHQL_URI=${{ inputs.cloud_provider == 'azure' && inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider == 'azure' && inputs.environment != 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment != 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
       aws_region: ${{ needs.configuration.outputs.aws_region }}
       gcp_project_id: ${{ needs.configuration.outputs.gcp_project_id }}
       gcp_region: ${{ needs.configuration.outputs.cloud_region }}
@@ -570,15 +570,15 @@ jobs:
     name: Package Admin (Docker)
     needs: [configuration, pre-flight-check]
     # Run for Feature Branches ONLY (Dev + Branch Name)
-    if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && (inputs.build_images == true || inputs.build_images == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@v2.12.5
+    if: ${{ inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && contains(fromJSON('[true, null]'), inputs.build_images) && contains(fromJSON('["Blaze all", "admin", null]'), inputs.target_services) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-docker-build.yml@dev
     with:
       display_name: "Admin"
       environment: ${{ inputs.environment || 'dev' }}
       cloud_provider: ${{ inputs.cloud_provider }}
       dockerfile: packages/admin/Dockerfile.admin
       context: .
-      image_name: ${{ (inputs.cloud_provider == 'gcp') && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || (inputs.cloud_provider == 'azure') && format('{0}.azurecr.io/{1}-{2}-web/{2}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
+      image_name: ${{ inputs.cloud_provider == 'gcp' && format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || inputs.cloud_provider == 'azure' && format('{0}.azurecr.io/{1}-{2}-web/{2}/admin', needs.configuration.outputs.azure_acr_name, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) || format('{0}.dkr.ecr.{1}.amazonaws.com/{2}-{3}-web/{3}/admin', needs.configuration.outputs.aws_account_id, needs.configuration.outputs.aws_region, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
       image_tag: ${{ github.sha }}
       platforms: ${{ inputs.frontend_cpu_architecture == 'ARM64' && 'linux/arm64' || inputs.frontend_cpu_architecture == 'X86_64' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       azure_registry_server: "${{ needs.configuration.outputs.azure_acr_name }}.azurecr.io"
@@ -600,8 +600,8 @@ jobs:
       id-token: write
     name: Deploy API (Cloud Run)
     needs: [configuration, build-api, pre-flight-check]
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == 'true' || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'api' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.12.5
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && contains(fromJSON('[true, "true", null]'), inputs.deploy_services) && contains(fromJSON('["Blaze all", "api", null]'), inputs.target_services) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@dev
     with:
       service_name: "api"
       environment: ${{ inputs.environment || 'dev' }}
@@ -622,7 +622,7 @@ jobs:
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
       sentry_dsn: ${{ vars.BLAZE_SENTRY_DSN }}
-      graphql_uri: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+      graphql_uri: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider == 'azure' && inputs.environment != 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment != 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -645,8 +645,8 @@ jobs:
       id-token: write
     name: Deploy Frontend (Cloud Run)
     needs: [configuration, build-frontend, pre-flight-check]
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && (inputs.deploy_services == true || inputs.deploy_services == null) && (inputs.target_services == 'Blaze all' || inputs.target_services == 'frontend' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.12.5
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && contains(fromJSON('[true, null]'), inputs.deploy_services) && contains(fromJSON('["Blaze all", "frontend", null]'), inputs.target_services) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@dev
     with:
       service_name: "frontend"
       environment: ${{ inputs.environment || 'dev' }}
@@ -667,7 +667,7 @@ jobs:
       s3_public_url: ${{ vars.BLAZE_FILES_S3_PUBLIC_URL }}
       s3_endpoint: ${{ vars.BLAZE_FILES_S3_ENDPOINT }}
       sentry_dsn: ${{ vars.BLAZE_SENTRY_DSN }}
-      graphql_uri: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+      graphql_uri: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider == 'azure' && inputs.environment != 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment != 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -685,8 +685,8 @@ jobs:
     name: Deploy Admin (Cloud Run)
     needs: [configuration, package-admin-docker, pre-flight-check]
     # Run for Feature Branches ONLY
-    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && (inputs.target_services == 'Blaze all' || inputs.target_services == 'admin' || inputs.target_services == null) }}
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@v2.12.5
+    if: ${{ !failure() && !cancelled() && inputs.cloud_provider == 'gcp' && inputs.environment == 'dev' && inputs.branch_name != '' && inputs.branch_name != null && needs.configuration.outputs.should_deploy_app == 'true' && contains(fromJSON('["Blaze all", "admin", null]'), inputs.target_services) }}
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-cloudrun-deploy.yml@dev
     with:
       service_name: "admin"
       environment: ${{ inputs.environment || 'dev' }}
@@ -702,7 +702,7 @@ jobs:
       namespace: ${{ needs.configuration.outputs.namespace }}
       image_uri: ${{ format('{0}-docker.pkg.dev/{1}/{2}-{3}-web/{3}/admin', needs.configuration.outputs.cloud_region, needs.configuration.outputs.gcp_project_id, needs.configuration.outputs.namespace, needs.configuration.outputs.image_project_key) }}
       port: 80 # Admin Nginx
-      graphql_uri: ${{ inputs.cloud_provider == 'azure' && (inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) || (inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root)) }}
+      graphql_uri: ${{ inputs.cloud_provider == 'azure' && inputs.environment == 'prod' && format('https://api-azure.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider == 'azure' && inputs.environment != 'prod' && format('https://api-azure-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment == 'prod' && format('https://api.{0}/graphql', needs.configuration.outputs.domain_root) || inputs.cloud_provider != 'azure' && inputs.environment != 'prod' && format('https://api-{0}.{1}/graphql', needs.configuration.outputs.stage_key, needs.configuration.outputs.domain_root) }}
     secrets:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -726,7 +726,7 @@ jobs:
     strategy:
       matrix:
         site_key: ["acme-standard"] # Test 1 site only
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@v2.12.5
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-gcp-multi-site-deploy.yml@dev
     with:
       site_key: ${{ matrix.site_key }}
       # Service name must match TF naming: the network module uses project_key="multi-site"

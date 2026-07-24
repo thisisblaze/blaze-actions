@@ -124,11 +124,14 @@ on:
         required: false
 jobs:
   check-dns:
+    timeout-minutes: 30
     name: "Check DNS Resolution"
     runs-on: ubuntu-latest
     outputs:
+      timeout-minutes: 30
       ready: ${{ steps.check.outputs.ready }}
     steps:
+      timeout-minutes: 30
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -191,11 +194,13 @@ jobs:
           fi
 
   verify:
+    timeout-minutes: 30
     needs: check-dns
     if: ${{ needs.check-dns.outputs.ready == 'true' }}
 
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.5
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.15
     with:
+      timeout-minutes: 30
       cloud_provider: ${{ inputs.cloud_provider }}
       tf_dir: ${{ inputs.tf_dir }}
       aws_region: ${{ inputs.aws_region }}
@@ -217,6 +222,7 @@ jobs:
         manage_dns=false
         await_validation=true
     secrets:
+      timeout-minutes: 30
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
@@ -236,13 +242,16 @@ jobs:
       BLAZE_FILES_S3_SECRET_ACCESS_KEY: ${{ secrets.BLAZE_FILES_S3_SECRET_ACCESS_KEY }}
 
   close-issue:
+    timeout-minutes: 30
     name: "Close DNS Handoff Issue"
     needs: verify
     runs-on: ubuntu-latest
     permissions:
+      timeout-minutes: 30
       contents: write
       issues: write
     steps:
+      timeout-minutes: 30
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 

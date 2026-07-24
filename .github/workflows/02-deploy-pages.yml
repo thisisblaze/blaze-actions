@@ -254,7 +254,7 @@ jobs:
     timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'DEV' }}
-    if: always() && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped')
+    if: always() && contains(fromJson('["success", "skipped"]'), needs.quality-check.result)
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
       stage_key: ${{ steps.config.outputs.stage_key }}
@@ -345,7 +345,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.12
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           project: ${{ inputs.project }}

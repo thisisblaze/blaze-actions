@@ -212,7 +212,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.12
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -328,7 +328,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.12
         with:
           environment: ${{ inputs.environment || 'DEV' }}
           terraform_stack: ${{ inputs.stack || 'app' }}
@@ -386,8 +386,8 @@ jobs:
       id-token: write
     name: Manage Env
     needs: [configuration]
-    if: inputs.action == 'manage-environment' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.12.5
+    if: inputs.action == 'manage-environment' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-ecs-service-management.yml@v2.12.12
     with:
       cluster_name: ${{ needs.configuration.outputs.cluster_name }}
       action: ${{ inputs.manage_action }}
@@ -404,7 +404,7 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Lambdas (Garbage Collection)
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-lambdas' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-lambdas' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15
@@ -516,7 +516,7 @@ jobs:
       id-token: write
     name: 🧹 Cleanup Orphaned Buckets
     needs: [configuration]
-    if: inputs.action == 'cleanup-orphaned-buckets' && (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null)
+    if: inputs.action == 'cleanup-orphaned-buckets' && inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
     timeout-minutes: 15

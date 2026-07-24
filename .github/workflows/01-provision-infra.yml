@@ -314,7 +314,7 @@ jobs:
 
       - name: Check Access
         if: steps.load-access.outputs.allowed != ''
-        uses: thisisblaze/blaze-actions/.github/actions/check-access@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/check-access@dev
         with:
           allowed_users: ${{ steps.load-access.outputs.allowed }}
           actor: ${{ github.actor }}
@@ -348,7 +348,7 @@ jobs:
           echo "☁️ Provider: $CLOUD_PROVIDER | Region: $CLOUD_REGION"
 
       - name: Configure AWS Credentials
-        if: (inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null) && (inputs.stack == 'network' || inputs.stack == 'acm')
+        if: inputs.cloud_provider != 'gcp' && inputs.cloud_provider != 'azure' && contains(fromJson('["network", "acm"]'), inputs.stack)
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -376,7 +376,7 @@ jobs:
 
       - name: Calculate Configuration
         id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@dev
         with:
           environment: ${{ inputs.environment }}
           project: ${{ inputs.project }}
@@ -431,7 +431,7 @@ jobs:
       - name: Build and Publish Sharp Layer
         id: build
         if: steps.existing.outputs.exists != 'true'
-        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@v2.12.5
+        uses: thisisblaze/blaze-actions/.github/actions/build-sharp-layer@dev
         with:
           aws-region: 'us-east-1'
           layer-name: 'sharp-image-processing'
@@ -441,8 +441,8 @@ jobs:
   provision:
     name: Provision ${{ inputs.stack }}
     needs: [configuration, build_sharp_layer]
-    if: always() && needs.configuration.result == 'success' && (needs.build_sharp_layer.result == 'success' || needs.build_sharp_layer.result == 'skipped')
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@v2.12.5
+    if: always() && needs.configuration.result == 'success' && contains(fromJson('["success", "skipped"]'), needs.build_sharp_layer.result)
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-terraform.yml@dev
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -474,9 +474,9 @@ jobs:
       state_key: ${{ needs.configuration.outputs.state_key }}
       lock_table: ${{ needs.configuration.outputs.lock_table }}
       terraform_version: ${{ inputs.terraform_version }}
-      apply: ${{ (inputs.apply == true || inputs.apply == 'true') && 'true' || 'false' }}
-      destroy: ${{ (inputs.destroy == true || inputs.destroy == 'true') && 'true' || 'false' }}
-      build_sharp: ${{ (inputs.enable_image_resize == true || inputs.enable_image_resize == 'true') && inputs.stack == 'network' && 'true' || 'false' }}
+      apply: ${{ contains(fromJSON('[true, "true"]'), inputs.apply) && 'true' || 'false' }}
+      destroy: ${{ contains(fromJSON('[true, "true"]'), inputs.destroy) && 'true' || 'false' }}
+      build_sharp: ${{ contains(fromJSON('[true, "true"]'), inputs.enable_image_resize) && inputs.stack == 'network' && 'true' || 'false' }}
       pre_apply_script: |-
         # Import existing resources before apply to prevent "already exists" errors
         SCRIPT="$GITHUB_WORKSPACE/.github/scripts/import-existing-resources.sh"
@@ -623,7 +623,7 @@ jobs:
         frontend_launch_type=${{ inputs.frontend_launch_type }}
         frontend_cpu_architecture=${{ inputs.frontend_cpu_architecture }}
         workers='${{ inputs.workers_json }}'
-      orphan_lambda: ${{ (inputs.stack == 'network' || inputs.stack == 'dedicated-network' || inputs.stack == 'multi-site-network') && 'true' || 'false' }}
+      orphan_lambda: ${{ contains(fromJSON('["network", "dedicated-network", "multi-site-network"]'), inputs.stack) && 'true' || 'false' }}
       split_apply: ${{ inputs.stack == 'tunnel' && 'true' || 'false' }}
       enable_vpc_peering: ${{ inputs.enable_vpc_peering && 'true' || 'false' }}
       split_targets: ${{ inputs.stack == 'tunnel' && 'module.tunnel.random_id.tunnel_secret module.tunnel.cloudflare_zero_trust_tunnel_cloudflared.this' || '' }}
@@ -694,8 +694,8 @@ jobs:
   auto-cleanup-dns:
     name: 🧹 Auto Cleanup DNS (Failure)
     needs: [configuration, provision]
-    if: failure() && needs.configuration.outputs.stage_key != 'prod' && (inputs.stack == 'tunnel' || inputs.stack == 'app')
-    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@v2.12.5
+    if: failure() && needs.configuration.outputs.stage_key != 'prod' && contains(fromJson('["tunnel", "app"]'), inputs.stack)
+    uses: thisisblaze/blaze-actions/.github/workflows/99-ops-utility.yml@dev
     with:
       environment: ${{ inputs.environment }}
       action: "remove_cname"
@@ -853,7 +853,7 @@ jobs:
           echo "| **Provider** | \`$PROVIDER\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stack** | \`${{ inputs.stack }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Region** | \`$REGION\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Type** | ${{ (inputs.apply == true || inputs.apply == 'true') && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Type** | ${{ contains(fromJSON('[true, "true"]'), inputs.apply) && '🟢 **APPLY**' || '🔵 **PLAN (Dry Run)**' }} |" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ inputs.apply }}" == "false" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY

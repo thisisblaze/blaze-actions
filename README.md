@@ -54,7 +54,7 @@ Centralized GitHub Actions workflows and composite actions for infrastructure pr
 # Recommended: Pin to specific version for stability
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.12.15
     with:
       environment: dev
       project: myproject
@@ -82,7 +82,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.55
+      - uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.15
         with:
           project_key: myproject
 ```
@@ -177,7 +177,7 @@ The namespace is automatically loaded by `reusable-calculate-config.yml` and ava
 ```yaml
 jobs:
   configuration:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-calculate-config.yml@v2.12.15
     with:
       environment: dev
       terraform_stack: app
@@ -288,9 +288,9 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 **04-deploy-multi-site.yml** - Application Phase 2
 - Docker build, tag pushing, isolated Tenant ECS allocation and routing
 
-**stress-test.yml** - Full environment testing
+**scripts/full-cycle.sh** (tenant repo) - Full environment testing
 
-- Complete lifecycle: provision → deploy → verify → cleanup
+- Complete lifecycle: provision → deploy → verify → cleanup. Replaces the retired `08-stress-test-suite.yml` workflow (Plan 205, blaze-actions `v2.12.12`, 2026-07-15).
 
 ### Operations Workflows
 
@@ -351,7 +351,7 @@ This repository provides **production-ready GitHub Actions workflows** for deplo
 Loads configuration from `vars/*.json` files
 
 ```yaml
-- uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
+- uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.15
   with:
     environment: dev
 ```
@@ -361,7 +361,7 @@ Loads configuration from `vars/*.json` files
 Deploys application to ECS
 
 ```yaml
-- uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.11.55
+- uses: thisisblaze/blaze-actions/.github/actions/deploy-ecs-service@v2.12.15
   with:
     cluster_name: my-cluster
     service_name: api
@@ -373,7 +373,7 @@ Deploys application to ECS
 Promotes Docker images between environments
 
 ```yaml
-- uses: thisisblaze/blaze-actions/.github/actions/docker-promote@v2.11.55
+- uses: thisisblaze/blaze-actions/.github/actions/docker-promote@v2.12.15
   with:
     source_tag: dev-123
     target_tag: stage-123
@@ -384,7 +384,7 @@ Promotes Docker images between environments
 Imports existing AWS resources to Terraform
 
 ```yaml
-- uses: thisisblaze/blaze-actions/.github/actions/resource-importer@v2.11.55
+- uses: thisisblaze/blaze-actions/.github/actions/resource-importer@v2.12.15
   with:
     resource_type: aws_s3_bucket
     resource_id: my-bucket
@@ -395,7 +395,7 @@ Imports existing AWS resources to Terraform
 Initial project setup and configuration
 
 ```yaml
-- uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.11.55
+- uses: thisisblaze/blaze-actions/.github/actions/setup-blaze@v2.12.15
   with:
     project_key: myproject
 ```
@@ -415,7 +415,7 @@ on:
 
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.12.15
     with:
       environment: prod
       project_key: myproject
@@ -438,7 +438,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
+      - uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.15
         with:
           environment: dev
 
@@ -451,14 +451,14 @@ jobs:
 ```yaml
 jobs:
   provision:
-    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/01a-provision-network.yml@v2.12.15
     with:
       environment: dev
     secrets: inherit
 
   deploy:
     needs: provision
-    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/04-deploy-multi-site.yml@v2.12.15
     with:
       environment: dev
     secrets: inherit
