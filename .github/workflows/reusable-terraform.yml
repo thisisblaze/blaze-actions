@@ -241,7 +241,6 @@ jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    timeout-minutes: 90
     permissions:
       id-token: write # Required for OIDC (Azure, GCP, AWS)
       contents: read

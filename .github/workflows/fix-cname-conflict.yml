@@ -97,7 +97,6 @@ jobs:
       contents: read
       id-token: write
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment: stage
     steps:
       - name: Checkout Code

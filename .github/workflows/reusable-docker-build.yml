@@ -180,7 +180,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/amd64')
-    timeout-minutes: 15
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     env:
@@ -309,7 +308,6 @@ jobs:
     runs-on: ubuntu-24.04-arm # Native ARM64 runner — 13x faster than QEMU
     environment: ${{ inputs.environment }}
     if: contains(inputs.platforms, 'linux/arm64')
-    timeout-minutes: 15
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     env:
@@ -443,7 +441,6 @@ jobs:
       (needs.build-amd64.result == 'success' || needs.build-amd64.result == 'skipped') &&
       (needs.build-arm64.result == 'success' || needs.build-arm64.result == 'skipped') &&
       (needs.build-amd64.result == 'success' || needs.build-arm64.result == 'success')
-    timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''

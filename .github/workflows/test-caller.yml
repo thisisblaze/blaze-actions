@@ -2,10 +2,8 @@ name: Test Caller
 on: push
 jobs:
   call:
-    timeout-minutes: 30
     uses: ./.github/workflows/01-provision-infra.yml
     with:
-      timeout-minutes: 30
       environment: DEV
       project: thisisblaze
       stack: app

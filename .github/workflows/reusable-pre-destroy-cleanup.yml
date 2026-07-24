@@ -138,7 +138,6 @@ jobs:
       id-token: write
     name: Pre-Destroy Cleanup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     environment: ${{ inputs.environment }}
 
     outputs:

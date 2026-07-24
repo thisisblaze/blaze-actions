@@ -401,7 +401,6 @@ jobs:
       == null) &&
       inputs.enable_image_resize == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     outputs:
       layer_arn: ${{ steps.build.outputs.layer-arn || steps.existing.outputs.layer_arn }}
     steps:
@@ -635,7 +634,6 @@ jobs:
     needs: [configuration, provision]
     if: inputs.stack == 'third-party-mongodb' && inputs.apply == 'true' && needs.provision.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
@@ -717,7 +715,6 @@ jobs:
       inputs.apply == 'true' &&
       needs.provision.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

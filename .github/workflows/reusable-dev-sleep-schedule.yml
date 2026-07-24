@@ -100,7 +100,6 @@ jobs:
       id-token: write
     name: "😴 Sleep — ECS → RDS"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     if: inputs.action == 'sleep'
     steps:
       - name: Configure AWS Credentials
@@ -155,7 +154,6 @@ jobs:
       id-token: write
     name: "☀️ Wake — RDS → ECS"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     if: inputs.action == 'wake'
     steps:
       - name: Configure AWS Credentials

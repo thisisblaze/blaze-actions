@@ -37,7 +37,6 @@ jobs:
   secrets:
     name: 🔐 Secret Scanning
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -69,7 +68,6 @@ jobs:
   sast:
     name: 🔍 SAST (Semgrep)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     needs: secrets
     steps:
       - name: Checkout Code
@@ -182,7 +180,6 @@ jobs:
   dependencies:
     name: 📦 Dependency Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     needs: secrets
     steps:
       - name: Checkout Code
@@ -254,7 +251,6 @@ jobs:
   iac-security:
     name: 🛡️ IaC Security Scan (Trivy)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     needs: secrets
     steps:
       - name: Checkout Code
@@ -286,7 +282,6 @@ jobs:
   integrity:
     name: 🛡️ Repository Integrity
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       contents: read
       id-token: write # OSSF Scorecard signing
@@ -322,7 +317,6 @@ jobs:
   reporting:
     name: 📊 Security Report
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write # post security findings as PR comments

@@ -201,7 +201,6 @@ jobs:
   validate:
     name: Validate Request
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -296,7 +295,6 @@ jobs:
     # Run for all actions except kill-workflows
     if: inputs.action != 'kill-workflows'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     outputs:
       env_val: ${{ steps.config.outputs.env_val }}
       tf_dir: ${{ steps.config.outputs.tf_dir }}
@@ -405,7 +403,6 @@ jobs:
     if: inputs.action == 'unlock-state' || inputs.action == 'wipe-state' || inputs.action == 'rm-state'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'DEV' }}
-    timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null

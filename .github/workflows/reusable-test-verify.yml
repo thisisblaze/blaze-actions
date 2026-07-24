@@ -116,7 +116,6 @@ env:
 jobs:
   verify:
     name: "⚡ Verify Deployment"
-    timeout-minutes: 45
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:

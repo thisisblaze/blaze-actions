@@ -182,7 +182,6 @@ jobs:
     needs: [configuration]
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    timeout-minutes: 10
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider != 'gcp'

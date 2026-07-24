@@ -98,7 +98,6 @@ jobs:
       id-token: write
     name: Provision App Users (Atlas & Elastic)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     environment: ${{ inputs.environment }}
     env:
       ELASTIC_ENDPOINT: ""

@@ -184,7 +184,6 @@ jobs:
   calculate-config:
     name: Calculate Configuration
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     outputs:
       aws_region: ${{ steps.calc.outputs.aws_region }}
       client_key: ${{ steps.calc.outputs.client_key }}
@@ -214,7 +213,6 @@ jobs:
     # Run if Task is "Bootstrap All" OR "Init Backend"
     if: contains(inputs.task, 'Bootstrap') || contains(inputs.task, 'Init Backend')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     environment: ${{ inputs.environment }}
     needs: calculate-config
 
@@ -415,7 +413,6 @@ jobs:
     if: contains(inputs.task, 'Bootstrap') && inputs.cloud_provider != 'azure' || contains(inputs.task, 'Mirror') && inputs.cloud_provider != 'azure'
     needs: [calculate-config] # Removed init-backend dependency
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     environment: ${{ inputs.environment }}
 
     steps:

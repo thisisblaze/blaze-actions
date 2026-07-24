@@ -114,7 +114,6 @@ jobs:
       id-token: write
     name: "🩺 ECS Health Snapshot"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials

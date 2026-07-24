@@ -121,7 +121,6 @@ jobs:
       id-token: write
     name: ECS ${{ inputs.action }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     environment: ${{ inputs.environment }}
 
     outputs:

@@ -242,7 +242,6 @@ jobs:
       id-token: write
     name: Configuration
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     needs: [quality-check]
     environment: ${{ inputs.environment || 'dev' }}
     if: always() && contains(fromJson('["success", "skipped"]'), needs.quality-check.result)
@@ -359,7 +358,6 @@ jobs:
     needs: [configuration]
     environment: ${{ inputs.environment || 'dev' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
@@ -750,7 +748,6 @@ jobs:
     needs: [configuration, deploy-api-gcp, deploy-frontend-gcp, deploy-admin-gcp, deploy-sites-multi-site-gcp]
     if: always() && needs.configuration.outputs.should_deploy_app == 'true' && inputs.smoke_test_url != ''
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Checkout Actions Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -774,7 +771,6 @@ jobs:
     needs: [configuration, deploy-api-gcp, deploy-frontend-gcp, deploy-admin-gcp, deploy-sites-multi-site-gcp, smoke-test]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - name: Generate Summary
         run: |

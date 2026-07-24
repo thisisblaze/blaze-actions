@@ -5,11 +5,9 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
-      timeout-minutes: 30
       id-token: write
       contents: read
     steps:
-      timeout-minutes: 30
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:

@@ -162,7 +162,6 @@ jobs:
     name: "⚙️ Config"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     outputs:
       stage_key: ${{ steps.calc.outputs.stage_key }}
       bucket: ${{ steps.calc.outputs.bucket }}

@@ -163,7 +163,6 @@ jobs:
     name: "⚙️ Config"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     outputs:
       stage_key: ${{ steps.calc.outputs.stage_key }}
       bucket: ${{ steps.calc.outputs.bucket }}
@@ -236,7 +235,6 @@ jobs:
     name: "🔍 Check Stack States"
     needs: config
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     outputs:
       app_exists: ${{ steps.check-app.outputs.exists }}
       db_pod_exists: ${{ steps.check-db-pod.outputs.exists }}
@@ -404,7 +402,6 @@ jobs:
     name: "⏳ Wait for ECS Service Purge"
     needs: [config, destroy-app]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Configure AWS Credentials
         if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == ''
@@ -574,7 +571,6 @@ jobs:
     name: "🧹 Cleanup VPC Orphans (Pre-Network Destroy)"
     needs: [config, destroy-app, destroy-tunnel, destroy-data-pod, check-states]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
@@ -1016,7 +1012,6 @@ jobs:
     name: "🔧 Post-Destroy State Fix"
     needs: [config, destroy-network]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials

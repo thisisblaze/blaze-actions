@@ -149,7 +149,6 @@ jobs:
       id-token: write
     name: "🌐 Deploy site: ${{ inputs.site_key }} @ ${{ inputs.image_tag }}"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     environment: ${{ inputs.environment }}
 
     env:

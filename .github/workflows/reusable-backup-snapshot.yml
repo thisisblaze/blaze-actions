@@ -106,7 +106,6 @@ jobs:
       id-token: write
     name: 💾 RDS Snapshot
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     environment: ${{ inputs.environment }}
 
     steps:
@@ -172,7 +171,6 @@ jobs:
       id-token: write
     name: 📋 SSM Inventory
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment: ${{ inputs.environment }}
     # Only run if an SSM path prefix and export bucket are provided
     if: inputs.ssm_path_prefix != '' && inputs.ssm_inventory_bucket != ''
@@ -217,7 +215,6 @@ jobs:
       id-token: write
     name: 🔍 S3 Integrity Assert
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment: ${{ inputs.environment }}
 
     steps:
@@ -288,7 +285,6 @@ jobs:
       id-token: write
     name: 🗄️ DocumentDB Snapshot
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     environment: ${{ inputs.environment }}
     # No-op when docdb_cluster_identifier is not provided
     if: inputs.docdb_cluster_identifier != ''

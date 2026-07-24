@@ -174,7 +174,6 @@ jobs:
   deploy:
     name: Deploy ${{ inputs.service_name }} (Cloud Run)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code

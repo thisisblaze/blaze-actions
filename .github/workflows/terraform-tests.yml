@@ -113,7 +113,6 @@ jobs:
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -150,7 +149,6 @@ jobs:
   iac-security:
     name: IaC Security Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -169,7 +167,6 @@ jobs:
   unit-tests:
     name: Unit Tests (Label Module)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     needs: [static-analysis, iac-security]
     steps:
       - name: Checkout Code
@@ -205,7 +202,6 @@ jobs:
   integration-tests:
     name: Integration Tests (AWS Resources)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
     needs: static-analysis
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
     environment: DEV
