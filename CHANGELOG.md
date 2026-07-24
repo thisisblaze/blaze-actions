@@ -2,6 +2,114 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.17 (2026-07-23)
+
+### Added
+
+- feat: whitespace-normalize confirmation gates in ops workflows (#192)
+
+### Changed
+
+- chore: delete stale live/ duplicate mirrors and sync docs sweep
+- chore: update CHANGELOG for v2.12.15
+- chore: update CHANGELOG for v2.12.14
+- chore: update CHANGELOG for v2.12.13
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- fix: correct botched previous commit (accidental base64 paste)
+- fix(mongo): require explicit tls=true for flex-tier mongodb:// scheme
+- fix(provision-db-users): pick mongodb:// vs mongodb+srv:// based on host shape (#185)
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
+## v2.12.16 (2026-07-23)
+
+### Added
+
+- **feat(deploy): minimum `desired_count` floor (1) in `deploy-ecs-service`** (`.github/actions/deploy-ecs-service/action.yml`, Plan 324 Phase 3). Added an automatic pre-deployment check that queries live service `desiredCount`. If a service is scaled down or sleeping (`desiredCount` == 0), the action automatically raises `desiredCount` to 1 prior to task registration, ensuring active deployments do not remain parked at 0 tasks.
+- **feat(ci): hermetic `pin-guard` linter in `validate-workflows.yml`** (`.github/workflows/validate-workflows.yml`, Plan 324 Phase 2). Added a dedicated `pin-guard` job that scans all workflows in `.github/workflows/` and fails pull requests if any internal workflow calls reference floating `@main` tags.
+
+### Changed
+
+- **perf(build): native arm64 runner & GHA layer caching** (`.github/workflows/reusable-docker-build.yml`, Plan 324 Phase 1). Verified `ubuntu-24.04-arm` native runners and `type=gha,mode=max` layer caching for Graviton container builds, bypassing QEMU emulation overhead and reducing build durations to under 5 minutes.
+- **docs(plan-324): V2 CI/CD Modernization & V3 Feature Adoption** (`docs/plans/324_cicd_v2_modernization_and_v3_adoption_plan.md` & `docs/reports/2026-07-23_cicd_v2_vs_v3_comparison_report.md`). Backported battle-tested V3 (Forge) build performance, deployment resilience, ADR-007 destruction safety, and ADR-017 read-only AI agent triage into the V2 pipeline ecosystem.
+
+### Fixed
+
+- **fix(deploy): prevent sleeping/scaled-to-zero ECS deployments from reporting false completion** (`.github/actions/deploy-ecs-service/action.yml`). Enforces a minimum task floor before triggering ECS task definition stability waits.
+
+## v2.12.15 (2026-07-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.14
+- chore: update CHANGELOG for v2.12.13
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
+## v2.12.14 (2026-07-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.13
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
+## v2.12.13 (2026-07-16)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
+## v2.12.12 (2026-07-13)
+
+### Added
+
+- No new features in this release
+
+### Changed
+
+- chore: align checkengines diagnostic checks to support 4-repo setup (including blaze-conductor) (#204)
+- docs: deep cicd maintenance sync - 4-repos structure & changelog update
+- docs: run /11-maintain-prompts-ai sweep and fix absolute persona links
+- docs: run /09-maintain-docs sweep and archive loose reports
+- docs: add Unreleased section for GHA boolean quoting fix
+- chore: update CHANGELOG for v2.12.11
+
+### Fixed
+
+
 ## [Unreleased]
 - feat(v2-audit): **Plan 207** — Removed 5.8MB actionlint binary, relocated 17 root maintenance scripts to `scripts/maintenance/`, enforced `timeout-minutes: 30` across 29 jobs in 8 workflows, and aligned branch parity with `dev` and `main`. (2026-07-24)
 
