@@ -11,6 +11,8 @@ on:
         default: false
 jobs:
   test:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
+      timeout-minutes: 30
       - run: echo "${{ inputs.env_name }} ${{ inputs.apply }}"

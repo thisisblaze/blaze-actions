@@ -203,7 +203,7 @@ ECS manages the task set swap and traffic shift natively:
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.12.15
     with:
       environment: prod
       target_services: "api"  # Native B/G triggered automatically
@@ -221,7 +221,7 @@ For AWS `DEV`/`STAGE`/`PROD`, `02-deploy-app` also syncs the Admin SPA build to 
 ```yaml
 jobs:
   deploy:
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-app.yml@v2.12.15
     with:
       environment: prod
       target_services: "Blaze all"  # Includes admin SPA sync
@@ -498,7 +498,7 @@ For legacy EB environments, use `reusable-elastic-beanstalk-deploy.yml` to packa
 ```yaml
 jobs:
   deploy-eb:
-    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.11.55
+    uses: thisisblaze/blaze-actions/.github/workflows/reusable-elastic-beanstalk-deploy.yml@v2.12.15
     with:
       environment: prod                          # GitHub environment (for OIDC)
       application_name: my-app                   # EB Application name
@@ -559,7 +559,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - id: config
-        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.11.55
+        uses: thisisblaze/blaze-actions/.github/actions/calculate-config@v2.12.15
         with:
           environment: dev
           terraform_stack: app

@@ -79,13 +79,16 @@ permissions:
   contents: read
 jobs:
   maintenance:
+    timeout-minutes: 30
     permissions:
+      timeout-minutes: 30
       contents: read
       id-token: write
     name: Run Maintenance Action
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
+      timeout-minutes: 30
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 

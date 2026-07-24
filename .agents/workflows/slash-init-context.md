@@ -39,7 +39,7 @@ gh workflow run "01-provision-infra.yml" -f stack="network" --repo thisisblaze/b
 
 ```hcl
 # ✅ CORRECT — pinned tag, cache-safe, deterministic
-source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.11.10"
+source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=v2.11.13"
 
 # ❌ RISKY — branch ref, GitHub Actions caches the old archive, changes are invisible
 source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/networking/environment-network?ref=dev"
