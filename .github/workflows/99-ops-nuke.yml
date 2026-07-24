@@ -1772,7 +1772,7 @@ jobs:
     needs: [validate]
     if: inputs.nuke_mode == 'all-projects' || inputs.nuke_mode == 'total'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     environment: ${{ inputs.environment || 'DEV' }}
     steps:
       - name: Configure AWS Credentials
