@@ -221,7 +221,7 @@ jobs:
       contents: read
       id-token: write
     if: inputs.cloud_provider == 'aws' || inputs.cloud_provider == '' || inputs.cloud_provider == null
-    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.12.15
+    uses: thisisblaze/blaze-actions/.github/workflows/02-deploy-aws.yml@v2.12.17
     with:
       cloud_provider: ${{ inputs.cloud_provider }}
       environment: ${{ inputs.environment }}
