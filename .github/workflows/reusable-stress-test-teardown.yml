@@ -574,7 +574,7 @@ jobs:
     name: "🧹 Cleanup VPC Orphans (Pre-Network Destroy)"
     needs: [config, destroy-app, destroy-tunnel, destroy-data-pod, check-states]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS Credentials
