@@ -51,7 +51,7 @@ locals {
 # MULTI-SITE APP
 # ──────────────────────────────────────────────────────────────────────────────
 module "multi_site_app" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/multi-site-app?ref=v2.11.13"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/aws/ecs/multi-site-app?ref=v2.11.14"
 
   # Identity
   namespace   = var.namespace

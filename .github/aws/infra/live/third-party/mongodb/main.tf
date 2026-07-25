@@ -33,7 +33,7 @@ locals {
 # MONGODB ATLAS CLUSTER MODULE
 # ---------------------------------------------------------
 module "mongodb_cluster" {
-  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.11.13"
+  source = "github.com/thisisblaze/blaze-terraform-infra-core//modules/mongodbatlas/cluster?ref=v2.11.14"
 
   # Required variables
   namespace   = var.namespace
