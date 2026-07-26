@@ -2,6 +2,36 @@
 
 All notable changes to the `blaze-actions` project will be documented in this file.
 
+## v2.12.17 (2026-07-26)
+
+### Added
+
+- feat: whitespace-normalize confirmation gates in ops workflows (#192)
+
+### Changed
+
+- docs: align canonical infra-core pin documentation to v2.11.14
+- chore: sync main into dev
+- docs: update release badge to v2.12.15 in README.md (#194)
+- docs: update release badge to v2.12.15 in README.md
+- chore: end-of-day governance sync — 2026-07-24
+- chore: update CHANGELOG for v2.12.17
+- chore: delete stale live/ duplicate mirrors and sync docs sweep
+- chore: update CHANGELOG for v2.12.15
+- chore: update CHANGELOG for v2.12.14
+- chore: update CHANGELOG for v2.12.13
+- chore: update CHANGELOG for v2.12.12
+
+### Fixed
+
+- chore(sync): reconcile main with dev (#193)
+- fix: correct botched previous commit (accidental base64 paste)
+- fix(mongo): require explicit tls=true for flex-tier mongodb:// scheme
+- fix(provision-db-users): pick mongodb:// vs mongodb+srv:// based on host shape (#185)
+- fix: eliminate all remaining grouping parenthesis logical issues
+- fix: resolve grouping parenthesis syntax in all workflows
+- fix: remove logical grouping parenthesis from cleanup conditional expressions
+
 ## v2.12.17 (2026-07-23)
 
 ### Added
