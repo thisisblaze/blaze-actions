@@ -1,5 +1,5 @@
 #!/bin/bash
-# .antigravity/scripts/find-secrets.sh
+# .agents/scripts/find-secrets.sh
 # Scans the codebase for high-risk secret patterns.
 
 echo "🔍 Scanning for secrets..."

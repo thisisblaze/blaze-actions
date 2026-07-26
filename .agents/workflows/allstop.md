@@ -89,13 +89,13 @@ For each repo where commits were made today, verify `CHANGELOG.md` has an entry 
 
 In `blaze-template-deploy`:
 
-1. Check if any stress test workflow ran today:
+1. Check if `scripts/full-cycle.sh` ran today (retired `08-stress-test-suite.yml` workflow, Plan 205):
    ```bash
-    gh run list --workflow=08-stress-test-suite.yml --limit=5 --json createdAt,status,conclusion --repo <tenant-repo>
+   ls -t docs/reports/full-cycle-*.log 2>/dev/null | head -1
    ```
-2. If a run completed today, check if a corresponding report exists in `docs/reports/stress-tests/runs/` with today's date.
+2. If a run completed today, check if a corresponding report exists in `docs/reports/` with today's date.
 3. If a run completed but **no report exists**, flag it:
-   `⚠️ Stress test ran today but no report generated — run /12-stress-test-report`
+   `⚠️ Full-cycle dispatcher ran today but no report generated — run /12-stress-test-report`
 
 ### 5.6. Knowledge Library Sync
 

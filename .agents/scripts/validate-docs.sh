@@ -1,5 +1,5 @@
 #!/bin/bash
-# .antigravity/scripts/validate-docs.sh
+# .agents/scripts/validate-docs.sh
 # Validates documentation structure.
 
 echo "🔍 Validating documentation structure..."
@@ -10,7 +10,7 @@ FAILED=0
 
 # 1. Check for loose files in docs/reports/
 if [ -d "$REPORTS_DIR" ]; then
-  loose_files=$(find "$REPORTS_DIR" -maxdepth 1 -type f -name "*.md" -not -name "README.md" -not -name "INDEX.md")
+  loose_files=$(find "$REPORTS_DIR" -maxdepth 1 -type f -name "*.md" -not -name "README.md" -not -name "INDEX.md" -not -name "MAINTENANCE_STATE.md")
   
   if [ ! -z "$loose_files" ]; then
     echo "❌ Found loose files in $REPORTS_DIR (Move to YYYY/MM/):"
